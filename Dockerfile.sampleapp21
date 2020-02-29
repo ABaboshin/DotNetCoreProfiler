@@ -1,12 +1,12 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.101 as build
+FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
 
-COPY sample/SampleApp/ sample/SampleApp/
+COPY sample/2.1/ sample/SampleApp/
 
 RUN dotnet publish -c Release -o /app sample/SampleApp/SampleApp.csproj
 
 FROM profiler:native as profiler
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.1
+FROM mcr.microsoft.com/dotnet/core/aspnet:2.1.15
 COPY --from=build /app /app
 RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler

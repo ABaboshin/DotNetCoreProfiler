@@ -6,9 +6,13 @@
   "license": "MIT",
   "scripts": {
     "build:native": "docker build -t profiler:native -f Dockerfile.native .",
-    "build:sampleapp": "docker build -t sampleapp:local -f Dockerfile.sampleapp .",
-    "build:all": "yarn build:native && yarn build:sampleapp",
-    "run:sample": "docker run -it --rm -p 8080:80 sampleapp:local",
-    "run:all": "yarn build:all && yarn run:sample"
+    "build:sampleapp:31": "docker build -t sampleapp:31 -f Dockerfile.sampleapp31 .",
+    "build:all:31": "yarn build:native && yarn build:sampleapp:31",
+    "run:sample:31": "docker run -it --rm -p 8080:80 sampleapp:31",
+    "run:all:31": "yarn build:all:31 && yarn run:sample:31",
+    "build:sampleapp:21": "docker build -t sampleapp:21 -f Dockerfile.sampleapp21 .",
+    "build:all:21": "yarn build:native && yarn build:sampleapp:21",
+    "run:sample:21": "docker run -it --rm -p 8080:80 sampleapp:21",
+    "run:all:21": "yarn build:all:21 && yarn run:sample:21"
   }
 }
