@@ -18,6 +18,10 @@ add_library("DotNetCoreProfiler.static" STATIC
     ClassFactory.cpp
     CorProfiler.cpp
     ILRewriter.cpp
+    helpers.cpp
+    miniutf.cpp
+    util.cpp
+    miniutf.cpp
     ${GENERATED_OBJ_FILES}
 )
 set_target_properties("DotNetCoreProfiler.static" PROPERTIES PREFIX "")

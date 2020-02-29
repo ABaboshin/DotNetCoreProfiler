@@ -4,8 +4,11 @@
 #pragma once
 
 #include <atomic>
+#include <mutex>
+#include <vector>
 #include "cor.h"
 #include "corprof.h"
+#include "types.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -13,6 +16,9 @@ private:
     std::atomic<int> refCount;
     ICorProfilerInfo8* corProfilerInfo;
     bool is_attached = false;
+    std::vector<WSTRING> moduleNames;
+    std::vector<ModuleID> modules;
+    std::mutex mutex;
 public:
     CorProfiler();
     virtual ~CorProfiler();
