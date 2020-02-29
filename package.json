@@ -1,0 +1,14 @@
+{
+  "name": "DotNetCoreProfiler",
+  "version": "1.0.0",
+  "repository": "https://github.com/ABaboshin/DotNetCoreProfiler.git",
+  "author": "Andrey Baboshin <andrey.baboshin@gmail.com>",
+  "license": "MIT",
+  "scripts": {
+    "build:native": "docker build -t profiler:native -f Dockerfile.native .",
+    "build:sampleapp": "docker build -t sampleapp:local -f Dockerfile.sampleapp .",
+    "build:all": "yarn build:native && yarn build:sampleapp",
+    "run:sample": "docker run -it --rm -p 8080:80 sampleapp:local",
+    "run:all": "yarn build:all && yarn run:sample"
+  }
+}

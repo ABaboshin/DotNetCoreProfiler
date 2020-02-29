@@ -9,22 +9,40 @@ const IID IID_IClassFactory = { 0x00000001, 0x0000, 0x0000, { 0xC0, 0x00, 0x00, 
 
 BOOL STDMETHODCALLTYPE DllMain(HMODULE hModule, DWORD ul_reason_for_call, LPVOID lpReserved)
 {
+  printf("Enter DllMain\r\n");
     return TRUE;
 }
 
 extern "C" HRESULT STDMETHODCALLTYPE DllGetClassObject(REFCLSID rclsid, REFIID riid, LPVOID* ppv)
 {
-    // {cf0d821e-299b-5307-a3d8-b283c03916dd}
-    const GUID CLSID_CorProfiler = { 0xcf0d821e, 0x299b, 0x5307, { 0xa3, 0xd8, 0xb2, 0x83, 0xc0, 0x39, 0x16, 0xdd } };
+  printf("Enter DllGetClassObject\r\n");
+    // 585022b6-31e9-4ddf-b35d-3c256d0a16f3
+    const GUID CLSID_CorProfiler = { 0x585022b6, 0x31e9, 0x4ddf, { 0xb3, 0x5d, 0x3c, 0x25, 0x6d, 0x0a, 0x16, 0xf3 } };
 
     if (ppv == nullptr || rclsid != CLSID_CorProfiler)
     {
+      printf("Enter E_FAIL 1\r\n");
+      printf("%d\r\n", ppv == nullptr);
+      printf("%d\r\n", rclsid != CLSID_CorProfiler);
+      printf("%p\r\n", ppv);
+      printf("%x\r\n", rclsid.Data1);
+      printf("%hx\r\n", rclsid.Data2);
+      printf("%hx\r\n", rclsid.Data3);
+      printf("%hhx\r\n", rclsid.Data4[0]);
+      printf("%hhx\r\n", rclsid.Data4[1]);
+      printf("%hhx\r\n", rclsid.Data4[2]);
+      printf("%hhx\r\n", rclsid.Data4[3]);
+      printf("%hhx\r\n", rclsid.Data4[4]);
+      printf("%hhx\r\n", rclsid.Data4[5]);
+      printf("%hhx\r\n", rclsid.Data4[6]);
+      printf("%hhx\r\n", rclsid.Data4[7]);
         return E_FAIL;
     }
 
     auto factory = new ClassFactory;
     if (factory == nullptr)
     {
+      printf("Enter E_FAIL 2\r\n");
         return E_FAIL;
     }
 
@@ -33,5 +51,6 @@ extern "C" HRESULT STDMETHODCALLTYPE DllGetClassObject(REFCLSID rclsid, REFIID r
 
 extern "C" HRESULT STDMETHODCALLTYPE DllCanUnloadNow()
 {
+  printf("Enter DllCanUnloadNow\r\n");
     return S_OK;
 }

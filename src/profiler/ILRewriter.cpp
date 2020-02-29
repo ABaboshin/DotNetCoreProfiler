@@ -123,15 +123,15 @@ static int k_rgnStackPushes[] = {
 
 #include "opcode.def"
 
-#undef Push0   
-#undef Push1   
-#undef PushI   
-#undef PushI4  
-#undef PushR4  
-#undef PushI8  
-#undef PushR8  
-#undef PushRef 
-#undef VarPush 
+#undef Push0
+#undef Push1
+#undef PushI
+#undef PushI4
+#undef PushR4
+#undef PushI8
+#undef PushR8
+#undef PushRef
+#undef VarPush
 #undef OPDEF
 };
 
@@ -491,7 +491,7 @@ public:
                 m_pOutputBuffer[offset++] = (opcode & 0xFF);
             }
 
-            assert(pInstr->m_opcode < _countof(s_OpCodeFlags));
+            assert(pInstr->m_opcode < (sizeof(s_OpCodeFlags)/sizeof(BYTE)));
             BYTE flags = s_OpCodeFlags[pInstr->m_opcode];
             switch (flags)
             {
@@ -559,7 +559,7 @@ public:
                     {
                     case 1 | OPCODEFLAGS_BranchTarget:
                         // Check if delta is too big to fit into an INT8.
-                        // 
+                        //
                         // (see #pragma at top of file)
                         if ((INT8)delta != delta)
                         {

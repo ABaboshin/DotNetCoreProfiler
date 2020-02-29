@@ -12,6 +12,7 @@ class CorProfiler : public ICorProfilerCallback8
 private:
     std::atomic<int> refCount;
     ICorProfilerInfo8* corProfilerInfo;
+    bool is_attached = false;
 public:
     CorProfiler();
     virtual ~CorProfiler();
@@ -145,4 +146,8 @@ public:
 
         return count;
     }
+
+    bool IsAttached() const;
 };
+
+extern CorProfiler* profiler;

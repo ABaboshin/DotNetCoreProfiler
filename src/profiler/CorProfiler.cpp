@@ -8,6 +8,8 @@
 #include "profiler_pal.h"
 #include <string>
 
+CorProfiler* profiler = nullptr;
+
 static void STDMETHODCALLTYPE Enter(FunctionID functionId)
 {
     printf("\r\nEnter %" UINT_PTR_FORMAT "", (UINT64)functionId);
@@ -50,6 +52,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown *pICorProfilerInfoUnk
                       COR_PRF_DISABLE_INLINING                             ;
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
+
+    is_attached = true;
+    profiler = this;
 
     return S_OK;
 }
@@ -527,3 +532,5 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
     printf("\r\nDynamic Function JIT Compilation Finished. %" UINT_PTR_FORMAT "", (UINT64)functionId);
     return S_OK;
 }
+
+bool CorProfiler::IsAttached() const { return is_attached; }

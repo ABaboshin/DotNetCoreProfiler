@@ -3,3 +3,4 @@ LIBRARY "ClrProfiler.Dll"
 EXPORTS
     DllCanUnloadNow PRIVATE
     DllGetClassObject PRIVATE
+    IsProfilerAttached

@@ -1,0 +1,29 @@
+{
+  "iisSettings": {
+    "windowsAuthentication": false,
+    "anonymousAuthentication": true,
+    "iisExpress": {
+      "applicationUrl": "http://localhost:55993",
+      "sslPort": 0
+    }
+  },
+  "$schema": "http://json.schemastore.org/launchsettings.json",
+  "profiles": {
+    "SampleApp": {
+      "commandName": "Project",
+      "launchUrl": "/",
+      "environmentVariables": {
+        "STATSD__PORT": "9125",
+        "http_metrics__enabled": "true",
+        "STATSD__SERVER": "127.0.0.1",
+        "http_metrics__name": "myhttp",
+        "DATABASE__CONNECTIONSTRING": "Server=localhost;Database=mydb;User Id=sa;Password=passwoyourStrong(!)Passwordrd;",
+        "ASPNETCORE_ENVIRONMENT": "Development",
+        "RABBITMQ__HOST": "localhost",
+        "RABBITMQ__USER": "admin",
+        "RABBITMQ__PASSWORD": "password"
+      },
+      "applicationUrl": "http://localhost:5000"
+    }
+  }
+}

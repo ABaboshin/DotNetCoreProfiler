@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.101 as build
+
+COPY sample/SampleApp/ sample/SampleApp/
+
+RUN dotnet publish -c Release -o /app sample/SampleApp/SampleApp.csproj
+
+FROM profiler:native as profiler
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.1
+COPY --from=build /app /app
+RUN mkdir /profiler
+COPY --from=profiler /DotNetCoreProfiler.so /profiler
+
+EXPOSE 80
+
+WORKDIR /app
+
+ENV CORECLR_ENABLE_PROFILING="1"
+ENV CORECLR_PROFILER="{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
+ENV CORECLR_PROFILER_PATH="/profiler/DotNetCoreProfiler.so"
+
+ENTRYPOINT ["dotnet", "SampleApp.dll"]
