@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SampleApp.Controllers
@@ -11,14 +12,44 @@ namespace SampleApp.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
+            Test(1);
+            Test(1,2);
+
+            SomeOther(1, "x", j: 3);
+            SomeOther(2, "y");
+
             return new string[] { "value1", "value2" };
+        }
+
+        void SomeOther(int i, string s, object o = null, int j = 2)
+        {
+            Console.WriteLine();
+        }
+
+        void Test(params object[] list) {
+            for (int i = 0; i < list.Length; i++)
+            {
+                Console.Write(list[i] + " ");
+            }
         }
 
         // GET api/values/5
         [HttpGet("{id}")]
-        public ActionResult<string> Get(int id)
+        public ActionResult<string> Oops(int id)
         {
-            return "value";
+            return NewMethod();
+        }
+
+        private static ActionResult<string> NewMethod()
+        {
+            int i = new Random().Next();
+            int j = new Random().Next();
+            if (i == j)
+            {
+                return String.Empty;
+            }
+
+            throw new System.Exception();
         }
 
         // POST api/values

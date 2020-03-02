@@ -17,7 +17,6 @@ SET_SOURCE_FILES_PROPERTIES(
 add_library("DotNetCoreProfiler.static" STATIC
     ClassFactory.cpp
     CorProfiler.cpp
-    ILRewriter.cpp
     helpers.cpp
     miniutf.cpp
     util.cpp
@@ -33,7 +32,6 @@ target_include_directories("DotNetCoreProfiler.static"
 )
 add_library("DotNetCoreProfiler" SHARED
     dllmain.cpp
-    interop.cpp
 )
 set_target_properties("DotNetCoreProfiler" PROPERTIES PREFIX "")
 target_link_libraries("DotNetCoreProfiler" "DotNetCoreProfiler.static")

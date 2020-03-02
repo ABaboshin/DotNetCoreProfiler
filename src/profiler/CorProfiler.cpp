@@ -7,29 +7,49 @@
 #include "CorProfiler.h"
 #include "corhlpr.h"
 #include "corhdr.h"
-#include "CComPtr.h"
 #include "ILRewriter.h"
 #include "profiler_pal.h"
 #include "helpers.h"
 #include "util.h"
+//#include "strings.h"
+#include "ComPtr.h"
 
 
 CorProfiler* profiler = nullptr;
 
+// static void PrintDebug () {
+//   ComPtr<IUnknown> metadata_interfaces;
+//   hr = profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite,
+//                                           IID_IMetaDataImport2,
+//                                           metadata_interfaces.GetAddressOf());
+//   const auto metadata_import =
+//     metadata_interfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+//   auto function = GetFunctionInfo(metadata_import, token);
+
+//   std::cout << ToString(function.type.name) << std::endl;
+//   std::cout << ToString(function.name) << std::endl;
+
+// }
+
 static void STDMETHODCALLTYPE Enter(FunctionID functionId)
 {
+    std::cout << "Enter " << functionId << std::endl;
+    std::cout << std::flush;
     // printf("\r\nEnter %" UINT_PTR_FORMAT "", (UINT64)functionId);
 }
 
 static void STDMETHODCALLTYPE Leave(FunctionID functionId)
 {
+    std::cout << "Leave " << functionId << std::endl;
+    std::cout << std::flush;
     // printf("\r\nLeave %" UINT_PTR_FORMAT "", (UINT64)functionId);
 }
 
-COR_SIGNATURE enterLeaveMethodSignature             [] = { IMAGE_CEE_CS_CALLCONV_STDCALL, 0x01, ELEMENT_TYPE_VOID, ELEMENT_TYPE_I };
+COR_SIGNATURE enterLeaveMethodSignature[] = { IMAGE_CEE_CS_CALLCONV_STDCALL, 0x01, ELEMENT_TYPE_VOID, ELEMENT_TYPE_I };
 
-void(STDMETHODCALLTYPE *EnterMethodAddress)(FunctionID) = &Enter;
-void(STDMETHODCALLTYPE *LeaveMethodAddress)(FunctionID) = &Leave;
+void(STDMETHODCALLTYPE* EnterMethodAddress)(FunctionID) = &Enter;
+void(STDMETHODCALLTYPE* LeaveMethodAddress)(FunctionID) = &Leave;
 
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
 {
@@ -44,18 +64,18 @@ CorProfiler::~CorProfiler()
     }
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown *pICorProfilerInfoUnk)
+HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk)
 {
-    HRESULT queryInterfaceResult = pICorProfilerInfoUnk->QueryInterface(__uuidof(ICorProfilerInfo8), reinterpret_cast<void **>(&this->corProfilerInfo));
+    HRESULT queryInterfaceResult = pICorProfilerInfoUnk->QueryInterface(__uuidof(ICorProfilerInfo8), reinterpret_cast<void**>(&this->corProfilerInfo));
 
     if (FAILED(queryInterfaceResult))
     {
         return E_FAIL;
     }
 
-    DWORD eventMask = COR_PRF_MONITOR_JIT_COMPILATION                      |
-                      COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST | /* helps the case where this profiler is used on Full CLR */
-                      COR_PRF_DISABLE_INLINING                             ;
+    DWORD eventMask = COR_PRF_MONITOR_JIT_COMPILATION |
+        COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST | /* helps the case where this profiler is used on Full CLR */
+        COR_PRF_DISABLE_INLINING;
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
@@ -66,8 +86,16 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown *pICorProfilerInfoUnk
     modules = std::vector<ModuleID>();
 
     for (auto&& module : moduleNames) {
-      std::cout << "found " << ToString(module) << std::endl;
+        std::cout << "found " << ToString(module) << std::endl;
     }
+
+    wrapperDll = GetEnvironmentValue("PROFILER_WRAPPER_DLL"_W);
+    wrapperType = GetEnvironmentValue("PROFILER_WRAPPER_TYPE"_W);
+    wrapperMethod = GetEnvironmentValue("PROFILER_WRAPPER_MERTHOD"_W);
+
+    std::cout << "wrapperDll " << ToString(wrapperDll) << std::endl;
+    std::cout << "wrapperType " << ToString(wrapperType) << std::endl;
+    std::cout << "wrapperMethod " << ToString(wrapperMethod) << std::endl;
 
     return S_OK;
 }
@@ -105,13 +133,13 @@ HRESULT STDMETHODCALLTYPE CorProfiler::AppDomainShutdownFinished(AppDomainID app
 
 HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadStarted(AssemblyID assemblyId)
 {
-  std::cout << "AssemblyLoadStarted " << assemblyId << std::endl;
+    std::cout << "AssemblyLoadStarted " << assemblyId << std::endl;
     return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus)
 {
-  std::cout << "AssemblyLoadFinished " << assemblyId << std::endl;
+    std::cout << "AssemblyLoadFinished " << assemblyId << std::endl;
     return S_OK;
 }
 
@@ -133,23 +161,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadStarted(ModuleID moduleId)
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRESULT hrStatus)
 {
-    // // HRESULT hr;
-    // // IfFailRet(hrStatus);
-
-    // // std::lock_guard<std::mutex> guard(this->mutex);
-
-    // const ModuleInfo moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
-
-    // std::cout << "ModuleLoadFinished " << ToString(moduleInfo.assembly.name) << " " << moduleInfo.id << std::endl;
-
-    // for (auto&& module : moduleNames) {
-    //   if (moduleInfo.assembly.name == module) {
-    //     modules.push_back(moduleId);
-    //     PrintModuleInfo(moduleInfo);
-    //     return S_OK;
-    //   }
-    // }
-
     return S_OK;
 }
 
@@ -200,45 +211,51 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     ClassID classId;
     ModuleID moduleId;
 
-    // std::cout << "JITCompilationStarted " << functionId << std::endl;
-
     IfFailRet(this->corProfilerInfo->GetFunctionInfo(functionId, &classId, &moduleId, &token));
 
     const ModuleInfo moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
-    if ( std::find(moduleNames.begin(), moduleNames.end(), moduleInfo.assembly.name) == moduleNames.end() ) {
-      // std::cout << "disable rewriting" << std::endl;
-      return S_OK;
+    if (std::find(moduleNames.begin(), moduleNames.end(), moduleInfo.assembly.name) == moduleNames.end()) {
+        return S_OK;
     }
 
-    // for (auto&& moduleName : moduleNames) {
-    //   if (moduleInfo.assembly.name == moduleName) {
-    //     return S_OK;
-    //   }
-    // }
+     std::cout << "JITCompilationStarted " << functionId << std::endl;
 
-    // std::cout << "enable rewriting" << std::endl;
+    ComPtr<IUnknown> metadata_interfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadata_interfaces.GetAddressOf()));
 
-    CComPtr<IMetaDataImport> metadataImport;
-    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, reinterpret_cast<IUnknown **>(&metadataImport)));
-
-    CComPtr<IMetaDataEmit> metadataEmit;
-    IfFailRet(metadataImport->QueryInterface(IID_IMetaDataEmit, reinterpret_cast<void **>(&metadataEmit)));
+    const auto metadataEmit =
+        metadata_interfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
 
     mdSignature enterLeaveMethodSignatureToken;
     metadataEmit->GetTokenFromSig(enterLeaveMethodSignature, sizeof(enterLeaveMethodSignature), &enterLeaveMethodSignatureToken);
 
-    PrintModuleInfo(corProfilerInfo, moduleId);
-    ComPtr<IUnknown> metadata_interfaces;
-    hr = this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite,
-                                            IID_IMetaDataImport2,
-                                            metadata_interfaces.GetAddressOf());
+    const auto assembly_emit =
+        metadata_interfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+
     const auto metadata_import =
-      metadata_interfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+        metadata_interfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
     auto function = GetFunctionInfo(metadata_import, token);
 
-    std::cout << ToString(function.type.name) << std::endl;
-    std::cout << ToString(function.name) << std::endl;
+    std::cout << ToString(function.type.name) << "." << ToString(function.name) << std::endl << std::flush;
+
+    // it's a hack, find a better way to figure out the entrypoint
+    // i.e. catch the first call in an AppDomain
+    if (ends_with(function.name, "Main"_W))
+    {
+        std::cout << "ENTRYPOINT!!" << std::endl;
+
+        return LoadAssemblyBefore(this->corProfilerInfo,
+            metadata_import,
+            metadataEmit,
+            assembly_emit,
+            nullptr,
+            moduleId,
+            token,
+            functionId,
+            wrapperDll,
+            enterLeaveMethodSignatureToken);
+    }
 
     return RewriteIL(this->corProfilerInfo, nullptr, moduleId, token, functionId, reinterpret_cast<ULONGLONG>(EnterMethodAddress), reinterpret_cast<ULONGLONG>(LeaveMethodAddress), enterLeaveMethodSignatureToken);
 }
@@ -248,7 +265,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationFinished(FunctionID functio
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::JITCachedFunctionSearchStarted(FunctionID functionId, BOOL *pbUseCachedFunction)
+HRESULT STDMETHODCALLTYPE CorProfiler::JITCachedFunctionSearchStarted(FunctionID functionId, BOOL* pbUseCachedFunction)
 {
     return S_OK;
 }
@@ -263,7 +280,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITFunctionPitched(FunctionID functionId)
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::JITInlining(FunctionID callerId, FunctionID calleeId, BOOL *pfShouldInline)
+HRESULT STDMETHODCALLTYPE CorProfiler::JITInlining(FunctionID callerId, FunctionID calleeId, BOOL* pfShouldInline)
 {
     return S_OK;
 }
@@ -288,12 +305,12 @@ HRESULT STDMETHODCALLTYPE CorProfiler::RemotingClientInvocationStarted()
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::RemotingClientSendingMessage(GUID *pCookie, BOOL fIsAsync)
+HRESULT STDMETHODCALLTYPE CorProfiler::RemotingClientSendingMessage(GUID* pCookie, BOOL fIsAsync)
 {
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::RemotingClientReceivingReply(GUID *pCookie, BOOL fIsAsync)
+HRESULT STDMETHODCALLTYPE CorProfiler::RemotingClientReceivingReply(GUID* pCookie, BOOL fIsAsync)
 {
     return S_OK;
 }
@@ -303,7 +320,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::RemotingClientInvocationFinished()
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::RemotingServerReceivingMessage(GUID *pCookie, BOOL fIsAsync)
+HRESULT STDMETHODCALLTYPE CorProfiler::RemotingServerReceivingMessage(GUID* pCookie, BOOL fIsAsync)
 {
     return S_OK;
 }
@@ -318,7 +335,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::RemotingServerInvocationReturned()
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::RemotingServerSendingReply(GUID *pCookie, BOOL fIsAsync)
+HRESULT STDMETHODCALLTYPE CorProfiler::RemotingServerSendingReply(GUID* pCookie, BOOL fIsAsync)
 {
     return S_OK;
 }
@@ -463,12 +480,12 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ExceptionCatcherLeave()
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::COMClassicVTableCreated(ClassID wrappedClassId, REFGUID implementedIID, void *pVTable, ULONG cSlots)
+HRESULT STDMETHODCALLTYPE CorProfiler::COMClassicVTableCreated(ClassID wrappedClassId, REFGUID implementedIID, void* pVTable, ULONG cSlots)
 {
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::COMClassicVTableDestroyed(ClassID wrappedClassId, REFGUID implementedIID, void *pVTable)
+HRESULT STDMETHODCALLTYPE CorProfiler::COMClassicVTableDestroyed(ClassID wrappedClassId, REFGUID implementedIID, void* pVTable)
 {
     return S_OK;
 }
@@ -523,7 +540,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::HandleDestroyed(GCHandleID handleId)
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::InitializeForAttach(IUnknown *pCorProfilerInfoUnk, void *pvClientData, UINT cbClientData)
+HRESULT STDMETHODCALLTYPE CorProfiler::InitializeForAttach(IUnknown* pCorProfilerInfoUnk, void* pvClientData, UINT cbClientData)
 {
     return S_OK;
 }
@@ -543,7 +560,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationStarted(FunctionID functi
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdMethodDef methodId, ICorProfilerFunctionControl *pFunctionControl)
+HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdMethodDef methodId, ICorProfilerFunctionControl* pFunctionControl)
 {
     return S_OK;
 }
@@ -573,7 +590,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ConditionalWeakTableElementReferences(ULO
     return S_OK;
 }
 
-HRESULT STDMETHODCALLTYPE CorProfiler::GetAssemblyReferences(const WCHAR *wszAssemblyPath, ICorProfilerAssemblyReferenceProvider *pAsmRefProvider)
+HRESULT STDMETHODCALLTYPE CorProfiler::GetAssemblyReferences(const WCHAR* wszAssemblyPath, ICorProfilerAssemblyReferenceProvider* pAsmRefProvider)
 {
     return S_OK;
 }
@@ -594,5 +611,3 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
     // printf("\r\nDynamic Function JIT Compilation Finished. %" UINT_PTR_FORMAT "", (UINT64)functionId);
     return S_OK;
 }
-
-bool CorProfiler::IsAttached() const { return is_attached; }

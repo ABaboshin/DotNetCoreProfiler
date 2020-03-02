@@ -1,4 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SampleApp.Controllers
@@ -11,7 +14,7 @@ namespace SampleApp.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<string>> Get()
         {
-            return new string[] { "value1", "value2" };
+            return Ok(AppDomain.CurrentDomain.GetAssemblies().Select(a => a.FullName));
         }
 
         // GET api/values/5

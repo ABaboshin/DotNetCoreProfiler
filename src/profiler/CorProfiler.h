@@ -18,7 +18,12 @@ private:
     bool is_attached = false;
     std::vector<WSTRING> moduleNames;
     std::vector<ModuleID> modules;
-    std::mutex mutex;
+    WSTRING wrapperDll;
+    WSTRING wrapperType;
+    WSTRING wrapperMethod;
+    //std::mutex mutex;
+
+    HRESULT GenerateVoidILStartupMethod(const ModuleID module_id, mdMethodDef* ret_method_token);
 public:
     CorProfiler();
     virtual ~CorProfiler();
@@ -153,7 +158,6 @@ public:
         return count;
     }
 
-    bool IsAttached() const;
 };
 
 extern CorProfiler* profiler;

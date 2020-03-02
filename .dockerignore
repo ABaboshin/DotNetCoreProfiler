@@ -2,6 +2,7 @@
 !lib/**
 !src/**
 !sample**
-sample/**/bin
-sample/**/obj
-sample/**/.vs
+**/.vs/
+**/bin/
+**/obj/
+**/out/

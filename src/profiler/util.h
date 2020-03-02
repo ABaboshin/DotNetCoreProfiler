@@ -27,3 +27,9 @@ void Split(const WSTRING &s, wchar_t delim, Out result) {
 std::vector<WSTRING> Split(const WSTRING &s, wchar_t delim);
 
 WSTRING Trim(const WSTRING &str);
+
+inline bool ends_with(WSTRING const& value, WSTRING const& ending)
+{
+    if (ending.size() > value.size()) return false;
+    return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
+}
