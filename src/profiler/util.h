@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "types.h"
+#include "ComPtr.h"
 
 WCHAR operator"" _W(const char c);
 WSTRING operator"" _W(const char* arr, size_t size);
@@ -33,3 +34,19 @@ inline bool ends_with(WSTRING const& value, WSTRING const& ending)
     if (ending.size() > value.size()) return false;
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
+
+template<class T>
+T base_name(T const& path, T const& delims)
+{
+    return path.substr(path.find_last_of(delims) + 1);
+}
+template<class T>
+T remove_extension(T const& filename)
+{
+    typename T::size_type const p(filename.find_last_of('.'));
+    return p > 0 && p != T::npos ? filename.substr(0, p) : filename;
+}
+
+HRESULT CreateAssemblyRef(const ComPtr< IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, std::vector<BYTE> public_key, ASSEMBLYMETADATA metadata, WSTRING assemblyName);
+
+WSTRING HexStr(const unsigned char* data, int len);

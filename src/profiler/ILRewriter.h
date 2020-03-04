@@ -151,15 +151,14 @@ private:
     ModuleID    m_moduleId;
     mdToken     m_tkMethod;
 
-    mdToken     m_tkLocalVarSig;
     unsigned    m_maxStack;
     unsigned    m_flags;
     bool        m_fGenerateTinyHeader;
 
     ILInstr m_IL; // Double linked list of all il instructions
 
-    unsigned    m_nEH;
-    EHClause* m_pEH;
+    
+    
 
     // Helper table for importing.  Sparse array that maps BYTE offset of beginning of an
     // instruction to that instruction's ILInstr*.  BYTE offsets that don't correspond
@@ -174,6 +173,11 @@ private:
     IMethodMalloc* m_pIMethodMalloc;
 
 public:
+    mdToken     m_tkLocalVarSig;
+    ULONG cNewLocals = 3;
+    unsigned    m_nEH;
+    EHClause* m_pEH;
+
     ILRewriter(ICorProfilerInfo* pICorProfilerInfo, ICorProfilerFunctionControl* pICorProfilerFunctionControl, ModuleID moduleID, mdToken tkMethod)
         : m_pICorProfilerInfo(pICorProfilerInfo), m_pICorProfilerFunctionControl(pICorProfilerFunctionControl),
         m_moduleId(moduleID), m_tkMethod(tkMethod), m_fGenerateTinyHeader(false),
@@ -888,17 +892,6 @@ HRESULT RewriteIL(
     return S_OK;
 }
 
-HRESULT CreateAssemblyRefToMscorlib(const ComPtr< IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, WSTRING assemblyName, ASSEMBLYMETADATA metadata) {
-    // Define an AssemblyRef to mscorlib, needed to create TypeRefs later
-    BYTE public_key[] = { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 };
-    HRESULT hr = pMetadataAssemblyEmit->DefineAssemblyRef(public_key, sizeof(public_key),
-        assemblyName.c_str(), &metadata, NULL, 0, 0,
-        mscorlib_ref);
-
-    return hr;
-}
-
-
 HRESULT LoadAssemblyBefore(
     ICorProfilerInfo* pICorProfilerInfo,
     const ComPtr<IMetaDataImport2> pMetadataImport,
@@ -911,7 +904,6 @@ HRESULT LoadAssemblyBefore(
     WSTRING assemblyPath,
     ULONG32 methodSignature)
 {
-
     std::cout << "LoadAssemblyBefore" << std::endl;
     HRESULT hr;
     ILRewriter rewriter(pICorProfilerInfo, pICorProfilerFunctionControl, moduleID, methodDef);
@@ -932,18 +924,20 @@ HRESULT LoadAssemblyBefore(
         return hr;
     }
 
+    // define mscorlib.dll
     ASSEMBLYMETADATA metadata{};
     metadata.usMajorVersion = 4;
     metadata.usMinorVersion = 0;
     metadata.usBuildNumber = 0;
     metadata.usRevisionNumber = 0;
 
-    mdModuleRef mscorlib_ref;
-    hr = CreateAssemblyRefToMscorlib(pMetadataAssemblyEmit, &mscorlib_ref, "mscorlib"_W, metadata);
+    mdModuleRef mscorlibRef;
+    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &mscorlibRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, "mscorlib"_W);
 
+    // define type System.Reflection.Assembly
     mdTypeRef assemblyTypeRef;
     hr = pMetadataEmit->DefineTypeRefByName(
-        mscorlib_ref,
+        mscorlibRef,
         "System.Reflection.Assembly"_W.data(),
         &assemblyTypeRef);
 
@@ -958,6 +952,7 @@ HRESULT LoadAssemblyBefore(
     offset += size;
     assemblyLoadSig[offset] = ELEMENT_TYPE_STRING;
 
+    // define method System.Reflection.Assembly.LoadFrom
     mdMemberRef assemblyLoadMemberRef;
     hr = pMetadataEmit->DefineMemberRef(
         assemblyTypeRef,
@@ -966,24 +961,103 @@ HRESULT LoadAssemblyBefore(
         sizeof(assemblyLoadSig),
         &assemblyLoadMemberRef);
 
+    // define path to a .net dll 
     mdString profilerTraceDllNameTextToken;
     hr = pMetadataEmit->DefineUserString(assemblyPath.data(), (ULONG)assemblyPath.length(), &profilerTraceDllNameTextToken);
 
+    std::cout << "LoadAssemblyBefore " << ToString(assemblyPath) << std::endl;
+
+    // load path
     ILInstr* pNewInstr = rewriter.NewILInstr();
     pNewInstr->m_opcode = CEE_LDSTR;
     pNewInstr->m_Arg32 = profilerTraceDllNameTextToken;
     rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
+    // call System.Reflection.Assembly.LoadFrom
     pNewInstr = rewriter.NewILInstr();
     pNewInstr->m_opcode = CEE_CALL;
     pNewInstr->m_Arg32 = assemblyLoadMemberRef;
     rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
+    // clean stack
     pNewInstr = rewriter.NewILInstr();
     pNewInstr->m_opcode = CEE_POP;
     rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
     IfFailRet(rewriter.Export());
+
+    return S_OK;
+}
+
+// add ret ex methodTrace var to local var
+HRESULT ModifyLocalSig(const ComPtr<IMetaDataImport2> pImport,
+    const ComPtr<IMetaDataEmit2> pEmit,
+    ILRewriter& reWriter,
+    mdTypeRef exTypeRef,
+    mdTypeRef methodTraceTypeRef)
+{
+    HRESULT hr;
+    PCCOR_SIGNATURE rgbOrigSig = NULL;
+    ULONG cbOrigSig = 0;
+    UNALIGNED INT32 temp = 0;
+    if (reWriter.m_tkLocalVarSig != mdTokenNil)
+    {
+        IfFailRet(pImport->GetSigFromToken(reWriter.m_tkLocalVarSig, &rgbOrigSig, &cbOrigSig));
+
+        //Check Is ReWrite or not
+        const auto len = CorSigCompressToken(methodTraceTypeRef, &temp);
+        if (cbOrigSig - len > 0) {
+            if (rgbOrigSig[cbOrigSig - len - 1] == ELEMENT_TYPE_CLASS) {
+                if (memcmp(&rgbOrigSig[cbOrigSig - len], &temp, len) == 0) {
+                    return E_FAIL;
+                }
+            }
+        }
+    }
+
+    auto exTypeRefSize = CorSigCompressToken(exTypeRef, &temp);
+    auto methodTraceTypeRefSize = CorSigCompressToken(methodTraceTypeRef, &temp);
+    ULONG cbNewSize = cbOrigSig + 1 + 1 + methodTraceTypeRefSize + 1 + exTypeRefSize;
+    ULONG cOrigLocals;
+    ULONG cNewLocalsLen;
+    ULONG cbOrigLocals = 0;
+
+    if (cbOrigSig == 0) {
+        cbNewSize += 2;
+        reWriter.cNewLocals = 3;
+        cNewLocalsLen = CorSigCompressData(reWriter.cNewLocals, &temp);
+    }
+    else {
+        cbOrigLocals = CorSigUncompressData(rgbOrigSig + 1, &cOrigLocals);
+        reWriter.cNewLocals = cOrigLocals + 3;
+        cNewLocalsLen = CorSigCompressData(reWriter.cNewLocals, &temp);
+        cbNewSize += cNewLocalsLen - cbOrigLocals;
+    }
+
+    const auto rgbNewSig = new COR_SIGNATURE[cbNewSize];
+    *rgbNewSig = IMAGE_CEE_CS_CALLCONV_LOCAL_SIG;
+
+    ULONG rgbNewSigOffset = 1;
+    memcpy(rgbNewSig + rgbNewSigOffset, &temp, cNewLocalsLen);
+    rgbNewSigOffset += cNewLocalsLen;
+
+    if (cbOrigSig > 0) {
+        const auto cbOrigCopyLen = cbOrigSig - 1 - cbOrigLocals;
+        memcpy(rgbNewSig + rgbNewSigOffset, rgbOrigSig + 1 + cbOrigLocals, cbOrigCopyLen);
+        rgbNewSigOffset += cbOrigCopyLen;
+    }
+
+    rgbNewSig[rgbNewSigOffset++] = ELEMENT_TYPE_OBJECT;
+    rgbNewSig[rgbNewSigOffset++] = ELEMENT_TYPE_CLASS;
+    exTypeRefSize = CorSigCompressToken(exTypeRef, &temp);
+    memcpy(rgbNewSig + rgbNewSigOffset, &temp, exTypeRefSize);
+    rgbNewSigOffset += exTypeRefSize;
+    rgbNewSig[rgbNewSigOffset++] = ELEMENT_TYPE_CLASS;
+    methodTraceTypeRefSize = CorSigCompressToken(methodTraceTypeRef, &temp);
+    memcpy(rgbNewSig + rgbNewSigOffset, &temp, methodTraceTypeRefSize);
+    rgbNewSigOffset += methodTraceTypeRefSize;
+
+    IfFailRet(pEmit->GetTokenFromSig(&rgbNewSig[0], cbNewSize, &reWriter.m_tkLocalVarSig));
 
     return S_OK;
 }

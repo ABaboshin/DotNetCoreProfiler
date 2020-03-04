@@ -1,29 +1,28 @@
 ﻿using System;
-using System.Reflection;
+using System.Diagnostics;
 
 namespace Wrapper
 {
-    public class Wrapper
+    public interface IWrapper
     {
-        public Wrapper()
+        void Start();
+        void Finish(object returnValue, object exception);
+    }
+
+    public class Wrapper : IWrapper
+    {
+        private readonly Stopwatch _stopwatch = new Stopwatch();
+
+        public void Finish(object returnValue, object exception)
         {
-            Console.WriteLine("Wrapper.ctor");
+            _stopwatch.Stop();
+            Console.WriteLine($"Wrapper.Finish {_stopwatch.ElapsedMilliseconds} {returnValue} {exception}");
         }
 
-        public static void Wrap()
+        public void Start()
         {
-            Console.WriteLine("Start Wrap");
-            try
-            {
-                Assembly.LoadFile("test");
-                System.Console.WriteLine("test");
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"catch {ex.Message}");
-                throw;
-            }
-            Console.WriteLine("Finish Wrap");
+            _stopwatch.Start();
+            Console.WriteLine("Wrapper.Start");
         }
     }
 }

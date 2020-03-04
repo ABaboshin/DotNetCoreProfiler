@@ -8,7 +8,7 @@ struct FunctionInfo {
   const WSTRING name;
   const TypeInfo type;
   const BOOL is_generic;
-  const MethodSignature signature;
+  MethodSignature signature;
   const MethodSignature function_spec_signature;
   const mdToken method_def_id;
 
