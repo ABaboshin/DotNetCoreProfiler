@@ -351,20 +351,17 @@ FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     const auto token_type = TypeFromToken(token);
     switch (token_type) {
     case mdtMemberRef:
-        std::cout << "mdtMemberRef" << std::endl << std::flush;
         hr = metadata_import->GetMemberRefProps(
             token, &parent_token, function_name, NameMaxSize, &function_name_len,
             &raw_signature, &raw_signature_len);
         break;
     case mdtMethodDef:
-        std::cout << "mdtMethodDef" << std::endl << std::flush;
         hr = metadata_import->GetMemberProps(
             token, &parent_token, function_name, NameMaxSize, &function_name_len,
             nullptr, &raw_signature, &raw_signature_len, nullptr, nullptr,
             nullptr, nullptr, nullptr);
         break;
     case mdtMethodSpec: {
-        std::cout << "mdtMethodSpec" << std::endl << std::flush;
         hr = metadata_import->GetMethodSpecProps(
             token, &parent_token, &raw_signature, &raw_signature_len);
         if (FAILED(hr)) {

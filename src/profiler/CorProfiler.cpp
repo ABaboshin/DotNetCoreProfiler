@@ -199,7 +199,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         return S_OK;
     }
 
-     std::cout << "JITCompilationStarted " << functionId << std::endl;
+    //std::cout << "JITCompilationStarted " << functionId << std::endl;
 
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
@@ -221,7 +221,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hr = functionInfo.signature.TryParse();
     IfFailRet(hr);
 
-    std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << std::endl << std::flush;
+    //std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << " " << functionInfo.signature.NumberOfArguments() << std::endl << std::flush;
 
     // it's a hack, find a better way to figure out the entrypoint
     // i.e. catch the first call in an AppDomain
@@ -241,10 +241,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             enterLeaveMethodSignatureToken);
     }
 
-    //return S_OK;
-
-    std::cout << "Start Wrapping" << std::endl << std::flush;
-
     // define reference to a wrapper .net dll
     ASSEMBLYMETADATA wrapperAssemblyMetadata{};
     wrapperAssemblyMetadata.usMajorVersion = 1;
@@ -261,6 +257,40 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         wrapperAssemblyRef,
         wrapperType.data(),
         &methodTraceTypeRef);
+    IfFailRet(hr);
+
+    // define test
+    COR_SIGNATURE testSig[] =
+    {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        0,
+        ELEMENT_TYPE_VOID,
+    };
+
+    mdMemberRef testMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperAssemblyRef,
+        ".ctor"_W.data(),
+        testSig,
+        sizeof(testSig),
+        &testMemberRef);
+    IfFailRet(hr);
+
+    // define .ctor
+    COR_SIGNATURE ctorSig[] =
+    {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS ,
+        0,
+        ELEMENT_TYPE_VOID,
+    };
+
+    mdMemberRef ctorMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperAssemblyRef,
+        ".ctor"_W.data(),
+        ctorSig,
+        sizeof(ctorSig),
+        &ctorMemberRef);
     IfFailRet(hr);
 
     // define start method
@@ -366,8 +396,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hr = ModifyLocalSig(metadataImport, metadataEmit, rewriter, exTypeRef, methodTraceTypeRef);
     IfFailRet(hr);
 
-    std::cout << "1" << std::endl;
-
     //define System.Object
     mdTypeRef objectTypeRef;
     hr = metadataEmit->DefineTypeRefByName(
@@ -376,13 +404,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         &objectTypeRef);
     IfFailRet(hr);
 
-    std::cout << "2" << std::endl;
-
     // get return type
     unsigned elementType;
     auto retTypeFlags = functionInfo.signature.GetRet().GetTypeFlags(elementType);
-
-    std::cout << retTypeFlags << std::endl;
 
     auto indexRet = rewriter.cNewLocals - 3;
     auto indexEx = rewriter.cNewLocals - 2;
@@ -392,6 +416,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
     rewriteHelper.SetILPosition(pFirstInstr);
 
+    // define helper type
     mdTypeRef helperTypeRef;
     hr = metadataEmit->DefineTypeRefByName(
         wrapperAssemblyRef,
@@ -399,20 +424,83 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         &helperTypeRef);
     IfFailRet(hr);
 
-    COR_SIGNATURE helperSig[] =
+    // define helper getinstance
+    COR_SIGNATURE getInstanceSig[] =
     {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
         0x00,
         ELEMENT_TYPE_OBJECT
     };
-    mdMemberRef helperMemberRef;
+    mdMemberRef getInstanceMemberRef;
     hr = metadataEmit->DefineMemberRef(
         helperTypeRef,
         "GetInstance"_W.data(),
-        helperSig,
-        sizeof(helperSig),
-        &helperMemberRef);
+        getInstanceSig,
+        sizeof(getInstanceSig),
+        &getInstanceMemberRef);
     IfFailRet(hr);
+
+    // define helper getinstance
+    COR_SIGNATURE beforeMethodSig[] =
+    {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT | IMAGE_CEE_CS_CALLCONV_HASTHIS ,
+        0x04,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_SZARRAY,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_U4
+    };
+    mdMemberRef beforeMethodMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        helperTypeRef,
+        "BeforeMethod"_W.data(),
+        beforeMethodSig,
+        sizeof(beforeMethodSig),
+        &beforeMethodMemberRef);
+    IfFailRet(hr);
+
+    std::cout << "try " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << " " << functionInfo.signature.NumberOfArguments() << std::endl << std::flush;
+
+    if (functionInfo.signature.NumberOfArguments() != 0)
+    {
+        return S_OK;
+    }
+
+    std::cout << "rewrite " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << " " << functionInfo.signature.NumberOfArguments() << std::endl << std::flush;
+
+    //rewriteHelper.Nop();
+    ////rewriteHelper.Pop();
+    //rewriteHelper.CallMember(testMemberRef, false);
+    //rewriteHelper.Ret();
+    //auto original_methodcall_opcode = pFirstInstr->m_opcode;
+    //pFirstInstr->m_opcode = CEE_NOP;
+    //ILInstr* pPrevInstr = pFirstInstr;
+    //ILInstr* pNewInstr;
+    ///*pNewInstr = rewriter.NewILInstr();
+    //pNewInstr->m_opcode = CEE_CALL;
+    //pNewInstr->m_Arg32 = testMemberRef;
+    //rewriter.InsertAfter(pPrevInstr, pNewInstr);
+    //pPrevInstr = pNewInstr;*/
+    //pNewInstr = rewriter.NewILInstr();
+    //pNewInstr->m_opcode = CEE_NOP;
+    //rewriter.InsertAfter(pPrevInstr, pNewInstr);
+    //pPrevInstr = pNewInstr;
+    //pNewInstr = rewriter.NewILInstr();
+    //pNewInstr->m_opcode = CEE_RET;
+    //rewriter.InsertAfter(pPrevInstr, pNewInstr);
+    //rewriteHelper.Nop();
+
+    rewriteHelper.SetILPosition(pFirstInstr);
+    
+    ////rewriteHelper.LoadNull();
+    ////rewriteHelper.CallMember(testMemberRef, false);
+    //rewriteHelper.Ret();
+    //rewriteHelper.NewObject(ctorMemberRef);
+    //rewriteHelper.StLocal(0);
+    //rewriteHelper.LoadLocal(0);
+    //rewriteHelper.CallMember(startMemberRef, true);
 
     // setup try/catch
     rewriteHelper.LoadNull();
@@ -422,7 +510,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     rewriteHelper.LoadNull();
     rewriteHelper.StLocal(indexRet);
 
-    ILInstr* pTryStartInstr = rewriteHelper.CallMember0(helperMemberRef, false);
+    ILInstr* pTryStartInstr = rewriteHelper.CallMember0(getInstanceMemberRef, false);
     rewriteHelper.Cast(helperTypeRef);
     rewriteHelper.LoadToken(functionInfo.type.id);
     rewriteHelper.CallMember(getTypeFromHandleToken, false);
@@ -448,9 +536,10 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         }
         rewriteHelper.EndLoadValueIntoArray();
     }
+
     rewriteHelper.LoadInt32((INT32)functionToken);
-    rewriteHelper.CallMember(startMemberRef, true);
-    rewriteHelper.Cast(methodTraceTypeRef);
+    rewriteHelper.CallMember(beforeMethodMemberRef, true);
+    //rewriteHelper.Cast(startMemberRef);
     rewriteHelper.StLocal(rewriter.cNewLocals - 1);
 
     ILInstr* pRetInstr = rewriter.NewILInstr();
@@ -545,8 +634,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     m_pEHNew[rewriter.m_nEH - 2] = exClause;
     m_pEHNew[rewriter.m_nEH - 1] = finallyClause;
     rewriter.m_pEH = m_pEHNew;
-
-    std::cout << "Export" << std::endl << std::flush;
 
     hr = rewriter.Export();
     IfFailRet(hr);

@@ -257,4 +257,33 @@ public:
         pNewInstr->m_Arg32 = token;
         m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
     }
+
+    void NewObject(mdToken token) const
+    {
+        ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_NEWOBJ;
+        pNewInstr->m_Arg32 = token;
+        m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
+    }
+
+    void Nop()
+    {
+        ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_NOP;
+        m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
+    }
+
+    void Pop()
+    {
+        ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_POP;
+        m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
+    }
+
+    void Ret()
+    {
+        ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_RET;
+        m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
+    }
 };

@@ -11,18 +11,28 @@ namespace Wrapper
 
     public class Wrapper : IWrapper
     {
-        private readonly Stopwatch _stopwatch = new Stopwatch();
+        public static void Test(object obj)
+        {
+            Console.WriteLine("Wrapper.Test");
+        }
+
+        //private readonly Stopwatch _stopwatch = new Stopwatch();
+
+        //public Wrapper()
+        //{
+        //    Console.WriteLine("Wrapper.ctor");
+        //}
 
         public void Finish(object returnValue, object exception)
         {
-            _stopwatch.Stop();
-            Console.WriteLine($"Wrapper.Finish {_stopwatch.ElapsedMilliseconds} {returnValue} {exception}");
+            //_stopwatch.Stop();
+            //Console.WriteLine($"Wrapper.Finish {_stopwatch.ElapsedMilliseconds} {returnValue} {exception}");
         }
 
         public void Start()
         {
-            _stopwatch.Start();
-            Console.WriteLine("Wrapper.Start");
+            //_stopwatch.Start();
+            //Console.WriteLine("Wrapper.Start");
         }
     }
 }
