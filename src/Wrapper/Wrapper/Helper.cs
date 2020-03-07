@@ -8,22 +8,23 @@ namespace Wrapper
     {
         public Helper()
         {
-            Wrapper.Test(null);
+            Wrapper.Test();
             var test = new Wrapper();
             test.Start();
             test.Finish(null, null);
+            //GetInstance().BeforeMethod(new object(), new object(), new[] { new object(), 1 }, 3);
         }
 
         private static readonly Helper Instance = new Helper();
 
-        public static object GetInstance()
+        public static Helper GetInstance()
         {
             return Instance;
         }
 
         public object BeforeMethod(object type, object invocationTarget, object[] methodArguments, uint functionToken)
         {
-            return null;
+            return new Wrapper();
         }
     }
 }

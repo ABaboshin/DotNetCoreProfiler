@@ -865,6 +865,8 @@ HRESULT RewriteIL(
     UINT_PTR exitMethodAddress,
     ULONG32 methodSignature);
 
+void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& mscorlibRef);
+
 
 // Uses the general-purpose ILRewriter class to import original
 // IL, rewrite it, and send the result to the CLR
@@ -920,19 +922,13 @@ HRESULT LoadAssemblyBefore(
     WCHAR string_contents[kNameMaxSize]{};
     hr = pMetadataImport->GetUserString(aPath, string_contents,
         kNameMaxSize, &string_len);
-    if (FAILED(hr)) {
-        return hr;
-    }
+    IfFailRet(hr);
 
+    
     // define mscorlib.dll
-    ASSEMBLYMETADATA metadata{};
-    metadata.usMajorVersion = 4;
-    metadata.usMinorVersion = 0;
-    metadata.usBuildNumber = 0;
-    metadata.usRevisionNumber = 0;
-
     mdModuleRef mscorlibRef;
-    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &mscorlibRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, "mscorlib"_W);
+    GetMsCorLibRef(hr, pMetadataAssemblyEmit, mscorlibRef);
+    IfFailRet(hr);
 
     // define type System.Reflection.Assembly
     mdTypeRef assemblyTypeRef;
@@ -987,6 +983,30 @@ HRESULT LoadAssemblyBefore(
     IfFailRet(rewriter.Export());
 
     return S_OK;
+}
+
+void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef)
+{
+    ASSEMBLYMETADATA metadata{};
+    metadata.usMajorVersion = 4;
+    metadata.usMinorVersion = 0;
+    metadata.usBuildNumber = 0;
+    metadata.usRevisionNumber = 0;
+
+
+    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, "mscorlib"_W);
+}
+
+void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef, WSTRING assemblyName)
+{
+    ASSEMBLYMETADATA metadata{};
+    metadata.usMajorVersion = 1;
+    metadata.usMinorVersion = 0;
+    metadata.usBuildNumber = 0;
+    metadata.usRevisionNumber = 0;
+
+
+    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE>(), metadata, assemblyName);
 }
 
 // add ret ex methodTrace var to local var

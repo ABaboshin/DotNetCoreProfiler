@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using System.IO;
+using System.Threading.Tasks;
 
 namespace SampleApp
 {
@@ -8,7 +9,7 @@ namespace SampleApp
     {
         public static void Main()
         {
-            //Test();
+            Test();
             var host = new WebHostBuilder()
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseKestrel()
@@ -22,6 +23,11 @@ namespace SampleApp
             host.Run();
         }
 
-        //static void Test() { }
+        static void Test() { }
+
+        public static async Task ATest()
+        {
+            await Task.Delay(100);
+        }
     }
 }

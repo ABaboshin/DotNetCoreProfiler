@@ -11,9 +11,9 @@ namespace Wrapper
 
     public class Wrapper : IWrapper
     {
-        public static void Test(object obj)
+        public static void Test()
         {
-            Console.WriteLine("Wrapper.Test");
+            Console.WriteLine("Wrapper.Test 42");
         }
 
         //private readonly Stopwatch _stopwatch = new Stopwatch();

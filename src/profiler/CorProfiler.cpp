@@ -204,24 +204,22 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
 
-    const auto metadataEmit =
+    const auto pMetadataEmit =
         metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
 
     mdSignature enterLeaveMethodSignatureToken;
-    metadataEmit->GetTokenFromSig(enterLeaveMethodSignature, sizeof(enterLeaveMethodSignature), &enterLeaveMethodSignatureToken);
+    pMetadataEmit->GetTokenFromSig(enterLeaveMethodSignature, sizeof(enterLeaveMethodSignature), &enterLeaveMethodSignatureToken);
 
-    const auto assemblyEmit =
+    const auto pMetadataAssemblyEmit =
         metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
-    const auto metadataImport =
+    const auto pMetadataImport =
         metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
-    auto functionInfo = GetFunctionInfo(metadataImport, functionToken);
+    auto functionInfo = GetFunctionInfo(pMetadataImport, functionToken);
 
     hr = functionInfo.signature.TryParse();
     IfFailRet(hr);
-
-    //std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << " " << functionInfo.signature.NumberOfArguments() << std::endl << std::flush;
 
     // it's a hack, find a better way to figure out the entrypoint
     // i.e. catch the first call in an AppDomain
@@ -230,9 +228,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         std::cout << "ENTRYPOINT!!" << std::endl;
 
         return LoadAssemblyBefore(this->corProfilerInfo,
-            metadataImport,
-            metadataEmit,
-            assemblyEmit,
+            pMetadataImport,
+            pMetadataEmit,
+            pMetadataAssemblyEmit,
             nullptr,
             moduleId,
             functionToken,
@@ -241,406 +239,109 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             enterLeaveMethodSignatureToken);
     }
 
-    // define reference to a wrapper .net dll
-    ASSEMBLYMETADATA wrapperAssemblyMetadata{};
-    wrapperAssemblyMetadata.usMajorVersion = 1;
-    wrapperAssemblyMetadata.usMinorVersion = 0;
-    wrapperAssemblyMetadata.usBuildNumber = 0;
-    wrapperAssemblyMetadata.usRevisionNumber = 0;
+    std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << " " << functionInfo.signature.NumberOfArguments() << std::endl << std::flush;
 
-    mdModuleRef wrapperAssemblyRef;
-    hr = CreateAssemblyRef(assemblyEmit, &wrapperAssemblyRef, std::vector<BYTE>(), wrapperAssemblyMetadata, wrapperAssemblyName);
-
-    // define wrapper type
-    mdTypeRef methodTraceTypeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        wrapperAssemblyRef,
-        wrapperType.data(),
-        &methodTraceTypeRef);
-    IfFailRet(hr);
-
-    // define test
-    COR_SIGNATURE testSig[] =
+    if (functionInfo.signature.NumberOfArguments() == 0 && functionInfo.type.name == "SampleApp.Program"_W && (functionInfo.name == "Test"_W || functionInfo.name == "ATest"_W))
     {
-        IMAGE_CEE_CS_CALLCONV_DEFAULT,
-        0,
-        ELEMENT_TYPE_VOID,
-    };
+        ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
+        IfFailRet(rewriter.Import());
 
-    mdMemberRef testMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperAssemblyRef,
-        ".ctor"_W.data(),
-        testSig,
-        sizeof(testSig),
-        &testMemberRef);
-    IfFailRet(hr);
+        // define mscorlib.dll
+        mdModuleRef wrapperRef;
+        GetWrapperRef(hr, pMetadataAssemblyEmit, wrapperRef, wrapperAssemblyName);
+        IfFailRet(hr);
 
-    // define .ctor
-    COR_SIGNATURE ctorSig[] =
-    {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS ,
-        0,
-        ELEMENT_TYPE_VOID,
-    };
+        std::cout << "Wrapper Dll Found!" << std::endl;
 
-    mdMemberRef ctorMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperAssemblyRef,
-        ".ctor"_W.data(),
-        ctorSig,
-        sizeof(ctorSig),
-        &ctorMemberRef);
-    IfFailRet(hr);
+        ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
 
-    // define start method
-    COR_SIGNATURE startSig[] =
-    {
-        IMAGE_CEE_CS_CALLCONV_DEFAULT | IMAGE_CEE_CS_CALLCONV_HASTHIS ,
-        0x02,
-        ELEMENT_TYPE_VOID,
-    };
+        std::cout << "Looking for Wrapper Type " << ToString(wrapperType) << std::endl;
 
-    mdMemberRef startMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperAssemblyRef,
-        "Start"_W.data(),
-        startSig,
-        sizeof(startSig),
-        &startMemberRef);
-    IfFailRet(hr);
+        // define type System.Console
+        mdTypeRef wrapperTypeRef;
+        hr = pMetadataEmit->DefineTypeRefByName(
+            wrapperRef,
+            wrapperType.data(),
+            &wrapperTypeRef);
+        IfFailRet(hr);
 
-    // define finish method
-    COR_SIGNATURE finishSig[] =
-    {
-        IMAGE_CEE_CS_CALLCONV_DEFAULT | IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        0x02,
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_OBJECT
-    };
-    mdMemberRef finishMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        methodTraceTypeRef,
-        "Finish"_W.data(),
-        finishSig,
-        sizeof(finishSig),
-        &finishMemberRef);
-    IfFailRet(hr);
+        std::cout << "Wrapper Type Found!" << std::endl;
 
-    // define mscorlib.dll
-    ASSEMBLYMETADATA metadata{};
-    metadata.usMajorVersion = 4;
-    metadata.usMinorVersion = 0;
-    metadata.usBuildNumber = 0;
-    metadata.usRevisionNumber = 0;
+        // method
+        mdMethodDef testRef;
+        BYTE Sig_void_String[] = {
+           IMAGE_CEE_CS_CALLCONV_DEFAULT,
+           0, // argument count
+           ELEMENT_TYPE_VOID
+        };
 
-    mdModuleRef mscorlibRef;
-    hr = CreateAssemblyRef(assemblyEmit, &mscorlibRef, std::vector<BYTE>{ 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, "mscorlib"_W);
-    IfFailRet(hr);
+        hr = pMetadataEmit->DefineMemberRef(
+            wrapperTypeRef,
+            "Test"_W.data(),
+            Sig_void_String, sizeof(Sig_void_String),
+            &testRef);
+        IfFailRet(hr);
 
-    // define System.Exception
-    mdTypeRef exTypeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        mscorlibRef,
-        "System.Exception"_W.data(),
-        &exTypeRef);
-    IfFailRet(hr);
+        std::cout << "Wrapper Method Found!" << std::endl;
 
-    // define System.Type
-    mdTypeRef typeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        mscorlibRef,
-        "System.Type"_W.data(),
-        &typeRef);
-    IfFailRet(hr);
+        ILInstr* pNewInstr;
 
-    // define System.RuntimeTypeHandle
-    mdTypeRef runtimeTypeHandleRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        mscorlibRef,
-        "System.RuntimeTypeHandle"_W.data(),
-        &runtimeTypeHandleRef);
-    IfFailRet(hr);
+        /*pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_LDARG_0;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);*/
 
-    // define System.Type.GetTypeFromHandle
-    unsigned runtimeTypeHandle_buffer;
-    unsigned type_buffer;
-    auto runtimeTypeHandle_size = CorSigCompressToken(runtimeTypeHandleRef, &runtimeTypeHandle_buffer);
-    auto type_size = CorSigCompressToken(typeRef, &type_buffer);
-    auto* getTypeFromHandleSig = new COR_SIGNATURE[runtimeTypeHandle_size + type_size + 4];
-    unsigned offset = 0;
-    getTypeFromHandleSig[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-    getTypeFromHandleSig[offset++] = 0x01;
-    getTypeFromHandleSig[offset++] = ELEMENT_TYPE_CLASS;
-    memcpy(&getTypeFromHandleSig[offset], &type_buffer, type_size);
-    offset += type_size;
-    getTypeFromHandleSig[offset++] = ELEMENT_TYPE_VALUETYPE;
-    memcpy(&getTypeFromHandleSig[offset], &runtimeTypeHandle_buffer, runtimeTypeHandle_size);
-    offset += runtimeTypeHandle_size;
+        pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_CALL;
+        pNewInstr->m_Arg32 = testRef;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
-    mdToken getTypeFromHandleToken;
-    hr = metadataEmit->DefineMemberRef(
-        typeRef,
-        "GetTypeFromHandle"_W.data(),
-        getTypeFromHandleSig,
-        sizeof(getTypeFromHandleSig),
-        &getTypeFromHandleToken);
-    IfFailRet(hr);
+        pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_NOP;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
-    // and then rewrite
-    ILRewriter rewriter(corProfilerInfo, NULL, moduleId, functionToken);
-    IfFailRet(rewriter.Import());
+        //unsigned buffer;
+        ////auto size = CorSigCompressToken(consoleTypeRef, &buffer);
+        //auto* assemblyLoadSig = new COR_SIGNATURE[/*size +*/ 4];
+        //unsigned offset = 0;
+        //assemblyLoadSig[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
+        //assemblyLoadSig[offset++] = 0x01;
+        //assemblyLoadSig[offset++] = ELEMENT_TYPE_VOID;
+        //assemblyLoadSig[offset++] = ELEMENT_TYPE_I4;
+        //memcpy(&assemblyLoadSig[offset], &buffer, size);
+        //offset += size;
+        //assemblyLoadSig[offset] = ELEMENT_TYPE_STRING;
 
-    //ModifyLocalSig
-    hr = ModifyLocalSig(metadataImport, metadataEmit, rewriter, exTypeRef, methodTraceTypeRef);
-    IfFailRet(hr);
+        //// define method System.Console.WriteLine
+        //mdMemberRef writeLineMemberRef;
+        //hr = pMetadataEmit->DefineMemberRef(
+        //    consoleTypeRef,
+        //    "WriteLine"_W.data(),
+        //    assemblyLoadSig,
+        //    sizeof(assemblyLoadSig),
+        //    &writeLineMemberRef);
 
-    //define System.Object
-    mdTypeRef objectTypeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        mscorlibRef,
-        "System.Object"_W.data(),
-        &objectTypeRef);
-    IfFailRet(hr);
+        //mdString profilerTraceDllNameTextToken;
+        //auto testStr = "Hallo From IL!"_W;
+        //hr = pMetadataEmit->DefineUserString(testStr.data(), (ULONG)testStr.length(), &profilerTraceDllNameTextToken);
 
-    // get return type
-    unsigned elementType;
-    auto retTypeFlags = functionInfo.signature.GetRet().GetTypeFlags(elementType);
+        //// load path
+        //ILInstr* pNewInstr = rewriter.NewILInstr();
+        //pNewInstr->m_opcode = CEE_LDSTR;
+        //pNewInstr->m_Arg32 = profilerTraceDllNameTextToken;
+        //rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
-    auto indexRet = rewriter.cNewLocals - 3;
-    auto indexEx = rewriter.cNewLocals - 2;
-    auto indexMethodTrace = rewriter.cNewLocals - 1;
+        //// call System.Reflection.Assembly.LoadFrom
+        //pNewInstr = rewriter.NewILInstr();
+        //pNewInstr->m_opcode = CEE_CALL;
+        //pNewInstr->m_Arg32 = writeLineMemberRef;
+        //rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
-    ILRewriterHelper rewriteHelper(&rewriter);
-    ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
-    rewriteHelper.SetILPosition(pFirstInstr);
+        IfFailRet(rewriter.Export());
 
-    // define helper type
-    mdTypeRef helperTypeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        wrapperAssemblyRef,
-        "Wrapper.Helper"_W.data(),
-        &helperTypeRef);
-    IfFailRet(hr);
-
-    // define helper getinstance
-    COR_SIGNATURE getInstanceSig[] =
-    {
-        IMAGE_CEE_CS_CALLCONV_DEFAULT,
-        0x00,
-        ELEMENT_TYPE_OBJECT
-    };
-    mdMemberRef getInstanceMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        helperTypeRef,
-        "GetInstance"_W.data(),
-        getInstanceSig,
-        sizeof(getInstanceSig),
-        &getInstanceMemberRef);
-    IfFailRet(hr);
-
-    // define helper getinstance
-    COR_SIGNATURE beforeMethodSig[] =
-    {
-        IMAGE_CEE_CS_CALLCONV_DEFAULT | IMAGE_CEE_CS_CALLCONV_HASTHIS ,
-        0x04,
-        ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_SZARRAY,
-        ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_U4
-    };
-    mdMemberRef beforeMethodMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        helperTypeRef,
-        "BeforeMethod"_W.data(),
-        beforeMethodSig,
-        sizeof(beforeMethodSig),
-        &beforeMethodMemberRef);
-    IfFailRet(hr);
-
-    std::cout << "try " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << " " << functionInfo.signature.NumberOfArguments() << std::endl << std::flush;
-
-    if (functionInfo.signature.NumberOfArguments() != 0)
-    {
         return S_OK;
     }
 
-    std::cout << "rewrite " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << " " << functionInfo.signature.NumberOfArguments() << std::endl << std::flush;
-
-    //rewriteHelper.Nop();
-    ////rewriteHelper.Pop();
-    //rewriteHelper.CallMember(testMemberRef, false);
-    //rewriteHelper.Ret();
-    //auto original_methodcall_opcode = pFirstInstr->m_opcode;
-    //pFirstInstr->m_opcode = CEE_NOP;
-    //ILInstr* pPrevInstr = pFirstInstr;
-    //ILInstr* pNewInstr;
-    ///*pNewInstr = rewriter.NewILInstr();
-    //pNewInstr->m_opcode = CEE_CALL;
-    //pNewInstr->m_Arg32 = testMemberRef;
-    //rewriter.InsertAfter(pPrevInstr, pNewInstr);
-    //pPrevInstr = pNewInstr;*/
-    //pNewInstr = rewriter.NewILInstr();
-    //pNewInstr->m_opcode = CEE_NOP;
-    //rewriter.InsertAfter(pPrevInstr, pNewInstr);
-    //pPrevInstr = pNewInstr;
-    //pNewInstr = rewriter.NewILInstr();
-    //pNewInstr->m_opcode = CEE_RET;
-    //rewriter.InsertAfter(pPrevInstr, pNewInstr);
-    //rewriteHelper.Nop();
-
-    rewriteHelper.SetILPosition(pFirstInstr);
-    
-    ////rewriteHelper.LoadNull();
-    ////rewriteHelper.CallMember(testMemberRef, false);
-    //rewriteHelper.Ret();
-    //rewriteHelper.NewObject(ctorMemberRef);
-    //rewriteHelper.StLocal(0);
-    //rewriteHelper.LoadLocal(0);
-    //rewriteHelper.CallMember(startMemberRef, true);
-
-    // setup try/catch
-    rewriteHelper.LoadNull();
-    rewriteHelper.StLocal(indexMethodTrace);
-    rewriteHelper.LoadNull();
-    rewriteHelper.StLocal(indexEx);
-    rewriteHelper.LoadNull();
-    rewriteHelper.StLocal(indexRet);
-
-    ILInstr* pTryStartInstr = rewriteHelper.CallMember0(getInstanceMemberRef, false);
-    rewriteHelper.Cast(helperTypeRef);
-    rewriteHelper.LoadToken(functionInfo.type.id);
-    rewriteHelper.CallMember(getTypeFromHandleToken, false);
-    rewriteHelper.LoadArgument(0);
-
-    // call Start
-    auto argNum = functionInfo.signature.NumberOfArguments();
-    rewriteHelper.CreateArray(objectTypeRef, argNum);
-    auto arguments = functionInfo.signature.GetMethodArguments();
-    for (unsigned i = 0; i < argNum; i++) {
-        rewriteHelper.BeginLoadValueIntoArray(i);
-        rewriteHelper.LoadArgument(i + 1);
-        auto argTypeFlags = arguments[i].GetTypeFlags(elementType);
-        if (argTypeFlags & TypeFlagByRef) {
-            rewriteHelper.LoadIND(elementType);
-        }
-        if (argTypeFlags & TypeFlagBoxedType) {
-            auto tok = arguments[i].GetTypeTok(metadataEmit, mscorlibRef);
-            if (tok == mdTokenNil) {
-                return S_OK;
-            }
-            rewriteHelper.Box(tok);
-        }
-        rewriteHelper.EndLoadValueIntoArray();
-    }
-
-    rewriteHelper.LoadInt32((INT32)functionToken);
-    rewriteHelper.CallMember(beforeMethodMemberRef, true);
-    //rewriteHelper.Cast(startMemberRef);
-    rewriteHelper.StLocal(rewriter.cNewLocals - 1);
-
-    ILInstr* pRetInstr = rewriter.NewILInstr();
-    pRetInstr->m_opcode = CEE_RET;
-    rewriter.InsertAfter(rewriter.GetILList()->m_pPrev, pRetInstr);
-
-    bool isVoidMethod = (retTypeFlags & TypeFlagVoid) > 0;
-    auto ret = functionInfo.signature.GetRet();
-    bool retIsBoxedType = false;
-    mdToken retTypeTok;
-    if (!isVoidMethod) {
-        retTypeTok = ret.GetTypeTok(metadataEmit, mscorlibRef);
-        if (ret.GetTypeFlags(elementType) & TypeFlagBoxedType) {
-            retIsBoxedType = true;
-        }
-    }
-    rewriteHelper.SetILPosition(pRetInstr);
-    rewriteHelper.StLocal(indexEx);
-    ILInstr* pRethrowInstr = rewriteHelper.Rethrow();
-
-    rewriteHelper.LoadLocal(indexMethodTrace);
-    ILInstr* pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_BRFALSE_S;
-    rewriter.InsertBefore(pRetInstr, pNewInstr);
-
-    rewriteHelper.LoadLocal(indexMethodTrace);
-    rewriteHelper.LoadLocal(indexRet);
-    rewriteHelper.LoadLocal(indexEx);
-    rewriteHelper.CallMember(finishMemberRef, true);
-
-    ILInstr* pEndFinallyInstr = rewriteHelper.EndFinally();
-    pNewInstr->m_pTarget = pEndFinallyInstr;
-
-    if (!isVoidMethod) {
-        rewriteHelper.LoadLocal(indexRet);
-        if (retIsBoxedType) {
-            rewriteHelper.UnboxAny(retTypeTok);
-        }
-        else {
-            rewriteHelper.Cast(retTypeTok);
-        }
-    }
-
-    for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
-        pInstr != rewriter.GetILList();
-        pInstr = pInstr->m_pNext) {
-        switch (pInstr->m_opcode)
-        {
-        case CEE_RET:
-        {
-            if (pInstr != pRetInstr) {
-                if (!isVoidMethod) {
-                    rewriteHelper.SetILPosition(pInstr);
-                    if (retIsBoxedType) {
-                        rewriteHelper.Box(retTypeTok);
-                    }
-                    rewriteHelper.StLocal(indexRet);
-                }
-                pInstr->m_opcode = CEE_LEAVE_S;
-                pInstr->m_pTarget = pEndFinallyInstr->m_pNext;
-            }
-            break;
-        }
-        default:
-            break;
-        }
-    }
-
-    // catch
-    EHClause exClause{};
-    exClause.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
-    exClause.m_pTryBegin = pTryStartInstr;
-    exClause.m_pTryEnd = pRethrowInstr->m_pPrev;
-    exClause.m_pHandlerBegin = pRethrowInstr->m_pPrev;
-    exClause.m_pHandlerEnd = pRethrowInstr;
-    exClause.m_ClassToken = exTypeRef;
-
-    // finally
-    EHClause finallyClause{};
-    finallyClause.m_Flags = COR_ILEXCEPTION_CLAUSE_FINALLY;
-    finallyClause.m_pTryBegin = pTryStartInstr;
-    finallyClause.m_pTryEnd = pRethrowInstr->m_pNext;
-    finallyClause.m_pHandlerBegin = pRethrowInstr->m_pNext;
-    finallyClause.m_pHandlerEnd = pEndFinallyInstr;
-
-    auto m_pEHNew = new EHClause[rewriter.m_nEH + 2];
-    for (unsigned i = 0; i < rewriter.m_nEH; i++) {
-        m_pEHNew[i] = rewriter.m_pEH[i];
-    }
-
-    rewriter.m_nEH += 2;
-    m_pEHNew[rewriter.m_nEH - 2] = exClause;
-    m_pEHNew[rewriter.m_nEH - 1] = finallyClause;
-    rewriter.m_pEH = m_pEHNew;
-
-    hr = rewriter.Export();
-    IfFailRet(hr);
-
     return  S_OK;
-
-    //return RewriteIL(this->corProfilerInfo, nullptr, moduleId, functionToken, functionId, reinterpret_cast<ULONGLONG>(EnterMethodAddress), reinterpret_cast<ULONGLONG>(LeaveMethodAddress), enterLeaveMethodSignatureToken);
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationFinished(FunctionID functionId, HRESULT hrStatus, BOOL fIsSafeToBlock)

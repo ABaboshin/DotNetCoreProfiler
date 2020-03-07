@@ -1,6 +1,5 @@
-LIBRARY "ClrProfiler.Dll"
+LIBRARY "profiler.dll"
 
 EXPORTS
     DllCanUnloadNow PRIVATE
     DllGetClassObject PRIVATE
-    IsProfilerAttached
