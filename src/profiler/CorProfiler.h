@@ -9,6 +9,7 @@
 #include "cor.h"
 #include "corprof.h"
 #include "types.h"
+#include "FunctionInfo.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -21,6 +22,7 @@ private:
     WSTRING wrapperDllPath;
     WSTRING wrapperAssemblyName;
     WSTRING wrapperType;
+    HRESULT Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleId, const mdToken& functionToken, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, const ComPtr<IMetaDataEmit2>& pMetadataEmit);
 
 public:
     CorProfiler();

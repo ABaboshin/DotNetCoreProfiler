@@ -49,6 +49,7 @@ public:
 
     ILInstr* CreateArray(const mdTypeRef type_ref, const INT32 size)
     {
+        LoadInt32(size);
         ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_NEWARR;
         pNewInstr->m_Arg32 = type_ref;

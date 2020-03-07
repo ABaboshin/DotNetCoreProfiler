@@ -27,6 +27,8 @@ namespace SampleApp.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<string>>> Get()
         {
+            var assembly = Assembly.GetEntryAssembly().Modules;
+
             await Program.ATest();
             return Ok(AppDomain.CurrentDomain.GetAssemblies().Select(a => a.FullName));
         }

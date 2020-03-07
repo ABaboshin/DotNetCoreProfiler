@@ -8,7 +8,11 @@ namespace Wrapper
     {
         public Helper()
         {
-            Wrapper.Test();
+            //var ar = new object[3];
+            //ar[0] = 1;
+            //ar[1] = "test";
+            //ar[2] = new { x = 3 };
+            //Wrapper.Test(ar);
             var test = new Wrapper();
             test.Start();
             test.Finish(null, null);

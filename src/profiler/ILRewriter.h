@@ -433,7 +433,7 @@ public:
 
         pWhat->m_pNext->m_pPrev = pWhat;
         pWhat->m_pPrev->m_pNext = pWhat;
-
+        
         AdjustState(pWhat);
     }
 
@@ -466,7 +466,7 @@ public:
     ////////////////////////////////////////////////////////////////////////////////////////////////
 
 
-    HRESULT Export()
+    HRESULT Export(bool dump)
     {
         // One instruction produces 2 + sizeof(native int) bytes in the worst case which can be 10 bytes for 64-bit.
         // For simplification we just use 10 here.
@@ -680,14 +680,24 @@ public:
             }
         }
 
-        IfFailRet(SetILFunctionBody(totalSize, pBody));
+        IfFailRet(SetILFunctionBody(totalSize, pBody, dump));
         DeallocateILMemory(pBody);
 
         return S_OK;
     }
 
-    HRESULT SetILFunctionBody(unsigned size, LPBYTE pBody)
+    HRESULT SetILFunctionBody(unsigned size, LPBYTE pBody, bool dump)
     {
+        if (dump)
+        {
+            std::cout << "SetILFunctionBody" << std::endl;
+            std::vector<BYTE> buffer(pBody, pBody + size);
+            for (unsigned i = 0; i < size; i++)
+            {
+                std::cout << "_:" << std::hex << std::setfill('0') << std::setw(2) << (int)buffer[i] << std::endl;
+            }
+        }
+
         if (m_pICorProfilerFunctionControl != NULL)
         {
             // We're supplying IL for a rejit, so use the rejit mechanism
@@ -889,7 +899,7 @@ HRESULT RewriteIL(
         IfFailRet(AddEnterProbe(&rewriter, functionId, enterMethodAddress, methodSignature));
         IfFailRet(AddExitProbe(&rewriter, functionId, exitMethodAddress, methodSignature));
     }
-    IfFailRet(rewriter.Export());
+    IfFailRet(rewriter.Export(false));
 
     return S_OK;
 }
@@ -980,7 +990,7 @@ HRESULT LoadAssemblyBefore(
     pNewInstr->m_opcode = CEE_POP;
     rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
-    IfFailRet(rewriter.Export());
+    IfFailRet(rewriter.Export(false));
 
     return S_OK;
 }

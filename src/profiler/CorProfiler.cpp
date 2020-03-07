@@ -13,7 +13,6 @@
 #include "ComPtr.h"
 #include "ILRewriterHelper.h"
 
-
 CorProfiler* profiler = nullptr;
 
 static void STDMETHODCALLTYPE Enter(FunctionID functionId)
@@ -142,6 +141,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadStarted(ModuleID moduleId)
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRESULT hrStatus)
 {
+    std::cout << "ModuleLoadFinished" << std::endl;
     return S_OK;
 }
 
@@ -187,14 +187,14 @@ HRESULT STDMETHODCALLTYPE CorProfiler::FunctionUnloadStarted(FunctionID function
 
 HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID functionId, BOOL fIsSafeToBlock)
 {
-    HRESULT hr;
+    HRESULT hres;
     mdToken functionToken;
     ClassID classId;
     ModuleID moduleId;
 
     IfFailRet(this->corProfilerInfo->GetFunctionInfo(functionId, &classId, &moduleId, &functionToken));
 
-    const ModuleInfo moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
+    ModuleInfo moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
     if (std::find(moduleNames.begin(), moduleNames.end(), moduleInfo.assembly.name) == moduleNames.end()) {
         return S_OK;
     }
@@ -218,8 +218,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     auto functionInfo = GetFunctionInfo(pMetadataImport, functionToken);
 
-    hr = functionInfo.signature.TryParse();
-    IfFailRet(hr);
+    hres = functionInfo.signature.TryParse();
+    IfFailRet(hres);
 
     // it's a hack, find a better way to figure out the entrypoint
     // i.e. catch the first call in an AppDomain
@@ -239,109 +239,131 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             enterLeaveMethodSignatureToken);
     }
 
-    std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << " " << functionInfo.signature.NumberOfArguments() << std::endl << std::flush;
+    if ((functionInfo.name == "Test"_W || functionInfo.name == "ATest"_W) && (functionInfo.type.name == "SampleApp.Program"_W || functionInfo.type.name == "SampleApp.TestC"_W)) {
+        std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+            << " num args" << functionInfo.signature.NumberOfArguments()
+            << " module_id: " << moduleId << " function_id: " << functionId
+            << " function_token: " << functionToken
+            << std::endl << std::flush;
+        return Rewrite(functionInfo, moduleId, functionToken, pMetadataAssemblyEmit, pMetadataEmit);
+    }
 
-    if (functionInfo.signature.NumberOfArguments() == 0 && functionInfo.type.name == "SampleApp.Program"_W && (functionInfo.name == "Test"_W || functionInfo.name == "ATest"_W))
-    {
-        ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
-        IfFailRet(rewriter.Import());
+    return S_OK;
+}
 
-        // define mscorlib.dll
-        mdModuleRef wrapperRef;
-        GetWrapperRef(hr, pMetadataAssemblyEmit, wrapperRef, wrapperAssemblyName);
-        IfFailRet(hr);
+HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleId, const mdToken& functionToken, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, const ComPtr<IMetaDataEmit2>& pMetadataEmit)
+{
+    HRESULT hres = 0;
 
-        std::cout << "Wrapper Dll Found!" << std::endl;
-
-        ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
-
-        std::cout << "Looking for Wrapper Type " << ToString(wrapperType) << std::endl;
-
-        // define type System.Console
-        mdTypeRef wrapperTypeRef;
-        hr = pMetadataEmit->DefineTypeRefByName(
-            wrapperRef,
-            wrapperType.data(),
-            &wrapperTypeRef);
-        IfFailRet(hr);
-
-        std::cout << "Wrapper Type Found!" << std::endl;
-
-        // method
-        mdMethodDef testRef;
-        BYTE Sig_void_String[] = {
-           IMAGE_CEE_CS_CALLCONV_DEFAULT,
-           0, // argument count
-           ELEMENT_TYPE_VOID
-        };
-
-        hr = pMetadataEmit->DefineMemberRef(
-            wrapperTypeRef,
-            "Test"_W.data(),
-            Sig_void_String, sizeof(Sig_void_String),
-            &testRef);
-        IfFailRet(hr);
-
-        std::cout << "Wrapper Method Found!" << std::endl;
-
-        ILInstr* pNewInstr;
-
-        /*pNewInstr = rewriter.NewILInstr();
-        pNewInstr->m_opcode = CEE_LDARG_0;
-        rewriter.InsertBefore(pFirstInstr, pNewInstr);*/
-
-        pNewInstr = rewriter.NewILInstr();
-        pNewInstr->m_opcode = CEE_CALL;
-        pNewInstr->m_Arg32 = testRef;
-        rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-        pNewInstr = rewriter.NewILInstr();
-        pNewInstr->m_opcode = CEE_NOP;
-        rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-        //unsigned buffer;
-        ////auto size = CorSigCompressToken(consoleTypeRef, &buffer);
-        //auto* assemblyLoadSig = new COR_SIGNATURE[/*size +*/ 4];
-        //unsigned offset = 0;
-        //assemblyLoadSig[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-        //assemblyLoadSig[offset++] = 0x01;
-        //assemblyLoadSig[offset++] = ELEMENT_TYPE_VOID;
-        //assemblyLoadSig[offset++] = ELEMENT_TYPE_I4;
-        //memcpy(&assemblyLoadSig[offset], &buffer, size);
-        //offset += size;
-        //assemblyLoadSig[offset] = ELEMENT_TYPE_STRING;
-
-        //// define method System.Console.WriteLine
-        //mdMemberRef writeLineMemberRef;
-        //hr = pMetadataEmit->DefineMemberRef(
-        //    consoleTypeRef,
-        //    "WriteLine"_W.data(),
-        //    assemblyLoadSig,
-        //    sizeof(assemblyLoadSig),
-        //    &writeLineMemberRef);
-
-        //mdString profilerTraceDllNameTextToken;
-        //auto testStr = "Hallo From IL!"_W;
-        //hr = pMetadataEmit->DefineUserString(testStr.data(), (ULONG)testStr.length(), &profilerTraceDllNameTextToken);
-
-        //// load path
-        //ILInstr* pNewInstr = rewriter.NewILInstr();
-        //pNewInstr->m_opcode = CEE_LDSTR;
-        //pNewInstr->m_Arg32 = profilerTraceDllNameTextToken;
-        //rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-        //// call System.Reflection.Assembly.LoadFrom
-        //pNewInstr = rewriter.NewILInstr();
-        //pNewInstr->m_opcode = CEE_CALL;
-        //pNewInstr->m_Arg32 = writeLineMemberRef;
-        //rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-        IfFailRet(rewriter.Export());
-
+    //return ref not support
+    unsigned elementType;
+    auto retTypeFlags = functionInfo.signature.GetRet().GetTypeFlags(elementType);
+    if (retTypeFlags & TypeFlagByRef) {
+        std::cout << (retTypeFlags & TypeFlagByRef) << std::endl;
         return S_OK;
     }
 
-    return  S_OK;
+    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
+    IfFailRet(rewriter.Import());
+
+    // define mscorlib.dll
+    mdModuleRef mscorlibRef;
+    GetMsCorLibRef(hres, pMetadataAssemblyEmit, mscorlibRef);
+
+    IfFailRet(hres);
+
+    // define System.Object
+    mdTypeRef objectTypeRef;
+    hres = pMetadataEmit->DefineTypeRefByName(
+        mscorlibRef,
+        "System.Object"_W.data(),
+        &objectTypeRef);
+    IfFailRet(hres);
+
+    // define wrapper.dll
+    mdModuleRef wrapperRef;
+    GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, wrapperAssemblyName);
+    IfFailRet(hres);
+
+    ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
+    ILRewriterHelper reWriterWrapper(&rewriter);
+    ILInstr* pFirstOriginalInstr = rewriter.GetILList()->m_pNext;
+    reWriterWrapper.SetILPosition(pFirstOriginalInstr);
+
+    // define type System.Console
+    mdTypeRef wrapperTypeRef;
+    hres = pMetadataEmit->DefineTypeRefByName(
+        wrapperRef,
+        wrapperType.data(),
+        &wrapperTypeRef);
+    IfFailRet(hres);
+
+    // method
+    mdMethodDef testRef;
+    BYTE Sig_void_String[] = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        2, // argument count
+        ELEMENT_TYPE_VOID,
+        ELEMENT_TYPE_SZARRAY,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_U4,
+    };
+
+    hres = pMetadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "Test"_W.data(),
+        Sig_void_String, sizeof(Sig_void_String),
+        &testRef);
+    IfFailRet(hres);
+
+    ILInstr* pNewInstr;
+
+    //reWriterWrapper.LoadArgument(0);
+
+    auto argNum = functionInfo.signature.NumberOfArguments();
+    reWriterWrapper.CreateArray(objectTypeRef, argNum);
+    auto arguments = functionInfo.signature.GetMethodArguments();
+    for (unsigned i = 0; i < argNum; i++) {
+        reWriterWrapper.BeginLoadValueIntoArray(i);
+        reWriterWrapper.LoadArgument(i);
+        auto argTypeFlags = arguments[i].GetTypeFlags(elementType);
+        if (argTypeFlags & TypeFlagByRef) {
+            reWriterWrapper.LoadIND(elementType);
+        }
+
+        if (argTypeFlags & TypeFlagBoxedType) {
+            auto tok = arguments[i].GetTypeTok(pMetadataEmit, mscorlibRef);
+            if (tok == mdTokenNil) {
+                return S_OK;
+            }
+
+            reWriterWrapper.Box(tok);
+        }
+
+        reWriterWrapper.EndLoadValueIntoArray();
+    }
+    
+    reWriterWrapper.LoadInt32(functionToken);
+
+    pNewInstr = rewriter.NewILInstr();
+    pNewInstr->m_opcode = CEE_CALL;
+    pNewInstr->m_Arg32 = testRef;
+    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+    /*pNewInstr = rewriter.NewILInstr();
+    pNewInstr->m_opcode = CEE_NOP;
+    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+    pNewInstr = rewriter.NewILInstr();
+    pNewInstr->m_opcode = CEE_RET;
+    rewriter.InsertBefore(pFirstInstr, pNewInstr);*/
+
+
+    std::cout << "export" << std::endl;
+
+    IfFailRet(rewriter.Export(false));
+
+    return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationFinished(FunctionID functionId, HRESULT hrStatus, BOOL fIsSafeToBlock)

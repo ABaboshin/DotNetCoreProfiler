@@ -11,9 +11,19 @@ namespace Wrapper
 
     public class Wrapper : IWrapper
     {
+        public static void Test(uint functionToken)
+        {
+            Console.WriteLine($"Wrapper.Test 42 functionToken {functionToken}");
+        }
+
         public static void Test()
         {
-            Console.WriteLine("Wrapper.Test 42");
+            Console.WriteLine("Wrapper.Test 42 _0_");
+        }
+
+        public static void Test(object[] param, uint functionToken)
+        {
+            Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken}");
         }
 
         //private readonly Stopwatch _stopwatch = new Stopwatch();
