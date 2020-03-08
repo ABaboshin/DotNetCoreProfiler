@@ -2,4 +2,4 @@ FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
 
 COPY src/Wrapper src/Wrapper
 
-RUN dotnet publish -c Release -o /wrapper src/Wrapper/Wrapper/Wrapper.csproj
+RUN dotnet publish -c Debug -o /wrapper src/Wrapper/Wrapper/Wrapper.csproj

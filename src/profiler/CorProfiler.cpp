@@ -113,7 +113,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::AppDomainShutdownFinished(AppDomainID app
 
 HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadStarted(AssemblyID assemblyId)
 {
-    std::cout << "AssemblyLoadStarted " << assemblyId << std::endl;
     return S_OK;
 }
 
@@ -135,7 +134,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyUnloadFinished(AssemblyID assembl
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadStarted(ModuleID moduleId)
 {
-    std::cout << "ModuleLoadStarted " << moduleId << std::endl;
     return S_OK;
 }
 
@@ -245,13 +243,13 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             << " module_id: " << moduleId << " function_id: " << functionId
             << " function_token: " << functionToken
             << std::endl << std::flush;
-        return Rewrite(functionInfo, moduleId, functionToken, pMetadataAssemblyEmit, pMetadataEmit);
+        return Rewrite(functionInfo, moduleId, functionToken, pMetadataAssemblyEmit, pMetadataEmit, moduleInfo);
     }
 
     return S_OK;
 }
 
-HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleId, const mdToken& functionToken, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, const ComPtr<IMetaDataEmit2>& pMetadataEmit)
+HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleId, const mdToken& functionToken, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, const ComPtr<IMetaDataEmit2>& pMetadataEmit, const ModuleInfo& moduleInfo)
 {
     HRESULT hres = 0;
 
@@ -302,11 +300,13 @@ HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleI
     mdMethodDef testRef;
     BYTE Sig_void_String[] = {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
-        2, // argument count
+        4, // argument count
         ELEMENT_TYPE_VOID,
         ELEMENT_TYPE_SZARRAY,
         ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_U4,
+        ELEMENT_TYPE_I4,
+        ELEMENT_TYPE_STRING,
+        ELEMENT_TYPE_STRING,
     };
 
     hres = pMetadataEmit->DefineMemberRef(
@@ -344,6 +344,24 @@ HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleI
     }
     
     reWriterWrapper.LoadInt32(functionToken);
+
+    mdString typeNameToken;
+    auto typeName = functionInfo.type.name;
+    hres = pMetadataEmit->DefineUserString(typeName.data(), (ULONG)typeName.length(), &typeNameToken);
+
+    pNewInstr = rewriter.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDSTR;
+    pNewInstr->m_Arg32 = typeNameToken;
+    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+    mdString assemblyNameToken;
+    auto assemblyName = moduleInfo.assembly.name;
+    hres = pMetadataEmit->DefineUserString(assemblyName.data(), (ULONG)assemblyName.length(), &assemblyNameToken);
+
+    pNewInstr = rewriter.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDSTR;
+    pNewInstr->m_Arg32 = assemblyNameToken;
+    rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
     pNewInstr = rewriter.NewILInstr();
     pNewInstr->m_opcode = CEE_CALL;

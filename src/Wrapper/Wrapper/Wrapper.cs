@@ -21,9 +21,26 @@ namespace Wrapper
             Console.WriteLine("Wrapper.Test 42 _0_");
         }
 
-        public static void Test(object[] param, uint functionToken)
+        public static void Test(object[] param, int functionToken, string typeName, string assemblyName)
         {
-            Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken}");
+            Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken} {typeName} {assemblyName}");
+
+            try
+            {
+                var type = Type.GetType($"{typeName}, {assemblyName}");
+                Console.WriteLine($"Found {typeName} {type}");
+                foreach (var method in type.GetMethods())
+                {
+                    if (method.MetadataToken == functionToken)
+                    {
+                        Console.WriteLine($"Wrapped {method.Name}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex);
+            }
         }
 
         //private readonly Stopwatch _stopwatch = new Stopwatch();

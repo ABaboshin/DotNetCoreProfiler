@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace SampleApp
 {
-    public class TestC
+    public class TestC : ITestC
     {
         public void Test()
         {

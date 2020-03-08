@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
 
 COPY sample/2.1/ sample/SampleApp/
 
-RUN dotnet publish -c Release -o /app sample/SampleApp/SampleApp.csproj
+RUN dotnet publish -c Debug -o /app sample/SampleApp/SampleApp.csproj
 
 FROM profiler:native as profiler
 

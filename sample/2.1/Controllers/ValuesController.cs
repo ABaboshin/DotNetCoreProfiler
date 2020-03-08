@@ -27,7 +27,19 @@ namespace SampleApp.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<string>>> Get()
         {
-            var assembly = Assembly.GetEntryAssembly().Modules;
+            var test = new TestC();
+            var type = test.GetType();
+            var method = type.GetMethod("Test");
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                Console.WriteLine($"Assembly {assembly.FullName}");
+                foreach (var module in assembly.GetModules())
+                {
+                    Console.WriteLine($"Assembly {assembly.FullName} module {module.MetadataToken}");
+                }
+            }
+            
 
             await Program.ATest();
             return Ok(AppDomain.CurrentDomain.GetAssemblies().Select(a => a.FullName));
