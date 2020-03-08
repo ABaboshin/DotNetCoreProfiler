@@ -1,7 +1,7 @@
 # DotNetCoreProfiler
 
 TODO
- - inject enter/leave
+ - Call wrapped method using emit
  - use json config
  - update native build tools
  - json log

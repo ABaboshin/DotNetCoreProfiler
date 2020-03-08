@@ -1,7 +1,11 @@
-﻿namespace SampleApp
+﻿using System.Threading.Tasks;
+
+namespace SampleApp
 {
     public interface ITestC
     {
-        void Test();
+        string Test();
+        Task Test1Async();
+        Task<string> Test2Async();
     }
 }

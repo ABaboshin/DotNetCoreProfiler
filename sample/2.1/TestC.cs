@@ -7,9 +7,23 @@ namespace SampleApp
 {
     public class TestC : ITestC
     {
-        public void Test()
+        public string Test()
         {
             System.Console.WriteLine($"TestC.Test empty");
+            return Guid.NewGuid().ToString();
+        }
+
+        public Task Test1Async()
+        {
+            System.Console.WriteLine($"TestC.Test1Async empty");
+            return Task.CompletedTask;
+        }
+
+        public async Task<string> Test2Async()
+        {
+            System.Console.WriteLine($"TestC.Test2Async empty");
+            await Task.Delay(100);
+            return Guid.NewGuid().ToString();
         }
     }
 }

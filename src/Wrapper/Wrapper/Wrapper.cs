@@ -33,7 +33,7 @@ namespace Wrapper
                 {
                     if (method.MetadataToken == functionToken)
                     {
-                        Console.WriteLine($"Wrapped {method.Name}");
+                        Console.WriteLine($"Wrapped {method.Name} {method.IsVirtual}");
                     }
                 }
             }

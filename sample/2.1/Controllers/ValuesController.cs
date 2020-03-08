@@ -42,6 +42,9 @@ namespace SampleApp.Controllers
             
 
             await Program.ATest();
+            await test.Test1Async();
+            var res = await test.Test2Async();
+            Console.WriteLine(res);
             return Ok(AppDomain.CurrentDomain.GetAssemblies().Select(a => a.FullName));
         }
 

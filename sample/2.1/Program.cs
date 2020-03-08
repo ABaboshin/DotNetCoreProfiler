@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
+using System;
 using System.IO;
 using System.Threading.Tasks;
 
@@ -11,7 +12,8 @@ namespace SampleApp
         {
             Test();
             Test(1, "test", new { x = 1 });
-            new TestC().Test();
+            var res = new TestC().Test();
+            Console.WriteLine(res);
             var host = new WebHostBuilder()
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseKestrel()
@@ -27,16 +29,16 @@ namespace SampleApp
 
         static void Test()
         {
-            System.Console.WriteLine($"Test empty");
+            Console.WriteLine($"Test empty");
         }
 
         static void Test(int i, string s, object o) {
-            System.Console.WriteLine($"Test not empty{i} {s} {o}");
+            Console.WriteLine($"Test not empty{i} {s} {o}");
         }
 
         public static async Task ATest()
         {
-            System.Console.WriteLine($"Async Test empty");
+            Console.WriteLine($"Async Test empty");
             await Task.Delay(100);
         }
     }
