@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Linq;
+using System.Reflection;
 
 namespace Wrapper
 {
@@ -16,24 +18,29 @@ namespace Wrapper
             Console.WriteLine($"Wrapper.Test 42 functionToken {functionToken}");
         }
 
-        public static void Test()
-        {
-            Console.WriteLine("Wrapper.Test 42 _0_");
-        }
+        //public static void Test()
+        //{
+        //    Console.WriteLine("Wrapper.Test 42 _0_");
+        //}
 
         public static void Test(object[] param, int functionToken, string typeName, string assemblyName)
         {
-            Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken} {typeName} {assemblyName}");
+            //Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken} {typeName} {assemblyName}");
 
             try
             {
                 var type = Type.GetType($"{typeName}, {assemblyName}");
-                Console.WriteLine($"Found {typeName} {type}");
-                foreach (var method in type.GetMethods())
+                //Console.WriteLine($"Found {typeName} {type}");
+                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Instance))
                 {
                     if (method.MetadataToken == functionToken)
                     {
-                        Console.WriteLine($"Wrapped {method.Name} {method.IsVirtual}");
+                        //Console.WriteLine($"Wrapped {method.Name} {method.IsVirtual}");
+
+                        Console.WriteLine($"Invoke {method.Name}");
+                        //method.Invoke(null, param);
+
+                        //var p = method.GetParameters().Select(p => p.ParameterType)
                     }
                 }
             }

@@ -237,12 +237,17 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             enterLeaveMethodSignatureToken);
     }
 
-    if ((functionInfo.name == "Test"_W || functionInfo.name == "ATest"_W) && (functionInfo.type.name == "SampleApp.Program"_W || functionInfo.type.name == "SampleApp.TestC"_W)) {
-        std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
-            << " num args" << functionInfo.signature.NumberOfArguments()
-            << " module_id: " << moduleId << " function_id: " << functionId
-            << " function_token: " << functionToken
-            << std::endl << std::flush;
+    if ((functionInfo.name == "Test"_W
+        || functionInfo.name == "ATest"_W
+        || functionInfo.name == "Test1Async"_W
+        || functionInfo.name == "Test2Async"_W
+        ) &&
+        (functionInfo.type.name == "SampleApp.Program"_W || functionInfo.type.name == "SampleApp.TestC"_W)) {
+        //std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+        //    << " num args" << functionInfo.signature.NumberOfArguments()
+        //    << " module_id: " << moduleId << " function_id: " << functionId
+        //    << " function_token: " << functionToken
+        //    << std::endl << std::flush;
         return Rewrite(functionInfo, moduleId, functionToken, pMetadataAssemblyEmit, pMetadataEmit, moduleInfo);
     }
 
@@ -257,7 +262,6 @@ HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleI
     unsigned elementType;
     auto retTypeFlags = functionInfo.signature.GetRet().GetTypeFlags(elementType);
     if (retTypeFlags & TypeFlagByRef) {
-        std::cout << (retTypeFlags & TypeFlagByRef) << std::endl;
         return S_OK;
     }
 
@@ -377,7 +381,7 @@ HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleI
     rewriter.InsertBefore(pFirstInstr, pNewInstr);*/
 
 
-    std::cout << "export" << std::endl;
+    //std::cout << "export" << std::endl;
 
     IfFailRet(rewriter.Export(false));
 
