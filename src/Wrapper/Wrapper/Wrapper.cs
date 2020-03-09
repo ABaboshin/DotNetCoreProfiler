@@ -13,23 +13,19 @@ namespace Wrapper
 
     public class Wrapper : IWrapper
     {
-        private int i;
-        public void Test(int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8, int p9)
+        public static void Test(uint functionToken)
         {
-            i = p1;
-            Console.WriteLine($"Wrapper.Test 42 functionToken");
+            Console.WriteLine($"Wrapper.Test 42 functionToken {functionToken}");
         }
+
+        //public static void Test()
+        //{
+        //    Console.WriteLine("Wrapper.Test 42 _0_");
+        //}
 
         public static void Test(object[] param, int functionToken, string typeName, string assemblyName)
         {
             //Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken} {typeName} {assemblyName}");
-
-            Console.WriteLine($"Invoke params {string.Join(", ", param.Select(p => p.GetType().Name))}");
-
-            foreach (var item in param)
-            {
-                Console.WriteLine($" Invoke param value " + item.ToString());
-            }
 
             try
             {
@@ -54,12 +50,23 @@ namespace Wrapper
             }
         }
 
+        //private readonly Stopwatch _stopwatch = new Stopwatch();
+
+        //public Wrapper()
+        //{
+        //    Console.WriteLine("Wrapper.ctor");
+        //}
+
         public void Finish(object returnValue, object exception)
         {
+            //_stopwatch.Stop();
+            //Console.WriteLine($"Wrapper.Finish {_stopwatch.ElapsedMilliseconds} {returnValue} {exception}");
         }
 
         public void Start()
         {
+            //_stopwatch.Start();
+            //Console.WriteLine("Wrapper.Start");
         }
     }
 }

@@ -6,7 +6,6 @@
 #include <atomic>
 #include <mutex>
 #include <vector>
-#include <map>
 #include "cor.h"
 #include "corprof.h"
 #include "types.h"
@@ -25,8 +24,6 @@ private:
     WSTRING wrapperAssemblyName;
     WSTRING wrapperType;
     HRESULT Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleId, const mdToken& functionToken, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, const ComPtr<IMetaDataEmit2>& pMetadataEmit, const ModuleInfo& moduleInfo);
-
-    std::vector<mdToken> processed;
 
 public:
     CorProfiler();
