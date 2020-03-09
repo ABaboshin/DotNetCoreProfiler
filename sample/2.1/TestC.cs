@@ -7,9 +7,21 @@ namespace SampleApp
 {
     public class TestC : ITestC
     {
+        public string Data { get; set; } = "XXX";
+
+        public override string ToString()
+        {
+            return $"TestC:{Data}";
+        }
+
+        public void TestVoid()
+        {
+            System.Console.WriteLine($"TestC.Test empty void");
+        }
+
         public string Test()
         {
-            System.Console.WriteLine($"TestC.Test empty");
+            System.Console.WriteLine($"TestC.Test empty string");
             return Guid.NewGuid().ToString();
         }
 

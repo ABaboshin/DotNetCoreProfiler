@@ -6,14 +6,27 @@ class ILRewriterHelper
 {
 private:
     ILRewriter* const m_ILRewriter;
-    ILInstr* m_ILInstr;
+    
 
 public:
+
+    ILInstr* m_ILInstr;
+
     ILRewriterHelper(ILRewriter* const il_rewriter)
         : m_ILRewriter(il_rewriter), m_ILInstr(nullptr) {}
     
     void SetILPosition(ILInstr* pILInstr) {
         m_ILInstr = pILInstr;
+    }
+
+    void SetLastILPosition(ILInstr* pILInstr) {
+        auto pInstr = pILInstr;
+        while (pInstr->m_pNext != nullptr)
+        {
+            pInstr = pInstr->m_pNext;
+        }
+
+        m_ILInstr = pInstr;
     }
 
     void LoadNull()

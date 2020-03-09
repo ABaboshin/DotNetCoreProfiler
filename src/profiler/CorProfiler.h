@@ -23,7 +23,7 @@ private:
     WSTRING wrapperDllPath;
     WSTRING wrapperAssemblyName;
     WSTRING wrapperType;
-    HRESULT Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleId, const mdToken& functionToken, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, const ComPtr<IMetaDataEmit2>& pMetadataEmit, const ModuleInfo& moduleInfo);
+    HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
 
 public:
     CorProfiler();

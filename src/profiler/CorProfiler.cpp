@@ -237,151 +237,210 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             enterLeaveMethodSignatureToken);
     }
 
-    if ((functionInfo.name == "Test"_W
-        || functionInfo.name == "ATest"_W
-        || functionInfo.name == "Test1Async"_W
-        || functionInfo.name == "Test2Async"_W
-        ) &&
-        (functionInfo.type.name == "SampleApp.Program"_W || functionInfo.type.name == "SampleApp.TestC"_W)) {
-        //std::cout << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
-        //    << " num args" << functionInfo.signature.NumberOfArguments()
-        //    << " module_id: " << moduleId << " function_id: " << functionId
-        //    << " function_token: " << functionToken
-        //    << std::endl << std::flush;
-        return Rewrite(functionInfo, moduleId, functionToken, pMetadataAssemblyEmit, pMetadataEmit, moduleInfo);
-    }
-
-    return S_OK;
+    return Rewrite(moduleId, functionToken);
 }
 
-HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleId, const mdToken& functionToken, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, const ComPtr<IMetaDataEmit2>& pMetadataEmit, const ModuleInfo& moduleInfo)
+HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToken)
 {
     HRESULT hres = 0;
 
-    //return ref not support
-    unsigned elementType;
-    auto retTypeFlags = functionInfo.signature.GetRet().GetTypeFlags(elementType);
-    if (retTypeFlags & TypeFlagByRef) {
-        return S_OK;
-    }
-
-    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
+    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
     IfFailRet(rewriter.Import());
 
-    // define mscorlib.dll
-    mdModuleRef mscorlibRef;
-    GetMsCorLibRef(hres, pMetadataAssemblyEmit, mscorlibRef);
-
-    IfFailRet(hres);
-
-    // define System.Object
-    mdTypeRef objectTypeRef;
-    hres = pMetadataEmit->DefineTypeRefByName(
-        mscorlibRef,
-        "System.Object"_W.data(),
-        &objectTypeRef);
-    IfFailRet(hres);
-
-    // define wrapper.dll
-    mdModuleRef wrapperRef;
-    GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, wrapperAssemblyName);
-    IfFailRet(hres);
-
-    ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
     ILRewriterHelper reWriterWrapper(&rewriter);
-    ILInstr* pFirstOriginalInstr = rewriter.GetILList()->m_pNext;
-    reWriterWrapper.SetILPosition(pFirstOriginalInstr);
 
-    // define type System.Console
-    mdTypeRef wrapperTypeRef;
-    hres = pMetadataEmit->DefineTypeRefByName(
-        wrapperRef,
-        wrapperType.data(),
-        &wrapperTypeRef);
-    IfFailRet(hres);
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
 
-    // method
-    mdMethodDef testRef;
-    BYTE Sig_void_String[] = {
-        IMAGE_CEE_CS_CALLCONV_DEFAULT,
-        4, // argument count
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_SZARRAY,
-        ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_I4,
-        ELEMENT_TYPE_STRING,
-        ELEMENT_TYPE_STRING,
-    };
+    const auto pMetadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
 
-    hres = pMetadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        "Test"_W.data(),
-        Sig_void_String, sizeof(Sig_void_String),
-        &testRef);
-    IfFailRet(hres);
+    const auto pMetadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
-    ILInstr* pNewInstr;
+    const auto pMetadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
-    //reWriterWrapper.LoadArgument(0);
-
-    auto argNum = functionInfo.signature.NumberOfArguments();
-    reWriterWrapper.CreateArray(objectTypeRef, argNum);
-    auto arguments = functionInfo.signature.GetMethodArguments();
-    for (unsigned i = 0; i < argNum; i++) {
-        reWriterWrapper.BeginLoadValueIntoArray(i);
-        reWriterWrapper.LoadArgument(i);
-        auto argTypeFlags = arguments[i].GetTypeFlags(elementType);
-        if (argTypeFlags & TypeFlagByRef) {
-            reWriterWrapper.LoadIND(elementType);
+    // for each IL instruction
+    for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
+        pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext)
+    {
+        // only CALL or CALLVIRT
+        if (pInstr->m_opcode != CEE_CALL && pInstr->m_opcode != CEE_CALLVIRT) {
+            continue;
         }
 
-        if (argTypeFlags & TypeFlagBoxedType) {
-            auto tok = arguments[i].GetTypeTok(pMetadataEmit, mscorlibRef);
-            if (tok == mdTokenNil) {
-                return S_OK;
+        auto functionToken = pInstr->m_Arg32;
+        auto functionInfo = GetFunctionInfo(pMetadataImport, functionToken);
+        hres = functionInfo.signature.TryParse();
+        if ((functionInfo.name == "Test"_W
+            || functionInfo.name == "ATest"_W
+            || functionInfo.name == "Test1Async"_W
+            || functionInfo.name == "Test2Async"_W
+            || functionInfo.name == "TestVoid"_W
+            ) &&
+            (functionInfo.type.name == "SampleApp.Program"_W || functionInfo.type.name == "SampleApp.TestC"_W)) {
+            std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+    << " num args " << functionInfo.signature.NumberOfArguments()
+    << std::endl << std::flush;
+
+            reWriterWrapper.SetILPosition(pInstr);
+
+            // define mscorlib.dll
+            mdModuleRef mscorlibRef;
+            GetMsCorLibRef(hres, pMetadataAssemblyEmit, mscorlibRef);
+
+            // define System.Object
+            mdTypeRef objectTypeRef;
+            hres = pMetadataEmit->DefineTypeRefByName(
+                mscorlibRef,
+                "System.Object"_W.data(),
+                &objectTypeRef);
+            IfFailRet(hres);
+
+            // define wrapper.dll
+            mdModuleRef wrapperRef;
+            GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, wrapperAssemblyName);
+            IfFailRet(hres);
+
+            // define type System.Console
+            mdTypeRef wrapperTypeRef;
+            hres = pMetadataEmit->DefineTypeRefByName(
+                wrapperRef,
+                wrapperType.data(),
+                &wrapperTypeRef);
+            IfFailRet(hres);
+
+            // rewrite
+            unsigned elementType;
+            auto retTypeFlags = functionInfo.signature.GetRet().GetTypeFlags(elementType);
+
+            /*if (elementType != ELEMENT_TYPE_VOID)
+            {
+                std::cout << "NOT VOID" << std::endl;
+                continue;
+            }*/
+
+            //std::cout << elementType << std::endl;
+
+            auto argNum = functionInfo.signature.NumberOfArguments();
+
+            /*if (argNum != 0 || functionInfo.signature.IsInstanceMethod())
+            {
+                continue;
+            }*/
+
+            unsigned inc = 0;
+
+            if (functionInfo.signature.IsInstanceMethod())
+            {
+                inc++;
+                argNum++;
             }
 
-            reWriterWrapper.Box(tok);
+            reWriterWrapper.CreateArray(objectTypeRef, argNum);
+            auto arguments = functionInfo.signature.GetMethodArguments();
+            for (unsigned i = 0; i < argNum; i++) {
+                std::cout << "load " << i << std::endl;
+                reWriterWrapper.BeginLoadValueIntoArray(i);
+                reWriterWrapper.LoadArgument(i);
+                if (inc == 0 || i != 0)
+                {
+                    auto argTypeFlags = arguments[i - inc].GetTypeFlags(elementType);
+                    if (argTypeFlags & TypeFlagByRef) {
+                        reWriterWrapper.LoadIND(elementType);
+                    }
+
+                    if (argTypeFlags & TypeFlagBoxedType) {
+                        auto tok = arguments[i - inc].GetTypeTok(pMetadataEmit, mscorlibRef);
+                        if (tok == mdTokenNil) {
+                            return S_OK;
+                        }
+
+                        reWriterWrapper.Box(tok);
+                    }
+                }
+
+                reWriterWrapper.EndLoadValueIntoArray();
+            }
+
+            ILInstr* pNewInstr;
+
+            {
+                mdString typeNameToken;
+                auto typeName = functionInfo.type.name;
+                hres = pMetadataEmit->DefineUserString(typeName.data(), (ULONG)typeName.length(), &typeNameToken);
+
+                pNewInstr = rewriter.NewILInstr();
+                pNewInstr->m_opcode = CEE_LDSTR;
+                pNewInstr->m_Arg32 = typeNameToken;
+                rewriter.InsertBefore(pInstr, pNewInstr);
+            }
+
+            {
+                mdString functionNameToken;
+                auto functionName = functionInfo.name;
+                hres = pMetadataEmit->DefineUserString(functionName.data(), (ULONG)functionName.length(), &functionNameToken);
+
+                pNewInstr = rewriter.NewILInstr();
+                pNewInstr->m_opcode = CEE_LDSTR;
+                pNewInstr->m_Arg32 = functionNameToken;
+                rewriter.InsertBefore(pInstr, pNewInstr);
+            }
+
+            reWriterWrapper.LoadInt32(functionToken);
+
+            // method
+            mdMethodDef testRef;
+
+            if (argNum == 0)
+            {
+                BYTE Sig_void_String[] = {
+                    IMAGE_CEE_CS_CALLCONV_DEFAULT,
+                    4, // argument count
+                    ELEMENT_TYPE_VOID,
+                    ELEMENT_TYPE_SZARRAY,
+                    ELEMENT_TYPE_OBJECT,
+                    ELEMENT_TYPE_STRING,
+                    ELEMENT_TYPE_STRING,
+                    ELEMENT_TYPE_I4,
+                };
+
+                hres = pMetadataEmit->DefineMemberRef(
+                    wrapperTypeRef,
+                    "TestVoid"_W.data(),
+                    Sig_void_String, sizeof(Sig_void_String),
+                    &testRef);
+                IfFailRet(hres);
+            }
+            else
+            {
+                BYTE Sig_void_String[] = {
+                    IMAGE_CEE_CS_CALLCONV_DEFAULT,
+                    4, // argument count
+                    ELEMENT_TYPE_OBJECT,
+                    ELEMENT_TYPE_SZARRAY,
+                    ELEMENT_TYPE_OBJECT,
+                    ELEMENT_TYPE_STRING,
+                    ELEMENT_TYPE_STRING,
+                    ELEMENT_TYPE_I4,
+                };
+
+                hres = pMetadataEmit->DefineMemberRef(
+                    wrapperTypeRef,
+                    "TestRet"_W.data(),
+                    Sig_void_String, sizeof(Sig_void_String),
+                    &testRef);
+                IfFailRet(hres);
+            }
+
+            
+
+            pNewInstr = rewriter.NewILInstr();
+            pNewInstr->m_opcode = CEE_CALL;
+            pNewInstr->m_Arg32 = testRef;
+            rewriter.InsertBefore(pInstr, pNewInstr);
+
+            pInstr->m_opcode = CEE_NOP;
         }
-
-        reWriterWrapper.EndLoadValueIntoArray();
     }
-    
-    reWriterWrapper.LoadInt32(functionToken);
-
-    mdString typeNameToken;
-    auto typeName = functionInfo.type.name;
-    hres = pMetadataEmit->DefineUserString(typeName.data(), (ULONG)typeName.length(), &typeNameToken);
-
-    pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_LDSTR;
-    pNewInstr->m_Arg32 = typeNameToken;
-    rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-    mdString assemblyNameToken;
-    auto assemblyName = moduleInfo.assembly.name;
-    hres = pMetadataEmit->DefineUserString(assemblyName.data(), (ULONG)assemblyName.length(), &assemblyNameToken);
-
-    pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_LDSTR;
-    pNewInstr->m_Arg32 = assemblyNameToken;
-    rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-    pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_CALL;
-    pNewInstr->m_Arg32 = testRef;
-    rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-    /*pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_NOP;
-    rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-    pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_RET;
-    rewriter.InsertBefore(pFirstInstr, pNewInstr);*/
-
-
-    //std::cout << "export" << std::endl;
 
     IfFailRet(rewriter.Export(false));
 

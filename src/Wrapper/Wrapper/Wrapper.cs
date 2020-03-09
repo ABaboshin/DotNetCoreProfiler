@@ -13,6 +13,11 @@ namespace Wrapper
 
     public class Wrapper : IWrapper
     {
+        public Wrapper()
+        {
+            Console.Write("Wrapper.ctor");
+        }
+
         public static void Test(uint functionToken)
         {
             Console.WriteLine($"Wrapper.Test 42 functionToken {functionToken}");
@@ -23,31 +28,70 @@ namespace Wrapper
         //    Console.WriteLine("Wrapper.Test 42 _0_");
         //}
 
-        public static void Test(object[] param, int functionToken, string typeName, string assemblyName)
+        public static void TestVoid(object[] param, string typeName, string funcitonName, int functionToken)
         {
             //Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken} {typeName} {assemblyName}");
 
-            try
+            Console.WriteLine($"Invoke params {string.Join(", ", param.Select(p => p.GetType().Name))} {typeName}.{funcitonName}");
+
+            foreach (var item in param)
             {
-                var type = Type.GetType($"{typeName}, {assemblyName}");
-                //Console.WriteLine($"Found {typeName} {type}");
-                foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Instance))
+                Console.WriteLine($" Invoke param value " + item.ToString());
+            }
+
+            foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                foreach (var type in assembly.GetTypes())
                 {
-                    if (method.MetadataToken == functionToken)
+                    if (type.FullName == typeName)
                     {
-                        //Console.WriteLine($"Wrapped {method.Name} {method.IsVirtual}");
-
-                        Console.WriteLine($"Invoke {method.Name}");
-                        //method.Invoke(null, param);
-
-                        //var p = method.GetParameters().Select(p => p.ParameterType)
+                        foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Instance))
+                        {
+                            if (method.MetadataToken == functionToken)
+                            {
+                                Console.WriteLine($"Found isStatic {method.IsStatic}");
+                                Console.WriteLine("call");
+                                method.Invoke(null, param);
+                                Console.WriteLine("call done");
+                            }
+                        }
                     }
                 }
             }
-            catch (Exception ex)
+        }
+
+        public static object TestRet(object[] param, string typeName, string funcitonName, int functionToken)
+        {
+            //Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken} {typeName} {assemblyName}");
+
+            Console.WriteLine($"Invoke params {string.Join(", ", param.Select(p => p.GetType().Name))} {typeName}.{funcitonName}");
+
+            foreach (var item in param)
             {
-                Console.WriteLine(ex);
+                Console.WriteLine($" Invoke param value " + item.ToString());
             }
+
+            return new object();
+
+            //foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+            //{
+            //    foreach (var type in assembly.GetTypes())
+            //    {
+            //        if (type.FullName == typeName)
+            //        {
+            //            foreach (var method in type.GetMethods(BindingFlags.Public | BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Instance))
+            //            {
+            //                if (method.MetadataToken == functionToken)
+            //                {
+            //                    Console.WriteLine($"Found isStatic {method.IsStatic}");
+            //                    Console.WriteLine("call");
+            //                    method.Invoke(null, param);
+            //                    Console.WriteLine("call done");
+            //                }
+            //            }
+            //        }
+            //    }
+            //}
         }
 
         //private readonly Stopwatch _stopwatch = new Stopwatch();
@@ -61,12 +105,13 @@ namespace Wrapper
         {
             //_stopwatch.Stop();
             //Console.WriteLine($"Wrapper.Finish {_stopwatch.ElapsedMilliseconds} {returnValue} {exception}");
+            Console.WriteLine($"Wrapper.Finish");
         }
 
         public void Start()
         {
             //_stopwatch.Start();
-            //Console.WriteLine("Wrapper.Start");
+            Console.WriteLine("Wrapper.Start");
         }
     }
 }

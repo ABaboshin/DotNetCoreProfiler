@@ -8,12 +8,10 @@ namespace SampleApp
 {
     public class Program
     {
+
         public static void Main()
         {
-            Test();
-            Test(1, "test", new { x = 1 });
-            var res = new TestC().Test();
-            Console.WriteLine(res);
+            TestJIT();
             var host = new WebHostBuilder()
                 .UseContentRoot(Directory.GetCurrentDirectory())
                 .UseKestrel()
@@ -25,6 +23,15 @@ namespace SampleApp
                 .Build();
 
             host.Run();
+        }
+
+        private static void TestJIT()
+        {
+            Test();
+            //new TestC().TestVoid();
+            //Test(1, "test", new { x = 1 });
+            //var res = new TestC().Test();
+            //Console.WriteLine(res);
         }
 
         static void Test()
