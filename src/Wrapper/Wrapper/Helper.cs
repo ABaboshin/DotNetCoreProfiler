@@ -14,6 +14,7 @@ namespace Wrapper
             //ar[2] = new { x = 3 };
             //Wrapper.Test(ar);
             var test = new Wrapper();
+            test.Test(1, 2, 3, 4, 5, 6, 7, 8, 9);
             test.Start();
             test.Finish(null, null);
             //GetInstance().BeforeMethod(new object(), new object(), new[] { new object(), 1 }, 3);

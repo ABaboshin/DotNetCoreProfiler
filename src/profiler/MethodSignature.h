@@ -49,6 +49,9 @@ public:
     bool IsEmpty() const {
         return len == 0;
     }
+    bool IsInstanceMethod() const {
+        return (CallingConvention() & IMAGE_CEE_CS_CALLCONV_HASTHIS) != 0;
+    }
 };
 
 bool ParseType(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd);

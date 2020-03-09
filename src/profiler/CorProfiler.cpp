@@ -77,6 +77,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     std::cout << "wrapperDll " << ToString(wrapperDllPath) << std::endl;
     std::cout << "wrapperType " << ToString(wrapperType) << std::endl;
 
+    processed = std::vector<mdToken>();
+
     return S_OK;
 }
 
@@ -219,11 +221,19 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hres = functionInfo.signature.TryParse();
     IfFailRet(hres);
 
+    if (std::find(processed.begin(), processed.end(), functionToken) != processed.end())
+    {
+        std::cout << "skip due already processed " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << std::endl;
+        return S_OK;
+    }
+
     // it's a hack, find a better way to figure out the entrypoint
     // i.e. catch the first call in an AppDomain
     if (ends_with(functionInfo.name, "Main"_W))
     {
         std::cout << "ENTRYPOINT!!" << std::endl;
+
+        processed.push_back(functionToken);
 
         return LoadAssemblyBefore(this->corProfilerInfo,
             pMetadataImport,
@@ -237,6 +247,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             enterLeaveMethodSignatureToken);
     }
 
+    //std::cout << "recompile " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << std::endl;
+
     if ((functionInfo.name == "Test"_W
         || functionInfo.name == "ATest"_W
         || functionInfo.name == "Test1Async"_W
@@ -248,6 +260,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         //    << " module_id: " << moduleId << " function_id: " << functionId
         //    << " function_token: " << functionToken
         //    << std::endl << std::flush;
+        processed.push_back(functionToken);
+        std::cout << "recompile " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name) << std::endl;
         return Rewrite(functionInfo, moduleId, functionToken, pMetadataAssemblyEmit, pMetadataEmit, moduleInfo);
     }
 
@@ -325,23 +339,35 @@ HRESULT CorProfiler::Rewrite(FunctionInfo& functionInfo, const ModuleID& moduleI
     //reWriterWrapper.LoadArgument(0);
 
     auto argNum = functionInfo.signature.NumberOfArguments();
+    unsigned inc = 0;
+
+    if (functionInfo.signature.IsInstanceMethod())
+    {
+        inc++;
+        argNum++;
+    }
+
     reWriterWrapper.CreateArray(objectTypeRef, argNum);
     auto arguments = functionInfo.signature.GetMethodArguments();
     for (unsigned i = 0; i < argNum; i++) {
         reWriterWrapper.BeginLoadValueIntoArray(i);
         reWriterWrapper.LoadArgument(i);
-        auto argTypeFlags = arguments[i].GetTypeFlags(elementType);
-        if (argTypeFlags & TypeFlagByRef) {
-            reWriterWrapper.LoadIND(elementType);
-        }
 
-        if (argTypeFlags & TypeFlagBoxedType) {
-            auto tok = arguments[i].GetTypeTok(pMetadataEmit, mscorlibRef);
-            if (tok == mdTokenNil) {
-                return S_OK;
+        if (inc == 0 || i != 0)
+        {
+            auto argTypeFlags = arguments[i - inc].GetTypeFlags(elementType);
+            if (argTypeFlags & TypeFlagByRef) {
+                reWriterWrapper.LoadIND(elementType);
             }
 
-            reWriterWrapper.Box(tok);
+            if (argTypeFlags & TypeFlagBoxedType) {
+                auto tok = arguments[i - inc].GetTypeTok(pMetadataEmit, mscorlibRef);
+                if (tok == mdTokenNil) {
+                    return S_OK;
+                }
+
+                reWriterWrapper.Box(tok);
+            }
         }
 
         reWriterWrapper.EndLoadValueIntoArray();
