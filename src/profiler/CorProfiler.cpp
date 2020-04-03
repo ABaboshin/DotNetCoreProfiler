@@ -312,11 +312,13 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
             unsigned elementType;
             auto retTypeFlags = functionInfo.signature.GetRet().GetTypeFlags(elementType);
 
-            /*if (elementType != ELEMENT_TYPE_VOID)
+
+            auto isVoid = (retTypeFlags & TypeFlagVoid) > 0;
+            if (!isVoid)
             {
-                std::cout << "NOT VOID" << std::endl;
+                std::cout << "NOT VOID " << elementType << std::endl;
                 continue;
-            }*/
+            }
 
             //std::cout << elementType << std::endl;
 
@@ -335,6 +337,9 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                 argNum++;
             }
 
+            ILInstr* pNewInstr;
+
+            reWriterWrapper.Nop();
             reWriterWrapper.CreateArray(objectTypeRef, argNum);
             auto arguments = functionInfo.signature.GetMethodArguments();
             for (unsigned i = 0; i < argNum; i++) {
@@ -360,8 +365,6 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
                 reWriterWrapper.EndLoadValueIntoArray();
             }
-
-            ILInstr* pNewInstr;
 
             {
                 mdString typeNameToken;
@@ -390,8 +393,9 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
             // method
             mdMethodDef testRef;
 
-            if (argNum == 0)
+            if (isVoid)
             {
+                std::cout << "VOID" << std::endl;
                 BYTE Sig_void_String[] = {
                     IMAGE_CEE_CS_CALLCONV_DEFAULT,
                     4, // argument count
@@ -431,14 +435,12 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                 IfFailRet(hres);
             }
 
-            
-
             pNewInstr = rewriter.NewILInstr();
             pNewInstr->m_opcode = CEE_CALL;
             pNewInstr->m_Arg32 = testRef;
             rewriter.InsertBefore(pInstr, pNewInstr);
 
-            pInstr->m_opcode = CEE_NOP;
+            //pInstr->m_opcode = CEE_NOP;
         }
     }
 

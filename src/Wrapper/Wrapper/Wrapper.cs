@@ -18,6 +18,23 @@ namespace Wrapper
             Console.Write("Wrapper.ctor");
         }
 
+        public void Test(/*int p1, int p2, int p3, int p4, int p5, int p6, int p7, int p8*/params object[] vs)
+        {
+            foreach (var v in vs)
+            {
+                Console.WriteLine(v);
+            }
+            //var i = p1;
+            //i = p1;
+            //i = p2;
+            //i = p3;
+            //i = p4;
+            //i = p5;
+            //i = p6;
+            //i = p7;
+            //i = p8;
+        }
+
         public static void Test(uint functionToken)
         {
             Console.WriteLine($"Wrapper.Test 42 functionToken {functionToken}");
@@ -60,11 +77,11 @@ namespace Wrapper
             }
         }
 
-        public static object TestRet(object[] param, string typeName, string funcitonName, int functionToken)
+        public static object TestRet(object[] param, string typeName, string functionName, int functionToken)
         {
             //Console.WriteLine($"Wrapper.Test 42 {param.Length} {functionToken} {typeName} {assemblyName}");
 
-            Console.WriteLine($"Invoke params {string.Join(", ", param.Select(p => p.GetType().Name))} {typeName}.{funcitonName}");
+            Console.WriteLine($"Invoke params {string.Join(", ", param.Select(p => p.GetType().Name))} {typeName}.{functionName}");
 
             foreach (var item in param)
             {
@@ -94,7 +111,7 @@ namespace Wrapper
             //}
         }
 
-        //private readonly Stopwatch _stopwatch = new Stopwatch();
+        private readonly Stopwatch _stopwatch = new Stopwatch();
 
         //public Wrapper()
         //{
@@ -103,14 +120,14 @@ namespace Wrapper
 
         public void Finish(object returnValue, object exception)
         {
-            //_stopwatch.Stop();
-            //Console.WriteLine($"Wrapper.Finish {_stopwatch.ElapsedMilliseconds} {returnValue} {exception}");
-            Console.WriteLine($"Wrapper.Finish");
+            _stopwatch.Stop();
+            Console.WriteLine($"Wrapper.Finish {_stopwatch.ElapsedMilliseconds} {returnValue} {exception}");
+            //Console.WriteLine($"Wrapper.Finish");
         }
 
         public void Start()
         {
-            //_stopwatch.Start();
+            _stopwatch.Start();
             Console.WriteLine("Wrapper.Start");
         }
     }

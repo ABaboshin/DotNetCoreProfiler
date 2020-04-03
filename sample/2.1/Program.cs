@@ -27,9 +27,9 @@ namespace SampleApp
 
         private static void TestJIT()
         {
-            Test();
+            //Test();
+            Test(1, "test", new { x = 1 });
             //new TestC().TestVoid();
-            //Test(1, "test", new { x = 1 });
             //var res = new TestC().Test();
             //Console.WriteLine(res);
         }
@@ -39,8 +39,14 @@ namespace SampleApp
             Console.WriteLine($"Test empty");
         }
 
-        static void Test(int i, string s, object o) {
-            Console.WriteLine($"Test not empty{i} {s} {o}");
+        static void Test(int i1, string s1, object o1) {
+            //var ar = new[] { i1, s1, o1 };
+            TXX(new[] { i1, s1, o1 }, s1, s1, i1);
+            //Console.WriteLine($"Test not empty{i} {s} {o}");
+        }
+
+        static void TXX(object[] p, string s, string a, int i)
+        {
         }
 
         public static async Task ATest()

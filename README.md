@@ -1,6 +1,7 @@
 # DotNetCoreProfiler
 
 TODO
+ - See Sample/SampleInternal il
  - load once into appdomain
  - cache jit compilations
  - do not wrap the wrapper

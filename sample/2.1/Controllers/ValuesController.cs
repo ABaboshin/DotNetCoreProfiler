@@ -27,15 +27,15 @@ namespace SampleApp.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<string>>> Get()
         {
-            var test = new TestC();
-            var type = test.GetType();
-            var method = type.GetMethod("Test");
+            //var test = new TestC();
+            //var type = test.GetType();
+            //var method = type.GetMethod("Test");
             
 
             await Program.ATest();
-            await test.Test1Async();
-            var res = await test.Test2Async();
-            Console.WriteLine(res);
+            //await test.Test1Async();
+            //var res = await test.Test2Async();
+            //Console.WriteLine(res);
             return Ok(AppDomain.CurrentDomain.GetAssemblies().Select(a => a.FullName));
         }
 
