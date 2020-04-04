@@ -102,7 +102,6 @@
     <ClInclude Include="ComPtr.h" />
     <ClInclude Include="CorProfiler.h" />
     <ClInclude Include="FunctionInfo.h" />
-    <ClInclude Include="WrapperAssembly.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="ILRewriter.h" />
     <ClInclude Include="ILRewriterHelper.h" />

@@ -12,7 +12,6 @@
 #include "util.h"
 #include "types.h"
 #include "ComPtr.h"
-#include "WrapperAssembly.h"
 
 
 #undef IfFailRet
@@ -142,8 +141,6 @@ static int k_rgnStackPushes[] = {
 #undef VarPush
 #undef OPDEF
 };
-
-void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef, WSTRING assemblyName);
 
 class ILRewriter
 {
@@ -770,38 +767,38 @@ HRESULT LoadAssemblyBefore(
     ModuleID moduleID,
     mdMethodDef methodDef,
     FunctionID functionId,
-    std::vector<WrapperAssembly> wrapperAssemblies,
+    std::vector<WSTRING> assemblies,
     ULONG32 methodSignature)
 {
     std::cout << "LoadAssemblyBefore" << std::endl;
-    HRESULT hres;
+    HRESULT hr;
     ILRewriter rewriter(pICorProfilerInfo, pICorProfilerFunctionControl, moduleID, methodDef);
 
     IfFailRet(rewriter.Import());
 
     ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
 
-    for (const auto& wrapperAssembly : wrapperAssemblies)
+    for (const auto& assemblyPath : assemblies)
     {
         mdString aPath;
-        hres = pMetadataEmit->DefineUserString(wrapperAssembly.WrapperAssemblyPath.c_str(), (ULONG)wrapperAssembly.WrapperAssemblyPath.length(),
+        hr = pMetadataEmit->DefineUserString(assemblyPath.c_str(), (ULONG)assemblyPath.length(),
             &aPath);
 
         ULONG string_len = 0;
         WCHAR string_contents[kNameMaxSize]{};
-        hres = pMetadataImport->GetUserString(aPath, string_contents,
+        hr = pMetadataImport->GetUserString(aPath, string_contents,
             kNameMaxSize, &string_len);
-        IfFailRet(hres);
+        IfFailRet(hr);
 
 
         // define mscorlib.dll
         mdModuleRef mscorlibRef;
-        GetMsCorLibRef(hres, pMetadataAssemblyEmit, mscorlibRef);
-        IfFailRet(hres);
+        GetMsCorLibRef(hr, pMetadataAssemblyEmit, mscorlibRef);
+        IfFailRet(hr);
 
         // define type System.Reflection.Assembly
         mdTypeRef assemblyTypeRef;
-        hres = pMetadataEmit->DefineTypeRefByName(
+        hr = pMetadataEmit->DefineTypeRefByName(
             mscorlibRef,
             "System.Reflection.Assembly"_W.data(),
             &assemblyTypeRef);
@@ -819,7 +816,7 @@ HRESULT LoadAssemblyBefore(
 
         // define method System.Reflection.Assembly.LoadFrom
         mdMemberRef assemblyLoadMemberRef;
-        hres = pMetadataEmit->DefineMemberRef(
+        hr = pMetadataEmit->DefineMemberRef(
             assemblyTypeRef,
             "LoadFrom"_W.data(),
             assemblyLoadSig,
@@ -828,9 +825,9 @@ HRESULT LoadAssemblyBefore(
 
         // define path to a .net dll 
         mdString profilerTraceDllNameTextToken;
-        hres = pMetadataEmit->DefineUserString(wrapperAssembly.WrapperAssemblyPath.data(), (ULONG)wrapperAssembly.WrapperAssemblyPath.length(), &profilerTraceDllNameTextToken);
+        hr = pMetadataEmit->DefineUserString(assemblyPath.data(), (ULONG)assemblyPath.length(), &profilerTraceDllNameTextToken);
 
-        std::cout << "LoadAssemblyBefore " << ToString(wrapperAssembly.WrapperAssemblyPath) << std::endl;
+        std::cout << "LoadAssemblyBefore " << ToString(assemblyPath) << std::endl;
 
         // load path
         ILInstr* pNewInstr = rewriter.NewILInstr();
@@ -848,51 +845,6 @@ HRESULT LoadAssemblyBefore(
         pNewInstr = rewriter.NewILInstr();
         pNewInstr->m_opcode = CEE_POP;
         rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-        // define wrapper.dll
-        mdModuleRef wrapperRef;
-        GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, wrapperAssembly.WrapperAssemblyName);
-        IfFailRet(hres);
-
-        std::cout << ToString(wrapperAssembly.WrapperAssemblyName) << " " << wrapperRef << std::endl;
-
-        // define configure type
-        mdTypeRef configurationTypeRef;
-        hres = pMetadataEmit->DefineTypeRefByName(
-            wrapperRef,
-            "Configuration"_W.data(),
-            &configurationTypeRef);
-        IfFailRet(hres);
-
-        std::cout << "Configuration" << " " << configurationTypeRef << std::endl;
-
-        // method
-        BYTE methodSig[] = {
-            IMAGE_CEE_CS_CALLCONV_DEFAULT,
-            0, // argument count
-            ELEMENT_TYPE_VOID,
-        };
-
-        mdMemberRef configureMethodRef;
-        hres = pMetadataEmit->DefineMemberRef(
-            configurationTypeRef,
-            "Configure"_W.data(),
-            methodSig,
-            sizeof(methodSig),
-            &configureMethodRef);
-
-        // call counter
-        pNewInstr = rewriter.NewILInstr();
-        pNewInstr->m_opcode = CEE_CALL;
-        pNewInstr->m_Arg32 = configureMethodRef;
-        rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-        // clean stack
-        pNewInstr = rewriter.NewILInstr();
-        pNewInstr->m_opcode = CEE_NOP;
-        rewriter.InsertBefore(pFirstInstr, pNewInstr);
-
-        std::cout << "Configure" << " " << configureMethodRef << std::endl;
     }
 
     IfFailRet(rewriter.Export(false));
