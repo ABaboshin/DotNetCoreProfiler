@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <iostream>
+#include <regex>
 #include <string>
 #include "CorProfiler.h"
 #include "corhlpr.h"
@@ -183,7 +184,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     IfFailRet(this->corProfilerInfo->GetFunctionInfo(functionId, &classId, &moduleId, &functionToken));
 
-    ModuleInfo moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
+    auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
 
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
@@ -205,8 +206,10 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hres = functionInfo.signature.TryParse();
     IfFailRet(hres);
 
+    // load once into appdomain
     if (loadedIntoAppDomains.find(moduleInfo.assembly.app_domain_id) == loadedIntoAppDomains.end())
     {
+        // if the current call is not a call to one of skipped assemblies
         if (SkipAssembly(moduleInfo.assembly.name))
         {
             return S_OK;
@@ -241,8 +244,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             enterLeaveMethodSignatureToken);
     }
 
-    return S_OK;
-    //return Rewrite(moduleId, functionToken);
+    return Rewrite(moduleId, functionToken);
 }
 
 bool CorProfiler::SkipAssembly(const WSTRING& name)
@@ -270,7 +272,11 @@ bool CorProfiler::SkipAssembly(const WSTRING& name)
       "Microsoft.AspNetCore.Mvc.RazorPages"_W,
       "Microsoft.CSharp"_W,
       "Anonymously Hosted DynamicMethods Assembly"_W,
-      "ISymWrapper"_W };
+      "ISymWrapper"_W,
+      "Wrapper"_W,
+      "StatsdClient"_W,
+      "Newtonsoft.Json"_W
+    };
 
     return std::find(skipAssemblies.begin(), skipAssemblies.end(), name) != skipAssemblies.end();
 }
@@ -294,9 +300,117 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
     auto functionInfo = GetFunctionInfo(pMetadataImport, callerToken);
     hres = functionInfo.signature.TryParse();
 
-    std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
-        << " num args " << functionInfo.signature.NumberOfArguments()
-        << std::endl << std::flush;
+    auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
+
+    for (const auto& interception : interceptions)
+    {
+        if (std::regex_match(ToString(moduleInfo.assembly.name), std::regex(ToString(interception.AssemblyName))) && !SkipAssembly(moduleInfo.assembly.name))
+        {
+            if (std::regex_match(ToString(functionInfo.type.name), std::regex(ToString(interception.TypeName))))
+            {
+                if (std::regex_match(ToString(functionInfo.name), std::regex(ToString(interception.MethodName))))
+                {
+                    if (interception.isCounter)
+                    {
+                        std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+                            << " num args " << functionInfo.signature.NumberOfArguments()
+                            << " from assembly " << ToString(moduleInfo.assembly.name)
+                            << std::endl << std::flush;
+                        return InsertCounter(moduleId, callerToken, interception);
+                    }
+                }
+            }
+        }
+    }
+
+    return S_OK;
+}
+
+HRESULT CorProfiler::InsertCounter(const ModuleID& moduleId, const mdToken& callerToken, const Interception& interception)
+{
+    HRESULT hres = 0;
+
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+
+    const auto pMetadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+
+    const auto pMetadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+    const auto pMetadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+
+    auto functionInfo = GetFunctionInfo(pMetadataImport, callerToken);
+    hres = functionInfo.signature.TryParse();
+
+    auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
+
+    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
+    IfFailRet(rewriter.Import());
+
+    ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
+
+    // define wrapper.dll
+    mdModuleRef wrapperRef;
+    GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, interception.WrapperAssemblyName);
+    IfFailRet(hres);
+
+    //std::cout << ToString(interception.WrapperAssemblyName) << " " << wrapperRef << std::endl;
+
+    // define wrappedType
+    mdTypeRef wrapperTypeRef;
+    hres = pMetadataEmit->DefineTypeRefByName(
+        wrapperRef,
+        interception.WrapperTypeName.data(),
+        &wrapperTypeRef);
+    IfFailRet(hres);
+
+    //std::cout << ToString(interception.WrapperTypeName) << " " << wrapperTypeRef << std::endl;
+
+    // method
+    BYTE Sig_void_String[] = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        1, // argument count
+        ELEMENT_TYPE_VOID,
+        ELEMENT_TYPE_STRING,
+    };
+
+    mdMemberRef wapperMethodRef;
+    hres = pMetadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        interception.WrapperMethodName.data(),
+        Sig_void_String,
+        sizeof(Sig_void_String),
+        &wapperMethodRef);
+
+    //std::cout << ToString(interception.WrapperMethodName) << " " << wapperMethodRef << std::endl;
+
+    // define function full name
+    auto functionFullName = functionInfo.type.name + "."_W + functionInfo.name;
+
+    mdString aFuctionFullName;
+    hres = pMetadataEmit->DefineUserString(functionFullName.c_str(), (ULONG)functionFullName.length(),
+        &aFuctionFullName);
+
+    //std::cout << ToString(functionFullName) << " " << aFuctionFullName << std::endl;
+
+    // load function name
+    ILInstr* pNewInstr = rewriter.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDSTR;
+    pNewInstr->m_Arg32 = aFuctionFullName;
+    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+    // call counter
+    pNewInstr = rewriter.NewILInstr();
+    pNewInstr->m_opcode = CEE_CALL;
+    pNewInstr->m_Arg32 = wapperMethodRef;
+    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+    // clean stack
+    pNewInstr = rewriter.NewILInstr();
+    pNewInstr->m_opcode = CEE_NOP;
+    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+    IfFailRet(rewriter.Export(false));
 
     return S_OK;
 }

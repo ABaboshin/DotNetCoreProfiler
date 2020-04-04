@@ -25,8 +25,10 @@ private:
     ICorProfilerInfo8* corProfilerInfo;
     bool is_attached = false;
 
-    HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
     bool SkipAssembly(const WSTRING& name);
+
+    HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
+    HRESULT InsertCounter(const ModuleID& moduleId, const mdToken& callerToken, const Interception& interception);
 
 public:
     CorProfiler();

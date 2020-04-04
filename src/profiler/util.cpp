@@ -68,7 +68,7 @@ WSTRING operator"" _W(const char* arr, size_t size) {
   return ToWSTRING(str);
 }
 
-HRESULT CreateAssemblyRef(const ComPtr< IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, std::vector<BYTE> public_key, ASSEMBLYMETADATA metadata, WSTRING assemblyName) {
+HRESULT CreateAssemblyRef(const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, std::vector<BYTE> public_key, ASSEMBLYMETADATA metadata, WSTRING assemblyName) {
     HRESULT hr = pMetadataAssemblyEmit->DefineAssemblyRef(
         (void*)public_key.data(),
         (ULONG)public_key.size(),

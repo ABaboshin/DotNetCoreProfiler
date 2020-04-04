@@ -1,13 +1,12 @@
 # DotNetCoreProfiler
 
 TODO
+ - Configure once on load
+ - Write some wrapper methods
  - See Sample/SampleInternal il
- - load once into appdomain
  - cache jit compilations
- - do not wrap the wrapper
  - Call wrapped method using emit
  - Extract IWrapper
- - use json config
  - update native build tools
  - json log
  - refactor

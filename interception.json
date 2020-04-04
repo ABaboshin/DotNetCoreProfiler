@@ -1,8 +1,8 @@
 [
   {
-    "AssemblyName": "Microsoft.AspNetCore.Mvc.Core",
-    "TypeName": "*",
-    "MethodName": "*",
+    "AssemblyName": "Microsoft.AspNetCore.Mvc.CoreIgnore",
+    "TypeName": ".*",
+    "MethodName": ".*",
     "isCounter": true,
     "WrapperAssemblyName": "Wrapper",
     "WrapperAssemblyPath": "/profiler/Wrapper.dll",
@@ -11,8 +11,8 @@
   },
   {
     "AssemblyName": "SampleApp",
-    "TypeName": "*",
-    "MethodName": "*",
+    "TypeName": ".*",
+    "MethodName": ".*",
     "isCounter": true,
     "WrapperAssemblyName": "Wrapper",
     "WrapperAssemblyPath": "/profiler/Wrapper.dll",

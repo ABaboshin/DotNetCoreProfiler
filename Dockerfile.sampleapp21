@@ -13,7 +13,7 @@ COPY --from=build /app /app
 RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
 COPY --from=profiler /interception.json /profiler
-COPY --from=wrapper /wrapper/*.dll /profiler
+COPY --from=wrapper /wrapper/*.dll /profiler/
 
 EXPOSE 80
 
