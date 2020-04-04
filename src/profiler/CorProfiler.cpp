@@ -205,22 +205,31 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hres = functionInfo.signature.TryParse();
     IfFailRet(hres);
 
-    // it's a hack, find a better way to figure out the entrypoint
-    // i.e. catch the first call in an AppDomain
     if (loadedIntoAppDomains.find(moduleInfo.assembly.app_domain_id) == loadedIntoAppDomains.end())
     {
+        if (SkipAssembly(moduleInfo.assembly.name))
+        {
+            return S_OK;
+        }
+
         loadedIntoAppDomains.insert(moduleInfo.assembly.app_domain_id);
 
-        std::cout << "Load into app_domain_id " << moduleInfo.assembly.app_domain_id << std::flush << std::endl;
+        std::cout << "Load into app_domain_id " << moduleInfo.assembly.app_domain_id 
 
-        std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+        << "Before call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
             << " num args " << functionInfo.signature.NumberOfArguments()
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
-        return S_OK;
+        std::vector<WSTRING> dlls;
+        std::for_each(interceptions.begin(), interceptions.end(), [&dlls](Interception i) { dlls.push_back(i.WrapperAssemblyPath); });
 
-        /*return LoadAssemblyBefore(this->corProfilerInfo,
+        std::vector<WSTRING> udlls;
+        std::copy_if(dlls.begin(), dlls.end(), std::back_inserter(udlls), [&udlls](WSTRING p) {
+            return std::find(udlls.begin(), udlls.end(), p) == udlls.end();
+        });
+
+        return LoadAssemblyBefore(this->corProfilerInfo,
             pMetadataImport,
             pMetadataEmit,
             pMetadataAssemblyEmit,
@@ -228,12 +237,42 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             moduleId,
             functionToken,
             functionId,
-            wrapperDllPath,
-            enterLeaveMethodSignatureToken);*/
+            udlls,
+            enterLeaveMethodSignatureToken);
     }
 
     return S_OK;
     //return Rewrite(moduleId, functionToken);
+}
+
+bool CorProfiler::SkipAssembly(const WSTRING& name)
+{
+    std::vector<WSTRING> skipAssemblies{
+      "mscorlib"_W,
+      "netstandard"_W,
+      "System.Core"_W,
+      "System.Runtime"_W,
+      "System.IO.FileSystem"_W,
+      "System.Collections"_W,
+      "System.Runtime.Extensions"_W,
+      "System.Threading.Tasks"_W,
+      "System.Runtime.InteropServices"_W,
+      "System.Runtime.InteropServices.RuntimeInformation"_W,
+      "System.ComponentModel"_W,
+      "System.Console"_W,
+      "System.Diagnostics.DiagnosticSource"_W,
+      "System.Private.CoreLib"_W,
+      "Microsoft.Extensions.Options"_W,
+      "Microsoft.Extensions.ObjectPool"_W,
+      "System.Configuration"_W,
+      "System.Xml.Linq"_W,
+      "Microsoft.AspNetCore.Razor.Language"_W,
+      "Microsoft.AspNetCore.Mvc.RazorPages"_W,
+      "Microsoft.CSharp"_W,
+      "Anonymously Hosted DynamicMethods Assembly"_W,
+      "ISymWrapper"_W };
+
+    return std::find(skipAssemblies.begin(), skipAssemblies.end(), name) != skipAssemblies.end();
 }
 
 HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToken)

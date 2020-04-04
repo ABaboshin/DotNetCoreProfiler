@@ -767,7 +767,7 @@ HRESULT LoadAssemblyBefore(
     ModuleID moduleID,
     mdMethodDef methodDef,
     FunctionID functionId,
-    WSTRING assemblyPath,
+    std::vector<WSTRING> assemblies,
     ULONG32 methodSignature)
 {
     std::cout << "LoadAssemblyBefore" << std::endl;
@@ -778,71 +778,74 @@ HRESULT LoadAssemblyBefore(
 
     ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
 
-    mdString aPath;
-    hr = pMetadataEmit->DefineUserString(assemblyPath.c_str(), (ULONG)assemblyPath.length(),
-        &aPath);
+    for (const auto& assemblyPath : assemblies)
+    {
+        mdString aPath;
+        hr = pMetadataEmit->DefineUserString(assemblyPath.c_str(), (ULONG)assemblyPath.length(),
+            &aPath);
 
-    ULONG string_len = 0;
-    WCHAR string_contents[kNameMaxSize]{};
-    hr = pMetadataImport->GetUserString(aPath, string_contents,
-        kNameMaxSize, &string_len);
-    IfFailRet(hr);
+        ULONG string_len = 0;
+        WCHAR string_contents[kNameMaxSize]{};
+        hr = pMetadataImport->GetUserString(aPath, string_contents,
+            kNameMaxSize, &string_len);
+        IfFailRet(hr);
 
-    
-    // define mscorlib.dll
-    mdModuleRef mscorlibRef;
-    GetMsCorLibRef(hr, pMetadataAssemblyEmit, mscorlibRef);
-    IfFailRet(hr);
 
-    // define type System.Reflection.Assembly
-    mdTypeRef assemblyTypeRef;
-    hr = pMetadataEmit->DefineTypeRefByName(
-        mscorlibRef,
-        "System.Reflection.Assembly"_W.data(),
-        &assemblyTypeRef);
+        // define mscorlib.dll
+        mdModuleRef mscorlibRef;
+        GetMsCorLibRef(hr, pMetadataAssemblyEmit, mscorlibRef);
+        IfFailRet(hr);
 
-    unsigned buffer;
-    auto size = CorSigCompressToken(assemblyTypeRef, &buffer);
-    auto* assemblyLoadSig = new COR_SIGNATURE[size + 4];
-    unsigned offset = 0;
-    assemblyLoadSig[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-    assemblyLoadSig[offset++] = 0x01;
-    assemblyLoadSig[offset++] = ELEMENT_TYPE_CLASS;
-    memcpy(&assemblyLoadSig[offset], &buffer, size);
-    offset += size;
-    assemblyLoadSig[offset] = ELEMENT_TYPE_STRING;
+        // define type System.Reflection.Assembly
+        mdTypeRef assemblyTypeRef;
+        hr = pMetadataEmit->DefineTypeRefByName(
+            mscorlibRef,
+            "System.Reflection.Assembly"_W.data(),
+            &assemblyTypeRef);
 
-    // define method System.Reflection.Assembly.LoadFrom
-    mdMemberRef assemblyLoadMemberRef;
-    hr = pMetadataEmit->DefineMemberRef(
-        assemblyTypeRef,
-        "LoadFrom"_W.data(),
-        assemblyLoadSig,
-        sizeof(assemblyLoadSig),
-        &assemblyLoadMemberRef);
+        unsigned buffer;
+        auto size = CorSigCompressToken(assemblyTypeRef, &buffer);
+        auto* assemblyLoadSig = new COR_SIGNATURE[size + 4];
+        unsigned offset = 0;
+        assemblyLoadSig[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
+        assemblyLoadSig[offset++] = 0x01;
+        assemblyLoadSig[offset++] = ELEMENT_TYPE_CLASS;
+        memcpy(&assemblyLoadSig[offset], &buffer, size);
+        offset += size;
+        assemblyLoadSig[offset] = ELEMENT_TYPE_STRING;
 
-    // define path to a .net dll 
-    mdString profilerTraceDllNameTextToken;
-    hr = pMetadataEmit->DefineUserString(assemblyPath.data(), (ULONG)assemblyPath.length(), &profilerTraceDllNameTextToken);
+        // define method System.Reflection.Assembly.LoadFrom
+        mdMemberRef assemblyLoadMemberRef;
+        hr = pMetadataEmit->DefineMemberRef(
+            assemblyTypeRef,
+            "LoadFrom"_W.data(),
+            assemblyLoadSig,
+            sizeof(assemblyLoadSig),
+            &assemblyLoadMemberRef);
 
-    std::cout << "LoadAssemblyBefore " << ToString(assemblyPath) << std::endl;
+        // define path to a .net dll 
+        mdString profilerTraceDllNameTextToken;
+        hr = pMetadataEmit->DefineUserString(assemblyPath.data(), (ULONG)assemblyPath.length(), &profilerTraceDllNameTextToken);
 
-    // load path
-    ILInstr* pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_LDSTR;
-    pNewInstr->m_Arg32 = profilerTraceDllNameTextToken;
-    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+        std::cout << "LoadAssemblyBefore " << ToString(assemblyPath) << std::endl;
 
-    // call System.Reflection.Assembly.LoadFrom
-    pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_CALL;
-    pNewInstr->m_Arg32 = assemblyLoadMemberRef;
-    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+        // load path
+        ILInstr* pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_LDSTR;
+        pNewInstr->m_Arg32 = profilerTraceDllNameTextToken;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);
 
-    // clean stack
-    pNewInstr = rewriter.NewILInstr();
-    pNewInstr->m_opcode = CEE_POP;
-    rewriter.InsertBefore(pFirstInstr, pNewInstr);
+        // call System.Reflection.Assembly.LoadFrom
+        pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_CALL;
+        pNewInstr->m_Arg32 = assemblyLoadMemberRef;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+        // clean stack
+        pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_POP;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);
+    }
 
     IfFailRet(rewriter.Export(false));
 

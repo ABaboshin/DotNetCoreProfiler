@@ -18,12 +18,15 @@ class CorProfiler : public ICorProfilerCallback8
 {
 private:
     std::atomic<int> refCount;
+    
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
+
     std::vector<Interception> interceptions;
     ICorProfilerInfo8* corProfilerInfo;
     bool is_attached = false;
 
     HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
+    bool SkipAssembly(const WSTRING& name);
 
 public:
     CorProfiler();
