@@ -1,0 +1,22 @@
+[
+  {
+    "AssemblyName": "Microsoft.AspNetCore.Mvc.Core",
+    "TypeName": "*",
+    "MethodName": "*",
+    "isCounter": true,
+    "WrapperAssemblyName": "Wrapper",
+    "WrapperAssemblyPath": "/profiler/Wrapper.dll",
+    "WrapperTypeName": "Wrapper.Counter",
+    "WrapperMethodName": "Count"
+  },
+  {
+    "AssemblyName": "SampleApp",
+    "TypeName": "*",
+    "MethodName": "*",
+    "isCounter": true,
+    "WrapperAssemblyName": "Wrapper",
+    "WrapperAssemblyPath": "/profiler/Wrapper.dll",
+    "WrapperTypeName": "Wrapper.Counter",
+    "WrapperMethodName": "Count"
+  }
+]

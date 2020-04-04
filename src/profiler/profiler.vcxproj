@@ -105,10 +105,12 @@
     <ClInclude Include="helpers.h" />
     <ClInclude Include="ILRewriter.h" />
     <ClInclude Include="ILRewriterHelper.h" />
+    <ClInclude Include="Interception.h" />
     <ClInclude Include="MethodSignature.h" />
     <ClInclude Include="miniutf.hpp" />
     <ClInclude Include="miniutfdata.h" />
     <ClInclude Include="ModuleInfo.h" />
+    <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="TypeInfo.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="util.h" />
@@ -118,6 +120,7 @@
     <ClCompile Include="CorProfiler.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="helpers.cpp" />
+    <ClCompile Include="Interception.cpp" />
     <ClCompile Include="MethodSignature.cpp" />
     <ClCompile Include="miniutf.cpp" />
     <ClCompile Include="util.cpp" />

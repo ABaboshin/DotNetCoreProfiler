@@ -12,6 +12,7 @@ FROM mcr.microsoft.com/dotnet/core/aspnet:2.1.15
 COPY --from=build /app /app
 RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
+COPY --from=profiler /interception.json /profiler
 COPY --from=wrapper /wrapper/*.dll /profiler
 
 EXPOSE 80
@@ -21,9 +22,6 @@ WORKDIR /app
 ENV CORECLR_ENABLE_PROFILING="1"
 ENV CORECLR_PROFILER="{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
 ENV CORECLR_PROFILER_PATH="/profiler/DotNetCoreProfiler.so"
-ENV PROFILER_ENABLEDMODULES="SampleApp,Wrapper"
-ENV PROFILER_WRAPPER_ASSEMBLY="Wrapper"
-ENV PROFILER_WRAPPER_DLL="/profiler/Wrapper.dll"
-ENV PROFILER_WRAPPER_TYPE="Wrapper.Wrapper"
+ENV PROFILER_CONFIGURATION="/profiler/interception.json"
 
 ENTRYPOINT ["dotnet", "SampleApp.dll"]

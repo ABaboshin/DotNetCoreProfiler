@@ -13,8 +13,6 @@
 #include "ComPtr.h"
 #include "ILRewriterHelper.h"
 
-CorProfiler* profiler = nullptr;
-
 static void STDMETHODCALLTYPE Enter(FunctionID functionId)
 {
     std::cout << "Enter " << functionId << std::endl;
@@ -61,21 +59,14 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
     is_attached = true;
-    profiler = this;
 
-    moduleNames = Split(GetEnvironmentValue("PROFILER_ENABLEDMODULES"_W), L',');
-    modules = std::vector<ModuleID>();
+    interceptions = LoadFromFile(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
 
-    for (auto&& module : moduleNames) {
-        std::cout << "found " << ToString(module) << std::endl;
+    std::cout << "Found interceptions " << interceptions.size() << std::endl;
+    for (size_t i = 0; i < interceptions.size(); i++)
+    {
+        std::cout << ToString(ToString(interceptions[i])) << std::endl;
     }
-
-    wrapperDllPath = GetEnvironmentValue("PROFILER_WRAPPER_DLL"_W);
-    wrapperType = GetEnvironmentValue("PROFILER_WRAPPER_TYPE"_W);
-    wrapperAssemblyName = GetEnvironmentValue("PROFILER_WRAPPER_ASSEMBLY"_W);
-
-    std::cout << "wrapperDll " << ToString(wrapperDllPath) << std::endl;
-    std::cout << "wrapperType " << ToString(wrapperType) << std::endl;
 
     return S_OK;
 }
@@ -193,11 +184,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     IfFailRet(this->corProfilerInfo->GetFunctionInfo(functionId, &classId, &moduleId, &functionToken));
 
     ModuleInfo moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
-    if (std::find(moduleNames.begin(), moduleNames.end(), moduleInfo.assembly.name) == moduleNames.end()) {
-        return S_OK;
-    }
-
-    //std::cout << "JITCompilationStarted " << functionId << std::endl;
 
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
@@ -221,11 +207,20 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     // it's a hack, find a better way to figure out the entrypoint
     // i.e. catch the first call in an AppDomain
-    if (ends_with(functionInfo.name, "Main"_W))
+    if (loadedIntoAppDomains.find(moduleInfo.assembly.app_domain_id) == loadedIntoAppDomains.end())
     {
-        std::cout << "ENTRYPOINT!!" << std::endl;
+        loadedIntoAppDomains.insert(moduleInfo.assembly.app_domain_id);
 
-        return LoadAssemblyBefore(this->corProfilerInfo,
+        std::cout << "Load into app_domain_id " << moduleInfo.assembly.app_domain_id << std::flush << std::endl;
+
+        std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+            << " num args " << functionInfo.signature.NumberOfArguments()
+            << " from assembly " << ToString(moduleInfo.assembly.name)
+            << std::endl << std::flush;
+
+        return S_OK;
+
+        /*return LoadAssemblyBefore(this->corProfilerInfo,
             pMetadataImport,
             pMetadataEmit,
             pMetadataAssemblyEmit,
@@ -234,10 +229,11 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             functionToken,
             functionId,
             wrapperDllPath,
-            enterLeaveMethodSignatureToken);
+            enterLeaveMethodSignatureToken);*/
     }
 
-    return Rewrite(moduleId, functionToken);
+    return S_OK;
+    //return Rewrite(moduleId, functionToken);
 }
 
 HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToken)
@@ -246,8 +242,6 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
     ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
     IfFailRet(rewriter.Import());
-
-    ILRewriterHelper reWriterWrapper(&rewriter);
 
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
@@ -258,193 +252,12 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
     const auto pMetadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
-    // for each IL instruction
-    for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
-        pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext)
-    {
-        // only CALL or CALLVIRT
-        if (pInstr->m_opcode != CEE_CALL && pInstr->m_opcode != CEE_CALLVIRT) {
-            continue;
-        }
+    auto functionInfo = GetFunctionInfo(pMetadataImport, callerToken);
+    hres = functionInfo.signature.TryParse();
 
-        auto functionToken = pInstr->m_Arg32;
-        auto functionInfo = GetFunctionInfo(pMetadataImport, functionToken);
-        hres = functionInfo.signature.TryParse();
-        if ((functionInfo.name == "Test"_W
-            || functionInfo.name == "ATest"_W
-            || functionInfo.name == "Test1Async"_W
-            || functionInfo.name == "Test2Async"_W
-            || functionInfo.name == "TestVoid"_W
-            ) &&
-            (functionInfo.type.name == "SampleApp.Program"_W || functionInfo.type.name == "SampleApp.TestC"_W)) {
-            std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
-    << " num args " << functionInfo.signature.NumberOfArguments()
-    << std::endl << std::flush;
-
-            reWriterWrapper.SetILPosition(pInstr);
-
-            // define mscorlib.dll
-            mdModuleRef mscorlibRef;
-            GetMsCorLibRef(hres, pMetadataAssemblyEmit, mscorlibRef);
-
-            // define System.Object
-            mdTypeRef objectTypeRef;
-            hres = pMetadataEmit->DefineTypeRefByName(
-                mscorlibRef,
-                "System.Object"_W.data(),
-                &objectTypeRef);
-            IfFailRet(hres);
-
-            // define wrapper.dll
-            mdModuleRef wrapperRef;
-            GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, wrapperAssemblyName);
-            IfFailRet(hres);
-
-            // define type System.Console
-            mdTypeRef wrapperTypeRef;
-            hres = pMetadataEmit->DefineTypeRefByName(
-                wrapperRef,
-                wrapperType.data(),
-                &wrapperTypeRef);
-            IfFailRet(hres);
-
-            // rewrite
-            unsigned elementType;
-            auto retTypeFlags = functionInfo.signature.GetRet().GetTypeFlags(elementType);
-
-
-            auto isVoid = (retTypeFlags & TypeFlagVoid) > 0;
-            if (!isVoid)
-            {
-                std::cout << "NOT VOID " << elementType << std::endl;
-                continue;
-            }
-
-            //std::cout << elementType << std::endl;
-
-            auto argNum = functionInfo.signature.NumberOfArguments();
-
-            /*if (argNum != 0 || functionInfo.signature.IsInstanceMethod())
-            {
-                continue;
-            }*/
-
-            unsigned inc = 0;
-
-            if (functionInfo.signature.IsInstanceMethod())
-            {
-                inc++;
-                argNum++;
-            }
-
-            ILInstr* pNewInstr;
-
-            reWriterWrapper.Nop();
-            reWriterWrapper.CreateArray(objectTypeRef, argNum);
-            auto arguments = functionInfo.signature.GetMethodArguments();
-            for (unsigned i = 0; i < argNum; i++) {
-                std::cout << "load " << i << std::endl;
-                reWriterWrapper.BeginLoadValueIntoArray(i);
-                reWriterWrapper.LoadArgument(i);
-                if (inc == 0 || i != 0)
-                {
-                    auto argTypeFlags = arguments[i - inc].GetTypeFlags(elementType);
-                    if (argTypeFlags & TypeFlagByRef) {
-                        reWriterWrapper.LoadIND(elementType);
-                    }
-
-                    if (argTypeFlags & TypeFlagBoxedType) {
-                        auto tok = arguments[i - inc].GetTypeTok(pMetadataEmit, mscorlibRef);
-                        if (tok == mdTokenNil) {
-                            return S_OK;
-                        }
-
-                        reWriterWrapper.Box(tok);
-                    }
-                }
-
-                reWriterWrapper.EndLoadValueIntoArray();
-            }
-
-            {
-                mdString typeNameToken;
-                auto typeName = functionInfo.type.name;
-                hres = pMetadataEmit->DefineUserString(typeName.data(), (ULONG)typeName.length(), &typeNameToken);
-
-                pNewInstr = rewriter.NewILInstr();
-                pNewInstr->m_opcode = CEE_LDSTR;
-                pNewInstr->m_Arg32 = typeNameToken;
-                rewriter.InsertBefore(pInstr, pNewInstr);
-            }
-
-            {
-                mdString functionNameToken;
-                auto functionName = functionInfo.name;
-                hres = pMetadataEmit->DefineUserString(functionName.data(), (ULONG)functionName.length(), &functionNameToken);
-
-                pNewInstr = rewriter.NewILInstr();
-                pNewInstr->m_opcode = CEE_LDSTR;
-                pNewInstr->m_Arg32 = functionNameToken;
-                rewriter.InsertBefore(pInstr, pNewInstr);
-            }
-
-            reWriterWrapper.LoadInt32(functionToken);
-
-            // method
-            mdMethodDef testRef;
-
-            if (isVoid)
-            {
-                std::cout << "VOID" << std::endl;
-                BYTE Sig_void_String[] = {
-                    IMAGE_CEE_CS_CALLCONV_DEFAULT,
-                    4, // argument count
-                    ELEMENT_TYPE_VOID,
-                    ELEMENT_TYPE_SZARRAY,
-                    ELEMENT_TYPE_OBJECT,
-                    ELEMENT_TYPE_STRING,
-                    ELEMENT_TYPE_STRING,
-                    ELEMENT_TYPE_I4,
-                };
-
-                hres = pMetadataEmit->DefineMemberRef(
-                    wrapperTypeRef,
-                    "TestVoid"_W.data(),
-                    Sig_void_String, sizeof(Sig_void_String),
-                    &testRef);
-                IfFailRet(hres);
-            }
-            else
-            {
-                BYTE Sig_void_String[] = {
-                    IMAGE_CEE_CS_CALLCONV_DEFAULT,
-                    4, // argument count
-                    ELEMENT_TYPE_OBJECT,
-                    ELEMENT_TYPE_SZARRAY,
-                    ELEMENT_TYPE_OBJECT,
-                    ELEMENT_TYPE_STRING,
-                    ELEMENT_TYPE_STRING,
-                    ELEMENT_TYPE_I4,
-                };
-
-                hres = pMetadataEmit->DefineMemberRef(
-                    wrapperTypeRef,
-                    "TestRet"_W.data(),
-                    Sig_void_String, sizeof(Sig_void_String),
-                    &testRef);
-                IfFailRet(hres);
-            }
-
-            pNewInstr = rewriter.NewILInstr();
-            pNewInstr->m_opcode = CEE_CALL;
-            pNewInstr->m_Arg32 = testRef;
-            rewriter.InsertBefore(pInstr, pNewInstr);
-
-            //pInstr->m_opcode = CEE_NOP;
-        }
-    }
-
-    IfFailRet(rewriter.Export(false));
+    std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+        << " num args " << functionInfo.signature.NumberOfArguments()
+        << std::endl << std::flush;
 
     return S_OK;
 }

@@ -6,23 +6,23 @@
 #include <atomic>
 #include <mutex>
 #include <vector>
+#include <unordered_set>
 #include "cor.h"
 #include "corprof.h"
 #include "types.h"
 #include "FunctionInfo.h"
 #include "ModuleInfo.h"
+#include "Interception.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
 private:
     std::atomic<int> refCount;
+    std::unordered_set<AppDomainID> loadedIntoAppDomains;
+    std::vector<Interception> interceptions;
     ICorProfilerInfo8* corProfilerInfo;
     bool is_attached = false;
-    std::vector<WSTRING> moduleNames;
-    std::vector<ModuleID> modules;
-    WSTRING wrapperDllPath;
-    WSTRING wrapperAssemblyName;
-    WSTRING wrapperType;
+
     HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
 
 public:
@@ -161,4 +161,3 @@ public:
 
 };
 
-extern CorProfiler* profiler;

@@ -1,67 +1,129 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
-using System.Reflection;
 using System.Threading.Tasks;
+using MassTransit;
 using Microsoft.AspNetCore.Mvc;
+using SampleApp.Database;
+using SampleApp.Database.Entities;
+using SampleApp.MessageBus;
 
 namespace SampleApp.Controllers
 {
+    /// <summary>
+    /// demo controller
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class ValuesController : ControllerBase
     {
-        //public ValuesController()
-        //{
-        //    try
-        //    {
+        private readonly IBusControl _busControl;
+        private readonly MyDbContext _myDbContext;
 
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        Console.WriteLine(ex);
-        //    }
-        //}
-
-        // GET api/values
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<string>>> Get()
+        public ValuesController(IBusControl busControl, MyDbContext myDbContext)
         {
-            //var test = new TestC();
-            //var type = test.GetType();
-            //var method = type.GetMethod("Test");
-            
-
-            await Program.ATest();
-            //await test.Test1Async();
-            //var res = await test.Test2Async();
-            //Console.WriteLine(res);
-            return Ok(AppDomain.CurrentDomain.GetAssemblies().Select(a => a.FullName));
+            _busControl = busControl;
+            _myDbContext = myDbContext;
         }
 
-        //// GET api/values/5
-        //[HttpGet("{id}")]
-        //public ActionResult<string> Get(int id)
-        //{
-        //    return "value";
-        //}
 
-        //// POST api/values
-        //[HttpPost]
-        //public void Post([FromBody] string value)
-        //{
-        //}
+        /// <summary>
+        /// executes an 'ok' sql query
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public ActionResult<IEnumerable<MyEntity>> Get()
+        {
+            var x = 0;
+            return _myDbContext.MyEntities.Where(e => e.Id > x).ToList();
+        }
 
-        //// PUT api/values/5
-        //[HttpPut("{id}")]
-        //public void Put(int id, [FromBody] string value)
-        //{
-        //}
+        /// <summary>
+        /// executes a bad sql query
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("bad")]
+        public ActionResult<IEnumerable<BadEntity>> Bad()   
+        {
+            try
+            {
+                return _myDbContext.BadEntities;
+            }
+            catch (Exception)
+            {
+                return Ok();
+            }
+        }
 
-        //// DELETE api/values/5
-        //[HttpDelete("{id}")]
-        //public void Delete(int id)
-        //{
-        //}
+        /// <summary>
+        /// publish a message with masstransit
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("publish")]
+        public async Task<ActionResult<string>> Publish(int id)
+        {
+            await _busControl.Publish(new MyMessage { Id = id });
+            return Ok();
+        }
+
+        /// <summary>
+        /// produces an http exception
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("exception")]
+        public ActionResult<string> Exception()
+        {
+            throw new NotImplementedException();
+        }
+
+        /// <summary>
+        /// healthcheck
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("hc")]
+        public ActionResult<string> HealthCheck()
+        {
+            var dl = new DiagnosticListener("HealthChecks");
+            dl.Write("healthcheck", new Dictionary<string, bool>
+            {
+                {"dep1", true },
+                {"dep2", false }
+            });
+            return Ok();
+        }
+
+        /// <summary>
+        /// track successfull execution
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("trackok")]
+        public async Task<ActionResult<string>> TrackOk()
+        {
+            await Task.Delay(1000);
+
+            return Ok();
+        }
+
+        /// <summary>
+        /// track successfull execution
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet("trackexception")]
+        public async Task<ActionResult<string>> TrackException()
+        {
+            await Task.Delay(1000);
+
+            try
+            {
+                throw new NotImplementedByDesignException();
+            }
+            catch (Exception exception)
+            {
+            }
+
+            return Ok();
+        }
     }
 }

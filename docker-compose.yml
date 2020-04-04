@@ -1,0 +1,70 @@
+version: '3.3'
+
+services:
+  statsd:
+    image: prom/statsd-exporter:v0.12.2
+    ports:
+      - "9102:9102"
+      - "9125:9125/udp"
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "passwoyourStrong(!)Passwordrd"
+    ports:
+      - "1433:1433"
+  rabbitmq:
+    image: rabbitmq:3.8.1-management
+    environment:
+      RABBITMQ_DEFAULT_USER: "admin"
+      RABBITMQ_DEFAULT_PASS: "password"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+  sampleapp:
+    image: sampleapp:21
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ASPNETCORE_ENVIRONMENT: Development
+      STATSD__PORT: "9125"
+      STATSD__SERVER: "statsd"
+      customtracking_metrics__enabled: "true"
+      customtracking_metrics__name: "samplecustomtracking"
+      entityframeworkcore_metrics__enabled: "true"
+      entityframeworkcore_metrics__name: "sampleef"
+      healthcheck_metrics__enabled: "true"
+      healthcheck_metrics__name: "samplehc"
+      http_metrics__enabled: "true"
+      http_metrics__name: "samplehttp"
+      masstransit_metrics__enabled: "true"
+      masstransit_metrics__name: "samplemasstransit"
+      service__name: "sampleapp"
+      DATABASE__CONNECTIONSTRING: "Server=sqlserver;Database=mydb;User Id=sa;Password=passwoyourStrong(!)Passwordrd;"
+      RABBITMQ__HOST: "rabbitmq"
+      RABBITMQ__USER: "admin"
+      RABBITMQ__PASSWORD: "password"
+    ports:
+      - "5000:5000"
+  prometheus:
+    image: prometheus:local
+    environment:
+      ENV: "local"
+      SERVICES: "sampleapp"
+    ports:
+      - "9090:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=2d'
+      - '--query.lookback-delta=1m'
+  grafana:
+    image: grafana:local
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+    ports:
+      - "3000:3000"
