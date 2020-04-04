@@ -13,6 +13,7 @@
 #include "util.h"
 #include "ComPtr.h"
 #include "ILRewriterHelper.h"
+#include "WrapperAssembly.h"
 
 static void STDMETHODCALLTYPE Enter(FunctionID functionId)
 {
@@ -224,11 +225,11 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
-        std::vector<WSTRING> dlls;
-        std::for_each(interceptions.begin(), interceptions.end(), [&dlls](Interception i) { dlls.push_back(i.WrapperAssemblyPath); });
+        std::vector<WrapperAssembly> dlls;
+        std::for_each(interceptions.begin(), interceptions.end(), [&dlls](Interception i) { dlls.push_back({ i.WrapperAssemblyPath , i.WrapperAssemblyName }); });
 
-        std::vector<WSTRING> udlls;
-        std::copy_if(dlls.begin(), dlls.end(), std::back_inserter(udlls), [&udlls](WSTRING p) {
+        std::vector<WrapperAssembly> udlls;
+        std::copy_if(dlls.begin(), dlls.end(), std::back_inserter(udlls), [&udlls](WrapperAssembly p) {
             return std::find(udlls.begin(), udlls.end(), p) == udlls.end();
         });
 
@@ -367,7 +368,7 @@ HRESULT CorProfiler::InsertCounter(const ModuleID& moduleId, const mdToken& call
     //std::cout << ToString(interception.WrapperTypeName) << " " << wrapperTypeRef << std::endl;
 
     // method
-    BYTE Sig_void_String[] = {
+    BYTE methodSig[] = {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
         1, // argument count
         ELEMENT_TYPE_VOID,
@@ -378,8 +379,8 @@ HRESULT CorProfiler::InsertCounter(const ModuleID& moduleId, const mdToken& call
     hres = pMetadataEmit->DefineMemberRef(
         wrapperTypeRef,
         interception.WrapperMethodName.data(),
-        Sig_void_String,
-        sizeof(Sig_void_String),
+        methodSig,
+        sizeof(methodSig),
         &wapperMethodRef);
 
     //std::cout << ToString(interception.WrapperMethodName) << " " << wapperMethodRef << std::endl;
