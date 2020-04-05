@@ -53,6 +53,15 @@ public:
     bool IsInstanceMethod() const {
         return (CallingConvention() & IMAGE_CEE_CS_CALLCONV_HASTHIS) != 0;
     }
+
+    std::vector<BYTE> GetSignatureByteRepresentation() {
+        std::vector<BYTE> signature_data(len);
+        for (ULONG i = 0; i < len; i++) {
+            signature_data[i] = pbBase[i];
+        }
+
+        return signature_data;
+    }
 };
 
 bool ParseType(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd);

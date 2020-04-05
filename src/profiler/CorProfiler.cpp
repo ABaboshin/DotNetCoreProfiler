@@ -149,7 +149,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     modules[moduleId] = module_version_id;
 
-    std::cout << "ModuleLoadFinished " << moduleId << " " << module_version_id << std::endl;
+    //std::cout << "ModuleLoadFinished " << moduleId << " " << module_version_id << std::endl;
 
     return S_OK;
 }
@@ -321,7 +321,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
     auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
 
-    for (const auto& interception : interceptions)
+    /*for (const auto& interception : interceptions)
     {
         if (std::regex_match(ToString(moduleInfo.assembly.name), std::regex(ToString(interception.AssemblyName))) && !SkipAssembly(moduleInfo.assembly.name))
         {
@@ -343,7 +343,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                 }
             }
         }
-    }
+    }*/
 
     for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
         pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext) {
@@ -353,22 +353,138 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
         auto target =
             GetFunctionInfo(pMetadataImport, pInstr->m_Arg32);
+        target.signature.TryParse();
+
+        auto targetMdToken = pInstr->m_Arg32;
+
+        //auto prefix = "SampleApp"_W;
+        //if (target.name.substr(0, prefix.size()) == prefix)
+        //{
+        //    std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
+        //        << " num args " << target.signature.NumberOfArguments()
+        //        << " from assembly " << ToString(moduleInfo.assembly.name)
+        //        << std::endl << std::flush;
+        //}
+
+        //std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
+        //    << " num args " << target.signature.NumberOfArguments()
+        //    << " from assembly " << ToString(moduleInfo.assembly.name)
+        //    << std::endl << std::flush;
 
         for (const auto& interception : interceptions)
         {
             if (std::regex_match(ToString(moduleInfo.assembly.name), std::regex(ToString(interception.AssemblyName))) && !SkipAssembly(moduleInfo.assembly.name))
             {
-                if (std::regex_match(ToString(functionInfo.type.name), std::regex(ToString(interception.TypeName))))
+                if (std::regex_match(ToString(target.type.name), std::regex(ToString(interception.TypeName))))
                 {
-                    if (std::regex_match(ToString(functionInfo.name), std::regex(ToString(interception.MethodName))))
+                    if (std::regex_match(ToString(target.name), std::regex(ToString(interception.MethodName))))
                     {
-                        if (interception.isCounter)
+                        if (!interception.isCounter)
                         {
-                            std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
-                                << " num args " << functionInfo.signature.NumberOfArguments()
+                            auto m = modules[moduleId];
+
+                            std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
+                                << " num args " << target.signature.NumberOfArguments()
                                 << " from assembly " << ToString(moduleInfo.assembly.name)
+                                << " module " << m
                                 << std::endl << std::flush;
-                            return InsertCounter(moduleId, callerToken, interception);
+                            auto signature = target.signature.GetSignatureByteRepresentation();
+                            //std::cout << signature << std::endl;
+
+                            // define wrapper.dll
+                            mdModuleRef wrapperRef;
+                            GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, interception.WrapperAssemblyName);
+                            IfFailRet(hres);
+
+                            std::cout << ToString(interception.WrapperAssemblyName) << " " << wrapperRef << std::endl;
+
+                            // define wrappedType
+                            mdTypeRef wrapperTypeRef;
+                            hres = pMetadataEmit->DefineTypeRefByName(
+                                wrapperRef,
+                                interception.WrapperTypeName.data(),
+                                &wrapperTypeRef);
+                            IfFailRet(hres);
+
+                            std::cout << ToString(interception.WrapperTypeName) << " " << wrapperTypeRef << std::endl;
+
+                            // method
+                            //BYTE Sig_void_String[] = {
+                            //    IMAGE_CEE_CS_CALLCONV_DEFAULT,
+                            //    3, // argument count
+                            //    ELEMENT_TYPE_VOID,
+                            //    ELEMENT_TYPE_STRING,
+                            //    ELEMENT_TYPE_I4,
+                            //    ELEMENT_TYPE_I8
+                            //};
+                            /*std::cout << "old" << std::endl;
+                            for (size_t i = 0; i < signature.size(); i++)
+                            {
+                                std::cout << (int)signature[i] << std::endl;
+                            }*/
+                            signature[0] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
+                            signature[1] += 4;
+                            if (target.signature.IsInstanceMethod())
+                            {
+                                signature.insert(signature.begin() + 3, ELEMENT_TYPE_OBJECT);
+                            }
+                            //signature.push_back(ELEMENT_TYPE_OBJECT);
+                            signature.push_back(ELEMENT_TYPE_STRING);
+                            signature.push_back(ELEMENT_TYPE_I4);
+                            signature.push_back(ELEMENT_TYPE_I8);
+
+                            /*std::cout << "new" << std::endl;
+                            for (size_t i = 0; i < signature.size(); i++)
+                            {
+                                std::cout << (int)signature[i] << std::endl;
+                            }*/
+
+                            mdMemberRef wapperMethodRef;
+                            hres = pMetadataEmit->DefineMemberRef(
+                                wrapperTypeRef,
+                                interception.WrapperMethodName.data(),
+                                signature.data(),
+                                signature.size(),
+                                &wapperMethodRef);
+
+                            std::cout << ToString(interception.WrapperMethodName) << " " << wapperMethodRef << std::endl;
+
+                            // define function full name
+                            auto functionFullName = target.type.name + "."_W + target.name;
+
+                            mdString aFuctionFullName;
+                            hres = pMetadataEmit->DefineUserString(functionFullName.c_str(), (ULONG)functionFullName.length(),
+                                &aFuctionFullName);
+
+                            //std::cout << ToString(functionFullName) << " " << aFuctionFullName << std::endl;
+
+                            // load function name
+                            ILInstr* pNewInstr = rewriter.NewILInstr();
+                            pNewInstr->m_opcode = CEE_LDSTR;
+                            pNewInstr->m_Arg32 = aFuctionFullName;
+                            rewriter.InsertBefore(pInstr, pNewInstr);
+
+                            ILRewriterHelper helper(&rewriter);
+                            helper.SetILPosition(pInstr);
+                            helper.LoadInt32(targetMdToken);
+
+                            const void* module_version_id_ptr = &modules[moduleId];
+
+                            helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
+
+                            // call wrapper
+                            pNewInstr = rewriter.NewILInstr();
+                            pNewInstr->m_opcode = CEE_CALL;
+                            pNewInstr->m_Arg32 = wapperMethodRef;
+                            rewriter.InsertBefore(pInstr, pNewInstr);
+
+                            pInstr->m_opcode = CEE_NOP;
+                            
+                            IfFailRet(rewriter.Export(false));
+
+                            return S_OK;
+
+                            //return InsertCounter(moduleId, callerToken, interception);
                         }
                     }
                 }

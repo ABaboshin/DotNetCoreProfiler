@@ -35,6 +35,12 @@ inline bool ends_with(WSTRING const& value, WSTRING const& ending)
     return std::equal(ending.rbegin(), ending.rend(), value.rbegin());
 }
 
+//inline bool starts_with(WSTRING const& value, WSTRING const& ending)
+//{
+//    if (ending.size() > value.size()) return false;
+//    return std::equal(ending.begin(), ending.end(), value.begin());
+//}
+
 template<class T>
 T base_name(T const& path, T const& delims)
 {
@@ -52,3 +58,5 @@ HRESULT CreateAssemblyRef(const ComPtr< IMetaDataAssemblyEmit> pMetadataAssembly
 WSTRING HexStr(const unsigned char* data, int len);
 
 std::ostream& operator<<(std::ostream& os, REFGUID guid);
+
+std::ostream& operator<<(std::ostream& os, std::vector<BYTE> vec);

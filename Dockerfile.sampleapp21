@@ -1,6 +1,7 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
 
 COPY sample/2.1/ sample/SampleApp/
+COPY src/Wrapper/ src/Wrapper/
 
 RUN dotnet publish -c Debug -o /app sample/SampleApp/SampleApp.csproj
 

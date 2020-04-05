@@ -116,3 +116,17 @@ std::ostream& operator<<(std::ostream& os, REFGUID guid) {
     os << std::nouppercase;
     return os;
 }
+
+std::ostream& operator<<(std::ostream& os, std::vector<BYTE> vec)
+{
+    os << std::uppercase;
+
+    for (const auto& el : vec)
+    {
+        os << std::hex << el << std::endl;
+    }
+
+    os << std::nouppercase;
+    return os;
+
+}
