@@ -44,7 +44,9 @@ namespace SampleApp.Controllers
         {
             Console.WriteLine("Test");
 
-            //ValuesControllerGet.Replace(this, "test", 0, 0);
+            var result = ValuesControllerGet.Replace(this, "test", 0, 0);
+
+            Console.WriteLine($"Result {result}");
         }
 
         /// <summary>

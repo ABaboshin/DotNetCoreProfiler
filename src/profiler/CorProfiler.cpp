@@ -383,11 +383,11 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                         {
                             auto m = modules[moduleId];
 
-                            std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
+                            /*std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
                                 << " num args " << target.signature.NumberOfArguments()
                                 << " from assembly " << ToString(moduleInfo.assembly.name)
                                 << " module " << m
-                                << std::endl << std::flush;
+                                << std::endl << std::flush;*/
                             auto signature = target.signature.GetSignatureByteRepresentation();
                             //std::cout << signature << std::endl;
 
@@ -396,7 +396,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                             GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, interception.WrapperAssemblyName);
                             IfFailRet(hres);
 
-                            std::cout << ToString(interception.WrapperAssemblyName) << " " << wrapperRef << std::endl;
+                            //std::cout << ToString(interception.WrapperAssemblyName) << " " << wrapperRef << std::endl;
 
                             // define wrappedType
                             mdTypeRef wrapperTypeRef;
@@ -406,7 +406,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                                 &wrapperTypeRef);
                             IfFailRet(hres);
 
-                            std::cout << ToString(interception.WrapperTypeName) << " " << wrapperTypeRef << std::endl;
+                            //std::cout << ToString(interception.WrapperTypeName) << " " << wrapperTypeRef << std::endl;
 
                             // method
                             //BYTE Sig_void_String[] = {
@@ -417,27 +417,37 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                             //    ELEMENT_TYPE_I4,
                             //    ELEMENT_TYPE_I8
                             //};
-                            /*std::cout << "old" << std::endl;
+                            std::cout << std::hex;
+                            std::cout << "old" << std::endl;
                             for (size_t i = 0; i < signature.size(); i++)
                             {
                                 std::cout << (int)signature[i] << std::endl;
-                            }*/
+                            }
                             signature[0] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-                            signature[1] += 4;
+                            signature[1] += 3;
                             if (target.signature.IsInstanceMethod())
                             {
+                                std::cout << "intance method" << std::endl;
                                 signature.insert(signature.begin() + 3, ELEMENT_TYPE_OBJECT);
+                                signature[1] += 1;
                             }
+
+                            //// force boxing/inboxing
+                            //if (signature[2] != ELEMENT_TYPE_VOID)
+                            //{
+                            //    signature[2] = ELEMENT_TYPE_OBJECT;
+                            //}
+
                             //signature.push_back(ELEMENT_TYPE_OBJECT);
                             signature.push_back(ELEMENT_TYPE_STRING);
                             signature.push_back(ELEMENT_TYPE_I4);
                             signature.push_back(ELEMENT_TYPE_I8);
 
-                            /*std::cout << "new" << std::endl;
+                            std::cout << "new" << std::endl;
                             for (size_t i = 0; i < signature.size(); i++)
                             {
                                 std::cout << (int)signature[i] << std::endl;
-                            }*/
+                            }
 
                             mdMemberRef wapperMethodRef;
                             hres = pMetadataEmit->DefineMemberRef(
@@ -447,7 +457,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                                 signature.size(),
                                 &wapperMethodRef);
 
-                            std::cout << ToString(interception.WrapperMethodName) << " " << wapperMethodRef << std::endl;
+                            //std::cout << ToString(interception.WrapperMethodName) << " " << wapperMethodRef << std::endl;
 
                             // define function full name
                             auto functionFullName = target.type.name + "."_W + target.name;
