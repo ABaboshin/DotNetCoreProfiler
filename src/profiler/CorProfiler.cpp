@@ -383,11 +383,11 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                         {
                             auto m = modules[moduleId];
 
-                            /*std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
+                            std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
                                 << " num args " << target.signature.NumberOfArguments()
                                 << " from assembly " << ToString(moduleInfo.assembly.name)
                                 << " module " << m
-                                << std::endl << std::flush;*/
+                                << std::endl << std::flush;
                             auto signature = target.signature.GetSignatureByteRepresentation();
                             //std::cout << signature << std::endl;
 
@@ -425,6 +425,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                             }
                             signature[0] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
                             signature[1] += 3;
+                            signature.resize(3 + target.signature.NumberOfArguments());
                             if (target.signature.IsInstanceMethod())
                             {
                                 std::cout << "intance method" << std::endl;

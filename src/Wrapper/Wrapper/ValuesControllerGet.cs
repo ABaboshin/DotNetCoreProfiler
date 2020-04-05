@@ -7,7 +7,7 @@ namespace Wrapper
 {
     public class ValuesControllerGet
     {
-        public static void Replace(object controller, string functionName, int mdToken, long moduleVersionPtr)
+        public static Guid Replace(object controller, object p, string functionName, int mdToken, long moduleVersionPtr)
         {
             var ptr = new IntPtr(moduleVersionPtr);
             var moduleVersionId = Marshal.PtrToStructure<Guid>(ptr);
@@ -26,8 +26,8 @@ namespace Wrapper
                             Console.WriteLine($"Found {method.DeclaringType.Name}.{method.Name} Call, {mdToken}, {moduleVersionPtr}, {moduleVersionId}, {functionName}");
                             found = true;
 
-                            Console.WriteLine("Start calling");
-                            var result = method.Invoke(controller, new object[] { });
+                            Console.WriteLine($"Start calling {controller} ({p})");
+                            var result = method.Invoke(controller, new object[] { p });
 
                             //var controllerType = Type.GetType("SampleApp.Controllers.ValuesController, SampleApp");
 
@@ -37,6 +37,9 @@ namespace Wrapper
 
                             Console.WriteLine("Finish calling");
                             //Console.WriteLine($"result {result}");
+
+
+                            return (Guid)result;
                         }
                         catch (Exception ex)
                         {
@@ -52,7 +55,7 @@ namespace Wrapper
                 Console.WriteLine($"Not found call");
             }
 
-            //return null;
+            return Guid.Empty;
         }
 
         public static Guid Replace2(object p, string v1, int v2, long v3, string functionName, int mdToken, long moduleVersionPtr)

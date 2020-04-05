@@ -20,7 +20,7 @@
     "WrapperMethodName": "Count"
   },
   {
-    "AssemblyName": "SampleAppXX",
+    "AssemblyName": "SampleApp",
     "TypeName": "SampleApp.Controllers.ValuesController",
     "MethodName": "Test",
     "isCounter": false,

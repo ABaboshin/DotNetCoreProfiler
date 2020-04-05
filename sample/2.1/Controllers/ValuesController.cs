@@ -36,17 +36,19 @@ namespace SampleApp.Controllers
         public ActionResult<IEnumerable<MyEntity>> Get()
         {
             var x = 0;
-            Test();
+            Test(x);
             return _myDbContext.MyEntities.Where(e => e.Id > x).ToList();
         }
 
-        void Test()
+        Guid Test(int i)
         {
             Console.WriteLine("Test");
 
-            var result = ValuesControllerGet.Replace(this, "test", 0, 0);
+            var result = ValuesControllerGet.Replace(this, "test", i, 0);
 
             Console.WriteLine($"Result {result}");
+
+            return result;
         }
 
         /// <summary>
