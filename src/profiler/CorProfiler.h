@@ -21,6 +21,8 @@ private:
     
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
 
+    std::unordered_map<ModuleID, GUID> modules;
+
     std::vector<Interception> interceptions;
     ICorProfilerInfo8* corProfilerInfo;
     bool is_attached = false;

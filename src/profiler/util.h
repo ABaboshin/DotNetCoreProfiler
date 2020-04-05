@@ -50,3 +50,5 @@ T remove_extension(T const& filename)
 HRESULT CreateAssemblyRef(const ComPtr< IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, std::vector<BYTE> public_key, ASSEMBLYMETADATA metadata, WSTRING assemblyName);
 
 WSTRING HexStr(const unsigned char* data, int len);
+
+std::ostream& operator<<(std::ostream& os, REFGUID guid);

@@ -396,14 +396,17 @@ TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     const auto token_type = TypeFromToken(token);
     switch (token_type) {
     case mdtTypeDef:
+        //std::cout << "mdtTypeDef" << std::endl;
         hr = metadata_import->GetTypeDefProps(token, type_name, NameMaxSize,
             &type_name_len, nullptr, nullptr);
         break;
     case mdtTypeRef:
+        //std::cout << "mdtTypeRef" << std::endl;
         hr = metadata_import->GetTypeRefProps(token, &parent_token, type_name,
             NameMaxSize, &type_name_len);
         break;
     case mdtTypeSpec: {
+        //std::cout << "mdtTypeSpec" << std::endl;
         PCCOR_SIGNATURE signature{};
         ULONG signature_length{};
 
@@ -417,6 +420,7 @@ TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
         return { token, GetSigTypeTokName(signature, metadata_import) };
     } break;
     case mdtModuleRef:
+        //std::cout << "mdtModuleRef" << std::endl;
         metadata_import->GetModuleRefProps(token, type_name, NameMaxSize,
             &type_name_len);
         break;

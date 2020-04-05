@@ -54,8 +54,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     }
 
     DWORD eventMask = COR_PRF_MONITOR_JIT_COMPILATION |
-        COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST | /* helps the case where this profiler is used on Full CLR */
-        COR_PRF_DISABLE_INLINING;
+        COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST | 
+        COR_PRF_DISABLE_INLINING | COR_PRF_MONITOR_MODULE_LOADS |
+        COR_PRF_DISABLE_ALL_NGEN_IMAGES;
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
@@ -131,7 +132,25 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadStarted(ModuleID moduleId)
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRESULT hrStatus)
 {
-    std::cout << "ModuleLoadFinished" << std::endl;
+    const auto module_info = GetModuleInfo(this->corProfilerInfo, moduleId);
+    auto app_domain_id = module_info.assembly.app_domain_id;
+
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+
+    const auto pMetadataImport =
+        metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+    mdModule module;
+    auto hr = pMetadataImport->GetModuleFromScope(&module);
+
+    GUID module_version_id;
+    hr = pMetadataImport->GetScopeProps(nullptr, 0, nullptr, &module_version_id);
+
+    modules[moduleId] = module_version_id;
+
+    std::cout << "ModuleLoadFinished " << moduleId << " " << module_version_id << std::endl;
+
     return S_OK;
 }
 
@@ -312,11 +331,45 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                 {
                     if (interception.isCounter)
                     {
+                        auto m = modules[moduleId];
+
                         std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
                             << " num args " << functionInfo.signature.NumberOfArguments()
                             << " from assembly " << ToString(moduleInfo.assembly.name)
+                            << " module " << m
                             << std::endl << std::flush;
                         return InsertCounter(moduleId, callerToken, interception);
+                    }
+                }
+            }
+        }
+    }
+
+    for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
+        pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext) {
+        if (pInstr->m_opcode != CEE_CALL && pInstr->m_opcode != CEE_CALLVIRT) {
+            continue;
+        }
+
+        auto target =
+            GetFunctionInfo(pMetadataImport, pInstr->m_Arg32);
+
+        for (const auto& interception : interceptions)
+        {
+            if (std::regex_match(ToString(moduleInfo.assembly.name), std::regex(ToString(interception.AssemblyName))) && !SkipAssembly(moduleInfo.assembly.name))
+            {
+                if (std::regex_match(ToString(functionInfo.type.name), std::regex(ToString(interception.TypeName))))
+                {
+                    if (std::regex_match(ToString(functionInfo.name), std::regex(ToString(interception.MethodName))))
+                    {
+                        if (interception.isCounter)
+                        {
+                            std::cout << "Found call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+                                << " num args " << functionInfo.signature.NumberOfArguments()
+                                << " from assembly " << ToString(moduleInfo.assembly.name)
+                                << std::endl << std::flush;
+                            return InsertCounter(moduleId, callerToken, interception);
+                        }
                     }
                 }
             }
@@ -369,9 +422,11 @@ HRESULT CorProfiler::InsertCounter(const ModuleID& moduleId, const mdToken& call
     // method
     BYTE Sig_void_String[] = {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
-        1, // argument count
+        3, // argument count
         ELEMENT_TYPE_VOID,
         ELEMENT_TYPE_STRING,
+        ELEMENT_TYPE_I4,
+        ELEMENT_TYPE_I8
     };
 
     mdMemberRef wapperMethodRef;
@@ -398,6 +453,14 @@ HRESULT CorProfiler::InsertCounter(const ModuleID& moduleId, const mdToken& call
     pNewInstr->m_opcode = CEE_LDSTR;
     pNewInstr->m_Arg32 = aFuctionFullName;
     rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+    ILRewriterHelper helper(&rewriter);
+    helper.SetILPosition(pFirstInstr);
+    helper.LoadInt32(callerToken);
+
+    const void* module_version_id_ptr = &modules[moduleId];
+
+    helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
 
     // call counter
     pNewInstr = rewriter.NewILInstr();

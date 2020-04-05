@@ -1,6 +1,7 @@
 # DotNetCoreProfiler
 
 TODO
+ - lock module loaded
  - Configure once on load
  - Write some wrapper methods
  - See Sample/SampleInternal il

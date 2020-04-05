@@ -105,6 +105,13 @@ public:
         m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
     }
 
+    void LoadInt64(const INT64 value) const {
+        ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_LDC_I8;
+        pNewInstr->m_Arg64 = value;
+        m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
+    }
+
     void BeginLoadValueIntoArray(const INT32 arrayIndex) const {
         
         // duplicate the array reference

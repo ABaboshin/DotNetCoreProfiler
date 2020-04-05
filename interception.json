@@ -10,7 +10,7 @@
     "WrapperMethodName": "Count"
   },
   {
-    "AssemblyName": "SampleApp",
+    "AssemblyName": "SampleAppXXX",
     "TypeName": ".*",
     "MethodName": ".*",
     "isCounter": true,
@@ -18,5 +18,15 @@
     "WrapperAssemblyPath": "/profiler/Wrapper.dll",
     "WrapperTypeName": "Wrapper.Counter",
     "WrapperMethodName": "Count"
+  },
+  {
+    "AssemblyName": "SampleApp",
+    "TypeName": "SampleApp.Controllers.ValuesController",
+    "MethodName": "Get",
+    "isCounter": false,
+    "WrapperAssemblyName": "Wrapper",
+    "WrapperAssemblyPath": "/profiler/Wrapper.dll",
+    "WrapperTypeName": "Wrapper.ValuesControllerGet",
+    "WrapperMethodName": "Replace"
   }
 ]
