@@ -46,5 +46,13 @@ namespace Interception.Common
                 throw;
             }
         }
+
+        public static void Histogram(string name, double duration, string[] tags)
+        {
+            Console.WriteLine($"Histogram {name} {duration} {tags}");
+            Configure();
+
+            DogStatsd.Histogram(name, duration, tags: tags);
+        }
     }
 }

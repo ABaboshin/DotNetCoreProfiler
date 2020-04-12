@@ -7,7 +7,7 @@ namespace Interception.Common
     /// <summary>
     /// exception extensions
     /// </summary>
-    internal static class ExceptionExtensions
+    public static class ExceptionExtensions
     {
         /// <summary>
         /// extract tag values for metrics from a given exception

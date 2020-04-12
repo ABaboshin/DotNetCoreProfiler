@@ -1,12 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Text;
 
 namespace Interception.Common
 {
     public static class MethodExecutor
     {
-        public static object ExecuteMethod(object obj, object[] param, int mdToken, long moduleVersionPtr)
+        public static object ExecuteMethod(object obj, object[] param, int mdToken, long moduleVersionPtr, bool noMetrics = false)
         {
             Console.WriteLine($"Call MethodExecutor.ExecuteMethod {mdToken} {moduleVersionPtr}");
 
@@ -14,12 +15,18 @@ namespace Interception.Common
             if (method != null)
             {
                 object result = null;
-                Metrics.Histogram(() => {
-                    Console.WriteLine($"Start calling {method.Name} ");
-                    result = method.Invoke(obj, param);
-
-                    Console.WriteLine($"Finish calling with result {result}");
-                }, method);
+                if (!noMetrics)
+                {
+                    Metrics.Histogram(() =>
+                    {
+                        result = ExecuteInternal(obj, param, method);
+                    }, method);
+                }
+                else
+                {
+                    result = ExecuteInternal(obj, param, method);
+                }
+                
 
                 return result;
             }
@@ -27,6 +34,16 @@ namespace Interception.Common
             Console.WriteLine($"Not found call");
 
             return null;
+        }
+
+        private static object ExecuteInternal(object obj, object[] param, MethodBase method)
+        {
+            object result;
+            Console.WriteLine($"Start calling {method.Name} ");
+            result = method.Invoke(obj, param);
+
+            Console.WriteLine($"Finish calling with result {result}");
+            return result;
         }
     }
 }
