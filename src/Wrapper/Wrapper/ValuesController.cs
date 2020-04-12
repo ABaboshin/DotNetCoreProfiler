@@ -76,5 +76,26 @@ namespace Wrapper
 
             return Guid.Empty;
         }
+
+        [Intercept(CallerAssembly = "", TargetAssemblyName = "SampleApp", TargetMethodName = "TestInstanceVoid", TargetTypeName = "SampleApp.Controllers.ValuesController")]
+        public static void TestInstanceVoidReplace(object controller, object i, object g, object o, int mdToken, long moduleVersionPtr)
+        {
+            Console.WriteLine($"Call TestInstanceVoidReplace {controller} {i} {g} {o} {mdToken} {moduleVersionPtr}");
+            var method = MethodFinder.FindMethod(mdToken, moduleVersionPtr);
+            if (method != null)
+            {
+                object result = null;
+                Metrics.Histogram(() => {
+                    Console.WriteLine($"Start calling {method.Name} ");
+                    result = method.Invoke(controller, new object[] { i, g, o });
+
+                    Console.WriteLine($"Finish calling with result {result}");
+                }, method);
+            }
+            else
+            {
+                Console.WriteLine($"Not found call");
+            }
+        }
     }
 }

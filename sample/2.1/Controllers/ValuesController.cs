@@ -47,6 +47,10 @@ namespace SampleApp.Controllers
             var r3 = TestGeneric(new TestClass { Name = "me", Age = 34 });
             Console.WriteLine($"After TestGeneric {r2}");
 
+            Console.WriteLine("Before TestInstanceVoid");
+            TestInstanceVoid(3, Guid.NewGuid(), new { x = 1, P = "t" });
+            Console.WriteLine($"After TestInstanceVoid");
+
             return _myDbContext.MyEntities.Where(e => e.Id > 0).ToList();
         }
 
@@ -62,6 +66,11 @@ namespace SampleApp.Controllers
             Console.WriteLine($"TestInstance original {i} {g} {o}");
 
             return g;
+        }
+
+        void TestInstanceVoid(object i, object g, object o)
+        {
+            Console.WriteLine($"TestInstance original {i} {g} {o}");
         }
 
         T TestGeneric<T>(T v)
