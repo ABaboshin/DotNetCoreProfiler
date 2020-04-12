@@ -29,7 +29,7 @@ namespace Interception
             actionDescriptor.TryGetPropertyValue("ActionName", out _actionName);
         }
 
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Mvc.Core", TargetMethodName = "BeforeAction", TargetTypeName = "Microsoft.AspNetCore.Mvc.Internal.MvcCoreDiagnosticSourceExtensions", TargetMethodParametersCount = 4)]
+        //[Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Mvc.Core", TargetMethodName = "BeforeAction", TargetTypeName = "Microsoft.AspNetCore.Mvc.Internal.MvcCoreDiagnosticSourceExtensions", TargetMethodParametersCount = 4)]
         public static void BeforeAction(object diagnosticSource, object actionDescriptor, object httpContext, object routeData, int mdToken, long moduleVersionPtr)
         {
             var integration = new AspNetCoreInterception(httpContext, actionDescriptor);
@@ -54,7 +54,7 @@ namespace Interception
             }
         }
 
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Mvc.Core", TargetMethodName = "AfterAction", TargetTypeName = "Microsoft.AspNetCore.Mvc.Internal.MvcCoreDiagnosticSourceExtensions", TargetMethodParametersCount = 4)]
+        //[Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Mvc.Core", TargetMethodName = "AfterAction", TargetTypeName = "Microsoft.AspNetCore.Mvc.Internal.MvcCoreDiagnosticSourceExtensions", TargetMethodParametersCount = 4)]
         public static void AfterAction(object diagnosticSource, object actionDescriptor, object httpContext, object routeData, int mdToken, long moduleVersionPtr)
         {
             AspNetCoreInterception integration = default;
@@ -74,7 +74,7 @@ namespace Interception
             }
         }
 
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Mvc.Core", TargetMethodName = "Rethrow", TargetTypeName = "Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker", TargetMethodParametersCount = 4)]
+        //[Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Mvc.Core", TargetMethodName = "Rethrow", TargetTypeName = "Microsoft.AspNetCore.Mvc.Internal.ResourceInvoker", TargetMethodParametersCount = 4)]
         public static void Rethrow(object httpContext, int mdToken, long moduleVersionPtr)
         {
             AspNetCoreInterception integration = default;

@@ -17,6 +17,7 @@ namespace Interception.Common
             {
                 if (!configured)
                 {
+                    Console.WriteLine("Metrics.Configure");
                     DogStatsd.Configure(new StatsdConfig
                     {
                         StatsdServerName = "statsd",
