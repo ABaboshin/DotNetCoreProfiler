@@ -351,7 +351,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                         GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, interception.WrapperAssemblyName);
                         IfFailRet(hres);
 
-                        std::cout << ToString(interception.WrapperAssemblyName) << " " << wrapperRef << std::endl;
+                        //std::cout << ToString(interception.WrapperAssemblyName) << " " << wrapperRef << std::endl;
 
                         // define wrappedType
                         mdTypeRef wrapperTypeRef;
@@ -361,7 +361,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                             &wrapperTypeRef);
                         IfFailRet(hres);
 
-                        std::cout << ToString(interception.WrapperTypeName) << " " << wrapperTypeRef << std::endl;
+                        //std::cout << ToString(interception.WrapperTypeName) << " " << wrapperTypeRef << std::endl;
 
                         // method
                         mdMemberRef wapperMethodRef;
@@ -371,7 +371,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                             (DWORD)(signature.size()),
                             &wapperMethodRef);
 
-                        std::cout << ToString(interception.WrapperMethodName) << " " << wapperMethodRef << std::endl;
+                        /*std::cout << ToString(interception.WrapperMethodName) << " " << wapperMethodRef << std::endl;
 
                         std::cout << std::hex;
                         std::cout << "signature" << std::endl;
@@ -385,22 +385,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                         for (size_t i = 0; i < origSignature.size(); i++)
                         {
                             std::cout << (int)origSignature[i] << std::endl;
-                        }
-
-                        //// define function full name
-                        //auto functionFullName = target.type.name + "."_W + target.name;
-
-                        //mdString aFuctionFullName;
-                        //hres = pMetadataEmit->DefineUserString(functionFullName.c_str(), (ULONG)functionFullName.length(),
-                        //    &aFuctionFullName);
-
-                        //std::cout << ToString(functionFullName) << " " << aFuctionFullName << std::endl;
-
-                        //// load function name
-                        //ILInstr* pNewInstr = rewriter.NewILInstr();
-                        //pNewInstr->m_opcode = CEE_LDSTR;
-                        //pNewInstr->m_Arg32 = aFuctionFullName;
-                        //rewriter.InsertBefore(pInstr, pNewInstr);
+                        }*/
 
                         ILRewriterHelper helper(&rewriter);
                         helper.SetILPosition(pInstr);
@@ -412,17 +397,9 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
                         helper.CallMember(wapperMethodRef, false);
 
-                        //// call wrapper
-                        //auto pNewInstr = rewriter.NewILInstr();
-                        //pNewInstr->m_opcode = CEE_CALL;
-                        //pNewInstr->m_Arg32 = wapperMethodRef;
-                        //rewriter.InsertBefore(pInstr, pNewInstr);
-
                         pInstr->m_opcode = CEE_NOP;
                             
                         IfFailRet(rewriter.Export(false));
-
-                        //return S_OK;
                     }
                 }
             }

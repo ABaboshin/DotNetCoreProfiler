@@ -35,14 +35,19 @@ namespace SampleApp.Controllers
         [HttpGet]
         public ActionResult<IEnumerable<MyEntity>> Get()
         {
-            var x = 0;
             Console.WriteLine("Before TestStatic");
             var r1 = TestStatic(this);
             Console.WriteLine($"After TestStatic {r1}");
-            Console.WriteLine("Before Test");
-            var r2 = Test(3, Guid.NewGuid(), new { x = 1, P = "t" });
-            Console.WriteLine($"After Test {r2}");
-            return _myDbContext.MyEntities.Where(e => e.Id > x).ToList();
+            
+            Console.WriteLine("Before TestInstance");
+            var r2 = TestInstance(3, Guid.NewGuid(), new { x = 1, P = "t" });
+            Console.WriteLine($"After TestInstance {r2}");
+
+            Console.WriteLine("Before TestGeneric");
+            var r3 = TestGeneric(new TestClass { Name = "me", Age = 34 });
+            Console.WriteLine($"After TestGeneric {r2}");
+
+            return _myDbContext.MyEntities.Where(e => e.Id > 0).ToList();
         }
 
         static object TestStatic(object obj)
@@ -52,11 +57,18 @@ namespace SampleApp.Controllers
             return obj;
         }
 
-        object Test(object i, object g, object o)
+        object TestInstance(object i, object g, object o)
         {
-            Console.WriteLine($"Test original {i} {g} {o}");
+            Console.WriteLine($"TestInstance original {i} {g} {o}");
 
             return g;
+        }
+
+        T TestGeneric<T>(T v)
+        {
+            Console.WriteLine($"TestGeneric original {v}");
+
+            return v;
         }
 
         /// <summary>
