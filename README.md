@@ -3,6 +3,7 @@
 TODO
  - Write some wrapper methods
   - masstransit
+  MassTransit.MassTransitBus.Publish
   - redis stackexchange
   - http/mvc
  - lock module loaded

@@ -1,4 +1,5 @@
 ﻿using MassTransit;
+using System;
 using System.Threading.Tasks;
 
 namespace SampleApp.MessageBus
@@ -8,6 +9,7 @@ namespace SampleApp.MessageBus
     {
         public async Task Consume(ConsumeContext<MyMessage> context)
         {
+            Console.WriteLine("MyMessageConsumer.Consume");
             await Task.Delay(1000);
             throw new NotImplementedByDesignException();
         }

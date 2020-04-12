@@ -13,21 +13,11 @@
       "commandName": "Project",
       "launchUrl": "/",
       "environmentVariables": {
-        "STATSD__PORT": "9125",
-        "http_metrics__enabled": "true",
-        "STATSD__SERVER": "127.0.0.1",
-        "http_metrics__name": "myhttp",
         "DATABASE__CONNECTIONSTRING": "Server=localhost;Database=mydb;User Id=sa;Password=passwoyourStrong(!)Passwordrd;",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "RABBITMQ__HOST": "localhost",
         "RABBITMQ__USER": "admin",
-        "RABBITMQ__PASSWORD": "password",
-        "CORECLR_ENABLE_PROFILING": "1",
-        "CORECLR_PROFILER": "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}",
-        "CORECLR_PROFILER_PATH": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin\\profiler.dll",
-        "PROFILER_WRAPPER_DLL": "D:\\playground\\DotNetCoreProfiler\\src\\Wrapper\\Wrapper\\bin\\Debug\\netcoreapp2.1\\Wrapper.dll",
-        "PROFILER_WRAPPER_ASSEMBLY": "Wrapper",
-        "PROFILER_WRAPPER_TYPE": "Wrapper.Wrapper"
+        "RABBITMQ__PASSWORD": "password"
       },
       "applicationUrl": "http://localhost:5000"
     }
