@@ -8,30 +8,32 @@
 #include "util.h"
 
 struct Interception {
-	const WSTRING AssemblyName;
-	const WSTRING TypeName;
-	const WSTRING MethodName;
-	const bool isCounter;
+	const WSTRING CallerAssemblyName;
+	const WSTRING TargetAssemblyName;
+	const WSTRING TargetTypeName;
+	const WSTRING TargetMethodName;
 	const WSTRING WrapperAssemblyPath;
 	const WSTRING WrapperAssemblyName;
 	const WSTRING WrapperTypeName;
 	const WSTRING WrapperMethodName;
+	const std::vector<BYTE> signature;
 
-	Interception(WSTRING AssemblyName, WSTRING TypeName, WSTRING MethodName, bool isCounter, WSTRING WrapperAssemblyPath, WSTRING WrapperAssemblyName, WSTRING WrapperTypeName, WSTRING WrapperMethodName) :
-		AssemblyName(AssemblyName),
-		TypeName(TypeName),
-		MethodName(MethodName),
-		isCounter(isCounter),
+	Interception(WSTRING CallerAssemblyName, WSTRING AssemblyName, WSTRING TypeName, WSTRING MethodName, WSTRING WrapperAssemblyPath, WSTRING WrapperAssemblyName, WSTRING WrapperTypeName, WSTRING WrapperMethodName, std::vector<BYTE> signature) :
+		CallerAssemblyName(CallerAssemblyName),
+		TargetAssemblyName(AssemblyName),
+		TargetTypeName(TypeName),
+		TargetMethodName(MethodName),
 		WrapperAssemblyName(WrapperAssemblyName),
 		WrapperTypeName(WrapperTypeName),
 		WrapperMethodName(WrapperMethodName),
-		WrapperAssemblyPath(WrapperAssemblyPath) {}
+		WrapperAssemblyPath(WrapperAssemblyPath),
+		signature(signature) {}
 
 	Interception() :
-		AssemblyName(""_W),
-		TypeName(""_W),
-		MethodName(""_W),
-		isCounter(false),
+		CallerAssemblyName(""_W),
+		TargetAssemblyName(""_W),
+		TargetTypeName(""_W),
+		TargetMethodName(""_W),
 		WrapperAssemblyName(""_W),
 		WrapperTypeName(""_W),
 		WrapperMethodName(""_W),

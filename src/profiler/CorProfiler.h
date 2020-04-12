@@ -30,7 +30,6 @@ private:
     bool SkipAssembly(const WSTRING& name);
 
     HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
-    HRESULT InsertCounter(const ModuleID& moduleId, const mdToken& callerToken, const Interception& interception);
 
 public:
     CorProfiler();

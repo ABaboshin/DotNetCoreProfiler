@@ -49,9 +49,7 @@ ENV CC=clang-3.9
 
 WORKDIR /profiler
 COPY lib /profiler/lib
-COPY src /profiler/src
+COPY src/profiler /profiler/src/profiler
 
 WORKDIR /profiler/src/profiler
 RUN cmake . && make && cp DotNetCoreProfiler.so /
-
-COPY interception.json /

@@ -767,8 +767,7 @@ HRESULT LoadAssemblyBefore(
     ModuleID moduleID,
     mdMethodDef methodDef,
     FunctionID functionId,
-    std::vector<WSTRING> assemblies,
-    ULONG32 methodSignature)
+    std::vector<WSTRING> assemblies)
 {
     std::cout << "LoadAssemblyBefore" << std::endl;
     HRESULT hr;

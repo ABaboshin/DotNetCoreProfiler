@@ -1,7 +1,6 @@
 # DotNetCoreProfiler
 
 TODO
- - rebuild signature for instance method / retrieve signature from assembly / enrich configuration
  - lock module loaded
  - Configure once on load
  - Write some wrapper methods

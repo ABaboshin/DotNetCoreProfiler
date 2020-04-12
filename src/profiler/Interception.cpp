@@ -53,24 +53,53 @@ std::pair<Interception, bool> LoadFromJson(const nlohmann::json::value_type& src
 		return std::make_pair<Interception, bool>({}, false);
 	}
 
-	auto AssemblyName = ToWSTRING(src.value("AssemblyName", ""));
-	auto TypeName = ToWSTRING(src.value("TypeName", ""));
-	auto MethodName = ToWSTRING(src.value("MethodName", ""));
+	
+	auto CallerAssemblyName = ToWSTRING(src.value("CallerAssemblyName", ""));
+	auto TargetAssemblyName = ToWSTRING(src.value("TargetAssemblyName", ""));
+	auto TargetTypeName = ToWSTRING(src.value("TargetTypeName", ""));
+	auto TargetMethodName = ToWSTRING(src.value("TargetMethodName", ""));
 	auto WrapperAssemblyPath = ToWSTRING(src.value("WrapperAssemblyPath", ""));
 	auto WrapperAssemblyName = ToWSTRING(src.value("WrapperAssemblyName", ""));
 	auto WrapperTypeName = ToWSTRING(src.value("WrapperTypeName", ""));
 	auto WrapperMethodName = ToWSTRING(src.value("WrapperMethodName", ""));
-	auto isCounter = src.value("isCounter", false);
+	
+	auto raw_signature = src.value("WrapperSignature", "");
 
-	return std::make_pair<Interception, bool>({ AssemblyName, TypeName , MethodName , isCounter , WrapperAssemblyPath, WrapperAssemblyName , WrapperTypeName , WrapperMethodName  }, true);
+	std::vector<BYTE> signature;
+
+	// load as a hex string
+	bool flip = false;
+	char prev = 0;
+	for (auto& c : raw_signature) {
+		BYTE b = 0;
+		if ('0' <= c && c <= '9') {
+			b = c - '0';
+		}
+		else if ('a' <= c && c <= 'f') {
+			b = c - 'a' + 10;
+		}
+		else if ('A' <= c && c <= 'F') {
+			b = c - 'A' + 10;
+		}
+		else {
+			// skip any non-hex character
+			continue;
+		}
+		if (flip) {
+			signature.push_back((prev << 4) + b);
+		}
+		flip = !flip;
+		prev = b;
+	}
+
+	return std::make_pair<Interception, bool>({ CallerAssemblyName, TargetAssemblyName, TargetTypeName , TargetMethodName , WrapperAssemblyPath, WrapperAssemblyName , WrapperTypeName , WrapperMethodName, signature  }, true);
 }
 
 WSTRING ToString(const Interception& interception)
 {
-	return interception.AssemblyName + " "_W +
-		interception.TypeName + " "_W +
-		interception.MethodName + " "_W +
-		(interception.isCounter ? "true"_W: "false"_W) + " "_W +
+	return interception.TargetAssemblyName + " "_W +
+		interception.TargetTypeName + " "_W +
+		interception.TargetMethodName + " "_W +
 		interception.WrapperAssemblyPath + " "_W +
 		interception.WrapperAssemblyName + " "_W +
 		interception.WrapperTypeName + " "_W +

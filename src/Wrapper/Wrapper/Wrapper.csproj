@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="DogStatsD-CSharp-Client" Version="3.2.0" />
+    <ProjectReference Include="..\..\Wrapper.Common\Wrapper.Common.csproj" />
   </ItemGroup>
 
 </Project>

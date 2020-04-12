@@ -9,6 +9,10 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "profiler", "..\..\src\profi
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Wrapper", "..\..\src\Wrapper\Wrapper\Wrapper.csproj", "{48373884-130E-424C-A41C-05D7E0D6BF43}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Wrapper.Common", "..\..\src\Wrapper.Common\Wrapper.Common.csproj", "{FC0BAF68-6410-4DD2-9BF8-F33443081982}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Generator", "..\..\src\Interception.Generator\Interception.Generator.csproj", "{FA69C348-EC28-4792-A14C-5941A435A852}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -40,6 +44,22 @@ Global
 		{48373884-130E-424C-A41C-05D7E0D6BF43}.Release|Any CPU.Build.0 = Release|Any CPU
 		{48373884-130E-424C-A41C-05D7E0D6BF43}.Release|x64.ActiveCfg = Release|Any CPU
 		{48373884-130E-424C-A41C-05D7E0D6BF43}.Release|x64.Build.0 = Release|Any CPU
+		{FC0BAF68-6410-4DD2-9BF8-F33443081982}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC0BAF68-6410-4DD2-9BF8-F33443081982}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC0BAF68-6410-4DD2-9BF8-F33443081982}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FC0BAF68-6410-4DD2-9BF8-F33443081982}.Debug|x64.Build.0 = Debug|Any CPU
+		{FC0BAF68-6410-4DD2-9BF8-F33443081982}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC0BAF68-6410-4DD2-9BF8-F33443081982}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC0BAF68-6410-4DD2-9BF8-F33443081982}.Release|x64.ActiveCfg = Release|Any CPU
+		{FC0BAF68-6410-4DD2-9BF8-F33443081982}.Release|x64.Build.0 = Release|Any CPU
+		{FA69C348-EC28-4792-A14C-5941A435A852}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FA69C348-EC28-4792-A14C-5941A435A852}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FA69C348-EC28-4792-A14C-5941A435A852}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{FA69C348-EC28-4792-A14C-5941A435A852}.Debug|x64.Build.0 = Debug|Any CPU
+		{FA69C348-EC28-4792-A14C-5941A435A852}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FA69C348-EC28-4792-A14C-5941A435A852}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FA69C348-EC28-4792-A14C-5941A435A852}.Release|x64.ActiveCfg = Release|Any CPU
+		{FA69C348-EC28-4792-A14C-5941A435A852}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

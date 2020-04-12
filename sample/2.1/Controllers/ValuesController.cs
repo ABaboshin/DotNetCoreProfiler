@@ -36,19 +36,27 @@ namespace SampleApp.Controllers
         public ActionResult<IEnumerable<MyEntity>> Get()
         {
             var x = 0;
-            Test(x);
+            Console.WriteLine("Before TestStatic");
+            var r1 = TestStatic(this);
+            Console.WriteLine($"After TestStatic {r1}");
+            Console.WriteLine("Before Test");
+            var r2 = Test(3, Guid.NewGuid(), new { x = 1, P = "t" });
+            Console.WriteLine($"After Test {r2}");
             return _myDbContext.MyEntities.Where(e => e.Id > x).ToList();
         }
 
-        Guid Test(int i)
+        static object TestStatic(object obj)
         {
-            Console.WriteLine("Test");
+            Console.WriteLine($"TestStatic original {obj}");
 
-            var result = ValuesControllerGet.Replace(this, "test", i, 0);
+            return obj;
+        }
 
-            Console.WriteLine($"Result {result}");
+        object Test(object i, object g, object o)
+        {
+            Console.WriteLine($"Test original {i} {g} {o}");
 
-            return result;
+            return g;
         }
 
         /// <summary>
