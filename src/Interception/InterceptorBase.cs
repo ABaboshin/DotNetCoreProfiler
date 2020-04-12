@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Wrapper
+namespace Interception
 {
     public static class InterceptorBase
     {

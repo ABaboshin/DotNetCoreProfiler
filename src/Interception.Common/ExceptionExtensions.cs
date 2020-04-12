@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Wrapper.Common
+namespace Interception.Common
 {
     /// <summary>
     /// exception extensions

@@ -334,7 +334,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                 //std::cout << "Try for " << ToString(moduleInfo.assembly.name) << ToString(target.type.name) << "." << ToString(target.name) << std::endl;
                 if (target.type.name == interception.TargetTypeName)
                 {
-                    if (target.name == interception.TargetMethodName)
+                    if (target.name == interception.TargetMethodName && interception.TargetMethodParametersCount == target.signature.NumberOfArguments())
                     {
                         auto m = modules[moduleId];
 

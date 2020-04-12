@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace Wrapper.Common
+namespace Interception.Common
 {
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
     public class InterceptAttribute : Attribute
@@ -11,5 +11,6 @@ namespace Wrapper.Common
         public string TargetAssemblyName { get; set; }
         public string TargetTypeName { get; set; }
         public string TargetMethodName { get; set; }
+        public int TargetMethodParametersCount { get; set; }
     }
 }

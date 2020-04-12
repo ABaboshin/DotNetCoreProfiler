@@ -9,7 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\Wrapper.Common\Wrapper.Common.csproj" />
+    <ProjectReference Include="..\Interception.Common\Interception.Common.csproj" />
   </ItemGroup>
 
 </Project>

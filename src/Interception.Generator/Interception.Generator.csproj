@@ -10,7 +10,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Wrapper\Wrapper\Wrapper.csproj" />
+    <ProjectReference Include="..\Interception\Interception.csproj" />
   </ItemGroup>
-
 </Project>

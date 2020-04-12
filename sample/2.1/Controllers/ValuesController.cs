@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
@@ -33,7 +34,7 @@ namespace SampleApp.Controllers
         /// </summary>
         /// <returns></returns>
         [HttpGet]
-        public ActionResult<IEnumerable<MyEntity>> Get()
+        public async Task<ActionResult<IEnumerable<MyEntity>>> Get()
         {
             Console.WriteLine("Before TestStatic");
             var r1 = TestStatic(this);
@@ -51,8 +52,11 @@ namespace SampleApp.Controllers
             TestInstanceVoid(3, Guid.NewGuid(), new { x = 1, P = "t" });
             Console.WriteLine($"After TestInstanceVoid");
 
-            return _myDbContext.MyEntities.Where(e => e.Id > 0).ToList();
-        }
+            _myDbContext.Database.ExecuteSqlCommand("SELECT 1;");
+            await _myDbContext.Database.ExecuteSqlCommandAsync("SELECT 2;");
+
+            return await _myDbContext.MyEntities.Where(e => e.Id > 0).ToListAsync();
+        } 
 
         static object TestStatic(object obj)
         {

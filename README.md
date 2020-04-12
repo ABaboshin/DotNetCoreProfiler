@@ -2,7 +2,6 @@
 
 TODO
  - Write some wrapper methods
-  - efcore
   - masstransit
   - redis stackexchange
   - http/mvc

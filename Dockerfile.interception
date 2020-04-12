@@ -2,7 +2,7 @@ FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
 
 COPY src src
 
-RUN dotnet publish -c Debug -o /wrapper src/Wrapper/Wrapper/Wrapper.csproj
+RUN dotnet publish -c Debug -o /interception src/Interception/Interception.csproj
 
 RUN dotnet publish -c Debug -o /Interception.Generator src/Interception.Generator/Interception.Generator.csproj
 
@@ -10,4 +10,4 @@ WORKDIR /Interception.Generator
 
 RUN dotnet Interception.Generator.dll
 
-RUN cp /Interception.Generator/interceptions.json /wrapper/interceptions.json
+RUN cp /Interception.Generator/interceptions.json /interception/interceptions.json

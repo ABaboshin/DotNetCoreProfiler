@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Reflection;
 using System.Text;
 
-namespace Wrapper.Common
+namespace Interception.Common
 {
     public static class Metrics
     {

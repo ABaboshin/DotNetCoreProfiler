@@ -62,6 +62,7 @@ std::pair<Interception, bool> LoadFromJson(const nlohmann::json::value_type& src
 	auto WrapperAssemblyName = ToWSTRING(src.value("WrapperAssemblyName", ""));
 	auto WrapperTypeName = ToWSTRING(src.value("WrapperTypeName", ""));
 	auto WrapperMethodName = ToWSTRING(src.value("WrapperMethodName", ""));
+	auto TargetMethodParametersCount = src.value("TargetMethodParametersCount", 0);
 	
 	auto raw_signature = src.value("WrapperSignature", "");
 
@@ -92,7 +93,7 @@ std::pair<Interception, bool> LoadFromJson(const nlohmann::json::value_type& src
 		prev = b;
 	}
 
-	return std::make_pair<Interception, bool>({ CallerAssemblyName, TargetAssemblyName, TargetTypeName , TargetMethodName , WrapperAssemblyPath, WrapperAssemblyName , WrapperTypeName , WrapperMethodName, signature  }, true);
+	return std::make_pair<Interception, bool>({ CallerAssemblyName, TargetAssemblyName, TargetTypeName , TargetMethodName , WrapperAssemblyPath, WrapperAssemblyName , WrapperTypeName , WrapperMethodName, signature, TargetMethodParametersCount }, true);
 }
 
 WSTRING ToString(const Interception& interception)

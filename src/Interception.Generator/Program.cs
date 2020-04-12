@@ -1,12 +1,11 @@
-﻿using Newtonsoft.Json;
+﻿using Interception.Common;
+using Newtonsoft.Json;
 using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Text;
-using Wrapper;
-using Wrapper.Common;
 
 namespace Interception.Generator
 {
@@ -19,19 +18,19 @@ namespace Interception.Generator
                 .GetTypes()
                 .SelectMany(type => type.GetRuntimeMethods())
                 .Where(method => method.GetCustomAttributes<InterceptAttribute>(false).Any())
-                .Select(method =>
+                .SelectMany(method => method.GetCustomAttributes<InterceptAttribute>(false).Select(attribute => new { method, attribute }))
+                .Select(info =>
                 {
-                    var attribute = method.GetCustomAttribute<InterceptAttribute>(false);
-                    var returnType = method.ReturnType;
-                    var parameters = method.GetParameters().Select(p => p.ParameterType).ToArray();
-                    var signatureHelper = SignatureHelper.GetMethodSigHelper(method.CallingConvention, returnType);
+                    var returnType = info.method.ReturnType;
+                    var parameters = info.method.GetParameters().Select(p => p.ParameterType).ToArray();
+                    var signatureHelper = SignatureHelper.GetMethodSigHelper(info.method.CallingConvention, returnType);
                     signatureHelper.AddArguments(parameters, requiredCustomModifiers: null, optionalCustomModifiers: null);
                     var signatureBytes = signatureHelper.GetSignature();
 
-                    if (method.IsGenericMethod)
+                    if (info.method.IsGenericMethod)
                     {
                         byte IMAGE_CEE_CS_CALLCONV_GENERIC = 0x10;
-                        var genericArguments = method.GetGenericArguments();
+                        var genericArguments = info.method.GetGenericArguments();
 
                         var newSignatureBytes = new byte[signatureBytes.Length + 1];
                         newSignatureBytes[0] = (byte)(signatureBytes[0] | IMAGE_CEE_CS_CALLCONV_GENERIC);
@@ -42,14 +41,15 @@ namespace Interception.Generator
                     }
 
                     return new {
-                        attribute.CallerAssembly,
-                        attribute.TargetAssemblyName,
-                        attribute.TargetMethodName,
-                        attribute.TargetTypeName,
-                        WrapperTypeName = method.DeclaringType.FullName,
-                        WrapperMethodName = method.Name,
-                        WrapperAssemblyName = method.DeclaringType.Assembly.GetName().Name,
-                        WrapperAssemblyPath = "/profiler/Wrapper.dll",
+                        info.attribute.CallerAssembly,
+                        info.attribute.TargetAssemblyName,
+                        info.attribute.TargetMethodName,
+                        info.attribute.TargetTypeName,
+                        info.attribute.TargetMethodParametersCount,
+                        WrapperTypeName = info.method.DeclaringType.FullName,
+                        WrapperMethodName = info.method.Name,
+                        WrapperAssemblyName = info.method.DeclaringType.Assembly.GetName().Name,
+                        WrapperAssemblyPath = "/profiler/Interception.dll",
                         WrapperSignature = string.Join(" ", signatureBytes.Select(b => b.ToString("X2")))
                     };
                 })

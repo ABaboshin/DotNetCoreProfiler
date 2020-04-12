@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace Wrapper.Common
+namespace Interception.Common
 {
     public static class MethodFinder
     {

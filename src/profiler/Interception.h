@@ -17,8 +17,9 @@ struct Interception {
 	const WSTRING WrapperTypeName;
 	const WSTRING WrapperMethodName;
 	const std::vector<BYTE> signature;
+	const int TargetMethodParametersCount;
 
-	Interception(WSTRING CallerAssemblyName, WSTRING AssemblyName, WSTRING TypeName, WSTRING MethodName, WSTRING WrapperAssemblyPath, WSTRING WrapperAssemblyName, WSTRING WrapperTypeName, WSTRING WrapperMethodName, std::vector<BYTE> signature) :
+	Interception(WSTRING CallerAssemblyName, WSTRING AssemblyName, WSTRING TypeName, WSTRING MethodName, WSTRING WrapperAssemblyPath, WSTRING WrapperAssemblyName, WSTRING WrapperTypeName, WSTRING WrapperMethodName, std::vector<BYTE> signature, int TargetMethodParametersCount) :
 		CallerAssemblyName(CallerAssemblyName),
 		TargetAssemblyName(AssemblyName),
 		TargetTypeName(TypeName),
@@ -27,6 +28,7 @@ struct Interception {
 		WrapperTypeName(WrapperTypeName),
 		WrapperMethodName(WrapperMethodName),
 		WrapperAssemblyPath(WrapperAssemblyPath),
+		TargetMethodParametersCount(TargetMethodParametersCount),
 		signature(signature) {}
 
 	Interception() :
@@ -37,7 +39,8 @@ struct Interception {
 		WrapperAssemblyName(""_W),
 		WrapperTypeName(""_W),
 		WrapperMethodName(""_W),
-		WrapperAssemblyPath(""_W) {}
+		WrapperAssemblyPath(""_W),
+		TargetMethodParametersCount(0) {}
 };
 
 std::vector<Interception> LoadFromFile(const WSTRING& path);
