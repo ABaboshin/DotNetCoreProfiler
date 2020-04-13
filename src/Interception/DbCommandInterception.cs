@@ -1,6 +1,7 @@
 ﻿using Interception.Common;
 using System;
 using System.Data;
+using System.Data.Common;
 using System.Threading;
 
 namespace Interception
@@ -19,7 +20,7 @@ namespace Interception
             var tokenSource = cancellationTokenSource as CancellationTokenSource;
             var cancellationToken = tokenSource?.Token ?? CancellationToken.None;
 
-            return MethodExecutor.ExecuteMethod(command, new object[] { (CommandBehavior)behavior, cancellationToken }, mdToken, moduleVersionPtr);
+            return MethodExecutor.ExecuteMethodAsync<DbDataReader>(command, new object[] { (CommandBehavior)behavior, cancellationToken }, mdToken, moduleVersionPtr);
         }
 
         [Intercept(CallerAssembly = "", TargetAssemblyName = "System.Data.Common", TargetMethodName = "ExecuteNonQuery", TargetTypeName = "System.Data.Common.DbCommand", TargetMethodParametersCount = 0)]
@@ -34,7 +35,7 @@ namespace Interception
             var tokenSource = cancellationTokenSource as CancellationTokenSource;
             var cancellationToken = tokenSource?.Token ?? CancellationToken.None;
 
-            return MethodExecutor.ExecuteMethod(command, new object[] { cancellationToken }, mdToken, moduleVersionPtr);
+            return MethodExecutor.ExecuteMethodAsync<int>(command, new object[] { cancellationToken }, mdToken, moduleVersionPtr);
         }
 
         [Intercept(CallerAssembly = "", TargetAssemblyName = "System.Data.Common", TargetMethodName = "ExecuteScalar", TargetTypeName = "System.Data.Common.DbCommand", TargetMethodParametersCount = 0)]
@@ -49,7 +50,7 @@ namespace Interception
             var tokenSource = cancellationTokenSource as CancellationTokenSource;
             var cancellationToken = tokenSource?.Token ?? CancellationToken.None;
 
-            return MethodExecutor.ExecuteMethod(command, new object[] { cancellationToken }, mdToken, moduleVersionPtr);
+            return MethodExecutor.ExecuteMethodAsync<object>(command, new object[] { cancellationToken }, mdToken, moduleVersionPtr);
         }
     }
 }
