@@ -69,7 +69,7 @@ namespace Interception.Common
             var method = MethodFinder.FindMethod(mdToken, moduleVersionPtr, genericTypeArguments);
             if (method != null)
             {
-                return Execute(() => {
+                return ExecuteInternalAsync(() => {
                     var task = (Task<T>)method.Invoke(obj, param);
                     return task;
                 }, method, metricName, noMetrics);
@@ -80,7 +80,7 @@ namespace Interception.Common
             return default;
         }
 
-        private static async Task<T> Execute<T>(Func<Task<T>> action, MethodBase method, string metricName, bool noMetrics)
+        private static async Task<T> ExecuteInternalAsync<T>(Func<Task<T>> action, MethodBase method, string metricName, bool noMetrics)
         {
             var sw = new Stopwatch();
             sw.Start();
