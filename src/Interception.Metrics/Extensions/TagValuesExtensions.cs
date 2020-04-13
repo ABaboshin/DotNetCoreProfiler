@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
-namespace Interception.Common
+namespace Interception.Metrics.Extensions
 {
     /// <summary>
     /// tags extensions

@@ -1,7 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using Interception.Metrics;
+using System;
 using System.Reflection;
-using System.Text;
 
 namespace Interception.Common
 {
@@ -17,7 +16,7 @@ namespace Interception.Common
                 object result = null;
                 if (!noMetrics)
                 {
-                    Metrics.Histogram(() =>
+                    MetricsSender.Histogram(() =>
                     {
                         result = ExecuteInternal(obj, param, method);
                     }, method);
