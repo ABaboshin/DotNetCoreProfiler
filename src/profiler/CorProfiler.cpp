@@ -177,33 +177,26 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
 
-    ComPtr<IUnknown> metadataInterfaces;
-    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
-
-    const auto pMetadataEmit =
-        metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
-
-    const auto pMetadataAssemblyEmit =
-        metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
-
-    const auto pMetadataImport =
-        metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
-    auto functionInfo = GetFunctionInfo(pMetadataImport, functionToken);
-
-    hr = functionInfo.signature.TryParse();
-    IfFailRet(hr);
+    // if the current call is not a call to one of skipped assemblies
+    if (SkipAssembly(moduleInfo.assembly.name))
+    {
+        return S_OK;
+    }
 
     // load once into appdomain
     if (loadedIntoAppDomains.find(moduleInfo.assembly.app_domain_id) == loadedIntoAppDomains.end())
     {
-        // if the current call is not a call to one of skipped assemblies
-        if (SkipAssembly(moduleInfo.assembly.name))
-        {
-            return S_OK;
-        }
-
         loadedIntoAppDomains.insert(moduleInfo.assembly.app_domain_id);
+
+        ComPtr<IUnknown> metadataInterfaces;
+        IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+
+        const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+        auto functionInfo = GetFunctionInfo(metadataImport, functionToken);
+
+        hr = functionInfo.signature.TryParse();
+        IfFailRet(hr);
 
         std::cout << "Load into app_domain_id " << moduleInfo.assembly.app_domain_id 
 
@@ -220,10 +213,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             return std::find(udlls.begin(), udlls.end(), p) == udlls.end();
         });
 
-        return LoadAssemblyBefore(this->corProfilerInfo,
-            pMetadataImport,
-            pMetadataEmit,
-            pMetadataAssemblyEmit,
+        return LoadAssemblyBefore(
             nullptr,
             moduleId,
             functionToken,
@@ -235,18 +225,24 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 }
 
 HRESULT CorProfiler::LoadAssemblyBefore(
-    ICorProfilerInfo* pICorProfilerInfo,
-    const ComPtr<IMetaDataImport2> pMetadataImport,
-    const ComPtr<IMetaDataEmit2> pMetadataEmit,
-    const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit,
     ICorProfilerFunctionControl* pICorProfilerFunctionControl,
-    ModuleID moduleID,
+    ModuleID moduleId,
     mdMethodDef methodDef,
     FunctionID functionId,
     std::vector<WSTRING> assemblies)
 {
     HRESULT hr;
-    ILRewriter rewriter(pICorProfilerInfo, pICorProfilerFunctionControl, moduleID, methodDef);
+
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+
+    const auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+
+    const auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+
+    const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+    ILRewriter rewriter(this->corProfilerInfo, pICorProfilerFunctionControl, moduleId, methodDef);
 
     IfFailRet(rewriter.Import());
 
@@ -255,24 +251,24 @@ HRESULT CorProfiler::LoadAssemblyBefore(
     for (const auto& assemblyPath : assemblies)
     {
         mdString aPath;
-        hr = pMetadataEmit->DefineUserString(assemblyPath.c_str(), (ULONG)assemblyPath.length(),
+        hr = metadataEmit->DefineUserString(assemblyPath.c_str(), (ULONG)assemblyPath.length(),
             &aPath);
 
         ULONG string_len = 0;
         WCHAR string_contents[NameMaxSize]{};
-        hr = pMetadataImport->GetUserString(aPath, string_contents,
+        hr = metadataImport->GetUserString(aPath, string_contents,
             NameMaxSize, &string_len);
         IfFailRet(hr);
 
 
         // define mscorlib.dll
         mdModuleRef mscorlibRef;
-        GetMsCorLibRef(hr, pMetadataAssemblyEmit, mscorlibRef);
+        GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
         IfFailRet(hr);
 
         // define type System.Reflection.Assembly
         mdTypeRef assemblyTypeRef;
-        hr = pMetadataEmit->DefineTypeRefByName(
+        hr = metadataEmit->DefineTypeRefByName(
             mscorlibRef,
             "System.Reflection.Assembly"_W.data(),
             &assemblyTypeRef);
@@ -290,7 +286,7 @@ HRESULT CorProfiler::LoadAssemblyBefore(
 
         // define method System.Reflection.Assembly.LoadFrom
         mdMemberRef assemblyLoadMemberRef;
-        hr = pMetadataEmit->DefineMemberRef(
+        hr = metadataEmit->DefineMemberRef(
             assemblyTypeRef,
             "LoadFrom"_W.data(),
             assemblyLoadSig,
@@ -299,7 +295,7 @@ HRESULT CorProfiler::LoadAssemblyBefore(
 
         // define path to a .net dll 
         mdString profilerTraceDllNameTextToken;
-        hr = pMetadataEmit->DefineUserString(assemblyPath.data(), (ULONG)assemblyPath.length(), &profilerTraceDllNameTextToken);
+        hr = metadataEmit->DefineUserString(assemblyPath.data(), (ULONG)assemblyPath.length(), &profilerTraceDllNameTextToken);
 
         std::cout << "LoadAssemblyBefore " << ToString(assemblyPath) << std::endl;
 
@@ -352,7 +348,12 @@ bool CorProfiler::SkipAssembly(const WSTRING& name)
       "Microsoft.CSharp"_W,
       "Anonymously Hosted DynamicMethods Assembly"_W,
       "ISymWrapper"_W,
-      "Wrapper"_W,
+      "Interception"_W,
+      "Interception.Common"_W,
+      "Interception.Executor"_W,
+      "Interception.Generator"_W,
+      "Interception.Metrics"_W,
+      "Interception.Observers"_W,
       "StatsdClient"_W,
       "Newtonsoft.Json"_W
     };
@@ -381,7 +382,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
     auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
 
-    for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
+    if (!SkipAssembly(moduleInfo.assembly.name)) for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
         pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext) {
         if (pInstr->m_opcode != CEE_CALL && pInstr->m_opcode != CEE_CALLVIRT) {
             continue;
@@ -402,7 +403,6 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
         {
             if (
                 (moduleInfo.assembly.name == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
-                && !SkipAssembly(moduleInfo.assembly.name)
                 && target.type.name == interception.TargetTypeName
                 && target.name == interception.TargetMethodName && interception.TargetMethodParametersCount == target.signature.NumberOfArguments()
                 )
