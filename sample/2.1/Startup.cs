@@ -8,6 +8,8 @@ using Microsoft.Extensions.Options;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
+using SampleApp.Redis;
+using StackExchange.Redis;
 using System;
 using System.Linq;
 
@@ -28,6 +30,18 @@ namespace SampleApp
 
             services.AddMvc();
             ConfigureMessageBus(services);
+            ConfigureRedis(services);
+        }
+
+        private void ConfigureRedis(IServiceCollection services)
+        {
+            services.Configure<RedisConfiguration>(Configuration.GetSection(RedisConfiguration.SectionKey));
+            services.AddScoped<ConnectionMultiplexer>(sp =>
+            {
+                var config = sp.GetService<IOptions<RedisConfiguration>>().Value;
+                return ConnectionMultiplexer.Connect(config.ConnectionString);
+            });
+            services.AddHostedService<RedisSubscriber>();
         }
 
         private void ConfigureMessageBus(IServiceCollection services)

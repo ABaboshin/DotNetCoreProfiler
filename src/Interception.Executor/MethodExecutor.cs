@@ -1,12 +1,13 @@
 ﻿using Interception.Metrics;
 using System;
+using System.Collections.Generic;
 using System.Reflection;
 
 namespace Interception.Common
 {
     public static class MethodExecutor
     {
-        public static object ExecuteMethod(object obj, object[] param, int mdToken, long moduleVersionPtr, bool noMetrics = false)
+        public static object ExecuteMethod(object obj, object[] param, int mdToken, long moduleVersionPtr, bool noMetrics = false, string metricName = "", IEnumerable<string> additionalTags = null)
         {
             Console.WriteLine($"Call MethodExecutor.ExecuteMethod {mdToken} {moduleVersionPtr}");
 
@@ -19,13 +20,12 @@ namespace Interception.Common
                     MetricsSender.Histogram(() =>
                     {
                         result = ExecuteInternal(obj, param, method);
-                    }, method);
+                    }, method, metricName, additionalTags);
                 }
                 else
                 {
                     result = ExecuteInternal(obj, param, method);
                 }
-                
 
                 return result;
             }

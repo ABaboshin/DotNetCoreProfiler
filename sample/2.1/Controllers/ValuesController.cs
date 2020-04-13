@@ -9,6 +9,7 @@ using Microsoft.EntityFrameworkCore;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
+using StackExchange.Redis;
 
 namespace SampleApp.Controllers
 {
@@ -21,13 +22,14 @@ namespace SampleApp.Controllers
     {
         private readonly IBusControl _busControl;
         private readonly MyDbContext _myDbContext;
+        private readonly ConnectionMultiplexer _connectionMultiplexer;
 
-        public ValuesController(IBusControl busControl, MyDbContext myDbContext)
+        public ValuesController(IBusControl busControl, MyDbContext myDbContext, ConnectionMultiplexer connectionMultiplexer)
         {
             _busControl = busControl;
             _myDbContext = myDbContext;
+            _connectionMultiplexer = connectionMultiplexer;
         }
-
 
         /// <summary>
         /// executes an 'ok' sql query
@@ -110,6 +112,22 @@ namespace SampleApp.Controllers
         public async Task<ActionResult<string>> Publish(int id)
         {
             await _busControl.Publish(new MyMessage { Id = id });
+            return Ok();
+        }
+
+        /// <summary>
+        /// publish a message with redis
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpGet("publish-redis")]
+        public async Task<ActionResult<string>> PublishRedis()
+        {
+            await _connectionMultiplexer
+                .GetDatabase()
+                .Multiplexer
+                .GetSubscriber()
+                .PublishAsync("channel", "value");
             return Ok();
         }
 

@@ -17,7 +17,8 @@
         "ASPNETCORE_ENVIRONMENT": "Development",
         "RABBITMQ__HOST": "localhost",
         "RABBITMQ__USER": "admin",
-        "RABBITMQ__PASSWORD": "password"
+        "RABBITMQ__PASSWORD": "password",
+        "redis__connectionstring": "localhost:6379"
       },
       "applicationUrl": "http://localhost:5000"
     }

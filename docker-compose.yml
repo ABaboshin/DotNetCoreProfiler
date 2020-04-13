@@ -21,6 +21,10 @@ services:
     ports:
       - "15672:15672"
       - "5672:5672"
+  redis:
+    image: redis:5.0.8
+    ports:
+      - "6379:6379"
   sampleapp:
     image: sampleapp:21
     environment:
@@ -35,6 +39,7 @@ services:
       RABBITMQ__HOST: "rabbitmq"
       RABBITMQ__USER: "admin"
       RABBITMQ__PASSWORD: "password"
+      redis__connectionstring: "redis:6379"
     ports:
       - "5000:5000"
   prometheus:

@@ -22,7 +22,7 @@ namespace Interception.Metrics
             _serviceConfiguration = serviceConfiguration;
         }
 
-        public static void Histogram(Action action, MethodBase method)
+        public static void Histogram(Action action, MethodBase method, string metricName = "", IEnumerable<string> additionalTags = null)
         {
             var sw = new Stopwatch();
             Exception exception = null;
@@ -39,13 +39,18 @@ namespace Interception.Metrics
             {
                 sw.Stop();
 
-                var tags = new List<string> { $"name:{method.DeclaringType.Name}.{method.Name}", $"success:{exception != null}" };
+                var tags = new List<string> { $"name:{method.DeclaringType.Name}.{method.Name}", $"success:{exception is null}" };
                 if (exception != null)
                 {
                     tags.AddRange(exception.GetTags());
                 }
 
-                Histogram("function_call", (double)sw.ElapsedMilliseconds(), tags);
+                if (additionalTags != null)
+                {
+                    tags.AddRange(additionalTags);
+                }
+
+                Histogram(metricName ?? "function_call", (double)sw.ElapsedMilliseconds(), tags);
             }
         }
 
