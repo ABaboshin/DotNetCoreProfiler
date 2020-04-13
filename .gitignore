@@ -1,0 +1,5 @@
+**/.vs/
+**/bin/
+**/obj/
+**/out/
+src/profiler/x64/

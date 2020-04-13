@@ -1,0 +1,9 @@
+**
+!lib/**
+!src/**
+!sample**
+!interception.json
+**/.vs/
+**/bin/
+**/obj/
+**/out/

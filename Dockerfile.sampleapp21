@@ -1,0 +1,27 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
+
+COPY sample/ sample/SampleApp/
+
+RUN dotnet publish -c Debug -o /app sample/SampleApp/SampleApp.csproj
+
+FROM profiler:native as profiler
+
+FROM profiler:interception as interception
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:2.1.15
+COPY --from=build /app /app
+RUN mkdir /profiler
+COPY --from=profiler /DotNetCoreProfiler.so /profiler
+COPY --from=interception /interception/interceptions.json /profiler
+COPY --from=interception /interception/*.dll /profiler/
+
+EXPOSE 80
+
+WORKDIR /app
+
+ENV CORECLR_ENABLE_PROFILING="1"
+ENV CORECLR_PROFILER="{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
+ENV CORECLR_PROFILER_PATH="/profiler/DotNetCoreProfiler.so"
+ENV PROFILER_CONFIGURATION="/profiler/interceptions.json"
+
+ENTRYPOINT ["dotnet", "SampleApp.dll"]
