@@ -7,11 +7,18 @@ namespace Interception.Common
 {
     public static class MethodExecutor
     {
-        public static object ExecuteMethod(object obj, object[] param, int mdToken, long moduleVersionPtr, bool noMetrics = false, string metricName = "", IEnumerable<string> additionalTags = null)
+        public static object ExecuteMethod(object obj,
+            object[] param,
+            int mdToken,
+            long moduleVersionPtr,
+            bool noMetrics = false,
+            string metricName = "",
+            IEnumerable<string> additionalTags = null,
+            Type[] genericTypeArguments = null)
         {
             Console.WriteLine($"Call MethodExecutor.ExecuteMethod {mdToken} {moduleVersionPtr}");
 
-            var method = MethodFinder.FindMethod(mdToken, moduleVersionPtr);
+            var method = MethodFinder.FindMethod(mdToken, moduleVersionPtr, genericTypeArguments);
             if (method != null)
             {
                 object result = null;

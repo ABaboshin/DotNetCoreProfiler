@@ -25,6 +25,7 @@ namespace Interception.Metrics
         public static void Histogram(Action action, MethodBase method, string metricName = "", IEnumerable<string> additionalTags = null)
         {
             var sw = new Stopwatch();
+            sw.Start();
             Exception exception = null;
             try
             {

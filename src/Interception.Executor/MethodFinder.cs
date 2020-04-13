@@ -6,7 +6,7 @@ namespace Interception.Common
 {
     public static class MethodFinder
     {
-        public static MethodBase FindMethod(int mdToken, long moduleVersionPtr)
+        public static MethodBase FindMethod(int mdToken, long moduleVersionPtr, Type[] genericTypeArguments)
         {
             Console.WriteLine($"Call FindMethod {mdToken} {moduleVersionPtr}");
 
@@ -22,7 +22,17 @@ namespace Interception.Common
                     {
                         try
                         {
-                            var method = module.ResolveMethod(mdToken);
+                            MethodBase method = null;
+
+                            if (genericTypeArguments != null)
+                            {
+                                method = module.ResolveMethod(mdToken, genericTypeArguments, new Type[] { });
+                            }
+                            else
+                            {
+                                method = module.ResolveMethod(mdToken);
+                            }
+                            
                             Console.WriteLine($"Found {method.DeclaringType.Name}.{method.Name} Call, {mdToken}, {moduleVersionPtr}, {moduleVersionId}");
 
                             return method;
