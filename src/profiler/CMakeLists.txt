@@ -5,7 +5,7 @@ project("DotNetCoreProfiler" VERSION 1.13.3)
 
 add_compile_options(-std=c++11 -fPIC -fms-extensions)
 add_compile_options(-DBIT64 -DPAL_STDCPP_COMPAT -DPLATFORM_UNIX -DUNICODE)
-add_compile_options(-Wno-invalid-noreturn -Wno-macro-redefined)
+add_compile_options(-Wno-invalid-noreturn -Wno-macro-redefined -Wno-pragma-pack)
 
 SET_SOURCE_FILES_PROPERTIES(
   ${GENERATED_OBJ_FILES}
