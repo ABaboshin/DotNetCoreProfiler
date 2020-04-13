@@ -62,13 +62,34 @@ std::vector<BYTE> GetSignatureByteRepresentation(
   return signature_data;
 }
 
-void PrintModuleInfo(ICorProfilerInfo8* info, const ModuleID& moduleId)
+void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef)
 {
-  const ModuleInfo moduleInfo = GetModuleInfo(info, moduleId);
-  std::cout << ToString(moduleInfo.assembly.name) << " " << moduleId << std::endl;
+    ASSEMBLYMETADATA metadata{};
+    metadata.usMajorVersion = 4;
+    metadata.usMinorVersion = 0;
+    metadata.usBuildNumber = 0;
+    metadata.usRevisionNumber = 0;
+
+    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, "mscorlib"_W);
 }
 
-void PrintModuleInfo(const ModuleInfo& moduleInfo)
+void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef, WSTRING assemblyName)
 {
-  std::cout << ToString(moduleInfo.assembly.name) << " " << moduleInfo.id << std::endl;
+    ASSEMBLYMETADATA metadata{};
+    metadata.usMajorVersion = 1;
+    metadata.usMinorVersion = 0;
+    metadata.usBuildNumber = 0;
+    metadata.usRevisionNumber = 0;
+
+    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE>(), metadata, assemblyName);
+}
+
+HRESULT CreateAssemblyRef(const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, std::vector<BYTE> public_key, ASSEMBLYMETADATA metadata, WSTRING assemblyName) {
+    HRESULT hr = pMetadataAssemblyEmit->DefineAssemblyRef(
+        (void*)public_key.data(),
+        (ULONG)public_key.size(),
+        assemblyName.c_str(), &metadata, NULL, 0, 0,
+        mscorlib_ref);
+
+    return hr;
 }

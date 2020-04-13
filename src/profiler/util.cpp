@@ -68,16 +68,6 @@ WSTRING operator"" _W(const char* arr, size_t size) {
   return ToWSTRING(str);
 }
 
-HRESULT CreateAssemblyRef(const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, std::vector<BYTE> public_key, ASSEMBLYMETADATA metadata, WSTRING assemblyName) {
-    HRESULT hr = pMetadataAssemblyEmit->DefineAssemblyRef(
-        (void*)public_key.data(),
-        (ULONG)public_key.size(),
-        assemblyName.c_str(), &metadata, NULL, 0, 0,
-        mscorlib_ref);
-
-    return hr;
-}
-
 constexpr char HexMap[] = { '0', '1', '2', '3', '4', '5', '6', '7',
                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 

@@ -31,6 +31,17 @@ private:
 
     HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
 
+    HRESULT LoadAssemblyBefore(
+        ICorProfilerInfo* pICorProfilerInfo,
+        const ComPtr<IMetaDataImport2> pMetadataImport,
+        const ComPtr<IMetaDataEmit2> pMetadataEmit,
+        const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit,
+        ICorProfilerFunctionControl* pICorProfilerFunctionControl,
+        ModuleID moduleID,
+        mdMethodDef methodDef,
+        FunctionID functionId,
+        std::vector<WSTRING> assemblies);
+
 public:
     CorProfiler();
     virtual ~CorProfiler();

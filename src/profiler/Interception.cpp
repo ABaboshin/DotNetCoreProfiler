@@ -29,7 +29,6 @@ std::vector<Interception> LoadFromFile(const WSTRING& path)
 
 std::vector<Interception> LoadFromStream(std::ifstream& stream)
 {
-	std::cout << "Load from stream" << std::endl;
 	std::vector<Interception> interceptions;
 
 	nlohmann::json j;
@@ -37,7 +36,6 @@ std::vector<Interception> LoadFromStream(std::ifstream& stream)
 
 	for (auto& el : j) {
 		auto i = LoadFromJson(el);
-		std::cout << std::get<1>(i) << std::endl;
 		if (std::get<1>(i)) {
 			interceptions.push_back(std::get<0>(i));
 		}
@@ -48,11 +46,9 @@ std::vector<Interception> LoadFromStream(std::ifstream& stream)
 
 std::pair<Interception, bool> LoadFromJson(const nlohmann::json::value_type& src)
 {
-	std::cout << "el " << src << std::endl;
 	if (!src.is_object()) {
 		return std::make_pair<Interception, bool>({}, false);
 	}
-
 	
 	auto CallerAssemblyName = ToWSTRING(src.value("CallerAssemblyName", ""));
 	auto TargetAssemblyName = ToWSTRING(src.value("TargetAssemblyName", ""));
@@ -94,15 +90,4 @@ std::pair<Interception, bool> LoadFromJson(const nlohmann::json::value_type& src
 	}
 
 	return std::make_pair<Interception, bool>({ CallerAssemblyName, TargetAssemblyName, TargetTypeName , TargetMethodName , WrapperAssemblyPath, WrapperAssemblyName , WrapperTypeName , WrapperMethodName, signature, TargetMethodParametersCount }, true);
-}
-
-WSTRING ToString(const Interception& interception)
-{
-	return interception.TargetAssemblyName + " "_W +
-		interception.TargetTypeName + " "_W +
-		interception.TargetMethodName + " "_W +
-		interception.WrapperAssemblyPath + " "_W +
-		interception.WrapperAssemblyName + " "_W +
-		interception.WrapperTypeName + " "_W +
-		interception.WrapperMethodName + " "_W;
 }

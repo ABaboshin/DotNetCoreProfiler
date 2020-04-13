@@ -25,6 +25,7 @@ namespace SampleApp.Redis
                 .Multiplexer
                 .GetSubscriber()
                 .SubscribeAsync("channel", (channel, data) => {
+                    Thread.Sleep(3000);
                     Console.WriteLine($"channel: {channel} data: {data}");
                 });
         }

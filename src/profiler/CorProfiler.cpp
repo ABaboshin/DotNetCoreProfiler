@@ -1,6 +1,3 @@
-// Copyright (c) .NET Foundation and contributors. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
 #include <algorithm>
 #include <iostream>
 #include <string>
@@ -46,12 +43,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     interceptions = LoadFromFile(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
 
-    std::cout << "Found interceptions " << interceptions.size() << std::endl;
-    for (size_t i = 0; i < interceptions.size(); i++)
-    {
-        std::cout << ToString(ToString(interceptions[i])) << std::endl;
-    }
-
     return S_OK;
 }
 
@@ -93,7 +84,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadStarted(AssemblyID assemblyId
 
 HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus)
 {
-    std::cout << "AssemblyLoadFinished " << assemblyId << std::endl;
     return S_OK;
 }
 
@@ -130,8 +120,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
     hr = pMetadataImport->GetScopeProps(nullptr, 0, nullptr, &module_version_id);
 
     modules[moduleId] = module_version_id;
-
-    //std::cout << "ModuleLoadFinished " << moduleId << " " << module_version_id << std::endl;
 
     return S_OK;
 }
@@ -244,6 +232,98 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     return Rewrite(moduleId, functionToken);
 }
 
+HRESULT CorProfiler::LoadAssemblyBefore(
+    ICorProfilerInfo* pICorProfilerInfo,
+    const ComPtr<IMetaDataImport2> pMetadataImport,
+    const ComPtr<IMetaDataEmit2> pMetadataEmit,
+    const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit,
+    ICorProfilerFunctionControl* pICorProfilerFunctionControl,
+    ModuleID moduleID,
+    mdMethodDef methodDef,
+    FunctionID functionId,
+    std::vector<WSTRING> assemblies)
+{
+    HRESULT hr;
+    ILRewriter rewriter(pICorProfilerInfo, pICorProfilerFunctionControl, moduleID, methodDef);
+
+    IfFailRet(rewriter.Import());
+
+    ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
+
+    for (const auto& assemblyPath : assemblies)
+    {
+        mdString aPath;
+        hr = pMetadataEmit->DefineUserString(assemblyPath.c_str(), (ULONG)assemblyPath.length(),
+            &aPath);
+
+        ULONG string_len = 0;
+        WCHAR string_contents[kNameMaxSize]{};
+        hr = pMetadataImport->GetUserString(aPath, string_contents,
+            kNameMaxSize, &string_len);
+        IfFailRet(hr);
+
+
+        // define mscorlib.dll
+        mdModuleRef mscorlibRef;
+        GetMsCorLibRef(hr, pMetadataAssemblyEmit, mscorlibRef);
+        IfFailRet(hr);
+
+        // define type System.Reflection.Assembly
+        mdTypeRef assemblyTypeRef;
+        hr = pMetadataEmit->DefineTypeRefByName(
+            mscorlibRef,
+            "System.Reflection.Assembly"_W.data(),
+            &assemblyTypeRef);
+
+        unsigned buffer;
+        auto size = CorSigCompressToken(assemblyTypeRef, &buffer);
+        auto* assemblyLoadSig = new COR_SIGNATURE[size + 4];
+        unsigned offset = 0;
+        assemblyLoadSig[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
+        assemblyLoadSig[offset++] = 0x01;
+        assemblyLoadSig[offset++] = ELEMENT_TYPE_CLASS;
+        memcpy(&assemblyLoadSig[offset], &buffer, size);
+        offset += size;
+        assemblyLoadSig[offset] = ELEMENT_TYPE_STRING;
+
+        // define method System.Reflection.Assembly.LoadFrom
+        mdMemberRef assemblyLoadMemberRef;
+        hr = pMetadataEmit->DefineMemberRef(
+            assemblyTypeRef,
+            "LoadFrom"_W.data(),
+            assemblyLoadSig,
+            sizeof(assemblyLoadSig),
+            &assemblyLoadMemberRef);
+
+        // define path to a .net dll 
+        mdString profilerTraceDllNameTextToken;
+        hr = pMetadataEmit->DefineUserString(assemblyPath.data(), (ULONG)assemblyPath.length(), &profilerTraceDllNameTextToken);
+
+        std::cout << "LoadAssemblyBefore " << ToString(assemblyPath) << std::endl;
+
+        // load path
+        ILInstr* pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_LDSTR;
+        pNewInstr->m_Arg32 = profilerTraceDllNameTextToken;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+        // call System.Reflection.Assembly.LoadFrom
+        pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_CALL;
+        pNewInstr->m_Arg32 = assemblyLoadMemberRef;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);
+
+        // clean stack
+        pNewInstr = rewriter.NewILInstr();
+        pNewInstr->m_opcode = CEE_POP;
+        rewriter.InsertBefore(pFirstInstr, pNewInstr);
+    }
+
+    IfFailRet(rewriter.Export(false));
+
+    return S_OK;
+}
+
 bool CorProfiler::SkipAssembly(const WSTRING& name)
 {
     std::vector<WSTRING> skipAssemblies{
@@ -320,78 +400,54 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
         {
             if (
                 (moduleInfo.assembly.name == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
-                && !SkipAssembly(moduleInfo.assembly.name))
+                && !SkipAssembly(moduleInfo.assembly.name)
+                && target.type.name == interception.TargetTypeName
+                && target.name == interception.TargetMethodName && interception.TargetMethodParametersCount == target.signature.NumberOfArguments()
+                )
             {
-                if (target.type.name == interception.TargetTypeName)
-                {
-                    if (target.name == interception.TargetMethodName && interception.TargetMethodParametersCount == target.signature.NumberOfArguments())
-                    {
-                        auto m = modules[moduleId];
+                auto m = modules[moduleId];
 
-                        std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
-                            << " num args " << target.signature.NumberOfArguments()
-                            << " from assembly " << ToString(moduleInfo.assembly.name)
-                            << " module " << m
-                            << std::endl << std::flush;
-                        auto signature = interception.signature;
-                        //std::cout << signature << std::endl;
+                std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
+                    << " num args " << target.signature.NumberOfArguments()
+                    << " from assembly " << ToString(moduleInfo.assembly.name)
+                    << " module " << m
+                    << std::endl << std::flush;
+                auto signature = interception.signature;
 
-                        // define wrapper.dll
-                        mdModuleRef wrapperRef;
-                        GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, interception.WrapperAssemblyName);
-                        IfFailRet(hres);
+                // define wrapper.dll
+                mdModuleRef wrapperRef;
+                GetWrapperRef(hres, pMetadataAssemblyEmit, wrapperRef, interception.WrapperAssemblyName);
+                IfFailRet(hres);
 
-                        //std::cout << ToString(interception.WrapperAssemblyName) << " " << wrapperRef << std::endl;
+                // define wrappedType
+                mdTypeRef wrapperTypeRef;
+                hres = pMetadataEmit->DefineTypeRefByName(
+                    wrapperRef,
+                    interception.WrapperTypeName.data(),
+                    &wrapperTypeRef);
+                IfFailRet(hres);
 
-                        // define wrappedType
-                        mdTypeRef wrapperTypeRef;
-                        hres = pMetadataEmit->DefineTypeRefByName(
-                            wrapperRef,
-                            interception.WrapperTypeName.data(),
-                            &wrapperTypeRef);
-                        IfFailRet(hres);
+                // method
+                mdMemberRef wrapperMethodRef;
+                hres = pMetadataEmit->DefineMemberRef(
+                    wrapperTypeRef, interception.WrapperMethodName.c_str(),
+                    signature.data(),
+                    (DWORD)(signature.size()),
+                    &wrapperMethodRef);
 
-                        //std::cout << ToString(interception.WrapperTypeName) << " " << wrapperTypeRef << std::endl;
+                ILRewriterHelper helper(&rewriter);
+                helper.SetILPosition(pInstr);
+                helper.LoadInt32(targetMdToken);
 
-                        // method
-                        mdMemberRef wapperMethodRef;
-                        hres = pMetadataEmit->DefineMemberRef(
-                            wrapperTypeRef, interception.WrapperMethodName.c_str(),
-                            signature.data(),
-                            (DWORD)(signature.size()),
-                            &wapperMethodRef);
+                const void* module_version_id_ptr = &modules[moduleId];
 
-                        /*std::cout << ToString(interception.WrapperMethodName) << " " << wapperMethodRef << std::endl;
+                helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
 
-                        std::cout << std::hex;
-                        std::cout << "signature" << std::endl;
-                        for (size_t i = 0; i < signature.size(); i++)
-                        {
-                            std::cout << (int)signature[i] << std::endl;
-                        }
+                helper.CallMember(wrapperMethodRef, false);
 
-                        auto origSignature = target.signature.GetSignatureByteRepresentation();
-                        std::cout << "origSignature" << std::endl;
-                        for (size_t i = 0; i < origSignature.size(); i++)
-                        {
-                            std::cout << (int)origSignature[i] << std::endl;
-                        }*/
-
-                        ILRewriterHelper helper(&rewriter);
-                        helper.SetILPosition(pInstr);
-                        helper.LoadInt32(targetMdToken);
-
-                        const void* module_version_id_ptr = &modules[moduleId];
-
-                        helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
-
-                        helper.CallMember(wapperMethodRef, false);
-
-                        pInstr->m_opcode = CEE_NOP;
+                pInstr->m_opcode = CEE_NOP;
                             
-                        IfFailRet(rewriter.Export(false));
-                    }
-                }
+                IfFailRet(rewriter.Export(false));
             }
         }
     }

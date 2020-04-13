@@ -46,5 +46,3 @@ struct Interception {
 std::vector<Interception> LoadFromFile(const WSTRING& path);
 std::vector<Interception> LoadFromStream(std::ifstream& stream);
 std::pair<Interception, bool> LoadFromJson(const nlohmann::json::value_type& src);
-
-WSTRING ToString(const Interception& interception);
