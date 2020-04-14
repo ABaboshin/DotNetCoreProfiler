@@ -43,7 +43,7 @@ services:
     ports:
       - "5000:5000"
   prometheus:
-    image: prometheus:local
+    image: prom/prometheus:v2.17.1
     environment:
       ENV: "local"
       SERVICES: "sampleapp"
@@ -58,10 +58,3 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=2d'
       - '--query.lookback-delta=1m'
-  grafana:
-    image: grafana:local
-    environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=password
-    ports:
-      - "3000:3000"
