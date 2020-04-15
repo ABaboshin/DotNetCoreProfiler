@@ -40,6 +40,7 @@ services:
       RABBITMQ__USER: "admin"
       RABBITMQ__PASSWORD: "password"
       redis__connectionstring: "redis:6379"
+      PROFILER_PRINT_EVERY_CALL: "false"
     ports:
       - "5000:5000"
   prometheus:

@@ -40,9 +40,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
-    is_attached = true;
-
     interceptions = LoadFromFile(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
+
+    printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
 
     return S_OK;
 }
@@ -199,8 +199,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         IfFailRet(hr);
 
         std::cout << "Load into app_domain_id " << moduleInfo.assembly.app_domain_id 
-
-        << "Before call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
+            << "Before call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
             << " num args " << functionInfo.signature.NumberOfArguments()
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
@@ -394,10 +393,14 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
         auto targetMdToken = pInstr->m_Arg32;
 
-        //std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
-        //    << " num args " << target.signature.NumberOfArguments()
-        //    << " from assembly " << ToString(moduleInfo.assembly.name)
-        //    << std::endl << std::flush;
+
+        if (printEveryCall)
+        {
+            std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
+            << " num args " << target.signature.NumberOfArguments()
+            << " from assembly " << ToString(moduleInfo.assembly.name)
+            << std::endl << std::flush;
+        }
 
         for (const auto& interception : interceptions)
         {

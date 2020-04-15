@@ -25,7 +25,8 @@ private:
 
     std::vector<Interception> interceptions;
     ICorProfilerInfo8* corProfilerInfo;
-    bool is_attached = false;
+
+    bool printEveryCall = false;
 
     bool SkipAssembly(const WSTRING& name);
 
