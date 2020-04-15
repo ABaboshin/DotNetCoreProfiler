@@ -60,7 +60,7 @@ namespace Interception.Common
             int mdToken,
             long moduleVersionPtr,
             bool noMetrics = false,
-            string metricName = "",
+            string metricName = "function_call",
             IEnumerable<string> additionalTags = null,
             Type[] genericTypeArguments = null)
         {
@@ -72,7 +72,7 @@ namespace Interception.Common
                 return ExecuteInternalAsync(() => {
                     var task = (Task<T>)method.Invoke(obj, param);
                     return task;
-                }, method, metricName, noMetrics);
+                }, method, metricName, additionalTags, noMetrics);
             }
 
             Console.WriteLine($"Not found call");
@@ -80,7 +80,7 @@ namespace Interception.Common
             return default;
         }
 
-        private static async Task<T> ExecuteInternalAsync<T>(Func<Task<T>> action, MethodBase method, string metricName, bool noMetrics)
+        private static async Task<T> ExecuteInternalAsync<T>(Func<Task<T>> action, MethodBase method, string metricName, IEnumerable<string> additionalTags, bool noMetrics)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -107,7 +107,12 @@ namespace Interception.Common
                         tags.AddRange(exception.GetTags());
                     }
 
-                    MetricsSender.Histogram("function_call", (double)sw.ElapsedMilliseconds, tags);
+                    if (additionalTags != null)
+                    {
+                        tags.AddRange(additionalTags);
+                    }
+
+                    MetricsSender.Histogram(metricName, (double)sw.ElapsedMilliseconds, tags);
                 }
             }
         }

@@ -5,7 +5,7 @@ namespace Interception.Metrics.Extensions
     /// <summary>
     /// tags extensions
     /// </summary>
-    internal static class TagValuesExtensions
+    public static class TagValuesExtensions
     {
         /// <summary>
         /// Escape tags values for statsd
