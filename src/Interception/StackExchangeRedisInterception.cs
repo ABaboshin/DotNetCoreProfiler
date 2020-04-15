@@ -18,8 +18,6 @@ namespace Interception
 
                 var result = MethodExecutor.ExecuteMethod(messageCompletable, new object[] { isAsync }, mdToken, moduleVersionPtr, false, "redis_call", new List<string> { $"channel:{channel}" });
 
-                Console.WriteLine($"done {result} {result?.GetType()}");
-
                 return (bool)result;
             }
             else
@@ -30,6 +28,22 @@ namespace Interception
 
         [Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "OnMessageSyncImpl", TargetTypeName = "StackExchange.Redis.ChannelMessageQueue", TargetMethodParametersCount = 0)]
         public static object OnMessageSyncImpl(object channelMessageQueue, int mdToken, long moduleVersionPtr)
+        {
+            return OnMessageImpl(channelMessageQueue, mdToken, moduleVersionPtr, (handler, next) => {
+                handler.DynamicInvoke(next);
+            });
+        }
+
+        [Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "OnMessageAsyncImpl", TargetTypeName = "StackExchange.Redis.ChannelMessageQueue", TargetMethodParametersCount = 0)]
+        public static object OnMessageAsyncImpl(object channelMessageQueue, int mdToken, long moduleVersionPtr)
+        {
+            return OnMessageImpl(channelMessageQueue, mdToken, moduleVersionPtr, (handler, next) => {
+                var task = (Task)handler.DynamicInvoke(next);
+                task.Wait();
+            });
+        }
+
+        private static object OnMessageImpl(object channelMessageQueue, int mdToken, long moduleVersionPtr, Action<Delegate, object> executor)
         {
             channelMessageQueue.TryGetPropertyValue("Channel", out object channelProp);
             channelMessageQueue.TryGetFieldValue("_onMessageHandler", out object _onMessageHandler);
@@ -44,7 +58,6 @@ namespace Interception
                 {
                     var TryRead = channelMessageQueue.GetType().GetMethod("TryRead");
                     var channelMessageType = Type.GetType("StackExchange.Redis.ChannelMessage, StackExchange.Redis, Version=2.0.0.0, Culture=neutral, PublicKeyToken=c219ff1ca8c2ce46");
-                    //var next = Activator.CreateInstance(channelMessageType);
                     object next = null;
                     var parameters = new object[] { /*next*/null };
                     var tryReadResult = (bool)TryRead.Invoke(channelMessageQueue, parameters);
@@ -65,7 +78,7 @@ namespace Interception
                     try
                     {
                         MetricsSender.Histogram(() => {
-                            handler.DynamicInvoke(next);
+                            executor(handler, next);
                         }, metricName: "redis_call", additionalTags: new List<string> { $"channel:{channelProp.ToString()}" });
                     }
                     catch (Exception)

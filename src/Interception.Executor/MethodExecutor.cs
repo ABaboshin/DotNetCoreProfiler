@@ -142,7 +142,7 @@ namespace Interception.Common
             return default;
         }
 
-        private static async Task ExecuteInternalAsync(Func<Task> action, MethodBase method, string metricName, IEnumerable<string> additionalTags, bool noMetrics)
+        public static async Task ExecuteInternalAsync(Func<Task> action, MethodBase method, string metricName, IEnumerable<string> additionalTags, bool noMetrics)
         {
             var sw = new Stopwatch();
             sw.Start();
@@ -163,7 +163,11 @@ namespace Interception.Common
                 {
                     sw.Stop();
 
-                    var tags = new List<string> { $"success:{exception is null}", $"name:{method.DeclaringType.Name}.{method.Name}" };
+                    var tags = new List<string> { $"success:{exception is null}" };
+                    if (method != null)
+                    {
+                        tags.Add($"name:{method.DeclaringType.Name}.{method.Name}");
+                    }
                     if (exception != null)
                     {
                         tags.AddRange(exception.GetTags());

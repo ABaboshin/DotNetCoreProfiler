@@ -28,5 +28,8 @@ It will create an app running on `http://localhost:5000` with the following endp
  - api/values -> produces one http metrics with success and some entity framework core metric with success
  - api/values/bad -> produces one http metrics with an error and one entity framework core metric with an error
  - api/values/publish -> produces one http metrics with success and one masstransit metric with an error
- - api/values/publish-redis -> produces one http metrics with success and one redis metric with success
+ - api/values/publish-redis-sync1 -> produces one http metrics with success and one redis metric with success. Using `.Subscribe`.
+ - api/values/publish-redis-async2 -> produces one http metrics with success and one redis metric with success. Using `.Subscribe`.
+ - api/values/publish-redis-sync3 -> produces one http metrics with success and one redis metric with success. Using `.Subscribe.OnMessage`.
+ - api/values/publish-redis-async4 -> produces one http metrics with success and one redis metric with success. Using `.Subscribe.OnMessage`.
  - api/values/exception -> produces one http metrics with an error
