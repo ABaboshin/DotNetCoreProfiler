@@ -116,5 +116,67 @@ namespace Interception.Common
                 }
             }
         }
+
+        public static Task ExecuteMethodAsync(object obj,
+            object[] param,
+            int mdToken,
+            long moduleVersionPtr,
+            bool noMetrics = false,
+            string metricName = "function_call",
+            IEnumerable<string> additionalTags = null,
+            Type[] genericTypeArguments = null)
+        {
+            Console.WriteLine($"Call MethodExecutor.ExecuteMethod {mdToken} {moduleVersionPtr}");
+
+            var method = MethodFinder.FindMethod(mdToken, moduleVersionPtr, genericTypeArguments);
+            if (method != null)
+            {
+                return ExecuteInternalAsync(() => {
+                    var task = (Task)method.Invoke(obj, param);
+                    return task;
+                }, method, metricName, additionalTags, noMetrics);
+            }
+
+            Console.WriteLine($"Not found call");
+
+            return default;
+        }
+
+        private static async Task ExecuteInternalAsync(Func<Task> action, MethodBase method, string metricName, IEnumerable<string> additionalTags, bool noMetrics)
+        {
+            var sw = new Stopwatch();
+            sw.Start();
+            Exception exception = null;
+            try
+            {
+                await action();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Catched exception");
+                exception = ex;
+                throw;
+            }
+            finally
+            {
+                if (!noMetrics)
+                {
+                    sw.Stop();
+
+                    var tags = new List<string> { $"success:{exception is null}", $"name:{method.DeclaringType.Name}.{method.Name}" };
+                    if (exception != null)
+                    {
+                        tags.AddRange(exception.GetTags());
+                    }
+
+                    if (additionalTags != null)
+                    {
+                        tags.AddRange(additionalTags);
+                    }
+
+                    MetricsSender.Histogram(metricName, (double)sw.ElapsedMilliseconds, tags);
+                }
+            }
+        }
     }
 }

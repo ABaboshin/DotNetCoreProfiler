@@ -2,8 +2,6 @@
 using Microsoft.Extensions.Options;
 using StackExchange.Redis;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -20,13 +18,44 @@ namespace SampleApp.Redis
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
+            _connectionMultiplexer
+                .GetDatabase()
+                .Multiplexer
+                .GetSubscriber()
+                .Subscribe("channel1", (channel, data) => {
+                    Thread.Sleep(3000);
+                    Console.WriteLine($"RedisSubscriber sync channel {channel} data: {data}");
+                });
+
             await _connectionMultiplexer
                 .GetDatabase()
                 .Multiplexer
                 .GetSubscriber()
-                .SubscribeAsync("channel", (channel, data) => {
+                .SubscribeAsync("channel2", async (channel, data) => {
+                    await Task.Delay(3000);
+                    Console.WriteLine($"RedisSubscriber sync channel {channel} data: {data}");
+                });
+
+            _connectionMultiplexer
+                .GetDatabase()
+                .Multiplexer
+                .GetSubscriber()
+                .Subscribe("channel3")
+                .OnMessage(data =>
+                {
                     Thread.Sleep(3000);
-                    Console.WriteLine($"channel: {channel} data: {data}");
+                    Console.WriteLine($"RedisSubscriber sync data: {data}");
+                });
+
+            _connectionMultiplexer
+                .GetDatabase()
+                .Multiplexer
+                .GetSubscriber()
+                .Subscribe("channel4")
+                .OnMessage(async data =>
+                {
+                    await Task.Delay(3000);
+                    Console.WriteLine($"RedisSubscriber async data: {data}");
                 });
         }
     }
