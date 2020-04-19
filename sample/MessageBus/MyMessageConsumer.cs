@@ -11,7 +11,7 @@ namespace SampleApp.MessageBus
         {
             Console.WriteLine("MyMessageConsumer.Consume");
             await Task.Delay(3000);
-            throw new NotImplementedByDesignException();
+            //throw new NotImplementedByDesignException();
         }
     }
 }

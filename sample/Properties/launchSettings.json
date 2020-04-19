@@ -18,7 +18,11 @@
         "RABBITMQ__HOST": "localhost",
         "RABBITMQ__USER": "admin",
         "RABBITMQ__PASSWORD": "password",
-        "redis__connectionstring": "localhost:6379"
+        "redis__connectionstring": "localhost:6379",
+        "JAEGER_SERVICE_NAME": "sampleapp",
+        "JAEGER_AGENT_HOST": "localhost",
+        "JAEGER_AGENT_PORT": "6831",
+        "JAEGER_SAMPLER_TYPE": "const"
       },
       "applicationUrl": "http://localhost:5000"
     }

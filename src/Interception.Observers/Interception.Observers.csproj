@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
@@ -7,6 +7,11 @@
   <ItemGroup>
     <ProjectReference Include="..\Interception.Common\Interception.Common.csproj" />
     <ProjectReference Include="..\Interception.Metrics\Interception.Metrics.csproj" />
+    <ProjectReference Include="..\Interception.Tracing\Interception.Tracing.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Http.Abstractions" Version="2.1.1" />
   </ItemGroup>
 
 </Project>

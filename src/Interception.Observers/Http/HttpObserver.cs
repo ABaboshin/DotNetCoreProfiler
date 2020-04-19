@@ -2,18 +2,27 @@
 using Interception.Metrics;
 using Interception.Metrics.Extensions;
 using Interception.Observers.Configuration;
+using Interception.Tracing;
+using Microsoft.AspNetCore.Http;
+using OpenTracing;
+using OpenTracing.Propagation;
+using OpenTracing.Tag;
+using OpenTracing.Util;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Reflection;
+using System.Threading;
 
 namespace Interception.Observers.Http
 {
     /// <summary>
     /// http request diagnsotic events observer
     /// </summary>
-    internal class HttpObserver : IObserver<KeyValuePair<string, object>>
+    public class HttpObserver : IObserver<KeyValuePair<string, object>>
     {
+        public static AsyncLocal<string> asyncLocal = new AsyncLocal<string>();
+
         private readonly ConcurrentDictionary<string, RequestInfo> info = new ConcurrentDictionary<string, RequestInfo>();
         private readonly HttpConfiguration _httpConfiguration;
 
@@ -65,6 +74,16 @@ namespace Interception.Observers.Http
             {
                 httpContext.TryGetPropertyValue("TraceIdentifier", out string traceIdentifier);
 
+                Tracing.Tracing.CurrentScope.Span
+                    .SetTag(Tags.Error, true)
+                    .SetTag(Tags.Error, true)
+                    .Log(new Dictionary<string, object>(3)
+                    {
+                        { LogFields.Event, Tags.Error.Key },
+                        { LogFields.ErrorKind, exception.GetType().Name },
+                        { LogFields.ErrorObject, exception }
+                    });
+
                 if (info.TryGetValue(traceIdentifier, out var existing))
                 {
                     info.TryUpdate(traceIdentifier,
@@ -92,6 +111,11 @@ namespace Interception.Observers.Http
                 httpContext.TryGetPropertyValue("TraceIdentifier", out string traceIdentifier);
                 httpContext.TryGetPropertyValue("Response", out object response);
                 response.TryGetPropertyValue("StatusCode", out object statusCode);
+
+                Tracing.Tracing.CurrentScope.Span
+                    .SetTag("StatusCode", statusCode.ToString());
+
+                Tracing.Tracing.CurrentScope.Dispose();
 
                 if (info.TryRemove(traceIdentifier, out var existing))
                 {
@@ -128,6 +152,10 @@ namespace Interception.Observers.Http
                 actionDescriptor.TryGetPropertyValue("ActionName", out string actionName);
                 actionDescriptor.TryGetPropertyValue("ControllerName", out string controllerName);
 
+                Tracing.Tracing.CurrentScope.Span
+                    .SetTag("ActionName", actionName)
+                    .SetTag("ActionName", controllerName);
+
                 if (info.TryGetValue(traceIdentifier, out var existing))
                 {
                     info.TryUpdate(traceIdentifier,
@@ -148,12 +176,21 @@ namespace Interception.Observers.Http
         /// <param name="value"></param>
         private void ProcessStartEvent(object value)
         {
-            var httpContext = value.GetType().GetTypeInfo().GetDeclaredProperty("HttpContext")?.GetValue(value);
+            var httpContext = (HttpContext)value.GetType().GetTypeInfo().GetDeclaredProperty("HttpContext")?.GetValue(value);
             if (httpContext != null)
             {
-                httpContext.TryGetPropertyValue("TraceIdentifier", out string traceIdentifier);
+                if (httpContext.TryGetPropertyValue("TraceIdentifier", out string traceIdentifier))
+                {
+                    info.TryAdd(traceIdentifier, new RequestInfo { Start = DateTime.UtcNow, TraceIdentifier = traceIdentifier });
 
-                info.TryAdd(traceIdentifier, new RequestInfo { Start = DateTime.UtcNow, TraceIdentifier = traceIdentifier });
+                    var extracted = Tracing.Tracing.Tracer
+                        .Extract(BuiltinFormats.HttpHeaders, new RequestHeadersExtractAdapter(httpContext));
+
+                    Tracing.Tracing.CurrentScope = Tracing.Tracing.Tracer
+                        .BuildSpan("http " + Guid.NewGuid().ToString())
+                        .AsChildOf(extracted)
+                        .StartActive();
+                }
             }
         }
     }

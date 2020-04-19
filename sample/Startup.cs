@@ -1,16 +1,22 @@
-﻿using MassTransit;
+﻿//using Interception.MassTransit;
+//using Interception.Observers;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+//using OpenTracing;
+//using OpenTracing.Util;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
 using SampleApp.Redis;
 using StackExchange.Redis;
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace SampleApp
@@ -24,13 +30,22 @@ namespace SampleApp
 
         public IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection serviceCollection)
         {
-            ConfigureDatabase(services);
+            //DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(new Interception.Observers.Configuration.HttpConfiguration { Enabled = true }));
 
-            services.AddMvc();
-            ConfigureMessageBus(services);
-            ConfigureRedis(services);
+            //var loggerFactory = new LoggerFactory();
+            //var config = Jaeger.Configuration.FromEnv(loggerFactory);
+            //var tracer = config.GetTracer();
+            //GlobalTracer.Register(tracer);
+
+            ConfigureDatabase(serviceCollection);
+
+            serviceCollection.AddMvc();
+            ConfigureMessageBus(serviceCollection);
+            ConfigureRedis(serviceCollection);
+
+            //services.AddOpenTracing();
         }
 
         private void ConfigureRedis(IServiceCollection services)
@@ -54,6 +69,12 @@ namespace SampleApp
                 {
                     return Bus.Factory.CreateUsingRabbitMq(cfg =>
                     {
+                        var loggerFactory = context.GetRequiredService<ILoggerFactory>();
+                        cfg.UseExtensionsLogging(loggerFactory);
+
+                        //cfg.ConfigurePublish(configurator => configurator.AddPipeSpecification(new OpenTracingPipeSpecification()));
+                        //cfg.AddPipeSpecification(new OpenTracingPipeSpecification());
+
                         var config = context.GetService<IOptions<RabbitMQConfiguration>>().Value;
 
                         cfg.Host(new Uri($"rabbitmq://{config.Host}/"), host =>
