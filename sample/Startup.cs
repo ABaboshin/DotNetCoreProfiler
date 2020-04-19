@@ -85,7 +85,7 @@ namespace SampleApp
                         
                         cfg.ReceiveEndpoint("queue-name", ec =>
                         {
-                            ec.Consumer<MyMessageConsumer>();
+                            ec.Consumer(typeof(MyMessageConsumer), t => new MyMessageConsumer(context.GetRequiredService<ILogger<MyMessageConsumer>>()));
                         });
                     });
                 });
