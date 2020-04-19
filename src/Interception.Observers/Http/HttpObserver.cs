@@ -2,12 +2,10 @@
 using Interception.Metrics;
 using Interception.Metrics.Extensions;
 using Interception.Observers.Configuration;
-using Interception.Tracing;
 using Microsoft.AspNetCore.Http;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
-using OpenTracing.Util;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;

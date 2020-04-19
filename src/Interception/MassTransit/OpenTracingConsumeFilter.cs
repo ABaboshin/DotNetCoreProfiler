@@ -50,6 +50,7 @@ namespace Interception.MassTransit
 
             using (var scope = spanBuilder.StartActive(true))
             {
+                Tracing.Tracing.CurrentScope = scope;
                 await next.Send(context);
             }
         }

@@ -2,9 +2,7 @@
 using Interception.Observers;
 using Interception.Observers.Configuration;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OpenTracing;
 using OpenTracing.Util;
 using System;
 using System.Diagnostics;
