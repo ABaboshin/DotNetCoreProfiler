@@ -5,10 +5,6 @@ using System.Threading.Tasks;
 using MassTransit;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using OpenTracing;
-using OpenTracing.Propagation;
-using OpenTracing.Tag;
-using OpenTracing.Util;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
@@ -26,14 +22,12 @@ namespace SampleApp.Controllers
         private readonly IBusControl _busControl;
         private readonly MyDbContext _myDbContext;
         private readonly ConnectionMultiplexer _connectionMultiplexer;
-        //private readonly ITracer _tracer;
 
-        public ValuesController(IBusControl busControl, MyDbContext myDbContext, ConnectionMultiplexer connectionMultiplexer/*, ITracer tracer*/)
+        public ValuesController(IBusControl busControl, MyDbContext myDbContext, ConnectionMultiplexer connectionMultiplexer)
         {
             _busControl = busControl;
             _myDbContext = myDbContext;
             _connectionMultiplexer = connectionMultiplexer;
-            //_tracer = tracer;
         }
 
         /// <summary>
@@ -43,8 +37,6 @@ namespace SampleApp.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MyEntity>>> Get()
         {
-            //var span = GlobalTracer.Instance.BuildSpan("get");
-
             _myDbContext.Database.ExecuteSqlCommand("SELECT 1;");
             await _myDbContext.Database.ExecuteSqlCommandAsync("SELECT 2;");
 
@@ -76,16 +68,7 @@ namespace SampleApp.Controllers
         [HttpGet("publish")]
         public async Task<ActionResult<string>> Publish(int id)
         {
-            //using (var scope = _tracer.BuildSpan("create-user-async").StartActive(finishSpanOnDispose: true))
-            //{
-                //var span = scope.Span.SetTag(Tags.SpanKind, Tags.SpanKindClient);
-
-                //var dictionary = new Dictionary<string, string>();
-                //_tracer.Inject(span.Context, BuiltinFormats.TextMap, new TextMapInjectAdapter(dictionary));
-
-                await _busControl.Publish(new MyMessage { Id = id });
-            //}
-                
+            await _busControl.Publish(new MyMessage { Id = id });
             return Ok();
         }
 

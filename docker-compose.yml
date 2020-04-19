@@ -48,11 +48,11 @@ services:
       JAEGER_SAMPLER_TYPE: "const"
     ports:
       - "5000:5000"
-    # logging:
-    #   driver: gelf
-    #   options:
-    #     gelf-address: tcp://localhost:12201
-    #     tag: sampleapp
+    logging:
+      driver: gelf
+      options:
+        gelf-address: tcp://localhost:12201
+        tag: sampleapp
   prometheus:
     image: prom/prometheus:v2.17.1
     environment:

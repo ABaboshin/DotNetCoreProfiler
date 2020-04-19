@@ -25,17 +25,10 @@ namespace Interception
 
             DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(httpConfiguration));
 
-            var serviceCollection = (IServiceCollection)services;
-            serviceCollection.AddOpenTracing();
-            
             var loggerFactory = new LoggerFactory();
-            serviceCollection.AddSingleton<ITracer>(sp => {
-                var config = Jaeger.Configuration.FromEnv(loggerFactory);
-                var tracer = config.GetTracer();
-                GlobalTracer.Register(tracer);
-
-                return tracer;
-            });
+            var config = Jaeger.Configuration.FromEnv(loggerFactory);
+            var tracer = config.GetTracer();
+            GlobalTracer.Register(tracer);
 
             return MethodExecutor.ExecuteMethod(builder, new object[] { instance, services }, mdToken, moduleVersionPtr, true);
         }

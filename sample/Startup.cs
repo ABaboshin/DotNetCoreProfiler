@@ -8,6 +8,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+//using OpenTracing;
+//using OpenTracing.Util;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
@@ -28,15 +30,20 @@ namespace SampleApp
 
         public IConfiguration Configuration { get; }
 
-        public void ConfigureServices(IServiceCollection services)
+        public void ConfigureServices(IServiceCollection serviceCollection)
         {
             //DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(new Interception.Observers.Configuration.HttpConfiguration { Enabled = true }));
 
-            ConfigureDatabase(services);
+            //var loggerFactory = new LoggerFactory();
+            //var config = Jaeger.Configuration.FromEnv(loggerFactory);
+            //var tracer = config.GetTracer();
+            //GlobalTracer.Register(tracer);
 
-            services.AddMvc();
-            ConfigureMessageBus(services);
-            ConfigureRedis(services);
+            ConfigureDatabase(serviceCollection);
+
+            serviceCollection.AddMvc();
+            ConfigureMessageBus(serviceCollection);
+            ConfigureRedis(serviceCollection);
 
             //services.AddOpenTracing();
         }

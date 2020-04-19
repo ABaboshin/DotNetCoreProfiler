@@ -1,8 +1,10 @@
 ﻿using GreenPipes;
 using MassTransit;
 using OpenTracing.Propagation;
+using OpenTracing.Tag;
 using OpenTracing.Util;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Interception.MassTransit
@@ -14,34 +16,24 @@ namespace Interception.MassTransit
 
         public async Task Send(PublishContext context, IPipe<PublishContext> next)
         {
-            //Console.WriteLine("OpenTracingPublishFilter 1");
-            //var operationName = $"Publishing Message: {context.DestinationAddress}";
-            //Console.WriteLine("OpenTracingPublishFilter 2");
+            var baseSpan = Tracing.Tracing.Tracer
+                .BuildSpan("publish-rabbitmq");
+            if (Tracing.Tracing.CurrentScope != null)
+            {
+                baseSpan = baseSpan.AsChildOf(Tracing.Tracing.CurrentScope.Span);
+            }
 
-            //var spanBuilder = GlobalTracer.Instance.BuildSpan(operationName)
-            //   .AsChildOf(GlobalTracer.Instance.ActiveSpan.Context)
-            //   .WithTag("destination-address", context.DestinationAddress?.ToString())
-            //   .WithTag("source-address", context.SourceAddress?.ToString())
-            //   .WithTag("initiator-id", context.InitiatorId?.ToString())
-            //   .WithTag("message-id", context.MessageId?.ToString());
+            using (var scope = baseSpan.StartActive(finishSpanOnDispose: true))
+            {
+                var span = scope.Span
+                    .SetTag(Tags.SpanKind, Tags.SpanKindClient)
+                    .SetTag("message-id", context.MessageId?.ToString());
 
-            //Console.WriteLine("OpenTracingPublishFilter 3");
-
-            //using (var scope = spanBuilder.StartActive())
-            //{
-            //    Console.WriteLine("OpenTracingPublishFilter 4");
-
-            //    GlobalTracer.Instance.Inject(
-            //       GlobalTracer.Instance.ActiveSpan.Context,
-            //       BuiltinFormats.TextMap,
-            //       new MassTransitTextMapInjectAdapter(context));
-
-            //    Console.WriteLine("OpenTracingPublishFilter 5");
+                var dictionary = new Dictionary<string, string>();
+                GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new MassTransitTextMapInjectAdapter(context));
 
                 await next.Send(context);
-
-            //    Console.WriteLine("OpenTracingPublishFilter 6");
-            //}
+            }
         }
     }
 }
