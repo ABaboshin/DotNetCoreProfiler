@@ -2,6 +2,7 @@
 using Interception.Metrics;
 using Interception.Metrics.Extensions;
 using Interception.Observers.Configuration;
+using OpenTracing.Util;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
@@ -151,9 +152,15 @@ namespace Interception.Observers.Http
             var httpContext = value.GetType().GetTypeInfo().GetDeclaredProperty("HttpContext")?.GetValue(value);
             if (httpContext != null)
             {
-                httpContext.TryGetPropertyValue("TraceIdentifier", out string traceIdentifier);
+                if (httpContext.TryGetPropertyValue("TraceIdentifier", out string traceIdentifier))
+                {
+                    info.TryAdd(traceIdentifier, new RequestInfo { Start = DateTime.UtcNow, TraceIdentifier = traceIdentifier });
 
-                info.TryAdd(traceIdentifier, new RequestInfo { Start = DateTime.UtcNow, TraceIdentifier = traceIdentifier });
+                    GlobalTracer.Instance
+                        .BuildSpan("request")
+                        .WithTag("X-Request-Id", traceIdentifier)
+                        .StartActive();
+                }
             }
         }
     }

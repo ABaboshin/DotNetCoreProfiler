@@ -13,11 +13,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Common", "..\s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception", "..\src\Interception\Interception.csproj", "{6983D015-A5C0-435D-A80C-030E331EDD67}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Observers", "..\src\Interception.Observers\Interception.Observers.csproj", "{678A3CFA-8E38-41EC-9CAA-40FB69E78124}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Observers", "..\src\Interception.Observers\Interception.Observers.csproj", "{678A3CFA-8E38-41EC-9CAA-40FB69E78124}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Metrics", "..\src\Interception.Metrics\Interception.Metrics.csproj", "{1B6D5027-2E61-4D8F-803B-1DC559FF5CDB}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Metrics", "..\src\Interception.Metrics\Interception.Metrics.csproj", "{1B6D5027-2E61-4D8F-803B-1DC559FF5CDB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Executor", "..\src\Interception.Executor\Interception.Executor.csproj", "{F1E3A9BC-0A49-46A7-B8D4-7BF9B1F0EB05}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Executor", "..\src\Interception.Executor\Interception.Executor.csproj", "{F1E3A9BC-0A49-46A7-B8D4-7BF9B1F0EB05}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

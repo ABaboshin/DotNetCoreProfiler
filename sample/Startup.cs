@@ -1,4 +1,6 @@
-﻿using MassTransit;
+﻿//using Interception.MassTransit;
+//using Interception.Observers;
+using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -12,6 +14,7 @@ using SampleApp.MessageBus;
 using SampleApp.Redis;
 using StackExchange.Redis;
 using System;
+using System.Diagnostics;
 using System.Linq;
 
 namespace SampleApp
@@ -27,11 +30,15 @@ namespace SampleApp
 
         public void ConfigureServices(IServiceCollection services)
         {
+            //DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(new Interception.Observers.Configuration.HttpConfiguration { Enabled = true }));
+
             ConfigureDatabase(services);
 
             services.AddMvc();
             ConfigureMessageBus(services);
             ConfigureRedis(services);
+
+            //services.AddOpenTracing();
         }
 
         private void ConfigureRedis(IServiceCollection services)
@@ -57,6 +64,9 @@ namespace SampleApp
                     {
                         var loggerFactory = context.GetRequiredService<ILoggerFactory>();
                         cfg.UseExtensionsLogging(loggerFactory);
+
+                        //cfg.ConfigurePublish(configurator => configurator.AddPipeSpecification(new OpenTracingPipeSpecification()));
+                        //cfg.AddPipeSpecification(new OpenTracingPipeSpecification());
 
                         var config = context.GetService<IOptions<RabbitMQConfiguration>>().Value;
 

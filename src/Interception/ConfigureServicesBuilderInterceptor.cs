@@ -3,6 +3,9 @@ using Interception.Observers;
 using Interception.Observers.Configuration;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using OpenTracing;
+using OpenTracing.Util;
 using System;
 using System.Diagnostics;
 
@@ -12,10 +15,8 @@ namespace Interception
     {
         [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
         public static object Invoke(object builder, object instance, object services, int mdToken, long moduleVersionPtr)
-        //[Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "BuildCommonServices", TargetTypeName = "Microsoft.AspNetCore.Hosting.WebHostBuilder", TargetMethodParametersCount = 1)]
-        //public static object Invoke(object builder, AggregateException ex, int mdToken, long moduleVersionPtr)
         {
-            Console.WriteLine("Configure additional services");
+            Console.WriteLine($"Configure additional services {builder.GetType().Name} {instance.GetType().Name} {services.GetType().Name}");
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
@@ -26,12 +27,17 @@ namespace Interception
 
             var serviceCollection = (IServiceCollection)services;
             serviceCollection.AddOpenTracing();
+            
+            var loggerFactory = new LoggerFactory();
+            serviceCollection.AddSingleton<ITracer>(sp => {
+                var config = Jaeger.Configuration.FromEnv(loggerFactory);
+                var tracer = config.GetTracer();
+                GlobalTracer.Register(tracer);
+
+                return tracer;
+            });
 
             return MethodExecutor.ExecuteMethod(builder, new object[] { instance, services }, mdToken, moduleVersionPtr, true);
-
-            //serviceCollection.AddOpenTracing();
-
-            //return serviceCollection;
         }
     }
 }
