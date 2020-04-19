@@ -10,6 +10,7 @@
 #include "ComPtr.h"
 #include "ILRewriterHelper.h"
 #include "clr_const.h"
+#include "Configuration.h"
 
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
 {
@@ -40,7 +41,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
-    interceptions = LoadFromFile(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
+    configuration = LoadFromFile(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
 
     printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
 
@@ -205,7 +206,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             << std::endl << std::flush;
 
         std::vector<WSTRING> dlls;
-        std::for_each(interceptions.begin(), interceptions.end(), [&dlls](Interception i) { dlls.push_back(i.WrapperAssemblyPath); });
+        std::for_each(configuration.interceptions.begin(), configuration.interceptions.end(), [&dlls](Interception i) { dlls.push_back(i.WrapperAssemblyPath); });
 
         std::vector<WSTRING> udlls;
         std::copy_if(dlls.begin(), dlls.end(), std::back_inserter(udlls), [&udlls](WSTRING p) {
@@ -245,8 +246,6 @@ HRESULT CorProfiler::LoadAssemblyBefore(
 
     IfFailRet(rewriter.Import());
 
-    ILInstr* pFirstInstr = rewriter.GetILList()->m_pNext;
-
     for (const auto& assemblyPath : assemblies)
     {
         mdString aPath;
@@ -274,23 +273,37 @@ HRESULT CorProfiler::LoadAssemblyBefore(
 
         unsigned buffer;
         auto size = CorSigCompressToken(assemblyTypeRef, &buffer);
-        auto* assemblyLoadSig = new COR_SIGNATURE[size + 4];
+        auto* assemblyLoadSignature = new COR_SIGNATURE[size + 4];
         unsigned offset = 0;
-        assemblyLoadSig[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-        assemblyLoadSig[offset++] = 0x01;
-        assemblyLoadSig[offset++] = ELEMENT_TYPE_CLASS;
-        memcpy(&assemblyLoadSig[offset], &buffer, size);
+        assemblyLoadSignature[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
+        assemblyLoadSignature[offset++] = 0x01;
+        assemblyLoadSignature[offset++] = ELEMENT_TYPE_CLASS;
+        memcpy(&assemblyLoadSignature[offset], &buffer, size);
         offset += size;
-        assemblyLoadSig[offset] = ELEMENT_TYPE_STRING;
+        assemblyLoadSignature[offset] = ELEMENT_TYPE_STRING;
 
         // define method System.Reflection.Assembly.LoadFrom
         mdMemberRef assemblyLoadMemberRef;
         hr = metadataEmit->DefineMemberRef(
             assemblyTypeRef,
             "LoadFrom"_W.data(),
-            assemblyLoadSig,
-            sizeof(assemblyLoadSig),
+            assemblyLoadSignature,
+            sizeof(assemblyLoadSignature),
             &assemblyLoadMemberRef);
+
+        // Create method signature for Assembly.CreateInstance(string)
+        COR_SIGNATURE createInstanceSignature[] = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_OBJECT,
+            ELEMENT_TYPE_STRING
+        };
+        mdMemberRef createInstanceMemberRef;
+        hr = metadataEmit->DefineMemberRef(
+            assemblyTypeRef, "CreateInstance"_W.c_str(),
+            createInstanceSignature,
+            sizeof(createInstanceSignature),
+            &createInstanceMemberRef);
 
         // define path to a .net dll 
         mdString profilerTraceDllNameTextToken;
@@ -298,22 +311,27 @@ HRESULT CorProfiler::LoadAssemblyBefore(
 
         std::cout << "LoadAssemblyBefore " << ToString(assemblyPath) << std::endl;
 
-        // load path
-        ILInstr* pNewInstr = rewriter.NewILInstr();
-        pNewInstr->m_opcode = CEE_LDSTR;
-        pNewInstr->m_Arg32 = profilerTraceDllNameTextToken;
-        rewriter.InsertBefore(pFirstInstr, pNewInstr);
+        ILRewriterHelper helper(&rewriter);
+        helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
-        // call System.Reflection.Assembly.LoadFrom
-        pNewInstr = rewriter.NewILInstr();
-        pNewInstr->m_opcode = CEE_CALL;
-        pNewInstr->m_Arg32 = assemblyLoadMemberRef;
-        rewriter.InsertBefore(pFirstInstr, pNewInstr);
+        // load assembly path
+        helper.LoadStr(profilerTraceDllNameTextToken);
+        // load assembly
+        helper.CallMember(assemblyLoadMemberRef, false);
 
-        // clean stack
-        pNewInstr = rewriter.NewILInstr();
-        pNewInstr->m_opcode = CEE_POP;
-        rewriter.InsertBefore(pFirstInstr, pNewInstr);
+        if (!configuration.initializer.IsEmpty())
+        {
+            mdString initializerTypeToken;
+            hr = metadataEmit->DefineUserString(configuration.initializer.TypeName.data(), (ULONG)configuration.initializer.TypeName.length(), &initializerTypeToken);
+
+            // load initializer type name
+            helper.LoadStr(initializerTypeToken);
+            // create an instance of the initializer
+            helper.CallMember(createInstanceMemberRef, true);
+        }
+
+        // pop result as not needed
+        helper.Pop();
     }
 
     IfFailRet(rewriter.Export(false));
@@ -393,7 +411,6 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
         auto targetMdToken = pInstr->m_Arg32;
 
-
         if (printEveryCall)
         {
             std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
@@ -402,7 +419,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
             << std::endl << std::flush;
         }
 
-        for (const auto& interception : interceptions)
+        for (const auto& interception : configuration.interceptions)
         {
             if (
                 (moduleInfo.assembly.name == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
@@ -417,7 +434,6 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                     << " from assembly " << ToString(moduleInfo.assembly.name)
                     << " module " << m
                     << std::endl << std::flush;
-                auto signature = interception.signature;
 
                 // define wrapper.dll
                 mdModuleRef wrapperRef;
@@ -436,8 +452,8 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                 mdMemberRef wrapperMethodRef;
                 hr = pMetadataEmit->DefineMemberRef(
                     wrapperTypeRef, interception.WrapperMethodName.c_str(),
-                    signature.data(),
-                    (DWORD)(signature.size()),
+                    interception.signature.data(),
+                    (DWORD)(interception.signature.size()),
                     &wrapperMethodRef);
 
                 ILRewriterHelper helper(&rewriter);

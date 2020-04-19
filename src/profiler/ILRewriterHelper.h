@@ -317,4 +317,12 @@ public:
         pNewInstr->m_opcode = CEE_RET;
         m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
     }
+
+    void LoadStr(mdToken token) const
+    {
+        ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_LDSTR;
+        pNewInstr->m_Arg32 = token;
+        m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
+    }
 };

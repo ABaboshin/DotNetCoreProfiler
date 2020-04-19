@@ -10,6 +10,6 @@
     "build:sampleapp:21": "docker build -t sampleapp:21 -f Dockerfile.sampleapp21 .",
     "build:all:21": "yarn build:native && yarn build:interception && yarn build:sampleapp:21",
     "run:sample:21": "docker-compose up -d",
-    "run:all:21": "yarn build:all:21 && yarn run:sample:21"
+    "run:all:21": "yarn build:all:21 && yarn run:sample:21 && docker logs -f dotnetcoreprofiler_sampleapp_1"
   }
 }

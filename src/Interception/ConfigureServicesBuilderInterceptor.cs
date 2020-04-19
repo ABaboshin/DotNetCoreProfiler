@@ -1,6 +1,4 @@
 ﻿using Interception.Common;
-using Interception.Metrics;
-using Interception.Metrics.Configuration;
 using Interception.Observers;
 using Interception.Observers.Configuration;
 using Microsoft.Extensions.Configuration;
@@ -17,11 +15,7 @@ namespace Interception
                 .AddEnvironmentVariables()
                 .Build();
 
-            var statsdConfiguration = configuration.GetSection(StatsdConfiguration.SectionKey).Get<StatsdConfiguration>();
             var httpConfiguration = configuration.GetSection(HttpConfiguration.SectionKey).Get<HttpConfiguration>();
-            var serviceConfiguration = configuration.GetSection(ServiceConfiguration.SectionKey).Get<ServiceConfiguration>();
-
-            MetricsSender.Configure(statsdConfiguration, serviceConfiguration);
 
             DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(httpConfiguration));
 

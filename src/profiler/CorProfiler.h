@@ -1,6 +1,3 @@
-// Copyright (c) .NET Foundation and contributors. All rights reserved.
-// Licensed under the MIT license. See LICENSE file in the project root for full license information.
-
 #pragma once
 
 #include <atomic>
@@ -12,7 +9,7 @@
 #include "types.h"
 #include "FunctionInfo.h"
 #include "ModuleInfo.h"
-#include "Interception.h"
+#include "Configuration.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -23,7 +20,7 @@ private:
 
     std::unordered_map<ModuleID, GUID> modules;
 
-    std::vector<Interception> interceptions;
+    Configuration configuration;
     ICorProfilerInfo8* corProfilerInfo;
 
     bool printEveryCall = false;
