@@ -22,7 +22,7 @@ add_library("DotNetCoreProfiler.static" STATIC
     util.cpp
     miniutf.cpp
     MethodSignature.cpp
-    Interception.cpp
+    Configuration.cpp
     ${GENERATED_OBJ_FILES}
 )
 set_target_properties("DotNetCoreProfiler.static" PROPERTIES PREFIX "")

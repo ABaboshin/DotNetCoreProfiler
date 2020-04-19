@@ -1,6 +1,11 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
 
-COPY src src
+COPY src/Interception src/Interception
+COPY src/Interception.Common src/Interception.Common
+COPY src/Interception.Executor src/Interception.Executor
+COPY src/Interception.Generator src/Interception.Generator
+COPY src/Interception.Metrics src/Interception.Metrics
+COPY src/Interception.Observers src/Interception.Observers
 
 RUN dotnet publish -c Debug -o /interception src/Interception/Interception.csproj
 
@@ -9,5 +14,6 @@ RUN dotnet publish -c Debug -o /Interception.Generator src/Interception.Generato
 WORKDIR /Interception.Generator
 
 RUN dotnet Interception.Generator.dll
+RUN cat /Interception.Generator/interceptions.json
 
 RUN cp /Interception.Generator/interceptions.json /interception/interceptions.json

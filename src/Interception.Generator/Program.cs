@@ -55,6 +55,21 @@ namespace Interception.Generator
                 })
                 .ToList();
 
+            var initializer = typeof(InterceptorBase)
+                .Assembly
+                .GetTypes()
+                .Where(type => type.GetCustomAttributes<InitializeAttribute>(false).Any())
+                .SelectMany(type => type.GetCustomAttributes<InitializeAttribute>(false).Select(attribute => new { type, attribute }))
+                .Select(info =>
+                {
+                    return new
+                    {
+                        TypeName = info.type.FullName,
+                        AssemblyName = info.type.Assembly.GetName().Name,
+                        AssemblyPath = "/profiler/Interception.dll",
+                    };
+                })
+                .FirstOrDefault();
 
             var serializerSettings = new JsonSerializerSettings
             {
@@ -62,8 +77,7 @@ namespace Interception.Generator
                 Formatting = Formatting.Indented
             };
 
-            var json = JsonConvert.SerializeObject(interceptions, serializerSettings);
-            Console.WriteLine(json);
+            var json = JsonConvert.SerializeObject(new { interceptions, initializer }, serializerSettings);
 
             File.WriteAllText("interceptions.json", json, new UTF8Encoding(encoderShouldEmitUTF8Identifier: false));
         }

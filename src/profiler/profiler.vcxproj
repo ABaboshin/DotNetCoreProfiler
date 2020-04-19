@@ -100,11 +100,13 @@
     <ClInclude Include="ClassFactory.h" />
     <ClInclude Include="clr_const.h" />
     <ClInclude Include="ComPtr.h" />
+    <ClInclude Include="Configuration.h" />
     <ClInclude Include="CorProfiler.h" />
     <ClInclude Include="FunctionInfo.h" />
     <ClInclude Include="helpers.h" />
     <ClInclude Include="ILRewriter.h" />
     <ClInclude Include="ILRewriterHelper.h" />
+    <ClInclude Include="Initializer.h" />
     <ClInclude Include="Interception.h" />
     <ClInclude Include="MethodSignature.h" />
     <ClInclude Include="miniutf.hpp" />
@@ -117,10 +119,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClassFactory.cpp" />
+    <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CorProfiler.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="helpers.cpp" />
-    <ClCompile Include="Interception.cpp" />
     <ClCompile Include="MethodSignature.cpp" />
     <ClCompile Include="miniutf.cpp" />
     <ClCompile Include="util.cpp" />
