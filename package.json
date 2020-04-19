@@ -8,7 +8,8 @@
     "build:interception": "docker build -t profiler:interception -f Dockerfile.interception .",
     "build:native": "docker build -t profiler:native -f Dockerfile.native .",
     "build:sampleapp:21": "docker build -t sampleapp:21 -f Dockerfile.sampleapp21 .",
-    "build:all:21": "yarn build:native && yarn build:interception && yarn build:sampleapp:21",
+    "build:all:21": "yarn build:native && yarn build:interception && yarn build:sampleapp:21 && yarn build:logstash",
+    "build:logstash": "docker build -t logstash:local -f logstash/Dockerfile logstash",
     "run:sample:21": "docker-compose up -d",
     "run:all:21": "yarn build:all:21 && yarn run:sample:21 && docker logs -f dotnetcoreprofiler_sampleapp_1"
   }

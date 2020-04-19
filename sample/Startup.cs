@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
@@ -54,6 +55,9 @@ namespace SampleApp
                 {
                     return Bus.Factory.CreateUsingRabbitMq(cfg =>
                     {
+                        var loggerFactory = context.GetRequiredService<ILoggerFactory>();
+                        cfg.UseExtensionsLogging(loggerFactory);
+
                         var config = context.GetService<IOptions<RabbitMQConfiguration>>().Value;
 
                         cfg.Host(new Uri($"rabbitmq://{config.Host}/"), host =>

@@ -30,6 +30,7 @@ services:
     environment:
       ASPNETCORE_URLS: "http://*:5000"
       ASPNETCORE_ENVIRONMENT: Development
+      LOG_LEVEL: Information
       STATSD__PORT: "9125"
       STATSD__SERVER: "statsd"
       http_metrics__enabled: "true"
@@ -43,6 +44,11 @@ services:
       PROFILER_PRINT_EVERY_CALL: "false"
     ports:
       - "5000:5000"
+    # logging:
+    #   driver: gelf
+    #   options:
+    #     gelf-address: tcp://localhost:12201
+    #     tag: sampleapp
   prometheus:
     image: prom/prometheus:v2.17.1
     environment:
@@ -59,3 +65,25 @@ services:
       - '--storage.tsdb.path=/prometheus'
       - '--storage.tsdb.retention.time=2d'
       - '--query.lookback-delta=1m'
+
+  kibana:
+    image: kibana:7.5.2
+    ports:
+      - "5601:5601"
+
+  elasticsearch:
+    image: elasticsearch:7.5.2
+    environment:
+      discovery.type: single-node
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+
+  logstash:
+    image: logstash:local
+    environment:
+      LS_JAVA_OPTS: "-Xmx2g -Xms2g"
+    ports:
+      - "12201:12201"
+      - "9600:9600"
+      - "5044:5044"
