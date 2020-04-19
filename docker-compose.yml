@@ -55,7 +55,7 @@ services:
         tag: sampleapp
 
   prometheus:
-    image: prom/prometheus:v2.17.1
+    image: prometheus:local
     environment:
       ENV: "local"
       SERVICES: "sampleapp"
