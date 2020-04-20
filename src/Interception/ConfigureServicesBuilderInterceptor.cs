@@ -23,11 +23,6 @@ namespace Interception
 
             DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(httpConfiguration));
 
-            var loggerFactory = new LoggerFactory();
-            var config = Jaeger.Configuration.FromEnv(loggerFactory);
-            var tracer = config.GetTracer();
-            GlobalTracer.Register(tracer);
-
             return MethodExecutor.ExecuteMethod(builder, new object[] { instance, services }, mdToken, moduleVersionPtr, true);
         }
     }

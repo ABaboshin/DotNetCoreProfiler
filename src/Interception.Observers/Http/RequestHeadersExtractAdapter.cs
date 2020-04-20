@@ -22,12 +22,12 @@ namespace Interception.Observers.Http
 
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
-            foreach (var kvp in _context.Request.Headers)
-            {
-                yield return new KeyValuePair<string, string>(kvp.Key, kvp.Value);
-            }
+            //foreach (var kvp in _context.Request.Headers)
+            //{
+            //    yield return new KeyValuePair<string, string>(kvp.Key, kvp.Value);
+            //}
 
-            yield return new KeyValuePair<string, string>("X-TraceIdentifier", _context.TraceIdentifier);
+            yield return new KeyValuePair<string, string>("traceIdentifier", _context.TraceIdentifier);
         }
 
         IEnumerator IEnumerable.GetEnumerator()

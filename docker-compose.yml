@@ -46,13 +46,14 @@ services:
       JAEGER_AGENT_HOST: "jaeger"
       JAEGER_AGENT_PORT: "6831"
       JAEGER_SAMPLER_TYPE: "const"
+      tracing__collector: "jaeger"
     ports:
       - "5000:5000"
-    logging:
-      driver: gelf
-      options:
-        gelf-address: tcp://localhost:12201
-        tag: sampleapp
+    # logging:
+    #   driver: gelf
+    #   options:
+    #     gelf-address: tcp://localhost:12201
+    #     tag: sampleapp
 
   prometheus:
     image: prometheus:local

@@ -1,7 +1,9 @@
 ﻿using Interception.Common;
-using Interception.Metrics;
-using Interception.Metrics.Configuration;
+using Interception.OpenTracing.Prometheus;
+using Interception.Tracing;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
+using OpenTracing.Util;
 using System;
 
 namespace Interception
@@ -11,15 +13,29 @@ namespace Interception
     {
         public ConfigureMetrics()
         {
-            Console.WriteLine("Initialize");
+            Console.WriteLine("ConfigureMetrics");
+            var loggerFactory = new LoggerFactory();
+
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
 
-            var statsdConfiguration = configuration.GetSection(StatsdConfiguration.SectionKey).Get<StatsdConfiguration>();
-            var serviceConfiguration = configuration.GetSection(ServiceConfiguration.SectionKey).Get<ServiceConfiguration>();
+            var tracingConfiguration = configuration.GetSection(TracingConfiguration.SectionKey).Get<TracingConfiguration>();
 
-            MetricsSender.Configure(statsdConfiguration, serviceConfiguration);
+            if (tracingConfiguration.Collector.ToLower() == "jaeger")
+            {
+                var config = Jaeger.Configuration.FromEnv(loggerFactory);
+                var tracer = config.GetTracer();
+
+                GlobalTracer.Register(tracer);
+            }
+            else
+            {
+                var config = PrometheusConfiguration.FromEnv(loggerFactory);
+                var tracer = config.GetTracer();
+
+                GlobalTracer.Register(tracer);
+            }
         }
     }
 }

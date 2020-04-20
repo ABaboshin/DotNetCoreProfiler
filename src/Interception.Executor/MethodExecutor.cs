@@ -1,8 +1,7 @@
-﻿using Interception.Metrics;
-using Interception.Metrics.Extensions;
+﻿using Interception.Tracing.Extensions;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -16,7 +15,7 @@ namespace Interception.Common
             long moduleVersionPtr,
             bool noMetrics = false,
             string metricName = "",
-            IEnumerable<string> additionalTags = null,
+            IDictionary<string, string> additionalTags = null,
             Type[] genericTypeArguments = null)
         {
             Console.WriteLine($"Call MethodExecutor.ExecuteMethod {mdToken} {moduleVersionPtr}");
@@ -27,10 +26,26 @@ namespace Interception.Common
                 object result = null;
                 if (!noMetrics)
                 {
-                    MetricsSender.Histogram(() =>
+                    using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan(metricName ?? "function_call").AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
                     {
-                        result = ExecuteInternal(obj, param, method);
-                    }, method, metricName, additionalTags);
+                        if (additionalTags != null && additionalTags.Any())
+                        {
+                            foreach (var item in additionalTags)
+                            {
+                                scope.Span.SetTag(item.Key, item.Value);
+                            }
+                        }
+
+                        try
+                        {
+                            result = ExecuteInternal(obj, param, method);
+                        }
+                        catch (Exception ex)
+                        {
+                            scope.Span.SetException(ex);
+                            throw;
+                        }
+                    }
                 }
                 else
                 {
@@ -61,7 +76,7 @@ namespace Interception.Common
             long moduleVersionPtr,
             bool noMetrics = false,
             string metricName = "function_call",
-            IEnumerable<string> additionalTags = null,
+            IDictionary<string, string> additionalTags = null,
             Type[] genericTypeArguments = null)
         {
             Console.WriteLine($"Call MethodExecutor.ExecuteMethod {mdToken} {moduleVersionPtr}");
@@ -80,105 +95,26 @@ namespace Interception.Common
             return default;
         }
 
-        private static async Task<T> ExecuteInternalAsync<T>(Func<Task<T>> action, MethodBase method, string metricName, IEnumerable<string> additionalTags, bool noMetrics)
+        private static async Task<T> ExecuteInternalAsync<T>(Func<Task<T>> action, MethodBase method, string metricName, IDictionary<string, string> additionalTags, bool noMetrics)
         {
-            var sw = new Stopwatch();
-            sw.Start();
-            Exception exception = null;
-            try
+            using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan(metricName ?? "function_call").AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
             {
-                return await action();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Catched exception");
-                exception = ex;
-                throw;
-            }
-            finally
-            {
-                if (!noMetrics)
+                if (additionalTags != null && additionalTags.Any())
                 {
-                    sw.Stop();
-
-                    var tags = new List<string> { $"success:{exception is null}", $"name:{method.DeclaringType.Name}.{method.Name}" };
-                    if (exception != null)
+                    foreach (var item in additionalTags)
                     {
-                        tags.AddRange(exception.GetTags());
+                        scope.Span.SetTag(item.Key, item.Value);
                     }
-
-                    if (additionalTags != null)
-                    {
-                        tags.AddRange(additionalTags);
-                    }
-
-                    MetricsSender.Histogram(metricName, (double)sw.ElapsedMilliseconds, tags);
                 }
-            }
-        }
 
-        public static Task ExecuteMethodAsync(object obj,
-            object[] param,
-            int mdToken,
-            long moduleVersionPtr,
-            bool noMetrics = false,
-            string metricName = "function_call",
-            IEnumerable<string> additionalTags = null,
-            Type[] genericTypeArguments = null)
-        {
-            Console.WriteLine($"Call MethodExecutor.ExecuteMethod {mdToken} {moduleVersionPtr}");
-
-            var method = MethodFinder.FindMethod(mdToken, moduleVersionPtr, genericTypeArguments);
-            if (method != null)
-            {
-                return ExecuteInternalAsync(() => {
-                    var task = (Task)method.Invoke(obj, param);
-                    return task;
-                }, method, metricName, additionalTags, noMetrics);
-            }
-
-            Console.WriteLine($"Not found call");
-
-            return default;
-        }
-
-        public static async Task ExecuteInternalAsync(Func<Task> action, MethodBase method, string metricName, IEnumerable<string> additionalTags, bool noMetrics)
-        {
-            var sw = new Stopwatch();
-            sw.Start();
-            Exception exception = null;
-            try
-            {
-                await action();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Catched exception");
-                exception = ex;
-                throw;
-            }
-            finally
-            {
-                if (!noMetrics)
+                try
                 {
-                    sw.Stop();
-
-                    var tags = new List<string> { $"success:{exception is null}" };
-                    if (method != null)
-                    {
-                        tags.Add($"name:{method.DeclaringType.Name}.{method.Name}");
-                    }
-                    if (exception != null)
-                    {
-                        tags.AddRange(exception.GetTags());
-                    }
-
-                    if (additionalTags != null)
-                    {
-                        tags.AddRange(additionalTags);
-                    }
-
-                    MetricsSender.Histogram(metricName, (double)sw.ElapsedMilliseconds, tags);
+                    return await action();
+                }
+                catch (Exception ex)
+                {
+                    scope.Span.SetException(ex);
+                    throw;
                 }
             }
         }
