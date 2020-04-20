@@ -5,16 +5,11 @@ using System.Linq;
 
 namespace Interception.MassTransit
 {
-    public class OpenTracingPipeSpecification : IPipeSpecification<ConsumeContext>, IPipeSpecification<PublishContext>
+    public class OpenTracingPipeSpecification : IPipeSpecification<PublishContext>
     {
         public IEnumerable<ValidationResult> Validate()
         {
             return Enumerable.Empty<ValidationResult>();
-        }
-
-        public void Apply(IPipeBuilder<ConsumeContext> builder)
-        {
-            builder.AddFilter(new OpenTracingConsumeFilter());
         }
 
         public void Apply(IPipeBuilder<PublishContext> builder)

@@ -31,8 +31,6 @@ namespace Interception.OpenTracing.Prometheus
                 return this;
             }
 
-            Console.WriteLine("AsChildOf");
-
             _references.Add(new Reference(referencedContext, referenceType));
 
             return this;
@@ -59,7 +57,6 @@ namespace Interception.OpenTracing.Prometheus
 
             if (!_references.Any())
             {
-                Console.WriteLine("Start with nochild");
                 var part1 = CorrelationIdGenerator.GetNextId();
                 var part2 = CorrelationIdGenerator.GetNextId();
 
@@ -67,11 +64,8 @@ namespace Interception.OpenTracing.Prometheus
             }
             else
             {
-                
                 var reference = _references.Where(r => r.Type == References.ChildOf).FirstOrDefault();
                 var baggage = reference.Context.GetBaggageItems();
-
-                Console.WriteLine($"Start as ChildOf {baggage.Count()}");
 
                 spanContext = new SpanContext(reference.Context.TraceId, CorrelationIdGenerator.GetNextId(), reference.Context.SpanId, baggage.ToDictionary(b => b.Key, b => b.Value));
             }

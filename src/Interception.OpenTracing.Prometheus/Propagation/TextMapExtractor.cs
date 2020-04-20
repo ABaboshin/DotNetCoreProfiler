@@ -21,15 +21,13 @@ namespace Interception.OpenTracing.Prometheus.Propagation
             Dictionary<string, string> baggage = new Dictionary<string, string>();
             foreach (var item in carrier)
             {
-                if (item.Key.ToLower() == _spanContextKey)
+                if (item.Key.ToLower() == _spanContextKey.ToLower())
                 {
                     spanContext = new SpanContext(item.Value);
                 }
-                else
-                {
-                    Console.WriteLine($"Baggage {item.Key} {item.Value}");
-                    baggage.Add(item.Key, item.Value);
-                }
+
+                Console.WriteLine($"Baggage {item.Key} {item.Value}");
+                baggage.Add(item.Key, item.Value);
             }
 
             if (spanContext is null)
