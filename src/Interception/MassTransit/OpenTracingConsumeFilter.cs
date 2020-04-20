@@ -2,7 +2,6 @@
 using MassTransit;
 using OpenTracing;
 using OpenTracing.Propagation;
-using OpenTracing.Util;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -23,9 +22,9 @@ namespace Interception.MassTransit
             try
             {
                 var headers = context.Headers.GetAll().ToDictionary(pair => pair.Key, pair => pair.Value.ToString());
-                var parentSpanCtx = GlobalTracer.Instance.Extract(BuiltinFormats.TextMap, new TextMapExtractAdapter(headers));
+                var parentSpanCtx = Interception.Tracing.Tracing.Tracer.Extract(BuiltinFormats.TextMap, new TextMapExtractAdapter(headers));
 
-                spanBuilder = GlobalTracer.Instance.BuildSpan(operationName);
+                spanBuilder = Interception.Tracing.Tracing.Tracer.BuildSpan(operationName);
                 if (parentSpanCtx != null)
                 {
                     spanBuilder = spanBuilder.AsChildOf(parentSpanCtx);
@@ -33,7 +32,7 @@ namespace Interception.MassTransit
             }
             catch (Exception)
             {
-                spanBuilder = GlobalTracer.Instance.BuildSpan(operationName);
+                spanBuilder = Interception.Tracing.Tracing.Tracer.BuildSpan(operationName);
             }
 
             spanBuilder

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Interception.Metrics.Extensions
+namespace Interception.OpenTracing.Prometheus.Extensions
 {
     /// <summary>
     /// tags extensions

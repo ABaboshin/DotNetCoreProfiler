@@ -2,8 +2,6 @@
 using MassTransit;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
-using OpenTracing.Util;
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
@@ -17,12 +15,9 @@ namespace Interception.MassTransit
         public async Task Send(PublishContext context, IPipe<PublishContext> next)
         {
             var baseSpan = Tracing.Tracing.Tracer
-                .BuildSpan("publish-rabbitmq");
-            if (Tracing.Tracing.CurrentScope != null)
-            {
-                baseSpan = baseSpan.AsChildOf(Tracing.Tracing.CurrentScope.Span);
-            }
-
+                .BuildSpan("publish-rabbitmq")
+                .AsChildOf(Tracing.Tracing.CurrentScope?.Span);
+            
             using (var scope = baseSpan.StartActive(finishSpanOnDispose: true))
             {
                 var span = scope.Span
@@ -30,7 +25,12 @@ namespace Interception.MassTransit
                     .SetTag("message-id", context.MessageId?.ToString());
 
                 var dictionary = new Dictionary<string, string>();
-                GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new MassTransitTextMapInjectAdapter(context));
+                Interception.Tracing.Tracing.Tracer.Inject(span.Context, BuiltinFormats.TextMap, new MassTransitTextMapInjectAdapter(context));
+
+                foreach (var item in dictionary)
+                {
+                    context.Headers.Set(item.Key, item.Value);
+                }
 
                 await next.Send(context);
             }

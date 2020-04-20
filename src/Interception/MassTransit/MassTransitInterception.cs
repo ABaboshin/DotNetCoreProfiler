@@ -1,10 +1,7 @@
 ﻿using Interception.Common;
-using Interception.Metrics;
-using Interception.Metrics.Extensions;
+using Interception.Tracing.Extensions;
 using MassTransit.RabbitMqTransport;
 using System;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Threading.Tasks;
 
 namespace Interception.MassTransit
@@ -40,30 +37,17 @@ namespace Interception.MassTransit
 
         private static async Task Execute(Func<Task> action, string consumerName)
         {
-            var sw = new Stopwatch();
-            sw.Start();
-            Exception exception = null;
-            try
+            using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan("masstransit").AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
             {
-                await action();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("Catched exception");
-                exception = ex;
-                throw;
-            }
-            finally
-            {
-                sw.Stop();
-
-                var tags = new List<string> { $"success:{exception is null}", $"consumer:{consumerName}" };
-                if (exception != null)
+                try
                 {
-                    tags.AddRange(exception.GetTags());
+                    await action();
                 }
-
-                MetricsSender.Histogram("masstransit", (double)sw.ElapsedMilliseconds, tags);
+                catch (Exception ex)
+                {
+                    scope.Span.SetException(ex);
+                    throw;
+                }
             }
         }
     }

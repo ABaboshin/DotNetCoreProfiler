@@ -1,4 +1,4 @@
-﻿namespace Interception.Metrics.Configuration
+﻿namespace Interception.Tracing
 {
     /// <summary>
     /// service configuration

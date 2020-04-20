@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Interception.Metrics.Configuration
+﻿namespace Interception.OpenTracing.Prometheus
 {
     /// <summary>
     /// Statsd configuration

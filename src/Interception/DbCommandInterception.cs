@@ -1,7 +1,5 @@
 ﻿using Interception.Common;
 using Interception.Common.Extensions;
-using Interception.Metrics.Extensions;
-using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
@@ -16,7 +14,7 @@ namespace Interception
         {
             command.TryGetPropertyValue("CommandText", out string commandText);
 
-            return MethodExecutor.ExecuteMethod(command, new object[] { }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new List<string> { $"commandText:{commandText.EscapeTagValue()}" });
+            return MethodExecutor.ExecuteMethod(command, new object[] { }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new Dictionary<string, string> { { "commandText", commandText } });
         }
 
         [Intercept(CallerAssembly = "", TargetAssemblyName = "System.Data.Common", TargetMethodName = "ExecuteReaderAsync", TargetTypeName = "System.Data.Common.DbCommand", TargetMethodParametersCount = 2)]
@@ -27,7 +25,7 @@ namespace Interception
             var tokenSource = cancellationTokenSource as CancellationTokenSource;
             var cancellationToken = tokenSource?.Token ?? CancellationToken.None;
 
-            return MethodExecutor.ExecuteMethodAsync<DbDataReader>(command, new object[] { (CommandBehavior)behavior, cancellationToken }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new List<string> { $"commandText:{commandText.EscapeTagValue()}" });
+            return MethodExecutor.ExecuteMethodAsync<DbDataReader>(command, new object[] { (CommandBehavior)behavior, cancellationToken }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new Dictionary<string, string> { { "commandText", commandText } });
         }
 
         [Intercept(CallerAssembly = "", TargetAssemblyName = "System.Data.Common", TargetMethodName = "ExecuteNonQuery", TargetTypeName = "System.Data.Common.DbCommand", TargetMethodParametersCount = 0)]
@@ -35,7 +33,7 @@ namespace Interception
         {
             command.TryGetPropertyValue("CommandText", out string commandText);
 
-            return MethodExecutor.ExecuteMethod(command, new object[] { }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new List<string> { $"commandText:{commandText.EscapeTagValue()}" });
+            return MethodExecutor.ExecuteMethod(command, new object[] { }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new Dictionary<string, string> { { "commandText", commandText } });
         }
 
         [Intercept(CallerAssembly = "", TargetAssemblyName = "System.Data.Common", TargetMethodName = "ExecuteNonQueryAsync", TargetTypeName = "System.Data.Common.DbCommand", TargetMethodParametersCount = 1)]
@@ -46,7 +44,7 @@ namespace Interception
             var tokenSource = cancellationTokenSource as CancellationTokenSource;
             var cancellationToken = tokenSource?.Token ?? CancellationToken.None;
 
-            return MethodExecutor.ExecuteMethodAsync<int>(command, new object[] { cancellationToken }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new List<string> { $"commandText:{commandText.EscapeTagValue()}" });
+            return MethodExecutor.ExecuteMethodAsync<int>(command, new object[] { cancellationToken }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new Dictionary<string, string> { { "commandText", commandText } });
         }
 
         [Intercept(CallerAssembly = "", TargetAssemblyName = "System.Data.Common", TargetMethodName = "ExecuteScalar", TargetTypeName = "System.Data.Common.DbCommand", TargetMethodParametersCount = 0)]
@@ -54,7 +52,7 @@ namespace Interception
         {
             command.TryGetPropertyValue("CommandText", out string commandText);
 
-            return MethodExecutor.ExecuteMethod(command, new object[] { }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new List<string> { $"commandText:{commandText.EscapeTagValue()}" });
+            return MethodExecutor.ExecuteMethod(command, new object[] { }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new Dictionary<string, string> { { "commandText", commandText } });
         }
 
         [Intercept(CallerAssembly = "", TargetAssemblyName = "System.Data.Common", TargetMethodName = "ExecuteScalarAsync", TargetTypeName = "System.Data.Common.DbCommand", TargetMethodParametersCount = 1)]
@@ -65,7 +63,7 @@ namespace Interception
             var tokenSource = cancellationTokenSource as CancellationTokenSource;
             var cancellationToken = tokenSource?.Token ?? CancellationToken.None;
 
-            return MethodExecutor.ExecuteMethodAsync<object>(command, new object[] { cancellationToken }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new List<string> { $"commandText:{commandText.EscapeTagValue()}" });
+            return MethodExecutor.ExecuteMethodAsync<object>(command, new object[] { cancellationToken }, mdToken, moduleVersionPtr, metricName: "db_call", additionalTags: new Dictionary<string, string> { { "commandText", commandText } });
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using Interception.Common;
 using Interception.Common.Extensions;
-using Interception.Metrics;
+using Interception.Tracing.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -16,7 +16,7 @@ namespace Interception
             {
                 messageCompletable.TryGetFieldValue("channel", out object channel);
 
-                var result = MethodExecutor.ExecuteMethod(messageCompletable, new object[] { isAsync }, mdToken, moduleVersionPtr, false, "redis_call", new List<string> { $"channel:{channel}" });
+                var result = MethodExecutor.ExecuteMethod(messageCompletable, new object[] { isAsync }, mdToken, moduleVersionPtr, false, "redis_call", new Dictionary<string, string> { { "channel", channel.ToString() } });
 
                 return (bool)result;
             }
@@ -77,9 +77,18 @@ namespace Interception
 
                     try
                     {
-                        MetricsSender.Histogram(() => {
-                            executor(handler, next);
-                        }, metricName: "redis_call", additionalTags: new List<string> { $"channel:{channelProp.ToString()}" });
+                        using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan("redis_call").AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
+                        {
+                            try
+                            {
+                                executor(handler, next);
+                            }
+                            catch (Exception ex)
+                            {
+                                scope.Span.SetException(ex);
+                                throw;
+                            }
+                        }
                     }
                     catch (Exception)
                     {
