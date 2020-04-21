@@ -15,7 +15,6 @@ namespace Interception.Observers
     /// </summary>
     public class AspNetCoreDiagnostics : IObserver<KeyValuePair<string, object>>
     {
-        public static readonly string TraceHeaderName = "X-Trace-Id";
         private readonly AspNetCoreConfiguration _configuration;
 
         public AspNetCoreDiagnostics(AspNetCoreConfiguration configuration)
@@ -111,11 +110,11 @@ namespace Interception.Observers
 
                 Tracing.Tracing.CurrentScope = Tracing.Tracing.Tracer
                     .BuildSpan(_configuration.Name)
-                    .WithTag(Constants.TraceIdentifier, httpContext.TraceIdentifier)
+                    //.WithTag(Constants.AspNetCoreTraceIdentifier, httpContext.TraceIdentifier)
                     .AsChildOf(extracted)
                     .StartActive();
 
-                httpContext.Response.Headers.Add(TraceHeaderName, Tracing.Tracing.CurrentScope.Span.Context.TraceId);
+                httpContext.Response.Headers.Add(Constants.TraceIdentifier, Tracing.Tracing.CurrentScope.Span.Context.TraceId);
             }
         }
     }

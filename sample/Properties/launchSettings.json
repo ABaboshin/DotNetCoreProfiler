@@ -13,6 +13,7 @@
       "commandName": "Project",
       "launchUrl": "/",
       "environmentVariables": {
+        "LOG_LEVEL": "Error",
         "DATABASE__CONNECTIONSTRING": "Server=localhost;Database=mydb;User Id=sa;Password=passwoyourStrong(!)Passwordrd;",
         "ASPNETCORE_ENVIRONMENT": "Development",
         "RABBITMQ__HOST": "localhost",
@@ -22,7 +23,13 @@
         "JAEGER_SERVICE_NAME": "sampleapp",
         "JAEGER_AGENT_HOST": "localhost",
         "JAEGER_AGENT_PORT": "6831",
-        "JAEGER_SAMPLER_TYPE": "const"
+        "JAEGER_SAMPLER_TYPE": "const",
+        "tracing__collector": "prometheus",
+        "STATSD__SERVER": "localhost",
+        "STATSD__PORT": "9125",
+        "aspnetcore_metrics__enabled": "true",
+        "httphandler_metrics__enabled": "true",
+        "service__name": "sampleapp"
       },
       "applicationUrl": "http://localhost:5000"
     }

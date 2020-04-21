@@ -48,7 +48,7 @@ services:
       JAEGER_AGENT_HOST: "jaeger"
       JAEGER_AGENT_PORT: "6831"
       JAEGER_SAMPLER_TYPE: "const"
-      tracing__collector: "jaeger"
+      tracing__collector: "prometheus"
     ports:
       - "5000:5000"
     # logging:

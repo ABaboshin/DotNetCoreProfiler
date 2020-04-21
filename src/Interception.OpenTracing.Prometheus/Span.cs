@@ -37,7 +37,6 @@ namespace Interception.OpenTracing.Prometheus
 
         public void Finish()
         {
-            Console.WriteLine("SPAN.FINISH");
             lock (_lock)
             {
                 _finishTimestampUtc = DateTime.UtcNow;

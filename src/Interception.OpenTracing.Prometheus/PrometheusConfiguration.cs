@@ -32,7 +32,7 @@ namespace Interception.OpenTracing.Prometheus
 
         public ITracer GetTracer()
         {
-            return new Tracer(_loggerFactory, _serviceConfiguration, Constants.TraceIdentifier);
+            return new Tracer(_loggerFactory, _serviceConfiguration, "X-Prometheus-OpenTracing-Id");
         }
     }
 }

@@ -14,6 +14,7 @@ namespace Interception.MassTransit
         {
             _context = context;
         }
+
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
             throw new NotSupportedException(
