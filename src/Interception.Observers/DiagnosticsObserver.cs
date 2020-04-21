@@ -8,11 +8,13 @@ namespace Interception.Observers
     {
         private readonly AspNetCoreConfiguration _aspNetCoreConfiguration;
         private readonly HttpHandlerConfiguration _httpHandlerConfiguration;
+        private readonly EntityFrameworkCoreConfiguration _entityFrameworkCoreConfiguration;
 
-        public DiagnosticsObserver(AspNetCoreConfiguration aspNetCoreConfiguration, HttpHandlerConfiguration httpHandlerConfiguration)
+        public DiagnosticsObserver(AspNetCoreConfiguration aspNetCoreConfiguration, HttpHandlerConfiguration httpHandlerConfiguration, EntityFrameworkCoreConfiguration entityFrameworkCoreConfiguration)
         {
             _aspNetCoreConfiguration = aspNetCoreConfiguration;
             _httpHandlerConfiguration = httpHandlerConfiguration;
+            _entityFrameworkCoreConfiguration = entityFrameworkCoreConfiguration;
         }
 
         public void OnCompleted()
@@ -33,6 +35,11 @@ namespace Interception.Observers
             if (value.Name == "HttpHandlerDiagnosticListener" && _httpHandlerConfiguration.Enabled)
             {
                 value.Subscribe(new HttpHandlerDiagnostrics(_httpHandlerConfiguration));
+            }
+
+            if (value.Name == "Microsoft.EntityFrameworkCore" && _entityFrameworkCoreConfiguration.Enabled)
+            {
+                value.Subscribe(new EntityFrameworkCoreObserver(_entityFrameworkCoreConfiguration));
             }
         }
     }
