@@ -9,12 +9,19 @@ namespace Interception.MassTransit
     public class OpenTracingPublishFilter : IFilter<PublishContext>
     {
         public void Probe(ProbeContext context)
-        { }
+        {
+        }
 
         public async Task Send(PublishContext context, IPipe<PublishContext> next)
         {
+            if (!MassTransitInterception.MassTransitConfiguration.PublisherEnabled)
+            {
+                await next.Send(context);
+                return;
+            }
+
             var baseSpan = Tracing.Tracing.Tracer
-                .BuildSpan("publish-rabbitmq")
+                .BuildSpan(MassTransitInterception.MassTransitConfiguration.PublisherName)
                 .AsChildOf(Tracing.Tracing.CurrentScope?.Span);
             
             using (var scope = baseSpan.StartActive(finishSpanOnDispose: true))

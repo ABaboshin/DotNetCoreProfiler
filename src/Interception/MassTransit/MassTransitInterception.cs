@@ -2,8 +2,10 @@
 using Interception.Tracing.Extensions;
 using MassTransit;
 using MassTransit.RabbitMqTransport;
+using Microsoft.Extensions.Configuration;
 using OpenTracing;
 using OpenTracing.Propagation;
+using OpenTracing.Tag;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -12,14 +14,25 @@ namespace Interception.MassTransit
 {
     public static class MassTransitInterception
     {
+        public static MassTransitConfiguration MassTransitConfiguration;
+
         [Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit.RabbitMqTransport", TargetMethodName = "CreateUsingRabbitMq", TargetTypeName = "MassTransit.BusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
         public static object CreateUsingRabbitMq(object selector, object configure, int mdToken, long moduleVersionPtr)
         {
+            var configuration = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+
+            MassTransitConfiguration = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
+
             var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)configure;
             Action<IRabbitMqBusFactoryConfigurator> myConfigure = (IRabbitMqBusFactoryConfigurator cfg) => {
                 Console.WriteLine("Masstransit configuration Injected");
 
-                cfg.ConfigurePublish(configurator => configurator.AddPipeSpecification(new OpenTracingPipeSpecification()));
+                if (MassTransitConfiguration.PublisherEnabled)
+                {
+                    cfg.ConfigurePublish(configurator => configurator.AddPipeSpecification(new OpenTracingPipeSpecification()));
+                }
 
                 typedConfigure(cfg);
             };
@@ -40,7 +53,11 @@ namespace Interception.MassTransit
 
         private static async Task Execute(Func<Task> action, string consumerName, ConsumeContext context)
         {
-            var operationName = $"Consuming Message: {context.DestinationAddress}";
+            if (!MassTransitConfiguration.ConsumerEnabled)
+            {
+                await action();
+                return;
+            }
 
             ISpanBuilder spanBuilder;
 
@@ -50,12 +67,13 @@ namespace Interception.MassTransit
                 var parentSpanContext = Interception.Tracing.Tracing.Tracer.Extract(BuiltinFormats.TextMap, new TextMapExtractAdapter(headers));
 
                 spanBuilder = Interception.Tracing.Tracing.Tracer
-                    .BuildSpan(operationName)
+                    .BuildSpan(MassTransitConfiguration.ConsumerName)
+                    .WithTag(Tags.SpanKind, Tags.SpanKindConsumer)
                     .AsChildOf(parentSpanContext);
             }
             catch (Exception)
             {
-                spanBuilder = Interception.Tracing.Tracing.Tracer.BuildSpan(operationName);
+                spanBuilder = Interception.Tracing.Tracing.Tracer.BuildSpan(MassTransitConfiguration.ConsumerName);
             }
 
             spanBuilder
