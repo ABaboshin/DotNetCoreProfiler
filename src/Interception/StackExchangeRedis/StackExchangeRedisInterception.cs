@@ -1,14 +1,26 @@
 ﻿using Interception.Common;
 using Interception.Common.Extensions;
 using Interception.Tracing.Extensions;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Interception
+namespace Interception.StackExchangeRedis
 {
     public static class StackExchangeRedisInterception
     {
+        public static RedisConfiguration RedisConfiguration;
+
+        public static void Configure()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+
+            RedisConfiguration = configuration.GetSection(RedisConfiguration.SectionKey).Get<RedisConfiguration>();
+        }
+
         [Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "TryComplete", TargetTypeName = "StackExchange.Redis.ICompletable", TargetMethodParametersCount = 1)]
         public static bool TryComplete(object messageCompletable, bool isAsync, int mdToken, long moduleVersionPtr)
         {
@@ -16,7 +28,14 @@ namespace Interception
             {
                 messageCompletable.TryGetFieldValue("channel", out object channel);
 
-                var result = MethodExecutor.ExecuteMethod(messageCompletable, new object[] { isAsync }, mdToken, moduleVersionPtr, false, "redis_call", new Dictionary<string, string> { { "channel", channel.ToString() } });
+                var result = MethodExecutor.ExecuteMethod(
+                    messageCompletable,
+                    new object[] { isAsync },
+                    mdToken,
+                    moduleVersionPtr,
+                    !RedisConfiguration.ConsumerEnabled,
+                    RedisConfiguration.ConsumerName,
+                    new Dictionary<string, string> { { "channel", channel.ToString() } });
 
                 return (bool)result;
             }
@@ -77,16 +96,23 @@ namespace Interception
 
                     try
                     {
-                        using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan("redis_call").AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
+                        if (!RedisConfiguration.ConsumerEnabled)
                         {
-                            try
+                            executor(handler, next);
+                        }
+                        else
+                        {
+                            using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan(RedisConfiguration.ConsumerName).AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
                             {
-                                executor(handler, next);
-                            }
-                            catch (Exception ex)
-                            {
-                                scope.Span.SetException(ex);
-                                throw;
+                                try
+                                {
+                                    executor(handler, next);
+                                }
+                                catch (Exception ex)
+                                {
+                                    scope.Span.SetException(ex);
+                                    throw;
+                                }
                             }
                         }
                     }
