@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Interception.MassTransit
+﻿namespace Interception.MassTransit
 {
     /// <summary>
     /// Configuration for masstransit

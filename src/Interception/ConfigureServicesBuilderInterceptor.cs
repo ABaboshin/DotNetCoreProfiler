@@ -1,6 +1,7 @@
 ﻿using Interception.Common;
 using Interception.Observers;
 using Interception.Observers.Configuration;
+using Interception.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using System;
 using System.Diagnostics;
@@ -21,6 +22,8 @@ namespace Interception
             var httpHandlerConfiguration = configuration.GetSection(HttpHandlerConfiguration.SectionKey).Get<HttpHandlerConfiguration>();
 
             DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(aspNetCoreConfiguration, httpHandlerConfiguration));
+
+            StackExchangeRedisInterception.Configure();
 
             return MethodExecutor.ExecuteMethod(builder, new object[] { instance, services }, mdToken, moduleVersionPtr, true);
         }

@@ -53,6 +53,8 @@ services:
       masstransit_metrics__PublisherName: "masstransit_publish"
       masstransit_metrics__ConsumerEnabled: "true"
       masstransit_metrics__ConsumerName: "masstransit_consume"
+      redis_metrics__ConsumerEnabled: "true"
+      redis_metrics__ConsumerName: "redis_consume"
     ports:
       - "5000:5000"
     logging:
