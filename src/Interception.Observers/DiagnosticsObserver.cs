@@ -1,5 +1,4 @@
 ﻿using Interception.Observers.Configuration;
-using Interception.Observers.Http;
 using System;
 using System.Diagnostics;
 
@@ -7,11 +6,13 @@ namespace Interception.Observers
 {
     public class DiagnosticsObserver : IObserver<DiagnosticListener>
     {
-        private readonly HttpConfiguration _httpConfiguration;
+        private readonly AspNetCoreConfiguration _aspNetCoreConfiguration;
+        private readonly HttpHandlerConfiguration _httpHandlerConfiguration;
 
-        public DiagnosticsObserver(HttpConfiguration httpConfiguration)
+        public DiagnosticsObserver(AspNetCoreConfiguration aspNetCoreConfiguration, HttpHandlerConfiguration httpHandlerConfiguration)
         {
-            _httpConfiguration = httpConfiguration;
+            _aspNetCoreConfiguration = aspNetCoreConfiguration;
+            _httpHandlerConfiguration = httpHandlerConfiguration;
         }
 
         public void OnCompleted()
@@ -24,9 +25,14 @@ namespace Interception.Observers
 
         public void OnNext(DiagnosticListener value)
         {
-            if (value.Name == "Microsoft.AspNetCore" && _httpConfiguration.Enabled)
+            if (value.Name == "Microsoft.AspNetCore" && _aspNetCoreConfiguration.Enabled)
             {
-                value.Subscribe(new HttpObserver(_httpConfiguration));
+                value.Subscribe(new AspNetCoreDiagnostics(_aspNetCoreConfiguration));
+            }
+
+            if (value.Name == "HttpHandlerDiagnosticListener" && _httpHandlerConfiguration.Enabled)
+            {
+                value.Subscribe(new HttpHandlerDiagnostrics(_httpHandlerConfiguration));
             }
         }
     }

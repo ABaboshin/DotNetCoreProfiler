@@ -3,8 +3,9 @@ using OpenTracing.Propagation;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
-namespace Interception.Observers.Http
+namespace Interception.Observers
 {
     internal class RequestHeadersExtractAdapter : ITextMap
     {
@@ -12,7 +13,7 @@ namespace Interception.Observers.Http
 
         public RequestHeadersExtractAdapter(HttpContext context)
         {
-            _context = context ?? throw new ArgumentNullException(nameof(context));
+            _context = context;
         }
 
         public void Set(string key, string value)
@@ -22,10 +23,12 @@ namespace Interception.Observers.Http
 
         public IEnumerator<KeyValuePair<string, string>> GetEnumerator()
         {
-            //foreach (var kvp in _context.Request.Headers)
-            //{
-            //    yield return new KeyValuePair<string, string>(kvp.Key, kvp.Value);
-            //}
+            foreach (var item in _context.Request.Headers.Where(k => k.Key.ToLower().Contains("-id")))
+            {
+                Console.WriteLine($"INJECT {item.Key} {item.Value}");
+
+                yield return new KeyValuePair<string, string>(item.Key, item.Value);
+            }
 
             yield return new KeyValuePair<string, string>("traceIdentifier", _context.TraceIdentifier);
         }

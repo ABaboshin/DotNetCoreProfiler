@@ -30,11 +30,13 @@ services:
     environment:
       ASPNETCORE_URLS: "http://*:5000"
       ASPNETCORE_ENVIRONMENT: Development
-      LOG_LEVEL: Information
+      LOG_LEVEL: Error
       STATSD__PORT: "9125"
       STATSD__SERVER: "statsd"
-      http_metrics__enabled: "true"
-      http_metrics__name: "samplehttp"
+      aspnetcore_metrics__enabled: "true"
+      aspnetcore_metrics__name: "incoming"
+      httphandler_metrics__enabled: "true"
+      httphandler_metrics__name: "outgoing"
       service__name: "sampleapp"
       DATABASE__CONNECTIONSTRING: "Server=sqlserver;Database=mydb;User Id=sa;Password=passwoyourStrong(!)Passwordrd;"
       RABBITMQ__HOST: "rabbitmq"
@@ -46,7 +48,7 @@ services:
       JAEGER_AGENT_HOST: "jaeger"
       JAEGER_AGENT_PORT: "6831"
       JAEGER_SAMPLER_TYPE: "const"
-      tracing__collector: "jaeger"
+      tracing__collector: "prometheus"
     ports:
       - "5000:5000"
     # logging:
