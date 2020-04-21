@@ -2,8 +2,6 @@
 using Interception.Observers;
 using Interception.Observers.Configuration;
 using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Logging;
-using OpenTracing.Util;
 using System;
 using System.Diagnostics;
 
@@ -19,9 +17,10 @@ namespace Interception
                 .AddEnvironmentVariables()
                 .Build();
 
-            var httpConfiguration = configuration.GetSection(HttpConfiguration.SectionKey).Get<HttpConfiguration>();
+            var aspNetCoreConfiguration = configuration.GetSection(AspNetCoreConfiguration.SectionKey).Get<AspNetCoreConfiguration>();
+            var httpHandlerConfiguration = configuration.GetSection(HttpHandlerConfiguration.SectionKey).Get<HttpHandlerConfiguration>();
 
-            DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(httpConfiguration));
+            DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(aspNetCoreConfiguration, httpHandlerConfiguration));
 
             return MethodExecutor.ExecuteMethod(builder, new object[] { instance, services }, mdToken, moduleVersionPtr, true);
         }

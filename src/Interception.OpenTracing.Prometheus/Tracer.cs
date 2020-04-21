@@ -40,7 +40,6 @@ namespace Interception.OpenTracing.Prometheus
 
         public void Inject<TCarrier>(ISpanContext spanContext, IFormat<TCarrier> format, TCarrier carrier)
         {
-            Console.WriteLine($"Inject");
             // TODO only ITextMap is supported currently
             var injector = new TextMapInjector(_spanContextKey);
             injector.Inject(spanContext, (ITextMap)carrier);

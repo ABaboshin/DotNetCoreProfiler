@@ -1,14 +1,14 @@
 ﻿namespace Interception.Observers.Configuration
 {
     /// <summary>
-    /// Configuration for http requests tracking
+    /// Configuration for aspnetcore
     /// </summary>
-    public class HttpConfiguration
+    public class AspNetCoreConfiguration
     {
         /// <summary>
         /// Section name in configuration
         /// </summary>
-        public static readonly string SectionKey = "http_metrics";
+        public static readonly string SectionKey = "aspnetcore_metrics";
 
         /// <summary>
         /// enable tracking
@@ -18,6 +18,6 @@
         /// <summary>
         /// metric name
         /// </summary>
-        public string Name { get; set; } = "http_request";
+        public string Name { get; set; } = "incoming";
     }
 }

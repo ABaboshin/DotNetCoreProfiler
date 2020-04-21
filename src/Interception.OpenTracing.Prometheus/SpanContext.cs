@@ -26,13 +26,13 @@ namespace Interception.OpenTracing.Prometheus
         public SpanContext(string value)
         {
             var parts = value.Split(':');
-            if (parts.Length < 2)
+            if (parts.Length != 3)
             {
                 throw new ArgumentException($"Wrong SpanContext representation {value}");
             }
 
-            TraceId = parts[0];
-            SpanId = parts[1];
+            TraceId = $"{parts[0]}:{parts[1]}";
+            SpanId = parts[2];
         }
 
         public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()

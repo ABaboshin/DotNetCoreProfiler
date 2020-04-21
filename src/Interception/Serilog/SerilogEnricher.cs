@@ -13,7 +13,7 @@ namespace Interception.Serilog
                 return;
             }
 
-            var traceId = Tracing.Tracing.CurrentScope.Span.Context.TraceId;
+            var traceId = Tracing.Tracing.CurrentScope?.Span.Context.TraceId;
 
             if (!string.IsNullOrEmpty(traceId))
                 logEvent.AddOrUpdateProperty(factory.CreateProperty("TraceId", traceId, true));

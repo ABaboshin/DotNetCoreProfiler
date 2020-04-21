@@ -1,6 +1,7 @@
 ﻿using MassTransit;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace SampleApp.MessageBus
@@ -19,7 +20,16 @@ namespace SampleApp.MessageBus
         {
             _logger.LogInformation("MyMessageConsumer.Consume");
             await Task.Delay(3000);
-            //throw new NotImplementedByDesignException();
+
+            var client = new HttpClient();
+
+            var request = new HttpRequestMessage
+            {
+                Method = HttpMethod.Get,
+                RequestUri = new Uri("http://localhost:5000/api/values")
+            };
+
+            var response = await client.SendAsync(request);
         }
     }
 }

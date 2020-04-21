@@ -1,0 +1,8 @@
+﻿namespace Interception.Tracing
+{
+    public class Constants
+    {
+        public static string TraceIdentifier = "X-Trace-Id";
+        public static string AspNetCoreTraceIdentifier = "traceIdentifier";
+    }
+}

@@ -1,6 +1,4 @@
-﻿//using Interception.MassTransit;
-//using Interception.Observers;
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
@@ -8,15 +6,12 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-//using OpenTracing;
-//using OpenTracing.Util;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
 using SampleApp.Redis;
 using StackExchange.Redis;
 using System;
-using System.Diagnostics;
 using System.Linq;
 
 namespace SampleApp
@@ -32,20 +27,11 @@ namespace SampleApp
 
         public void ConfigureServices(IServiceCollection serviceCollection)
         {
-            //DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(new Interception.Observers.Configuration.HttpConfiguration { Enabled = true }));
-
-            //var loggerFactory = new LoggerFactory();
-            //var config = Jaeger.Configuration.FromEnv(loggerFactory);
-            //var tracer = config.GetTracer();
-            //GlobalTracer.Register(tracer);
-
             ConfigureDatabase(serviceCollection);
 
             serviceCollection.AddMvc();
             ConfigureMessageBus(serviceCollection);
             ConfigureRedis(serviceCollection);
-
-            //services.AddOpenTracing();
         }
 
         private void ConfigureRedis(IServiceCollection services)
@@ -71,9 +57,6 @@ namespace SampleApp
                     {
                         var loggerFactory = context.GetRequiredService<ILoggerFactory>();
                         cfg.UseExtensionsLogging(loggerFactory);
-
-                        //cfg.ConfigurePublish(configurator => configurator.AddPipeSpecification(new OpenTracingPipeSpecification()));
-                        //cfg.AddPipeSpecification(new OpenTracingPipeSpecification());
 
                         var config = context.GetService<IOptions<RabbitMQConfiguration>>().Value;
 
