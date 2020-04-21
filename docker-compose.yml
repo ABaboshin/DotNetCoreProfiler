@@ -30,7 +30,7 @@ services:
     environment:
       ASPNETCORE_URLS: "http://*:5000"
       ASPNETCORE_ENVIRONMENT: Development
-      LOG_LEVEL: Error
+      LOG_LEVEL: Information
       STATSD__PORT: "9125"
       STATSD__SERVER: "statsd"
       aspnetcore_metrics__enabled: "true"
@@ -48,14 +48,18 @@ services:
       JAEGER_AGENT_HOST: "jaeger"
       JAEGER_AGENT_PORT: "6831"
       JAEGER_SAMPLER_TYPE: "const"
-      tracing__collector: "prometheus"
+      tracing__collector: "jaeger"
+      masstransit_metrics__PublisherEnabled: "true"
+      masstransit_metrics__PublisherName: "masstransit_publish"
+      masstransit_metrics__ConsumerEnabled: "true"
+      masstransit_metrics__ConsumerName: "masstransit_consume"
     ports:
       - "5000:5000"
-    # logging:
-    #   driver: gelf
-    #   options:
-    #     gelf-address: tcp://localhost:12201
-    #     tag: sampleapp
+    logging:
+      driver: gelf
+      options:
+        gelf-address: tcp://localhost:12201
+        tag: sampleapp
 
   prometheus:
     image: prometheus:local
