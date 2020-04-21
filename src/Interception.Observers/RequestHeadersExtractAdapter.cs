@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Interception.Tracing;
+using Microsoft.AspNetCore.Http;
 using OpenTracing.Propagation;
 using System;
 using System.Collections;
@@ -25,12 +26,10 @@ namespace Interception.Observers
         {
             foreach (var item in _context.Request.Headers.Where(k => k.Key.ToLower().Contains("-id")))
             {
-                Console.WriteLine($"INJECT {item.Key} {item.Value}");
-
                 yield return new KeyValuePair<string, string>(item.Key, item.Value);
             }
 
-            yield return new KeyValuePair<string, string>("traceIdentifier", _context.TraceIdentifier);
+            yield return new KeyValuePair<string, string>(Constants.TraceIdentifier, _context.TraceIdentifier);
         }
 
         IEnumerator IEnumerable.GetEnumerator()

@@ -26,7 +26,6 @@ namespace Interception.OpenTracing.Prometheus.Propagation
                     spanContext = new SpanContext(item.Value);
                 }
 
-                Console.WriteLine($"Baggage {item.Key} {item.Value}");
                 baggage.Add(item.Key, item.Value);
             }
 

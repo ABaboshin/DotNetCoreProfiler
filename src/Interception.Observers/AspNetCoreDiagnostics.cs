@@ -1,20 +1,21 @@
 ﻿using Interception.Common.Extensions;
 using Interception.Observers.Configuration;
+using Interception.Tracing;
 using Interception.Tracing.Extensions;
 using Microsoft.AspNetCore.Http;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
 
 namespace Interception.Observers
 {
     /// <summary>
-    /// http request diagnsotic events observer
+    /// asp net core diagnsotic events observer
     /// </summary>
     public class AspNetCoreDiagnostics : IObserver<KeyValuePair<string, object>>
     {
+        public static readonly string TraceHeaderName = "X-Trace-Id";
         private readonly AspNetCoreConfiguration _configuration;
 
         public AspNetCoreDiagnostics(AspNetCoreConfiguration configuration)
@@ -47,7 +48,7 @@ namespace Interception.Observers
                 ProcessStopEvent(kv.Value);
             }
 
-            if (kv.Key == "Microsoft.AspNetCore.Diagnostics.UnhandledException")
+            if (kv.Key == "Microsoft.AspNetCore.Hosting.UnhandledException")
             {
                 ProcessUnhandledException(kv.Value);
             }
@@ -59,7 +60,7 @@ namespace Interception.Observers
         /// <param name="value"></param>
         private void ProcessUnhandledException(object value)
         {
-            if (value.TryGetPropertyValue("HttpContext", out Exception exception))
+            if (value.TryGetPropertyValue("exception", out Exception exception))
             {
                 Tracing.Tracing.CurrentScope.Span.SetException(exception);
             }
@@ -110,9 +111,11 @@ namespace Interception.Observers
 
                 Tracing.Tracing.CurrentScope = Tracing.Tracing.Tracer
                     .BuildSpan(_configuration.Name)
-                    .WithTag("traceIdentifier", httpContext.TraceIdentifier)
+                    .WithTag(Constants.TraceIdentifier, httpContext.TraceIdentifier)
                     .AsChildOf(extracted)
                     .StartActive();
+
+                httpContext.Response.Headers.Add(TraceHeaderName, Tracing.Tracing.CurrentScope.Span.Context.TraceId);
             }
         }
     }

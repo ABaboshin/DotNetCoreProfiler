@@ -100,7 +100,7 @@ namespace Interception.Observers
                     .AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span)
                     .Start();
 
-                Interception.Tracing.Tracing.Tracer.Inject(span.Context, BuiltinFormats.HttpHeaders, new RequestHeadersInjectAdapter(request.Headers));
+                Interception.Tracing.Tracing.Tracer.Inject(span.Context, BuiltinFormats.HttpHeaders, new RequestHeadersInjectAdapter(request));
 
                 request.Properties.Add(PropertiesKey, span);
             }

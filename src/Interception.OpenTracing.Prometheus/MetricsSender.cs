@@ -2,6 +2,7 @@
 using Interception.Tracing;
 using StatsdClient;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Interception.OpenTracing.Prometheus
@@ -25,7 +26,7 @@ namespace Interception.OpenTracing.Prometheus
         {
             var duration = span.Duration.TotalMilliseconds;
             var metricName = span.OperationName;
-            var tags = span.GetTags();
+            var tags = new Dictionary<string, string>(span.GetTags().ToDictionary(t => t.Key, t => t.Value.ToString()));
             tags.Add("TraceId", span.Context.TraceId);
             tags.Add("SpanId", span.Context.SpanId);
             if (!string.IsNullOrEmpty(span.Context.ParentSpanId))
@@ -37,7 +38,10 @@ namespace Interception.OpenTracing.Prometheus
 
             foreach (var item in span.Context.GetBaggageItems())
             {
-                tags.Add(item.Key, item.Value);
+                if (!tags.ContainsKey(item.Key))
+                {
+                    tags.Add(item.Key, item.Value);
+                }
             }
 
             Console.WriteLine($"Histogram {metricName} {duration} {string.Join(", ", tags.Select(t => $"{t.Key}={t.Value}"))}");
