@@ -13,11 +13,16 @@
         /// <summary>
         /// enable consumer tracking
         /// </summary>
-        public bool ConsumerEnabled { get; set; } = true;
+        public bool Enabled { get; set; } = true;
 
         /// <summary>
         /// consumer metric name
         /// </summary>
         public string ConsumerName { get; set; } = "redis_consumer";
+
+        /// <summary>
+        /// publisher metric name
+        /// </summary>
+        public string PublisherName { get; set; } = "redis_publisher";
     }
 }

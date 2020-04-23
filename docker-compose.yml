@@ -30,7 +30,7 @@ services:
     environment:
       ASPNETCORE_URLS: "http://*:5000"
       ASPNETCORE_ENVIRONMENT: Development
-      LOG_LEVEL: Information
+      LOG_LEVEL: Error
       STATSD__PORT: "9125"
       STATSD__SERVER: "statsd"
       aspnetcore_metrics__enabled: "true"
@@ -43,7 +43,6 @@ services:
       RABBITMQ__USER: "admin"
       RABBITMQ__PASSWORD: "password"
       redis__connectionstring: "redis:6379"
-      PROFILER_PRINT_EVERY_CALL: "false"
       JAEGER_SERVICE_NAME: "sampleapp"
       JAEGER_AGENT_HOST: "jaeger"
       JAEGER_AGENT_PORT: "6831"
@@ -53,10 +52,12 @@ services:
       masstransit_metrics__PublisherName: "masstransit_publish"
       masstransit_metrics__ConsumerEnabled: "true"
       masstransit_metrics__ConsumerName: "masstransit_consume"
-      redis_metrics__ConsumerEnabled: "true"
-      redis_metrics__ConsumerName: "redis_consume"
+      redis_metrics__Enabled: "true"
+      redis_metrics__ConsumerName: "redis_consumer"
+      redis_metrics__PublisherName: "redis_publisher"
       entityframeworkcore_metrics__enabled: "true"
       entityframeworkcore_metrics__name: "db_call"
+      PROFILER_PRINT_EVERY_CALL: "false"
     ports:
       - "5000:5000"
     # logging:
