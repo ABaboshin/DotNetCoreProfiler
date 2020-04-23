@@ -31,8 +31,8 @@ AssemblyInfo GetAssemblyInfo(ICorProfilerInfo8* info,
     return {};
   }
 
-  return {assembly_id, WSTRING(assembly_name), manifest_module_id, app_domain_id,
-          WSTRING(app_domain_name)};
+  return {assembly_id, assembly_name, manifest_module_id, app_domain_id,
+          app_domain_name};
 }
 
 ModuleInfo GetModuleInfo(ICorProfilerInfo8* info, const ModuleID& module_id)
@@ -49,7 +49,7 @@ ModuleInfo GetModuleInfo(ICorProfilerInfo8* info, const ModuleID& module_id)
   if (FAILED(hr) || module_path_len == 0) {
     return {};
   }
-  return {module_id, WSTRING(module_path), GetAssemblyInfo(info, assembly_id),
+  return {module_id, module_path, GetAssemblyInfo(info, assembly_id),
           module_flags};
 }
 
@@ -71,10 +71,10 @@ void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataA
     metadata.usBuildNumber = 0;
     metadata.usRevisionNumber = 0;
 
-    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, "mscorlib"_W);
+    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, mscorlib);
 }
 
-void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef, WSTRING assemblyName)
+void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef, const wstring& assemblyName)
 {
     ASSEMBLYMETADATA metadata{};
     metadata.usMajorVersion = 1;
@@ -85,7 +85,7 @@ void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAs
     hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE>(), metadata, assemblyName);
 }
 
-HRESULT CreateAssemblyRef(const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, std::vector<BYTE> public_key, ASSEMBLYMETADATA metadata, WSTRING assemblyName) {
+HRESULT CreateAssemblyRef(const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, const std::vector<BYTE>& public_key, ASSEMBLYMETADATA metadata, const wstring& assemblyName) {
     HRESULT hr = pMetadataAssemblyEmit->DefineAssemblyRef(
         (void*)public_key.data(),
         (ULONG)public_key.size(),

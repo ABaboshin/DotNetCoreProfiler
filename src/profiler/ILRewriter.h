@@ -10,7 +10,6 @@
 #include <fstream>
 #include <stdexcept>
 #include "util.h"
-#include "types.h"
 #include "ComPtr.h"
 
 struct ILInstr

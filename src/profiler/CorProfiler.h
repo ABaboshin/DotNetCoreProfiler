@@ -6,10 +6,10 @@
 #include <unordered_set>
 #include "cor.h"
 #include "corprof.h"
-#include "types.h"
 #include "FunctionInfo.h"
 #include "ModuleInfo.h"
 #include "Configuration.h"
+#include <unordered_map>
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -25,7 +25,7 @@ private:
 
     bool printEveryCall = false;
 
-    bool SkipAssembly(const WSTRING& name);
+    bool SkipAssembly(const wstring& name);
 
     HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
 
@@ -34,7 +34,7 @@ private:
         ModuleID moduleID,
         mdMethodDef methodDef,
         FunctionID functionId,
-        std::vector<WSTRING> assemblies);
+        std::vector<wstring> assemblies);
 
 public:
     CorProfiler();

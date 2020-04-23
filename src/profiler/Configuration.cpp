@@ -1,12 +1,13 @@
 #include "Configuration.h"
 #include <iostream>
+#include "nlohmann/json.hpp"
 
 Configuration LoadFromStream(std::ifstream& stream);
 std::pair<Interception, bool> LoadInterceptionFromJson(const nlohmann::json::value_type& src);
 std::pair<Initializer, bool> LoadInitializerFromJson(const nlohmann::json::value_type& src);
 std::vector<BYTE> ReadSignature(std::string raw_signature);
 
-Configuration LoadFromFile(const WSTRING& path)
+Configuration LoadFromFile(const wstring& path)
 {
 	std::cout << "Load from " << ToString(path) << std::endl;
 	Configuration configuration;
@@ -63,19 +64,19 @@ std::pair<Interception, bool> LoadInterceptionFromJson(const nlohmann::json::val
 		return std::make_pair<Interception, bool>({}, false);
 	}
 
-	auto CallerAssemblyName = ToWSTRING(src.value("CallerAssemblyName", ""));
-	auto TargetAssemblyName = ToWSTRING(src.value("TargetAssemblyName", ""));
-	auto TargetTypeName = ToWSTRING(src.value("TargetTypeName", ""));
-	auto TargetMethodName = ToWSTRING(src.value("TargetMethodName", ""));
-	auto WrapperAssemblyPath = ToWSTRING(src.value("WrapperAssemblyPath", ""));
-	auto WrapperAssemblyName = ToWSTRING(src.value("WrapperAssemblyName", ""));
-	auto WrapperTypeName = ToWSTRING(src.value("WrapperTypeName", ""));
-	auto WrapperMethodName = ToWSTRING(src.value("WrapperMethodName", ""));
-	auto TargetMethodParametersCount = src.value("TargetMethodParametersCount", 0);
+	auto callerAssemblyName = ToWSTRING(src.value("CallerAssemblyName", ""));
+	auto targetAssemblyName = ToWSTRING(src.value("TargetAssemblyName", ""));
+	auto targetTypeName = ToWSTRING(src.value("TargetTypeName", ""));
+	auto targetMethodName = ToWSTRING(src.value("TargetMethodName", ""));
+	auto wrapperAssemblyPath = ToWSTRING(src.value("WrapperAssemblyPath", ""));
+	auto wrapperAssemblyName = ToWSTRING(src.value("WrapperAssemblyName", ""));
+	auto wrapperTypeName = ToWSTRING(src.value("WrapperTypeName", ""));
+	auto wrapperMethodName = ToWSTRING(src.value("WrapperMethodName", ""));
+	auto targetMethodParametersCount = src.value("TargetMethodParametersCount", 0);
 
 	auto signature = ReadSignature(src.value("WrapperSignature", ""));
 
-	return std::make_pair<Interception, bool>({ CallerAssemblyName, TargetAssemblyName, TargetTypeName , TargetMethodName , WrapperAssemblyPath, WrapperAssemblyName , WrapperTypeName , WrapperMethodName, signature, TargetMethodParametersCount }, true);
+	return std::make_pair<Interception, bool>({ callerAssemblyName, targetAssemblyName, targetTypeName , targetMethodName , wrapperAssemblyPath, wrapperAssemblyName , wrapperTypeName , wrapperMethodName, signature, targetMethodParametersCount }, true);
 }
 
 std::pair<Initializer, bool> LoadInitializerFromJson(const nlohmann::json::value_type& src)

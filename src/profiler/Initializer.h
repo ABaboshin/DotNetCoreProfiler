@@ -1,20 +1,19 @@
 #pragma once
 
 #include <vector>
-#include "types.h"
 #include "util.h"
 
 class Initializer
 {
 public:
-	WSTRING AssemblyPath;
-	WSTRING AssemblyName;
-	WSTRING TypeName;
+	wstring AssemblyPath;
+	wstring AssemblyName;
+	wstring TypeName;
 
-	Initializer(WSTRING AssemblyPath, WSTRING AssemblyName, WSTRING TypeName) :
-		AssemblyName(AssemblyName),
-		TypeName(TypeName),
-		AssemblyPath(AssemblyPath) {}
+	Initializer(const wstring& assemblyPath, const wstring& assemblyName, const wstring& typeName) :
+		AssemblyName(assemblyName),
+		TypeName(typeName),
+		AssemblyPath(assemblyPath) {}
 
 	Initializer() :
 		AssemblyName(""_W),

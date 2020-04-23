@@ -108,7 +108,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 {
     HRESULT hr;
     const auto module_info = GetModuleInfo(this->corProfilerInfo, moduleId);
-    auto app_domain_id = module_info.assembly.app_domain_id;
+    auto app_domain_id = module_info.assembly.appDomainId;
 
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
@@ -185,9 +185,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     }
 
     // load once into appdomain
-    if (loadedIntoAppDomains.find(moduleInfo.assembly.app_domain_id) == loadedIntoAppDomains.end())
+    if (loadedIntoAppDomains.find(moduleInfo.assembly.appDomainId) == loadedIntoAppDomains.end())
     {
-        loadedIntoAppDomains.insert(moduleInfo.assembly.app_domain_id);
+        loadedIntoAppDomains.insert(moduleInfo.assembly.appDomainId);
 
         ComPtr<IUnknown> metadataInterfaces;
         IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
@@ -199,17 +199,17 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         hr = functionInfo.signature.TryParse();
         IfFailRet(hr);
 
-        std::cout << "Load into app_domain_id " << moduleInfo.assembly.app_domain_id 
+        std::cout << "Load into app_domain_id " << moduleInfo.assembly.appDomainId
             << "Before call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
             << " num args " << functionInfo.signature.NumberOfArguments()
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
-        std::vector<WSTRING> dlls;
-        std::for_each(configuration.interceptions.begin(), configuration.interceptions.end(), [&dlls](Interception i) { dlls.push_back(i.WrapperAssemblyPath); });
+        std::vector<wstring> dlls;
+        std::for_each(configuration.interceptions.begin(), configuration.interceptions.end(), [&dlls](const Interception& i) { dlls.push_back(i.wrapperAssemblyPath); });
 
-        std::vector<WSTRING> udlls;
-        std::copy_if(dlls.begin(), dlls.end(), std::back_inserter(udlls), [&udlls](WSTRING p) {
+        std::vector<wstring> udlls;
+        std::copy_if(dlls.begin(), dlls.end(), std::back_inserter(udlls), [&udlls](const wstring& p) {
             return std::find(udlls.begin(), udlls.end(), p) == udlls.end();
         });
 
@@ -229,7 +229,7 @@ HRESULT CorProfiler::LoadAssemblyBefore(
     ModuleID moduleId,
     mdMethodDef methodDef,
     FunctionID functionId,
-    std::vector<WSTRING> assemblies)
+    std::vector<wstring> assemblies)
 {
     HRESULT hr;
 
@@ -268,7 +268,7 @@ HRESULT CorProfiler::LoadAssemblyBefore(
         mdTypeRef assemblyTypeRef;
         hr = metadataEmit->DefineTypeRefByName(
             mscorlibRef,
-            "System.Reflection.Assembly"_W.data(),
+            SystemReflectionAssembly.c_str(),
             &assemblyTypeRef);
 
         unsigned buffer;
@@ -286,7 +286,7 @@ HRESULT CorProfiler::LoadAssemblyBefore(
         mdMemberRef assemblyLoadMemberRef;
         hr = metadataEmit->DefineMemberRef(
             assemblyTypeRef,
-            "LoadFrom"_W.data(),
+            LoadFrom.data(),
             assemblyLoadSignature,
             sizeof(assemblyLoadSignature),
             &assemblyLoadMemberRef);
@@ -300,7 +300,7 @@ HRESULT CorProfiler::LoadAssemblyBefore(
         };
         mdMemberRef createInstanceMemberRef;
         hr = metadataEmit->DefineMemberRef(
-            assemblyTypeRef, "CreateInstance"_W.c_str(),
+            assemblyTypeRef, CreateInstance.c_str(),
             createInstanceSignature,
             sizeof(createInstanceSignature),
             &createInstanceMemberRef);
@@ -339,9 +339,9 @@ HRESULT CorProfiler::LoadAssemblyBefore(
     return S_OK;
 }
 
-bool CorProfiler::SkipAssembly(const WSTRING& name)
+bool CorProfiler::SkipAssembly(const wstring& name)
 {
-    std::vector<WSTRING> skipAssemblies{
+    std::vector<wstring> skipAssemblies{
       "mscorlib"_W,
       "netstandard"_W,
       "System.Core"_W,
@@ -422,9 +422,9 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
         for (const auto& interception : configuration.interceptions)
         {
             if (
-                (moduleInfo.assembly.name == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
-                && target.type.name == interception.TargetTypeName
-                && target.name == interception.TargetMethodName && interception.TargetMethodParametersCount == target.signature.NumberOfArguments()
+                (moduleInfo.assembly.name == interception.callerAssemblyName || interception.callerAssemblyName.empty())
+                && target.type.name == interception.targetTypeName
+                && target.name == interception.targetMethodName && interception.targetMethodParametersCount == target.signature.NumberOfArguments()
                 )
             {
                 auto m = modules[moduleId];
@@ -437,21 +437,21 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
                 // define wrapper.dll
                 mdModuleRef wrapperRef;
-                GetWrapperRef(hr, pMetadataAssemblyEmit, wrapperRef, interception.WrapperAssemblyName);
+                GetWrapperRef(hr, pMetadataAssemblyEmit, wrapperRef, interception.wrapperAssemblyName);
                 IfFailRet(hr);
 
                 // define wrappedType
                 mdTypeRef wrapperTypeRef;
                 hr = pMetadataEmit->DefineTypeRefByName(
                     wrapperRef,
-                    interception.WrapperTypeName.data(),
+                    interception.wrapperTypeName.data(),
                     &wrapperTypeRef);
                 IfFailRet(hr);
 
                 // method
                 mdMemberRef wrapperMethodRef;
                 hr = pMetadataEmit->DefineMemberRef(
-                    wrapperTypeRef, interception.WrapperMethodName.c_str(),
+                    wrapperTypeRef, interception.wrapperMethodName.c_str(),
                     interception.signature.data(),
                     (DWORD)(interception.signature.size()),
                     &wrapperMethodRef);
