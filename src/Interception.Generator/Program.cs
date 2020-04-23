@@ -42,15 +42,19 @@ namespace Interception.Generator
 
                     return new {
                         info.attribute.CallerAssembly,
-                        info.attribute.TargetAssemblyName,
-                        info.attribute.TargetMethodName,
-                        info.attribute.TargetTypeName,
-                        info.attribute.TargetMethodParametersCount,
-                        WrapperTypeName = info.method.DeclaringType.FullName,
-                        WrapperMethodName = info.method.Name,
-                        WrapperAssemblyName = info.method.DeclaringType.Assembly.GetName().Name,
-                        WrapperAssemblyPath = "/profiler/Interception.dll",
-                        WrapperSignature = string.Join(" ", signatureBytes.Select(b => b.ToString("X2")))
+                        Target = new {
+                            AssemblyName = info.attribute.TargetAssemblyName,
+                            MethodName = info.attribute.TargetMethodName,
+                            TypeName = info.attribute.TargetTypeName,
+                            MethodParametersCount = info.attribute.TargetMethodParametersCount,
+                        },
+                        Interceptor = new {
+                            TypeName = info.method.DeclaringType.FullName,
+                            MethodName = info.method.Name,
+                            AssemblyName = info.method.DeclaringType.Assembly.GetName().Name,
+                            AssemblyPath = "/profiler/Interception.dll",
+                            Signature = string.Join(" ", signatureBytes.Select(b => b.ToString("X2")))
+                        }
                     };
                 })
                 .ToList();
