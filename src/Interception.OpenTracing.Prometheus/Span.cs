@@ -11,20 +11,20 @@ namespace Interception.OpenTracing.Prometheus
         private SpanBuilder _spanBuilder;
         public string OperationName { get; private set; }
         public SpanContext Context { get; private set; }
-        private DateTime _startTimestampUtc;
+        public DateTime StartTimestampUtc { get; }
         private IDictionary<string, object> _tags;
         private List<Reference> _references;
 
         private readonly object _lock = new object();
 
-        private DateTime? _finishTimestampUtc;
+        public DateTime? FinishTimestampUtc { get; private set; }
 
         public Span(SpanBuilder spanBuilder, string operationName, SpanContext spanContext, DateTime startTimestampUtc, IDictionary<string, object> tags, List<Reference> references)
         {
             _spanBuilder = spanBuilder;
             OperationName = operationName;
             Context = spanContext;
-            _startTimestampUtc = startTimestampUtc;
+            StartTimestampUtc = startTimestampUtc;
             _tags = tags;
             _references = references;
         }
@@ -33,13 +33,13 @@ namespace Interception.OpenTracing.Prometheus
 
         public IDictionary<string, object> GetTags() => _tags;
 
-        public TimeSpan Duration => _finishTimestampUtc.HasValue ? _finishTimestampUtc.Value - _startTimestampUtc : TimeSpan.Zero;
+        public TimeSpan Duration => FinishTimestampUtc.HasValue ? FinishTimestampUtc.Value - StartTimestampUtc : TimeSpan.Zero;
 
         public void Finish()
         {
             lock (_lock)
             {
-                _finishTimestampUtc = DateTime.UtcNow;
+                FinishTimestampUtc = DateTime.UtcNow;
             }
 
             _spanBuilder.Tracer.ReportSpan(this);
@@ -49,7 +49,7 @@ namespace Interception.OpenTracing.Prometheus
         {
             lock (_lock)
             {
-                _finishTimestampUtc = finishTimestamp.UtcDateTime;
+                FinishTimestampUtc = finishTimestamp.UtcDateTime;
             }
 
             _spanBuilder.Tracer.ReportSpan(this);
