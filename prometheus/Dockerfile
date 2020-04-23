@@ -24,6 +24,7 @@ RUN cp /tmp/prometheus-$PROMETHEUS_VERSION.linux-amd64/prometheus "/bin/promethe
 RUN mv /tmp/prometheus-$PROMETHEUS_VERSION.linux-amd64/ /etc/prometheus
 
 COPY ./prometheus.yml /etc/prometheus/prometheus.yml
+COPY alert-rules.yml /etc/prometheus/alert-rules.yml
 COPY ./entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 RUN dos2unix /entrypoint.sh

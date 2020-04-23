@@ -3,8 +3,8 @@ global:
   evaluation_interval: 15s
   scrape_timeout: 10s
 
-#rule_files:
-#  - "alert-rules.yml"
+rule_files:
+ - "alert-rules.yml"
 
 scrape_configs:
   - job_name: 'statsd'

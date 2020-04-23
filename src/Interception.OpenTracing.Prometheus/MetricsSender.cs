@@ -1,5 +1,6 @@
 ﻿using Interception.OpenTracing.Prometheus.Extensions;
 using Interception.Tracing;
+using Microsoft.Extensions.Logging;
 using StatsdClient;
 using System;
 using System.Collections.Generic;
@@ -7,7 +8,7 @@ using System.Linq;
 
 namespace Interception.OpenTracing.Prometheus
 {
-    internal static class MetricsSender
+    internal class MetricsSender
     {
         internal static ServiceConfiguration _serviceConfiguration;
 
@@ -22,7 +23,7 @@ namespace Interception.OpenTracing.Prometheus
             _serviceConfiguration = serviceConfiguration;
         }
 
-        public static void Histogram(Span span)
+        public static void Histogram(Span span, ILoggerFactory loggerFactory)
         {
             var duration = span.Duration.TotalMilliseconds;
             var metricName = span.OperationName;
@@ -44,9 +45,14 @@ namespace Interception.OpenTracing.Prometheus
                 }
             }
 
-            Console.WriteLine($"Histogram {metricName} {duration} {string.Join(", ", tags.Select(t => $"{t.Key}={t.Value}"))}");
+            tags.Add("metric", metricName);
+            tags.Add("startDate", span.StartTimestampUtc.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString());
+            tags.Add("finishDate", span.FinishTimestampUtc?.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString());
 
-            DogStatsd.Histogram(metricName, duration, tags: tags.Select(t => $"{t.Key}:{t.Value.ToString().EscapeTagValue()}").ToArray());
+            loggerFactory.CreateLogger<MetricsSender>()
+                .LogDebug("Histogram {name} {duration} {tags}", metricName, duration, string.Join(", ", tags.Select(t => $"{t.Key}={t.Value}")));
+
+            DogStatsd.Histogram("interception", duration, tags: tags.Select(t => $"{t.Key}:{t.Value.ToString().EscapeTagValue()}").ToArray());
         }
     }
 }

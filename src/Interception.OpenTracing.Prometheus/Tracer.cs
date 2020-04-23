@@ -47,7 +47,7 @@ namespace Interception.OpenTracing.Prometheus
 
         internal void ReportSpan(Span span)
         {
-            MetricsSender.Histogram(span);
+            MetricsSender.Histogram(span, _loggerFactory);
         }
     }
 }

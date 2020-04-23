@@ -1,0 +1,5 @@
+groups:
+- name: records
+  rules:
+    - record: db_call
+      expr: interception{metric="db_call"}
