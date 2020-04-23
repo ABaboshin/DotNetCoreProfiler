@@ -26,22 +26,11 @@ namespace Interception.Observers
         {
         }
 
-        public void OnNext(DiagnosticListener value)
+        public void OnNext(DiagnosticListener diagnosticListener)
         {
-            if (value.Name == "Microsoft.AspNetCore" && _aspNetCoreConfiguration.Enabled)
-            {
-                value.Subscribe(new AspNetCoreDiagnostics(_aspNetCoreConfiguration));
-            }
-
-            if (value.Name == "HttpHandlerDiagnosticListener" && _httpHandlerConfiguration.Enabled)
-            {
-                value.Subscribe(new HttpHandlerDiagnostrics(_httpHandlerConfiguration));
-            }
-
-            if (value.Name == "Microsoft.EntityFrameworkCore" && _entityFrameworkCoreConfiguration.Enabled)
-            {
-                value.Subscribe(new EntityFrameworkCoreObserver(_entityFrameworkCoreConfiguration));
-            }
+            new AspNetCoreDiagnostics(_aspNetCoreConfiguration).Subscribe(diagnosticListener);
+            new EntityFrameworkCoreObserver(_entityFrameworkCoreConfiguration).Subscribe(diagnosticListener);
+            new HttpHandlerDiagnostrics(_httpHandlerConfiguration).Subscribe(diagnosticListener);
         }
 
         public static void ConfigureAndStart()

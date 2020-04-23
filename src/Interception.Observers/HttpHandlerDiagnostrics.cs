@@ -6,12 +6,13 @@ using OpenTracing.Propagation;
 using OpenTracing.Tag;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace Interception.Observers
 {
-    public class HttpHandlerDiagnostrics : IObserver<KeyValuePair<string, object>>
+    public class HttpHandlerDiagnostrics : BaseObserver
     {
         private static readonly string PropertiesKey = "X-Interception";
 
@@ -22,15 +23,15 @@ namespace Interception.Observers
             _configuration = configuration;
         }
 
-        public void OnCompleted()
+        public override void OnCompleted()
         {
         }
 
-        public void OnError(Exception error)
+        public override void OnError(Exception error)
         {
         }
 
-        public void OnNext(KeyValuePair<string, object> value)
+        public override void OnNext(KeyValuePair<string, object> value)
         {
             if (value.Key == "System.Net.Http.HttpRequestOut.Start")
             {
@@ -104,6 +105,11 @@ namespace Interception.Observers
 
                 request.Properties.Add(PropertiesKey, span);
             }
+        }
+
+        public override bool ShouldSubscribe(DiagnosticListener diagnosticListener)
+        {
+            return diagnosticListener.Name == "HttpHandlerDiagnosticListener" && _configuration.Enabled;
         }
     }
 }
