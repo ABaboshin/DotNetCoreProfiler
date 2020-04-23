@@ -108,11 +108,13 @@
     <ClInclude Include="ILRewriterHelper.h" />
     <ClInclude Include="Initializer.h" />
     <ClInclude Include="Interception.h" />
+    <ClInclude Include="Interceptor.h" />
     <ClInclude Include="MethodSignature.h" />
     <ClInclude Include="miniutf.hpp" />
     <ClInclude Include="miniutfdata.h" />
     <ClInclude Include="ModuleInfo.h" />
     <ClInclude Include="nlohmann\json.hpp" />
+    <ClInclude Include="TargetMethod.h" />
     <ClInclude Include="TypeInfo.h" />
     <ClInclude Include="types.h" />
     <ClInclude Include="util.h" />

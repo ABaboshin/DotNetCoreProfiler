@@ -206,7 +206,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             << std::endl << std::flush;
 
         std::vector<wstring> dlls;
-        std::for_each(configuration.interceptions.begin(), configuration.interceptions.end(), [&dlls](const Interception& i) { dlls.push_back(i.wrapperAssemblyPath); });
+        std::for_each(configuration.interceptions.begin(), configuration.interceptions.end(), [&dlls](const Interception& i) { dlls.push_back(i.Interceptor.AssemblyPath); });
 
         std::vector<wstring> udlls;
         std::copy_if(dlls.begin(), dlls.end(), std::back_inserter(udlls), [&udlls](const wstring& p) {
@@ -423,8 +423,8 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
         {
             if (
                 (moduleInfo.assembly.name == interception.callerAssemblyName || interception.callerAssemblyName.empty())
-                && target.type.name == interception.targetTypeName
-                && target.name == interception.targetMethodName && interception.targetMethodParametersCount == target.signature.NumberOfArguments()
+                && target.type.name == interception.Target.TypeName
+                && target.name == interception.Target.MethodName && interception.Target.MethodParametersCount == target.signature.NumberOfArguments()
                 )
             {
                 auto m = modules[moduleId];
@@ -437,23 +437,23 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
 
                 // define wrapper.dll
                 mdModuleRef wrapperRef;
-                GetWrapperRef(hr, pMetadataAssemblyEmit, wrapperRef, interception.wrapperAssemblyName);
+                GetWrapperRef(hr, pMetadataAssemblyEmit, wrapperRef, interception.Interceptor.AssemblyName);
                 IfFailRet(hr);
 
                 // define wrappedType
                 mdTypeRef wrapperTypeRef;
                 hr = pMetadataEmit->DefineTypeRefByName(
                     wrapperRef,
-                    interception.wrapperTypeName.data(),
+                    interception.Interceptor.TypeName.data(),
                     &wrapperTypeRef);
                 IfFailRet(hr);
 
                 // method
                 mdMemberRef wrapperMethodRef;
                 hr = pMetadataEmit->DefineMemberRef(
-                    wrapperTypeRef, interception.wrapperMethodName.c_str(),
-                    interception.signature.data(),
-                    (DWORD)(interception.signature.size()),
+                    wrapperTypeRef, interception.Interceptor.MethodName.c_str(),
+                    interception.Interceptor.Signature.data(),
+                    (DWORD)(interception.Interceptor.Signature.size()),
                     &wrapperMethodRef);
 
                 ILRewriterHelper helper(&rewriter);
