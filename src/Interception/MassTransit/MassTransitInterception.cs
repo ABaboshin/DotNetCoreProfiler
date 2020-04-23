@@ -80,7 +80,7 @@ namespace Interception.MassTransit
                 .WithTag("consumer", consumerName)
                 .WithTag("message-id", context.MessageId?.ToString());
 
-            using (var scope = spanBuilder.StartActive(true))
+            using (Tracing.Tracing.CurrentScope = spanBuilder.StartActive(true))
             {
                 try
                 {
@@ -88,7 +88,7 @@ namespace Interception.MassTransit
                 }
                 catch (Exception ex)
                 {
-                    scope.Span.SetException(ex);
+                    Tracing.Tracing.CurrentScope.Span.SetException(ex);
                     throw;
                 }
             }
