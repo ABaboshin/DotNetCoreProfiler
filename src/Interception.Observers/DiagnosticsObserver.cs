@@ -1,4 +1,5 @@
 ﻿using Interception.Observers.Configuration;
+using Microsoft.Extensions.Configuration;
 using System;
 using System.Diagnostics;
 
@@ -41,6 +42,19 @@ namespace Interception.Observers
             {
                 value.Subscribe(new EntityFrameworkCoreObserver(_entityFrameworkCoreConfiguration));
             }
+        }
+
+        public static void ConfigureAndStart()
+        {
+            var configuration = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+
+            var aspNetCoreConfiguration = configuration.GetSection(AspNetCoreConfiguration.SectionKey).Get<AspNetCoreConfiguration>();
+            var httpHandlerConfiguration = configuration.GetSection(HttpHandlerConfiguration.SectionKey).Get<HttpHandlerConfiguration>();
+            var entityFrameworkCoreConfiguration = configuration.GetSection(EntityFrameworkCoreConfiguration.SectionKey).Get<EntityFrameworkCoreConfiguration>();
+
+            DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(aspNetCoreConfiguration, httpHandlerConfiguration, entityFrameworkCoreConfiguration));
         }
     }
 }
