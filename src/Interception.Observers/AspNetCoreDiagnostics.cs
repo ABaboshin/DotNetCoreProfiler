@@ -7,13 +7,14 @@ using OpenTracing.Propagation;
 using OpenTracing.Tag;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Interception.Observers
 {
     /// <summary>
     /// asp net core diagnsotic events observer
     /// </summary>
-    public class AspNetCoreDiagnostics : IObserver<KeyValuePair<string, object>>
+    public class AspNetCoreDiagnostics : BaseObserver
     {
         private readonly AspNetCoreConfiguration _configuration;
 
@@ -22,15 +23,15 @@ namespace Interception.Observers
             _configuration = configuration;
         }
 
-        public void OnCompleted()
+        public override void OnCompleted()
         {
         }
 
-        public void OnError(Exception error)
+        public override void OnError(Exception error)
         {
         }
 
-        public void OnNext(KeyValuePair<string, object> kv)
+        public override void OnNext(KeyValuePair<string, object> kv)
         {
             if (kv.Key == "Microsoft.AspNetCore.Hosting.HttpRequestIn.Start")
             {
@@ -116,6 +117,11 @@ namespace Interception.Observers
 
                 httpContext.Response.Headers.Add(Constants.TraceIdentifier, Tracing.Tracing.CurrentScope.Span.Context.TraceId);
             }
+        }
+
+        public override bool ShouldSubscribe(DiagnosticListener diagnosticListener)
+        {
+            return diagnosticListener.Name == "Microsoft.AspNetCore" && _configuration.Enabled;
         }
     }
 }

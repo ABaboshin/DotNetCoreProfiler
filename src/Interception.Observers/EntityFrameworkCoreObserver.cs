@@ -5,11 +5,12 @@ using OpenTracing;
 using OpenTracing.Tag;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Threading;
 
 namespace Interception.Observers
 {
-    public class EntityFrameworkCoreObserver : IObserver<KeyValuePair<string, object>>
+    public class EntityFrameworkCoreObserver : BaseObserver
     {
         private AsyncLocal<ISpan> _currentScope = new AsyncLocal<ISpan>();
 
@@ -20,15 +21,15 @@ namespace Interception.Observers
             _configuration = configuration;
         }
 
-        public void OnCompleted()
+        public override void OnCompleted()
         {
         }
 
-        public void OnError(Exception error)
+        public override void OnError(Exception error)
         {
         }
 
-        public void OnNext(KeyValuePair<string, object> kv)
+        public override void OnNext(KeyValuePair<string, object> kv)
         {
             // execution started
             if (kv.Key == RelationalEventId.CommandExecuting.Name && kv.Value is CommandEventData commandEventData)
@@ -51,6 +52,11 @@ namespace Interception.Observers
             {
                 _currentScope.Value.Finish();
             }
+        }
+
+        public override bool ShouldSubscribe(DiagnosticListener diagnosticListener)
+        {
+            return diagnosticListener.Name == "Microsoft.EntityFrameworkCore" && _configuration.Enabled;
         }
     }
 }
