@@ -1,31 +1,20 @@
 #include "util.h"
 #include <cstdlib>
 #include <iostream>
+#include "miniutf.hpp"
 
-std::string ToString(const WSTRING& wstr) {
-  std::u16string ustr(reinterpret_cast<const char16_t*>(wstr.c_str()));
-  return miniutf::to_utf8(ustr);
-}
-
-WSTRING ToWSTRING(const std::string& str) {
-  auto ustr = miniutf::to_utf16(str);
-  return WSTRING(reinterpret_cast<const WCHAR*>(ustr.c_str()));
-}
-
-WSTRING GetEnvironmentValue(const WSTRING &name) {
+wstring GetEnvironmentValue(const wstring&name) {
   auto cstr = std::getenv(ToString(name).c_str());
   if (cstr == nullptr) {
     return ""_W;
   }
-  std::string str(cstr);
-  auto wstr = ToWSTRING(str);
-  return wstr;
+
+  return ToWSTRING(std::string(cstr));
 }
 
-std::vector<WSTRING> GetEnvironmentValues(const WSTRING &name,
-                                          const wchar_t delim) {
-                                            // std::cout << "GetEnvironmentValues" << std::endl;
-  std::vector<WSTRING> values;
+std::vector<wstring> GetEnvironmentValues(const wstring&name,
+                                          wchar_t delim) {
+  std::vector<wstring> values;
   for (auto s : Split(GetEnvironmentValue(name), delim)) {
     s = Trim(s);
     if (!s.empty()) {
@@ -35,44 +24,49 @@ std::vector<WSTRING> GetEnvironmentValues(const WSTRING &name,
   return values;
 }
 
-std::vector<WSTRING> Split(const WSTRING &s, wchar_t delim) {
-  std::vector<WSTRING> elems;
+template <typename Out>
+void Split(const wstring& s, wchar_t delim, Out result) {
+    size_t lpos = 0;
+    for (size_t i = 0; i < s.length(); i++) {
+        if (s[i] == delim) {
+            *(result++) = s.substr(lpos, (i - lpos));
+            lpos = i + 1;
+        }
+    }
+    *(result++) = s.substr(lpos);
+}
+
+std::vector<wstring> Split(const wstring&s, wchar_t delim) {
+  std::vector<wstring> elems;
   Split(s, delim, std::back_inserter(elems));
   return elems;
 }
 
-WSTRING Trim(const WSTRING &str) {
+wstring Trim(const wstring&str) {
   if (str.length() == 0) {
     return ""_W;
   }
 
-  WSTRING trimmed = str;
+  wstring trimmed = str;
 
   auto lpos = trimmed.find_first_not_of(" \t"_W);
-  if (lpos != WSTRING::npos && lpos > 0) {
+  if (lpos != std::string::npos && lpos > 0) {
     trimmed = trimmed.substr(lpos);
   }
 
   auto rpos = trimmed.find_last_not_of(" \t"_W);
-  if (rpos != WSTRING::npos) {
+  if (rpos != std::string::npos) {
     trimmed = trimmed.substr(0, rpos + 1);
   }
 
   return trimmed;
 }
 
-WCHAR operator"" _W(const char c) { return WCHAR(c); }
-
-WSTRING operator"" _W(const char* arr, size_t size) {
-  std::string str(arr, size);
-  return ToWSTRING(str);
-}
-
 constexpr char HexMap[] = { '0', '1', '2', '3', '4', '5', '6', '7',
                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
-WSTRING HexStr(const unsigned char* data, int len) {
-    WSTRING s(len * 2, ' ');
+wstring HexStr(const unsigned char* data, int len) {
+    wstring s(len * 2, ' ');
     for (int i = 0; i < len; ++i) {
         s[2 * i] = HexMap[(data[i] & 0xF0) >> 4];
         s[2 * i + 1] = HexMap[data[i] & 0x0F];
@@ -118,5 +112,22 @@ std::ostream& operator<<(std::ostream& os, std::vector<BYTE> vec)
 
     os << std::nouppercase;
     return os;
+}
 
+
+wstring ToWSTRING(const std::string& str) {
+    auto ustr = miniutf::to_utf16(str);
+    return wstring(reinterpret_cast<const WCHAR*>(ustr.c_str()));
+}
+
+std::string ToString(const wstring& wstr) {
+    std::u16string ustr(reinterpret_cast<const char16_t*>(wstr.c_str()));
+    return miniutf::to_utf8(ustr);
+}
+
+WCHAR operator"" _W(const char c) { return WCHAR(c); }
+
+wstring operator"" _W(const char* arr, size_t size) {
+    std::string str(arr, size);
+    return ToWSTRING(str);
 }

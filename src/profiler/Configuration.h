@@ -16,4 +16,4 @@ public:
 	Configuration() {}
 };
 
-Configuration LoadFromFile(const WSTRING& path);
+Configuration LoadFromFile(const wstring& path);

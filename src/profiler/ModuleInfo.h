@@ -4,13 +4,13 @@
 #include "util.h"
 
 struct ModuleInfo {
-  const ModuleID id;
-  const WSTRING path;
-  const AssemblyInfo assembly;
-  const DWORD flags;
+  ModuleID id;
+  wstring path;
+  AssemblyInfo assembly;
+  DWORD flags;
 
   ModuleInfo() : id(0), path(""_W), assembly({}), flags(0) {}
-  ModuleInfo(ModuleID id, WSTRING path, AssemblyInfo assembly, DWORD flags)
+  ModuleInfo(ModuleID id, wstring path, AssemblyInfo assembly, DWORD flags)
       : id(id), path(path), assembly(assembly), flags(flags) {}
 
   bool IsValid() const { return id != 0; }

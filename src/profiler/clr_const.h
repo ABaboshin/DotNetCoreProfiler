@@ -19,5 +19,9 @@ const auto SystemUIntPtr = "System.UIntPtr"_W;
 const auto SystemString = "System.String"_W;
 const auto SystemObject = "System.Object"_W;
 const auto SystemException = "System.Exception"_W;
+const auto SystemReflectionAssembly = "System.Reflection.Assembly"_W;
+const auto mscorlib = "mscorlib"_W;
+const auto LoadFrom = "LoadFrom"_W;
+const auto CreateInstance = "CreateInstance"_W;
 
 const size_t NameMaxSize = 1024;

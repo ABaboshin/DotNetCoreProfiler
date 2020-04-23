@@ -4,6 +4,7 @@
 #include "TypeInfo.h"
 #include "FunctionInfo.h"
 #include <iostream>
+#include <string>
 
 /*  we don't support
         PTR CustomMod* VOID
@@ -382,7 +383,7 @@ FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     // parent_token could be: TypeDef, TypeRef, TypeSpec, ModuleRef, MethodDef
     const auto type_info = GetTypeInfo(metadata_import, parent_token);
 
-    return { token, WSTRING(function_name), type_info,
+    return { token, function_name, type_info,
             MethodSignature(raw_signature,raw_signature_len) };
 }
 
@@ -435,12 +436,12 @@ TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
         return {};
     }
 
-    return { token, WSTRING(type_name) };
+    return { token, type_name };
 }
 
-WSTRING GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& pImport)
+wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& pImport)
 {
-    WSTRING tokenName = ""_W;
+    wstring tokenName = ""_W;
     bool ref_flag = false;
     if (*pbCur == ELEMENT_TYPE_BYREF)
     {
@@ -701,7 +702,7 @@ mdToken MethodArgument::GetTypeTok(const ComPtr<IMetaDataEmit2> pEmit,
     return token;
 }
 
-WSTRING MethodArgument::GetTypeTokName(ComPtr<IMetaDataImport2>& pImport) const
+wstring MethodArgument::GetTypeTokName(ComPtr<IMetaDataImport2>& pImport) const
 {
     PCCOR_SIGNATURE pbCur = &pbBase[offset];
     return GetSigTypeTokName(pbCur, pImport);

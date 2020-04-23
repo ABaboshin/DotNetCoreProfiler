@@ -1,6 +1,7 @@
 #pragma once
 
 #include <iomanip>
+#include "ComPtr.h"
 #include "TypeInfo.h"
 #include "util.h"
 
@@ -16,7 +17,7 @@ struct MethodArgument {
     ULONG length;
     PCCOR_SIGNATURE pbBase;
     mdToken GetTypeTok(const ComPtr<IMetaDataEmit2> pEmit, mdAssemblyRef corLibRef) const;
-    WSTRING GetTypeTokName(ComPtr<IMetaDataImport2>& pImport) const;
+    wstring GetTypeTokName(ComPtr<IMetaDataImport2>& pImport) const;
     int GetTypeFlags(unsigned& elementType) const;
 };
 
@@ -36,7 +37,7 @@ public:
     };
     ULONG NumberOfTypeArguments() const { return numberOfTypeArguments; }
     ULONG NumberOfArguments() const { return numberOfArguments; }
-    WSTRING str() const { return HexStr(pbBase, len); }
+    wstring str() const { return HexStr(pbBase, len); }
     MethodArgument GetRet() const { return  ret; }
     std::vector<MethodArgument> GetMethodArguments() const { return params; }
     HRESULT TryParse();
@@ -73,4 +74,4 @@ bool ParseNumber(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd, unsigned* pOut);
 TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     const mdToken& token);
 
-WSTRING GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& pImport);
+wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& pImport);
