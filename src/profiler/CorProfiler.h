@@ -4,12 +4,14 @@
 #include <mutex>
 #include <vector>
 #include <unordered_set>
+#include <unordered_map>
+#include <iostream>
 #include "cor.h"
 #include "corprof.h"
 #include "FunctionInfo.h"
 #include "ModuleInfo.h"
 #include "Configuration.h"
-#include <unordered_map>
+#include "ImportInterception.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -20,10 +22,12 @@ private:
 
     std::unordered_map<ModuleID, GUID> modules;
 
-    Configuration configuration;
+    Configuration configuration{};
     ICorProfilerInfo8* corProfilerInfo;
 
     bool printEveryCall = false;
+    wstring loaderDllPath;
+    wstring loaderClass;
 
     bool SkipAssembly(const wstring& name);
 
@@ -33,8 +37,7 @@ private:
         ICorProfilerFunctionControl* pICorProfilerFunctionControl,
         ModuleID moduleID,
         mdMethodDef methodDef,
-        FunctionID functionId,
-        std::vector<wstring> assemblies);
+        FunctionID functionId);
 
 public:
     CorProfiler();
@@ -170,5 +173,7 @@ public:
         return count;
     }
 
+    void AddInterception(ImportInterception interception);
 };
 
+extern CorProfiler* profiler;

@@ -7,8 +7,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SampleApp", "SampleApp.cspr
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "profiler", "..\src\profiler\profiler.vcxproj", "{91B6272F-5780-4C94-8071-DBBA7B4F67F3}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Generator", "..\src\Interception.Generator\Interception.Generator.csproj", "{FA69C348-EC28-4792-A14C-5941A435A852}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Common", "..\src\Interception.Common\Interception.Common.csproj", "{306264A1-2256-4864-8CF2-A9C1A955C8F0}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception", "..\src\Interception\Interception.csproj", "{6983D015-A5C0-435D-A80C-030E331EDD67}"
@@ -20,6 +18,8 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Tracing", "..\src\Interception.Tracing\Interception.Tracing.csproj", "{B347FC0E-1E1B-45F1-9AA4-A2730675884D}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.OpenTracing.Prometheus", "..\src\Interception.OpenTracing.Prometheus\Interception.OpenTracing.Prometheus.csproj", "{2C5834C8-8ACF-4094-BBF7-47797AE4CA76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Loader", "..\src\Interception.Loader\Interception.Loader.csproj", "{41054159-1F62-45C1-839F-281E6EFDD24E}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -44,14 +44,6 @@ Global
 		{91B6272F-5780-4C94-8071-DBBA7B4F67F3}.Release|Any CPU.ActiveCfg = Release|x64
 		{91B6272F-5780-4C94-8071-DBBA7B4F67F3}.Release|x64.ActiveCfg = Release|x64
 		{91B6272F-5780-4C94-8071-DBBA7B4F67F3}.Release|x64.Build.0 = Release|x64
-		{FA69C348-EC28-4792-A14C-5941A435A852}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{FA69C348-EC28-4792-A14C-5941A435A852}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{FA69C348-EC28-4792-A14C-5941A435A852}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{FA69C348-EC28-4792-A14C-5941A435A852}.Debug|x64.Build.0 = Debug|Any CPU
-		{FA69C348-EC28-4792-A14C-5941A435A852}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{FA69C348-EC28-4792-A14C-5941A435A852}.Release|Any CPU.Build.0 = Release|Any CPU
-		{FA69C348-EC28-4792-A14C-5941A435A852}.Release|x64.ActiveCfg = Release|Any CPU
-		{FA69C348-EC28-4792-A14C-5941A435A852}.Release|x64.Build.0 = Release|Any CPU
 		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Debug|x64.ActiveCfg = Debug|Any CPU
@@ -100,6 +92,14 @@ Global
 		{2C5834C8-8ACF-4094-BBF7-47797AE4CA76}.Release|Any CPU.Build.0 = Release|Any CPU
 		{2C5834C8-8ACF-4094-BBF7-47797AE4CA76}.Release|x64.ActiveCfg = Release|Any CPU
 		{2C5834C8-8ACF-4094-BBF7-47797AE4CA76}.Release|x64.Build.0 = Release|Any CPU
+		{41054159-1F62-45C1-839F-281E6EFDD24E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{41054159-1F62-45C1-839F-281E6EFDD24E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{41054159-1F62-45C1-839F-281E6EFDD24E}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{41054159-1F62-45C1-839F-281E6EFDD24E}.Debug|x64.Build.0 = Debug|Any CPU
+		{41054159-1F62-45C1-839F-281E6EFDD24E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{41054159-1F62-45C1-839F-281E6EFDD24E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{41054159-1F62-45C1-839F-281E6EFDD24E}.Release|x64.ActiveCfg = Release|Any CPU
+		{41054159-1F62-45C1-839F-281E6EFDD24E}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

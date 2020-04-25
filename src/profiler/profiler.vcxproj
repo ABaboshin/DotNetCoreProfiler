@@ -30,6 +30,7 @@
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
+    <CLRSupport>false</CLRSupport>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>DynamicLibrary</ConfigurationType>
@@ -43,6 +44,7 @@
     <LinkIncremental>true</LinkIncremental>
     <IncludePath>$(VC_IncludePath);$(CORECLR_PATH)\src\pal\prebuilt\inc;$(CORECLR_PATH)\src\inc;$(CORECLR_PATH)\bin\Product\$(BuildOS).$(BuildArch).$(BuildType)\inc;$(NETFXSDKDir)Include\um;$(WindowsSDK_IncludePath);</IncludePath>
     <OutDir>.\bin</OutDir>
+    <TargetName>DotNetCoreProfiler</TargetName>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <LinkIncremental>false</LinkIncremental>
@@ -106,7 +108,7 @@
     <ClInclude Include="helpers.h" />
     <ClInclude Include="ILRewriter.h" />
     <ClInclude Include="ILRewriterHelper.h" />
-    <ClInclude Include="Initializer.h" />
+    <ClInclude Include="ImportInterception.h" />
     <ClInclude Include="Interception.h" />
     <ClInclude Include="Interceptor.h" />
     <ClInclude Include="MethodSignature.h" />
@@ -121,10 +123,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ClassFactory.cpp" />
-    <ClCompile Include="Configuration.cpp" />
     <ClCompile Include="CorProfiler.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="helpers.cpp" />
+    <ClCompile Include="interop.cpp" />
     <ClCompile Include="MethodSignature.cpp" />
     <ClCompile Include="miniutf.cpp" />
     <ClCompile Include="util.cpp" />

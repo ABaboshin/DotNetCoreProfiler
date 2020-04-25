@@ -9,12 +9,4 @@ COPY src src
 #COPY src/Interception.Observers src/Interception.Observers
 
 RUN dotnet publish -c Debug -o /interception src/Interception/Interception.csproj
-
-RUN dotnet publish -c Debug -o /Interception.Generator src/Interception.Generator/Interception.Generator.csproj
-
-WORKDIR /Interception.Generator
-
-RUN dotnet Interception.Generator.dll
-RUN cat /Interception.Generator/interceptions.json
-
-RUN cp /Interception.Generator/interceptions.json /interception/interceptions.json
+RUN dotnet publish -c Debug -o /interception src/Interception.Loader/Interception.Loader.csproj

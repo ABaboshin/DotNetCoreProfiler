@@ -12,6 +12,8 @@
 #include "clr_const.h"
 #include "Configuration.h"
 
+CorProfiler* profiler = nullptr;
+
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
 {
 }
@@ -41,9 +43,11 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
-    configuration = LoadFromFile(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
-
     printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
+    loaderDllPath = GetEnvironmentValue("PROFILER_LOADER_DLL"_W);
+    loaderClass = GetEnvironmentValue("PROFILER_LOADER_CLASS"_W);
+
+    profiler = this;
 
     return S_OK;
 }
@@ -205,20 +209,12 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
-        std::vector<wstring> dlls;
-        std::for_each(configuration.interceptions.begin(), configuration.interceptions.end(), [&dlls](const Interception& i) { dlls.push_back(i.Interceptor.AssemblyPath); });
-
-        std::vector<wstring> udlls;
-        std::copy_if(dlls.begin(), dlls.end(), std::back_inserter(udlls), [&udlls](const wstring& p) {
-            return std::find(udlls.begin(), udlls.end(), p) == udlls.end();
-        });
-
         return LoadAssemblyBefore(
             nullptr,
             moduleId,
             functionToken,
-            functionId,
-            udlls);
+            functionId
+        );
     }
 
     return Rewrite(moduleId, functionToken);
@@ -228,8 +224,10 @@ HRESULT CorProfiler::LoadAssemblyBefore(
     ICorProfilerFunctionControl* pICorProfilerFunctionControl,
     ModuleID moduleId,
     mdMethodDef methodDef,
-    FunctionID functionId,
-    std::vector<wstring> assemblies)
+    FunctionID functionId
+    /*,
+    std::vector<wstring> assemblies*/
+)
 {
     HRESULT hr;
 
@@ -246,93 +244,86 @@ HRESULT CorProfiler::LoadAssemblyBefore(
 
     IfFailRet(rewriter.Import());
 
-    for (const auto& assemblyPath : assemblies)
-    {
-        mdString aPath;
-        hr = metadataEmit->DefineUserString(assemblyPath.c_str(), (ULONG)assemblyPath.length(),
-            &aPath);
+    mdString aPath;
+    hr = metadataEmit->DefineUserString(loaderDllPath.c_str(), (ULONG)loaderDllPath.length(),
+        &aPath);
 
-        ULONG string_len = 0;
-        WCHAR string_contents[NameMaxSize]{};
-        hr = metadataImport->GetUserString(aPath, string_contents,
-            NameMaxSize, &string_len);
-        IfFailRet(hr);
+    ULONG string_len = 0;
+    WCHAR string_contents[NameMaxSize]{};
+    hr = metadataImport->GetUserString(aPath, string_contents,
+        NameMaxSize, &string_len);
+    IfFailRet(hr);
 
+    // define mscorlib.dll
+    mdModuleRef mscorlibRef;
+    GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
+    IfFailRet(hr);
 
-        // define mscorlib.dll
-        mdModuleRef mscorlibRef;
-        GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
-        IfFailRet(hr);
+    // define type System.Reflection.Assembly
+    mdTypeRef assemblyTypeRef;
+    hr = metadataEmit->DefineTypeRefByName(
+        mscorlibRef,
+        SystemReflectionAssembly.c_str(),
+        &assemblyTypeRef);
 
-        // define type System.Reflection.Assembly
-        mdTypeRef assemblyTypeRef;
-        hr = metadataEmit->DefineTypeRefByName(
-            mscorlibRef,
-            SystemReflectionAssembly.c_str(),
-            &assemblyTypeRef);
+    unsigned buffer;
+    auto size = CorSigCompressToken(assemblyTypeRef, &buffer);
+    auto* assemblyLoadSignature = new COR_SIGNATURE[size + 4];
+    unsigned offset = 0;
+    assemblyLoadSignature[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
+    assemblyLoadSignature[offset++] = 0x01;
+    assemblyLoadSignature[offset++] = ELEMENT_TYPE_CLASS;
+    memcpy(&assemblyLoadSignature[offset], &buffer, size);
+    offset += size;
+    assemblyLoadSignature[offset] = ELEMENT_TYPE_STRING;
 
-        unsigned buffer;
-        auto size = CorSigCompressToken(assemblyTypeRef, &buffer);
-        auto* assemblyLoadSignature = new COR_SIGNATURE[size + 4];
-        unsigned offset = 0;
-        assemblyLoadSignature[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-        assemblyLoadSignature[offset++] = 0x01;
-        assemblyLoadSignature[offset++] = ELEMENT_TYPE_CLASS;
-        memcpy(&assemblyLoadSignature[offset], &buffer, size);
-        offset += size;
-        assemblyLoadSignature[offset] = ELEMENT_TYPE_STRING;
+    // define method System.Reflection.Assembly.LoadFrom
+    mdMemberRef assemblyLoadMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        assemblyTypeRef,
+        LoadFrom.data(),
+        assemblyLoadSignature,
+        sizeof(assemblyLoadSignature),
+        &assemblyLoadMemberRef);
 
-        // define method System.Reflection.Assembly.LoadFrom
-        mdMemberRef assemblyLoadMemberRef;
-        hr = metadataEmit->DefineMemberRef(
-            assemblyTypeRef,
-            LoadFrom.data(),
-            assemblyLoadSignature,
-            sizeof(assemblyLoadSignature),
-            &assemblyLoadMemberRef);
+    // Create method signature for Assembly.CreateInstance(string)
+    COR_SIGNATURE createInstanceSignature[] = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_STRING
+    };
+    mdMemberRef createInstanceMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        assemblyTypeRef, CreateInstance.c_str(),
+        createInstanceSignature,
+        sizeof(createInstanceSignature),
+        &createInstanceMemberRef);
 
-        // Create method signature for Assembly.CreateInstance(string)
-        COR_SIGNATURE createInstanceSignature[] = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            1,
-            ELEMENT_TYPE_OBJECT,
-            ELEMENT_TYPE_STRING
-        };
-        mdMemberRef createInstanceMemberRef;
-        hr = metadataEmit->DefineMemberRef(
-            assemblyTypeRef, CreateInstance.c_str(),
-            createInstanceSignature,
-            sizeof(createInstanceSignature),
-            &createInstanceMemberRef);
+    // define path to a .net dll 
+    mdString profilerLoaderDllNameTextToken;
+    hr = metadataEmit->DefineUserString(loaderDllPath.data(), (ULONG)loaderDllPath.length(), &profilerLoaderDllNameTextToken);
 
-        // define path to a .net dll 
-        mdString profilerTraceDllNameTextToken;
-        hr = metadataEmit->DefineUserString(assemblyPath.data(), (ULONG)assemblyPath.length(), &profilerTraceDllNameTextToken);
+    std::cout << "AssemblyLoader " << ToString(loaderDllPath) << std::endl;
 
-        std::cout << "LoadAssemblyBefore " << ToString(assemblyPath) << std::endl;
+    ILRewriterHelper helper(&rewriter);
+    helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
-        ILRewriterHelper helper(&rewriter);
-        helper.SetILPosition(rewriter.GetILList()->m_pNext);
+    // load assembly path
+    helper.LoadStr(profilerLoaderDllNameTextToken);
+    // load assembly
+    helper.CallMember(assemblyLoadMemberRef, false);
 
-        // load assembly path
-        helper.LoadStr(profilerTraceDllNameTextToken);
-        // load assembly
-        helper.CallMember(assemblyLoadMemberRef, false);
+    mdString initializerTypeToken;
+    hr = metadataEmit->DefineUserString(loaderClass.data(), (ULONG)loaderClass.length(), &initializerTypeToken);
 
-        if (!configuration.initializer.IsEmpty())
-        {
-            mdString initializerTypeToken;
-            hr = metadataEmit->DefineUserString(configuration.initializer.TypeName.data(), (ULONG)configuration.initializer.TypeName.length(), &initializerTypeToken);
+    // load initializer type name
+    helper.LoadStr(initializerTypeToken);
+    // create an instance of the initializer
+    helper.CallMember(createInstanceMemberRef, true);
 
-            // load initializer type name
-            helper.LoadStr(initializerTypeToken);
-            // create an instance of the initializer
-            helper.CallMember(createInstanceMemberRef, true);
-        }
-
-        // pop result as not needed
-        helper.Pop();
-    }
+    // pop result as not needed
+    helper.Pop();
 
     IfFailRet(rewriter.Export(false));
 
@@ -824,4 +815,20 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationStarted(Functi
 HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(FunctionID functionId, HRESULT hrStatus, BOOL fIsSafeToBlock)
 {
     return S_OK;
+}
+
+void CorProfiler::AddInterception(ImportInterception interception)
+{
+    configuration.interceptions.push_back(Interception(
+        ToWSTRING(interception.CallerAssembly),
+        TargetMethod(
+            ToWSTRING(interception.TargetAssemblyName),
+            ToWSTRING(interception.TargetTypeName),
+            ToWSTRING(interception.TargetMethodName),
+            interception.TargetMethodParametersCount),
+        Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
+            ToWSTRING(interception.InterceptorTypeName),
+            ToWSTRING(interception.InterceptorMethodName),
+            std::vector<BYTE>(interception.Signature, interception.Signature + interception.SignatureLength))
+    ));
 }

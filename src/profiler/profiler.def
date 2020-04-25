@@ -1,5 +1,6 @@
-LIBRARY "profiler.dll"
+LIBRARY "DotNetCoreProfiler.dll"
 
 EXPORTS
     DllCanUnloadNow PRIVATE
     DllGetClassObject PRIVATE
+    AddInterceptor

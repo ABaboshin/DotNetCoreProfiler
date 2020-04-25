@@ -11,4 +11,5 @@ namespace Interception
             Console.WriteLine("ConfigureMetrics");
         }
     }
+
 }

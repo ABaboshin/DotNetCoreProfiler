@@ -59,11 +59,11 @@ services:
       entityframeworkcore_metrics__name: "db_call"
     ports:
       - "5000:5000"
-    logging:
-      driver: gelf
-      options:
-        gelf-address: tcp://localhost:12201
-        tag: sampleapp
+    # logging:
+    #   driver: gelf
+    #   options:
+    #     gelf-address: tcp://localhost:12201
+    #     tag: sampleapp
 
   prometheus:
     image: prometheus:local

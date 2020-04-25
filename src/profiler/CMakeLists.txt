@@ -22,7 +22,6 @@ add_library("DotNetCoreProfiler.static" STATIC
     util.cpp
     miniutf.cpp
     MethodSignature.cpp
-    Configuration.cpp
     ${GENERATED_OBJ_FILES}
 )
 set_target_properties("DotNetCoreProfiler.static" PROPERTIES PREFIX "")
@@ -34,6 +33,7 @@ target_include_directories("DotNetCoreProfiler.static"
 )
 add_library("DotNetCoreProfiler" SHARED
     dllmain.cpp
+    interop.cpp
 )
 set_target_properties("DotNetCoreProfiler" PROPERTIES PREFIX "")
 target_link_libraries("DotNetCoreProfiler" "DotNetCoreProfiler.static")

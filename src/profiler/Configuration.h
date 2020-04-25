@@ -6,7 +6,7 @@
 class Configuration
 {
 public:
-	std::vector<Interception> interceptions;
+	std::vector<Interception> interceptions{};
 	Initializer initializer;
 
 	Configuration(std::vector<Interception> interceptions, Initializer initializer) :
@@ -15,5 +15,3 @@ public:
 
 	Configuration() {}
 };
-
-Configuration LoadFromFile(const wstring& path);

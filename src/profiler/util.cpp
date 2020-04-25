@@ -131,3 +131,8 @@ wstring operator"" _W(const char* arr, size_t size) {
     std::string str(arr, size);
     return ToWSTRING(str);
 }
+
+wstring ToWSTRING(const char* str)
+{
+    return ToWSTRING(std::string(str));
+}
