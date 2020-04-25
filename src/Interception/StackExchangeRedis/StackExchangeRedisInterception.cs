@@ -2,6 +2,7 @@
 using Interception.Common.Extensions;
 using Interception.Tracing.Extensions;
 using Microsoft.Extensions.Configuration;
+using OpenTracing.Util;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
@@ -102,7 +103,7 @@ namespace Interception.StackExchangeRedis
                         }
                         else
                         {
-                            using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan(RedisConfiguration.ConsumerName).AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
+                            using (var scope = GlobalTracer.Instance.BuildSpan(RedisConfiguration.ConsumerName).AsChildOf(GlobalTracer.Instance.ActiveSpan).StartActive())
                             {
                                 try
                                 {

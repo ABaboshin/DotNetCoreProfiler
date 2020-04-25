@@ -4,6 +4,7 @@ using Interception.Tracing.Extensions;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
+using OpenTracing.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -94,14 +95,14 @@ namespace Interception.Observers
         {
             if (value.TryGetPropertyValue("Request", out HttpRequestMessage request))
             {
-                var span = Interception.Tracing.Tracing.Tracer
+                var span = GlobalTracer.Instance
                     .BuildSpan(_configuration.Name)
                     .WithTag(Tags.HttpUrl, request.RequestUri.ToString())
                     .WithTag(Tags.SpanKind, Tags.SpanKindClient)
-                    .AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span)
+                    .AsChildOf(GlobalTracer.Instance.ActiveSpan)
                     .Start();
 
-                Interception.Tracing.Tracing.Tracer.Inject(span.Context, BuiltinFormats.HttpHeaders, new RequestHeadersInjectAdapter(request));
+                GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.HttpHeaders, new RequestHeadersInjectAdapter(request));
 
                 request.Properties.Add(PropertiesKey, span);
             }

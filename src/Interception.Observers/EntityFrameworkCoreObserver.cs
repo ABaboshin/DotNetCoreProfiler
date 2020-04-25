@@ -3,6 +3,7 @@ using Interception.Tracing.Extensions;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using OpenTracing;
 using OpenTracing.Tag;
+using OpenTracing.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -34,11 +35,11 @@ namespace Interception.Observers
             // execution started
             if (kv.Key == RelationalEventId.CommandExecuting.Name && kv.Value is CommandEventData commandEventData)
             {
-                _currentScope.Value = Interception.Tracing.Tracing.Tracer
+                _currentScope.Value = GlobalTracer.Instance
                     .BuildSpan(_configuration.Name)
                     .WithTag(Tags.DbStatement, commandEventData.Command.CommandText)
                     .WithTag(Tags.SpanKind, Tags.SpanKindClient)
-                    .AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span)
+                    .AsChildOf(GlobalTracer.Instance.ActiveSpan)
                     .Start();
             }
 

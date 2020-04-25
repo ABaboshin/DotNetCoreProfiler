@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
+using OpenTracing.Util;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -64,23 +65,23 @@ namespace Interception.MassTransit
             try
             {
                 var headers = context.Headers.GetAll().ToDictionary(pair => pair.Key, pair => pair.Value.ToString());
-                var parentSpanContext = Interception.Tracing.Tracing.Tracer.Extract(BuiltinFormats.TextMap, new TextMapExtractAdapter(headers));
+                var parentSpanContext = GlobalTracer.Instance.Extract(BuiltinFormats.TextMap, new TextMapExtractAdapter(headers));
 
-                spanBuilder = Interception.Tracing.Tracing.Tracer
+                spanBuilder = GlobalTracer.Instance
                     .BuildSpan(MassTransitConfiguration.ConsumerName)
                     .WithTag(Tags.SpanKind, Tags.SpanKindConsumer)
                     .AsChildOf(parentSpanContext);
             }
             catch (Exception)
             {
-                spanBuilder = Interception.Tracing.Tracing.Tracer.BuildSpan(MassTransitConfiguration.ConsumerName);
+                spanBuilder = GlobalTracer.Instance.BuildSpan(MassTransitConfiguration.ConsumerName);
             }
 
             spanBuilder
                 .WithTag("consumer", consumerName)
                 .WithTag("message-id", context.MessageId?.ToString());
 
-            using (Tracing.Tracing.CurrentScope = spanBuilder.StartActive(true))
+            using (spanBuilder.StartActive(true))
             {
                 try
                 {
@@ -88,7 +89,7 @@ namespace Interception.MassTransit
                 }
                 catch (Exception ex)
                 {
-                    Tracing.Tracing.CurrentScope.Span.SetException(ex);
+                    GlobalTracer.Instance.ActiveSpan.SetException(ex);
                     throw;
                 }
             }

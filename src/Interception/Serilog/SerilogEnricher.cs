@@ -1,4 +1,5 @@
-﻿using Serilog.Core;
+﻿using OpenTracing.Util;
+using Serilog.Core;
 using Serilog.Events;
 
 namespace Interception.Serilog
@@ -8,12 +9,12 @@ namespace Interception.Serilog
     {
         public void Enrich(LogEvent logEvent, ILogEventPropertyFactory factory)
         {
-            if (Tracing.Tracing.CurrentScope is null)
+            if (GlobalTracer.Instance.ActiveSpan is null)
             {
                 return;
             }
 
-            var traceId = Tracing.Tracing.CurrentScope?.Span.Context.TraceId;
+            var traceId = GlobalTracer.Instance.ActiveSpan.Context.TraceId;
 
             if (!string.IsNullOrEmpty(traceId))
                 logEvent.AddOrUpdateProperty(factory.CreateProperty("TraceId", traceId, true));
