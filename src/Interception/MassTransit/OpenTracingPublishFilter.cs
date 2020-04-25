@@ -2,6 +2,7 @@
 using MassTransit;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
+using OpenTracing.Util;
 using System.Threading.Tasks;
 
 namespace Interception.MassTransit
@@ -20,9 +21,9 @@ namespace Interception.MassTransit
                 return;
             }
 
-            var baseSpan = Tracing.Tracing.Tracer
+            var baseSpan = GlobalTracer.Instance
                 .BuildSpan(MassTransitInterception.MassTransitConfiguration.PublisherName)
-                .AsChildOf(Tracing.Tracing.CurrentScope?.Span);
+                .AsChildOf(GlobalTracer.Instance.ActiveSpan);
             
             using (var scope = baseSpan.StartActive(finishSpanOnDispose: true))
             {
@@ -30,7 +31,7 @@ namespace Interception.MassTransit
                     .SetTag(Tags.SpanKind, Tags.SpanKindProducer)
                     .SetTag("message-id", context.MessageId?.ToString());
 
-                Interception.Tracing.Tracing.Tracer.Inject(span.Context, BuiltinFormats.TextMap, new MassTransitTextMapInjectAdapter(context));
+                GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new MassTransitTextMapInjectAdapter(context));
 
                 await next.Send(context);
             }

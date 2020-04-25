@@ -5,6 +5,7 @@ using Interception.Tracing.Extensions;
 using Microsoft.AspNetCore.Http;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
+using OpenTracing.Util;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -62,7 +63,7 @@ namespace Interception.Observers
         {
             if (value.TryGetPropertyValue("exception", out Exception exception))
             {
-                Tracing.Tracing.CurrentScope.Span.SetException(exception);
+                GlobalTracer.Instance.ActiveSpan.SetException(exception);
             }
         }
 
@@ -74,10 +75,10 @@ namespace Interception.Observers
         {
             if (value.TryGetPropertyValue("HttpContext", out HttpContext httpContext))
             {
-                Tracing.Tracing.CurrentScope.Span
+                GlobalTracer.Instance.ActiveSpan
                     .SetTag(Tags.HttpStatus, httpContext.Response.StatusCode);
 
-                Tracing.Tracing.CurrentScope.Dispose();
+                GlobalTracer.Instance.ActiveSpan.Finish();
             }
         }
 
@@ -92,7 +93,7 @@ namespace Interception.Observers
                 actionDescriptor.TryGetPropertyValue("ActionName", out string actionName);
                 actionDescriptor.TryGetPropertyValue("ControllerName", out string controllerName);
 
-                Tracing.Tracing.CurrentScope.Span
+                GlobalTracer.Instance.ActiveSpan
                     .SetTag("ActionName", actionName)
                     .SetTag("ControllerName", controllerName);
             }
@@ -106,16 +107,16 @@ namespace Interception.Observers
         {
             if (value.TryGetPropertyValue("HttpContext", out HttpContext httpContext))
             {
-                var extracted = Tracing.Tracing.Tracer
+                var extracted = GlobalTracer.Instance
                         .Extract(BuiltinFormats.HttpHeaders, new RequestHeadersExtractAdapter(httpContext));
 
-                Tracing.Tracing.CurrentScope = Tracing.Tracing.Tracer
+                GlobalTracer.Instance
                     .BuildSpan(_configuration.Name)
                     //.WithTag(Constants.AspNetCoreTraceIdentifier, httpContext.TraceIdentifier)
                     .AsChildOf(extracted)
                     .StartActive();
 
-                httpContext.Response.Headers.Add(Constants.TraceIdentifier, Tracing.Tracing.CurrentScope.Span.Context.TraceId);
+                httpContext.Response.Headers.Add(Constants.TraceIdentifier, GlobalTracer.Instance.ActiveSpan.Context.TraceId);
             }
         }
 

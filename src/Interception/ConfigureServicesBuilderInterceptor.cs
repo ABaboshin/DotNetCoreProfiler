@@ -7,6 +7,7 @@ using Interception.Tracing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using OpenTracing;
 using OpenTracing.Util;
 using Serilog;
 using Serilog.AspNetCore;
@@ -29,14 +30,15 @@ namespace Interception
             StackExchangeRedisInterception.Configure();
 
             var loggerFactory = new SerilogLoggerFactory(CreateLogger(), false);
-            ((IServiceCollection)services).AddSingleton((ILoggerFactory)loggerFactory);
+            var serviceCollection = ((IServiceCollection)services);
+            serviceCollection.AddSingleton((ILoggerFactory)loggerFactory);
 
-            ConfigureMetrics(loggerFactory);
+            ConfigureMetrics(loggerFactory, serviceCollection);
 
             return MethodExecutor.ExecuteMethod(builder, new object[] { instance, services }, mdToken, moduleVersionPtr, true);
         }
 
-        private static void ConfigureMetrics(ILoggerFactory loggerFactory)
+        private static void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
         {
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
@@ -58,6 +60,8 @@ namespace Interception
 
                 GlobalTracer.Register(tracer);
             }
+
+            serviceCollection.AddSingleton(sp => GlobalTracer.Instance);
         }
 
         private static Logger CreateLogger()

@@ -1,4 +1,5 @@
 ﻿using Interception.Tracing.Extensions;
+using OpenTracing.Util;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,7 +27,7 @@ namespace Interception.Common
                 object result = null;
                 if (!noMetrics)
                 {
-                    using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan(metricName ?? "function_call").AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
+                    using (var scope = GlobalTracer.Instance.BuildSpan(metricName ?? "function_call").AsChildOf(GlobalTracer.Instance.ActiveSpan).StartActive())
                     {
                         if (additionalTags != null && additionalTags.Any())
                         {
@@ -97,7 +98,7 @@ namespace Interception.Common
 
         private static async Task<T> ExecuteInternalAsync<T>(Func<Task<T>> action, MethodBase method, string metricName, IDictionary<string, string> additionalTags, bool noMetrics)
         {
-            using (var scope = Interception.Tracing.Tracing.Tracer.BuildSpan(metricName ?? "function_call").AsChildOf(Interception.Tracing.Tracing.CurrentScope?.Span).StartActive())
+            using (var scope = GlobalTracer.Instance.BuildSpan(metricName ?? "function_call").AsChildOf(GlobalTracer.Instance.ActiveSpan).StartActive())
             {
                 if (additionalTags != null && additionalTags.Any())
                 {
