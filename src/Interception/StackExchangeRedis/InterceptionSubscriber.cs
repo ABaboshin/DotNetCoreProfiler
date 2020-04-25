@@ -52,23 +52,25 @@ namespace Interception.StackExchangeRedis
             var baseSpan = GlobalTracer.Instance
                 .BuildSpan(StackExchangeRedisInterception.RedisConfiguration.PublisherName)
                 .AsChildOf(GlobalTracer.Instance.ActiveSpan);
-            using (var scope = baseSpan.StartActive(finishSpanOnDispose: true))
-            {
-                var span = scope.Span
-                    .SetTag(Tags.SpanKind, Tags.SpanKindProducer)
-                    .SetTag("channel", channel)
-                    .SetTag("sync", true);
+            var span = baseSpan.Start();
+            span = span
+                .SetTag(Tags.SpanKind, Tags.SpanKindProducer)
+                .SetTag("channel", channel)
+                .SetTag("async", true);
 
-                var tracing = new Dictionary<string, string>();
-                GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new StackExchangeRedisTextMapInjectAdapter(tracing));
+            var data = new Dictionary<string, string>();
+            GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new StackExchangeRedisTextMapInjectAdapter(data));
 
-                var interceptionMessage = new InterceptionMessage { Tracing = tracing, Message = message };
-                var json = JsonConvert.SerializeObject(interceptionMessage);
+            var interceptionMessage = new InterceptionMessage { Tracing = data, Message = message };
+            var json = JsonConvert.SerializeObject(interceptionMessage);
 
-                Console.WriteLine($"json {json}");
+            Console.WriteLine($"json {json}");
 
-                return _subscriber.Publish(channel, json, flags);
-            }
+            var result = _subscriber.Publish(channel, json, flags);
+
+            span.Finish();
+
+            return result;
         }
 
         public async Task<long> PublishAsync(RedisChannel channel, RedisValue message, CommandFlags flags = CommandFlags.None)
@@ -77,23 +79,25 @@ namespace Interception.StackExchangeRedis
             var baseSpan = GlobalTracer.Instance
                 .BuildSpan(StackExchangeRedisInterception.RedisConfiguration.PublisherName)
                 .AsChildOf(GlobalTracer.Instance.ActiveSpan);
-            using (var scope = baseSpan.StartActive(finishSpanOnDispose: true))
-            {
-                var span = scope.Span
-                    .SetTag(Tags.SpanKind, Tags.SpanKindProducer)
-                    .SetTag("channel", channel)
-                    .SetTag("async", true);
+            var span = baseSpan.Start();
+            span = span
+                .SetTag(Tags.SpanKind, Tags.SpanKindProducer)
+                .SetTag("channel", channel)
+                .SetTag("async", true);
 
-                var data = new Dictionary<string, string>();
-                GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new StackExchangeRedisTextMapInjectAdapter(data));
+            var data = new Dictionary<string, string>();
+            GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new StackExchangeRedisTextMapInjectAdapter(data));
 
-                var interceptionMessage = new InterceptionMessage { Tracing = data, Message = message };
-                var json = JsonConvert.SerializeObject(interceptionMessage);
+            var interceptionMessage = new InterceptionMessage { Tracing = data, Message = message };
+            var json = JsonConvert.SerializeObject(interceptionMessage);
 
-                Console.WriteLine($"json {json}");
+            Console.WriteLine($"json {json}");
 
-                return await _subscriber.PublishAsync(channel, json, flags);
-            }
+            var result = await _subscriber.PublishAsync(channel, json, flags);
+
+            span.Finish();
+
+            return result;
         }
 
         public void Subscribe(RedisChannel channel, Action<RedisChannel, RedisValue> handler, CommandFlags flags = CommandFlags.None)
@@ -103,7 +107,6 @@ namespace Interception.StackExchangeRedis
 
         public ChannelMessageQueue Subscribe(RedisChannel channel, CommandFlags flags = CommandFlags.None)
         {
-            Console.WriteLine($"subscribe {channel}");
             return _subscriber.Subscribe(channel, flags);
         }
 

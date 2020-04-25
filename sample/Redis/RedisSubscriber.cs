@@ -35,7 +35,7 @@ namespace SampleApp.Redis
                 .OnMessage(async data =>
                 {
                     await Task.Delay(3000);
-                    Console.WriteLine($"RedisSubscriber async4 data: {data}");
+                    Console.WriteLine($"RedisSubscriber async2 data: {data}");
                 });
         }
     }
