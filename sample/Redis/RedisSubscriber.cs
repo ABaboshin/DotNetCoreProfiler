@@ -24,38 +24,18 @@ namespace SampleApp.Redis
                 .GetSubscriber()
                 .Subscribe("channel1", (channel, data) => {
                     Thread.Sleep(3000);
-                    Console.WriteLine($"RedisSubscriber sync channel {channel} data: {data}");
-                });
-
-            await _connectionMultiplexer
-                .GetDatabase()
-                .Multiplexer
-                .GetSubscriber()
-                .SubscribeAsync("channel2", async (channel, data) => {
-                    await Task.Delay(3000);
-                    Console.WriteLine($"RedisSubscriber sync channel {channel} data: {data}");
+                    Console.WriteLine($"RedisSubscriber sync1 channel {channel} data: {data}");
                 });
 
             _connectionMultiplexer
                 .GetDatabase()
                 .Multiplexer
                 .GetSubscriber()
-                .Subscribe("channel3")
-                .OnMessage(data =>
-                {
-                    Thread.Sleep(3000);
-                    Console.WriteLine($"RedisSubscriber sync data: {data}");
-                });
-
-            _connectionMultiplexer
-                .GetDatabase()
-                .Multiplexer
-                .GetSubscriber()
-                .Subscribe("channel4")
+                .Subscribe("channel2")
                 .OnMessage(async data =>
                 {
                     await Task.Delay(3000);
-                    Console.WriteLine($"RedisSubscriber async data: {data}");
+                    Console.WriteLine($"RedisSubscriber async2 data: {data}");
                 });
         }
     }
