@@ -12,6 +12,7 @@
     "build:logstash": "docker build -t logstash:local -f logstash/Dockerfile logstash",
     "build:prometheus": "docker build -t prometheus:local -f prometheus/Dockerfile prometheus",
     "run:sample:21": "docker-compose up -d",
-    "run:all:21": "yarn build:all:21 && yarn run:sample:21 && docker logs -f dotnetcoreprofiler_sampleapp_1"
+    "run:all:21": "yarn build:all:21 && yarn run:sample:21 && docker logs -f dotnetcoreprofiler_sampleapp_1",
+    "generate:interceptions": "cd src/Interception.Generator && dotnet run"
   }
 }
