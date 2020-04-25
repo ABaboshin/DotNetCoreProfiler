@@ -77,8 +77,8 @@ namespace SampleApp.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpGet("publish-redis-sync1")]
-        public ActionResult<string> PublishRedisSync1()
+        [HttpGet("publish-redis-sync")]
+        public ActionResult<string> PublishRedisSync()
         {
             _connectionMultiplexer
                 .GetDatabase()
@@ -94,47 +94,14 @@ namespace SampleApp.Controllers
         /// </summary>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpGet("publish-redis-async2")]
-        public async Task<ActionResult<string>> PublishRedisAsync2()
+        [HttpGet("publish-redis-async")]
+        public async Task<ActionResult<string>> PublishRedisAsync()
         {
             await _connectionMultiplexer
                 .GetDatabase()
                 .Multiplexer
                 .GetSubscriber()
                 .PublishAsync("channel2", "value2");
-            return Ok();
-        }
-
-        /// <summary>
-        /// publish a message with redis
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpGet("publish-redis-sync3")]
-        public ActionResult<string> PublishRedisSync3()
-        {
-            _connectionMultiplexer
-                .GetDatabase()
-                .Multiplexer
-                .GetSubscriber()
-                .Publish("channel3", "value3");
-
-            return Ok();
-        }
-
-        /// <summary>
-        /// publish a message with redis
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpGet("publish-redis-async4")]
-        public async Task<ActionResult<string>> PublishRedisAsync4()
-        {
-            await _connectionMultiplexer
-                .GetDatabase()
-                .Multiplexer
-                .GetSubscriber()
-                .PublishAsync("channel4", "value4");
             return Ok();
         }
 
