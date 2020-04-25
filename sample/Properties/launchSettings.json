@@ -29,8 +29,14 @@
         "STATSD__PORT": "9125",
         "aspnetcore_metrics__enabled": "true",
         "httphandler_metrics__enabled": "true",
-        "service__name": "sampleapp"
+        "service__name": "sampleapp",
+        "CORECLR_ENABLE_PROFILING": "1",
+        "CORECLR_PROFILER": "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}",
+        "CORECLR_PROFILER_PATH": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin\\profiler.dll",
+        "CORECLR_PROFILER_HOME": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin",
+        "PROFILER_CONFIGURATION": "D:\\playground\\DotNetCoreProfiler\\src\\Interception.Generator\\interceptions.json"
       },
+      "nativeDebugging": true,
       "applicationUrl": "http://localhost:5000"
     }
   }

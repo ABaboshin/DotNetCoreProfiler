@@ -1,0 +1,105 @@
+{
+  "interceptions": [
+    {
+      "CallerAssembly": "",
+      "Target": {
+        "AssemblyName": "Microsoft.AspNetCore.Hosting",
+        "MethodName": "Invoke",
+        "TypeName": "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder",
+        "MethodParametersCount": 2
+      },
+      "Interceptor": {
+        "TypeName": "Interception.ConfigureServicesBuilderInterceptor",
+        "MethodName": "Invoke",
+        "AssemblyName": "Interception",
+        "AssemblyPath": "/profiler/Interception.dll",
+        "Signature": "00 05 1C 1C 1C 1C 08 0A"
+      }
+    },
+    {
+      "CallerAssembly": "",
+      "Target": {
+        "AssemblyName": "StackExchange.Redis",
+        "MethodName": "TryComplete",
+        "TypeName": "StackExchange.Redis.ICompletable",
+        "MethodParametersCount": 1
+      },
+      "Interceptor": {
+        "TypeName": "Interception.StackExchangeRedis.StackExchangeRedisInterception",
+        "MethodName": "TryComplete",
+        "AssemblyName": "Interception",
+        "AssemblyPath": "/profiler/Interception.dll",
+        "Signature": "00 04 02 1C 02 08 0A"
+      }
+    },
+    {
+      "CallerAssembly": "",
+      "Target": {
+        "AssemblyName": "StackExchange.Redis",
+        "MethodName": "OnMessageSyncImpl",
+        "TypeName": "StackExchange.Redis.ChannelMessageQueue",
+        "MethodParametersCount": 0
+      },
+      "Interceptor": {
+        "TypeName": "Interception.StackExchangeRedis.StackExchangeRedisInterception",
+        "MethodName": "OnMessageSyncImpl",
+        "AssemblyName": "Interception",
+        "AssemblyPath": "/profiler/Interception.dll",
+        "Signature": "00 03 1C 1C 08 0A"
+      }
+    },
+    {
+      "CallerAssembly": "",
+      "Target": {
+        "AssemblyName": "StackExchange.Redis",
+        "MethodName": "OnMessageAsyncImpl",
+        "TypeName": "StackExchange.Redis.ChannelMessageQueue",
+        "MethodParametersCount": 0
+      },
+      "Interceptor": {
+        "TypeName": "Interception.StackExchangeRedis.StackExchangeRedisInterception",
+        "MethodName": "OnMessageAsyncImpl",
+        "AssemblyName": "Interception",
+        "AssemblyPath": "/profiler/Interception.dll",
+        "Signature": "00 03 1C 1C 08 0A"
+      }
+    },
+    {
+      "CallerAssembly": "",
+      "Target": {
+        "AssemblyName": "MassTransit.RabbitMqTransport",
+        "MethodName": "CreateUsingRabbitMq",
+        "TypeName": "MassTransit.BusFactoryConfiguratorExtensions",
+        "MethodParametersCount": 2
+      },
+      "Interceptor": {
+        "TypeName": "Interception.MassTransit.MassTransitInterception",
+        "MethodName": "CreateUsingRabbitMq",
+        "AssemblyName": "Interception",
+        "AssemblyPath": "/profiler/Interception.dll",
+        "Signature": "00 04 1C 1C 1C 08 0A"
+      }
+    },
+    {
+      "CallerAssembly": "",
+      "Target": {
+        "AssemblyName": "MassTransit",
+        "MethodName": "Consume",
+        "TypeName": "MassTransit.IConsumer`1[!1]",
+        "MethodParametersCount": 1
+      },
+      "Interceptor": {
+        "TypeName": "Interception.MassTransit.MassTransitInterception",
+        "MethodName": "Consume",
+        "AssemblyName": "Interception",
+        "AssemblyPath": "/profiler/Interception.dll",
+        "Signature": "00 04 1C 1C 1C 08 0A"
+      }
+    }
+  ],
+  "initializer": {
+    "TypeName": "Interception.ConfigureMetrics",
+    "AssemblyName": "Interception",
+    "AssemblyPath": "/profiler/Interception.dll"
+  }
+}
