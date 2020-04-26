@@ -9,4 +9,4 @@ COPY src src
 #COPY src/Interception.Observers src/Interception.Observers
 
 RUN dotnet publish -c Debug -o /interception src/Interception/Interception.csproj
-RUN dotnet publish -c Debug -o /interception src/Interception.Loader/Interception.Loader.csproj
+#RUN dotnet publish -c Debug -o /interception src/Interception.Loader/Interception.Loader.csproj

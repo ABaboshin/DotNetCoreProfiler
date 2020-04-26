@@ -7,7 +7,6 @@ using Interception.Tracing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using OpenTracing;
 using OpenTracing.Util;
 using Serilog;
 using Serilog.AspNetCore;

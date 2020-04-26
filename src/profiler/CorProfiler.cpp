@@ -11,6 +11,7 @@
 #include "ILRewriterHelper.h"
 #include "clr_const.h"
 #include "Configuration.h"
+#include "dllmain.h"
 
 CorProfiler* profiler = nullptr;
 
@@ -209,25 +210,413 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
-        return LoadAssemblyBefore(
-            nullptr,
-            moduleId,
-            functionToken,
-            functionId
-        );
+        if (!loaderDllPath.empty())
+        {
+            return LoadAssemblyFromFile(
+                moduleId,
+                functionToken,
+                functionId
+            );
+        }
+        else
+        {
+            return LoadAssemblyFromResource(
+                moduleId,
+                functionToken,
+                functionId
+            );
+        }
     }
 
     return Rewrite(moduleId, functionToken);
 }
 
-HRESULT CorProfiler::LoadAssemblyBefore(
-    ICorProfilerFunctionControl* pICorProfilerFunctionControl,
+HRESULT CorProfiler::LoadAssemblyFromResource(ModuleID moduleId, mdMethodDef methodDef, FunctionID functionId)
+{
+    mdMethodDef ret_method_token;
+
+    auto hr = GenerateVoidILStartupMethod(moduleId, &ret_method_token);
+
+    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, methodDef);
+    IfFailRet(rewriter.Import());
+
+    ILRewriterHelper helper(&rewriter);
+    helper.SetILPosition(rewriter.GetILList()->m_pNext);
+    helper.CallMember(ret_method_token, false);
+    hr = rewriter.Export(false);
+
+    return S_OK;
+}
+
+HRESULT CorProfiler::GenerateVoidILStartupMethod(ModuleID moduleId,
+    mdMethodDef* retMethodToken) {
+
+    HRESULT hr;
+
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+
+    const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+    const auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+    const auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
+    const auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+
+    // define mscorlib.dll
+    mdModuleRef mscorlibRef;
+    GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
+    IfFailRet(hr);
+
+    // Define System.Object
+    mdTypeRef objectTypeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemObject.data(), &objectTypeRef);
+
+    // Define a new TypeDef __DDVoidMethodType__ that extends System.Object
+    mdTypeDef newTypeDef;
+    hr = metadataEmit->DefineTypeDef("__DDVoidMethodType__"_W.c_str(), tdAbstract | tdSealed,
+        objectTypeRef, NULL, &newTypeDef);
+
+    // Define a new static method __DDVoidMethodCall__ on the new type that has a void return type and takes no arguments
+    BYTE initialize_signature[] = {
+      IMAGE_CEE_CS_CALLCONV_DEFAULT, // Calling convention
+      0,                             // Number of parameters
+      ELEMENT_TYPE_VOID,             // Return type
+    };
+    hr = metadataEmit->DefineMethod(newTypeDef,
+        "__DDVoidMethodCall__"_W.c_str(),
+        mdStatic,
+        initialize_signature,
+        sizeof(initialize_signature),
+        0,
+        0,
+        retMethodToken);
+
+    // Define a method on the managed side that will PInvoke into the profiler method:
+    // C++: void GetAssemblyBytes(BYTE** pAssemblyArray, int* assemblySize)
+    // C#: static extern void GetAssemblyBytes(out IntPtr assemblyPtr, out int assemblySize)
+    mdMethodDef pinvoke_method_def;
+    COR_SIGNATURE get_assembly_bytes_signature[] = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT, // Calling convention
+        2,                             // Number of parameters
+        ELEMENT_TYPE_VOID,             // Return type
+        ELEMENT_TYPE_BYREF,            // List of parameter types
+        ELEMENT_TYPE_I,
+        ELEMENT_TYPE_BYREF,
+        ELEMENT_TYPE_I4,
+    };
+
+    hr = metadataEmit->DefineMethod(
+        newTypeDef, "GetAssemblyBytes"_W.c_str(), mdStatic | mdPinvokeImpl | mdHideBySig,
+        get_assembly_bytes_signature, sizeof(get_assembly_bytes_signature), 0, 0,
+        &pinvoke_method_def);
+
+    metadataEmit->SetMethodImplFlags(pinvoke_method_def, miPreserveSig);
+
+#ifdef _WIN32
+    wstring native_profiler_file = "DotNetCoreProfiler.dll"_W;
+#else // _WIN32
+    wstring native_profiler_file = "DotNetCoreProfiler.so"_W;
+#endif // _WIN32
+
+    mdModuleRef profiler_ref;
+    hr = metadataEmit->DefineModuleRef(native_profiler_file.c_str(),
+        &profiler_ref);
+
+    hr = metadataEmit->DefinePinvokeMap(pinvoke_method_def,
+        0,
+        "GetAssemblyBytes"_W.c_str(),
+        profiler_ref);
+
+    // Get a TypeRef for System.Byte
+    mdTypeRef byte_type_ref;
+    hr = metadataEmit->DefineTypeRefByName(mscorlibRef,
+        SystemByte.data(),
+        &byte_type_ref);
+
+    // Get a TypeRef for System.Runtime.InteropServices.Marshal
+    mdTypeRef marshal_type_ref;
+    hr = metadataEmit->DefineTypeRefByName(mscorlibRef,
+        SystemRuntimeInteropServicesMarshal.data(),
+        &marshal_type_ref);
+
+    // Get a MemberRef for System.Runtime.InteropServices.Marshal.Copy(IntPtr, Byte[], int, int)
+    mdMemberRef marshal_copy_member_ref;
+    COR_SIGNATURE marshal_copy_signature[] = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT, // Calling convention
+        4,                             // Number of parameters
+        ELEMENT_TYPE_VOID,             // Return type
+        ELEMENT_TYPE_I,                // List of parameter types
+        ELEMENT_TYPE_SZARRAY,
+        ELEMENT_TYPE_U1,
+        ELEMENT_TYPE_I4,
+        ELEMENT_TYPE_I4
+    };
+    hr = metadataEmit->DefineMemberRef(
+        marshal_type_ref, Copy.data(), marshal_copy_signature,
+        sizeof(marshal_copy_signature), &marshal_copy_member_ref);
+
+    // Get a TypeRef for System.Reflection.Assembly
+    mdTypeRef system_reflection_assembly_type_ref;
+    hr = metadataEmit->DefineTypeRefByName(mscorlibRef,
+        SystemReflectionAssembly.data(),
+        &system_reflection_assembly_type_ref);
+
+    // Get a TypeRef for System.AppDomain
+    mdTypeRef system_appdomain_type_ref;
+    hr = metadataEmit->DefineTypeRefByName(mscorlibRef,
+        SystemAppDomain.data(),
+        &system_appdomain_type_ref);
+
+    // Get a MemberRef for System.AppDomain.get_CurrentDomain()
+    // and System.AppDomain.Assembly.Load(byte[], byte[])
+
+    // Create method signature for AppDomain.CurrentDomain property
+    COR_SIGNATURE appdomain_get_current_domain_signature_start[] = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        0,
+        ELEMENT_TYPE_CLASS, // ret = System.AppDomain
+        // insert compressed token for System.AppDomain TypeRef here
+    };
+    ULONG start_length = sizeof(appdomain_get_current_domain_signature_start);
+
+    BYTE system_appdomain_type_ref_compressed_token[4];
+    ULONG token_length = CorSigCompressToken(system_appdomain_type_ref, system_appdomain_type_ref_compressed_token);
+
+    COR_SIGNATURE* appdomain_get_current_domain_signature = new COR_SIGNATURE[start_length + token_length];
+    memcpy(appdomain_get_current_domain_signature,
+        appdomain_get_current_domain_signature_start,
+        start_length);
+    memcpy(&appdomain_get_current_domain_signature[start_length],
+        system_appdomain_type_ref_compressed_token,
+        token_length);
+
+    mdMemberRef appdomain_get_current_domain_member_ref;
+    hr = metadataEmit->DefineMemberRef(
+        system_appdomain_type_ref,
+        get_CurrentDomain.data(),
+        appdomain_get_current_domain_signature,
+        start_length + token_length,
+        &appdomain_get_current_domain_member_ref);
+    delete[] appdomain_get_current_domain_signature;
+
+    // Create method signature for AppDomain.Load(byte[], byte[])
+    COR_SIGNATURE appdomain_load_signature_start[] = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_CLASS  // ret = System.Reflection.Assembly
+        // insert compressed token for System.Reflection.Assembly TypeRef here
+    };
+    COR_SIGNATURE appdomain_load_signature_end[] = {
+        ELEMENT_TYPE_SZARRAY,
+        ELEMENT_TYPE_U1
+    };
+    start_length = sizeof(appdomain_load_signature_start);
+    ULONG end_length = sizeof(appdomain_load_signature_end);
+
+    BYTE system_reflection_assembly_type_ref_compressed_token[4];
+    token_length = CorSigCompressToken(system_reflection_assembly_type_ref, system_reflection_assembly_type_ref_compressed_token);
+
+    COR_SIGNATURE* appdomain_load_signature = new COR_SIGNATURE[start_length + token_length + end_length];
+    memcpy(appdomain_load_signature,
+        appdomain_load_signature_start,
+        start_length);
+    memcpy(&appdomain_load_signature[start_length],
+        system_reflection_assembly_type_ref_compressed_token,
+        token_length);
+    memcpy(&appdomain_load_signature[start_length + token_length],
+        appdomain_load_signature_end,
+        end_length);
+
+    mdMemberRef appdomain_load_member_ref;
+    hr = metadataEmit->DefineMemberRef(
+        system_appdomain_type_ref, Load.data(),
+        appdomain_load_signature,
+        start_length + token_length + end_length,
+        &appdomain_load_member_ref);
+    delete[] appdomain_load_signature;
+
+    // Create method signature for Assembly.CreateInstance(string)
+    COR_SIGNATURE assembly_create_instance_signature[] = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,  // ret = System.Object
+        ELEMENT_TYPE_STRING
+    };
+
+    mdMemberRef assembly_create_instance_member_ref;
+    hr = metadataEmit->DefineMemberRef(
+        system_reflection_assembly_type_ref, CreateInstance.data(),
+        assembly_create_instance_signature,
+        sizeof(assembly_create_instance_signature),
+        &assembly_create_instance_member_ref);
+
+    auto load_helper_str = "Interception.Loader"_W;
+
+    mdString load_helper_token;
+    hr = metadataEmit->DefineUserString(load_helper_str.c_str(), (ULONG)load_helper_str.length(),
+        &load_helper_token);
+
+    ULONG string_len = 0;
+    WCHAR string_contents[NameMaxSize]{};
+    hr = metadataImport->GetUserString(load_helper_token, string_contents,
+        NameMaxSize, &string_len);
+
+    // Generate a locals signature defined in the following way:
+    //   [0] System.IntPtr ("assemblyPtr" - address of assembly bytes)
+    //   [1] System.Int32  ("assemblySize" - size of assembly bytes)
+    //   [2] System.Byte[] ("assemblyBytes" - managed byte array for assembly)
+    //   [3] class System.Reflection.Assembly ("loadedAssembly" - assembly instance to save loaded assembly)
+    mdSignature locals_signature_token;
+    COR_SIGNATURE locals_signature[6] = {
+        IMAGE_CEE_CS_CALLCONV_LOCAL_SIG, // Calling convention
+        3,                               // Number of variables
+        ELEMENT_TYPE_I,                  // List of variable types
+        ELEMENT_TYPE_I4,
+        ELEMENT_TYPE_SZARRAY,
+        ELEMENT_TYPE_U1
+    };
+
+    hr = metadataEmit->GetTokenFromSig(locals_signature, sizeof(locals_signature),
+        &locals_signature_token);
+
+    /////////////////////////////////////////////
+    // Add IL instructions into the void method
+    ILRewriter rewriter_void(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
+    rewriter_void.InitializeTiny();
+    rewriter_void.SetTkLocalVarSig(locals_signature_token);
+    ILInstr* pFirstInstr = rewriter_void.GetILList()->m_pNext;
+    ILInstr* pNewInstr = NULL;
+
+    // Step 1) Call void GetAssemblyBytes(out IntPtr assemblyPtr, out int assemblySize)
+
+    // ldloca.s 0 : Load the address of the "assemblyPtr" variable (locals index 0)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDLOCA_S;
+    pNewInstr->m_Arg32 = 0;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // ldloca.s 1 : Load the address of the "assemblySize" variable (locals index 1)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDLOCA_S;
+    pNewInstr->m_Arg32 = 1;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // call void GetAssemblyBytes(out IntPtr assemblyPtr, out int assemblySize)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_CALL;
+    pNewInstr->m_Arg32 = pinvoke_method_def;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // Step 2) Call void Marshal.Copy(IntPtr source, byte[] destination, int startIndex, int length) to populate the managed assembly bytes
+
+    // ldloc.1 : Load the "assemblySize" variable (locals index 1)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDLOC_1;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // newarr System.Byte : Create a new Byte[] to hold a managed copy of the assembly data
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_NEWARR;
+    pNewInstr->m_Arg32 = byte_type_ref;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // stloc.s 4 : Assign the Byte[] to the "assemblyBytes" variable (locals index 4)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_STLOC_S;
+    pNewInstr->m_Arg8 = 2;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // ldloc.0 : Load the "assemblyPtr" variable (locals index 0)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDLOC_0;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // ldloc.s 4 : Load the "assemblyBytes" variable (locals index 4)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDLOC_S;
+    pNewInstr->m_Arg8 = 2;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // ldc.i4.0 : Load the integer 0 for the Marshal.Copy startIndex parameter
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDC_I4_0;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // ldloc.1 : Load the "assemblySize" variable (locals index 1) for the Marshal.Copy length parameter
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDLOC_1;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // call Marshal.Copy(IntPtr source, byte[] destination, int startIndex, int length)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_CALL;
+    pNewInstr->m_Arg32 = marshal_copy_member_ref;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // Step 4) Call System.Reflection.Assembly System.AppDomain.CurrentDomain.Load(byte[]))
+
+    // call System.AppDomain System.AppDomain.CurrentDomain property
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_CALL;
+    pNewInstr->m_Arg32 = appdomain_get_current_domain_member_ref;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // ldloc.s 4 : Load the "assemblyBytes" variable (locals index 2) for the first byte[] parameter of AppDomain.Load(byte[], byte[])
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDLOC_S;
+    pNewInstr->m_Arg8 = 2;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // callvirt System.Reflection.Assembly System.AppDomain.Load(uint8[])
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_CALLVIRT;
+    pNewInstr->m_Arg32 = appdomain_load_member_ref;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    //// stloc.s 6 : Assign the System.Reflection.Assembly object to the "loadedAssembly" variable (locals index 3
+    //pNewInstr = rewriter_void.NewILInstr();
+    //pNewInstr->m_opcode = CEE_STLOC_S;
+    //pNewInstr->m_Arg8 = 3;
+    //rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    //// Step 4) Call instance method Assembly.CreateInstance("Datadog.Trace.ClrProfiler.Managed.Loader.Startup")
+
+    //// ldloc.s 6 : Load the "loadedAssembly" variable (locals index 6) to call Assembly.CreateInstance
+    //pNewInstr = rewriter_void.NewILInstr();
+    //pNewInstr->m_opcode = CEE_LDLOC_S;
+    //pNewInstr->m_Arg8 = 3;
+    //rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // ldstr "Datadog.Trace.ClrProfiler.Managed.Loader.Startup"
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_LDSTR;
+    pNewInstr->m_Arg32 = load_helper_token;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // callvirt System.Object System.Reflection.Assembly.CreateInstance(string)
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_CALLVIRT;
+    pNewInstr->m_Arg32 = assembly_create_instance_member_ref;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // pop the returned object
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_POP;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    // return
+    pNewInstr = rewriter_void.NewILInstr();
+    pNewInstr->m_opcode = CEE_RET;
+    rewriter_void.InsertBefore(pFirstInstr, pNewInstr);
+
+    hr = rewriter_void.Export(false);
+
+    return S_OK;
+}
+
+HRESULT CorProfiler::LoadAssemblyFromFile(
     ModuleID moduleId,
     mdMethodDef methodDef,
-    FunctionID functionId
-    /*,
-    std::vector<wstring> assemblies*/
-)
+    FunctionID functionId)
 {
     HRESULT hr;
 
@@ -240,7 +629,7 @@ HRESULT CorProfiler::LoadAssemblyBefore(
 
     const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
-    ILRewriter rewriter(this->corProfilerInfo, pICorProfilerFunctionControl, moduleId, methodDef);
+    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, methodDef);
 
     IfFailRet(rewriter.Import());
 
@@ -831,4 +1220,19 @@ void CorProfiler::AddInterception(ImportInterception interception)
             ToWSTRING(interception.InterceptorMethodName),
             std::vector<BYTE>(interception.Signature, interception.Signature + interception.SignatureLength))
     ));
+}
+
+#ifndef _WIN32
+extern BYTE _binary_Interception_Loader_dll_start;
+extern BYTE _binary_Interception_Loader_dll_end;
+#endif
+
+void CorProfiler::GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize)
+{
+#ifdef _WIN32
+    throw std::exception("Not implemented");
+#else
+    *assemblyArray = &_binary_Interception_Loader_dll_start;
+    *assemblySize = &_binary_Interception_Loader_dll_end - &_binary_Interception_Loader_dll_start;
+#endif // _WIN32
 }

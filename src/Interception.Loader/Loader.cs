@@ -1,5 +1,4 @@
-﻿using Interception.Common;
-using System;
+﻿using System;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -15,7 +14,29 @@ namespace Interception
             Console.WriteLine($"Interception.Loader {interceptionDlls}");
             foreach (var dll in interceptionDlls.Split(new char[] { ',' }))
             {
+                Console.WriteLine($"Load {dll}");
                 var assembly = System.Reflection.Assembly.LoadFrom(dll);
+
+                foreach (var a in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    Console.WriteLine($"assembly {a.FullName}");
+                }
+
+                foreach (var item in assembly
+                    .GetTypes()
+                    .SelectMany(type => type.GetRuntimeMethods())
+                    .Where(m => m.GetCustomAttributes().Any()))
+                {
+                    foreach (var attr in item.GetCustomAttributes())
+                    {
+                        if (attr.GetType().Name == typeof(InterceptAttribute).Name)
+                        {
+                            Console.WriteLine($"method {item.Name}");
+                            Console.WriteLine($"Interception {attr.GetType().Assembly.FullName} {attr.GetType().FullName} {typeof(InterceptAttribute).Assembly.FullName} {typeof(InterceptAttribute).FullName} {attr.GetType() == typeof(InterceptAttribute)} {attr.GetType().Assembly == typeof(InterceptAttribute).Assembly}");
+                        }
+                    }
+                }
+
                 var interceptors = assembly
                     .GetTypes()
                     .SelectMany(type => type.GetRuntimeMethods())

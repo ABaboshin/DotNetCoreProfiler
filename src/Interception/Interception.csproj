@@ -11,6 +11,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\Interception.Loader\Interception.Loader.csproj" />
     <ProjectReference Include="..\Interception.OpenTracing.Prometheus\Interception.OpenTracing.Prometheus.csproj" />
     <ProjectReference Include="..\Interception.Common\Interception.Common.csproj" />
     <ProjectReference Include="..\Interception.Executor\Interception.Executor.csproj" />
