@@ -486,23 +486,6 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         activatorCreateInstanceSignatureEnd,
         endLength);
 
-    /*COR_SIGNATURE activatorCreateInstanceSignature[] = {
-        0,
-        2,
-        28,
-        33,
-        103,
-        26,
-        57,
-        110,
-        252,
-        127,
-        0,
-        0,
-        29,
-        28
-    };*/
-
     mdMemberRef activatorCreateInstanceMemberRef;
     hr = metadataEmit->DefineMemberRef(
         activatorTypeRef, CreateInstance.data(),
@@ -531,21 +514,11 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     hr = metadataEmit->DefineUserString(loaderClass.c_str(), (ULONG)loaderClass.length(),
         &loaderClassToken);
 
-    //ULONG srtringLength = 0;
-    //WCHAR stringContents[NameMaxSize]{};
-    //hr = metadataImport->GetUserString(loaderClassToken, stringContents,
-    //    NameMaxSize, &srtringLength);
-
     // loader class param
     auto profilerInterceptionDlls = GetEnvironmentValue("PROFILER_INTERCEPTION_DLLS"_W);
     mdString paramToken;
     hr = metadataEmit->DefineUserString(profilerInterceptionDlls.c_str(), (ULONG)profilerInterceptionDlls.length(),
         &paramToken);
-
-    //ULONG srtringLength = 0;
-    //WCHAR stringContents[NameMaxSize]{};
-    //hr = metadataImport->GetUserString(loaderClassToken, stringContents,
-    //    NameMaxSize, &srtringLength);
 
     // local sig
     mdSignature localSigToken;
@@ -556,16 +529,9 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         ELEMENT_TYPE_I4, // assemblySize
         ELEMENT_TYPE_SZARRAY, // assemblyBytes
         ELEMENT_TYPE_U1,
-        ELEMENT_TYPE_SZARRAY, // params
-        ELEMENT_TYPE_OBJECT,
-        /*01,
-        0,
-        0*/
-        //ELEMENT_TYPE_CLASS // assembly
+        ELEMENT_TYPE_SZARRAY, // ctor params
+        ELEMENT_TYPE_OBJECT
     };
-
-    /*CorSigCompressToken(assemblyTypeRef,
-        &localSig[7]);*/
 
     hr = metadataEmit->GetTokenFromSig(localSig, sizeof(localSig),
         &localSigToken);
@@ -576,17 +542,17 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
-    // load assemblyPtr
+    // load addr of assemblyPtr
     helper.LoadLocalAddress(0);
-    // assemblySize
+    // load addr of assemblySize
     helper.LoadLocalAddress(1);
-    // GetAssemblyBytes
+    // call GetAssemblyBytes
     helper.CallMember(getAssemblyMethodDef, false);
 
     // load assemblySize
     helper.LoadLocal(1);
 
-    // newarr of bytes
+    // create newarr of bytes
     helper.CreateArray(byteTypeRef, 0);
 
     // set assemblyBytes to newarr
@@ -598,7 +564,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     helper.LoadStr(paramToken);
     helper.EndLoadValueIntoArray();
 
-    // set assemblyBytes to newarr
+    // set params to newarr
     helper.StLocal(3);
 
     // load assemblyPtr
@@ -612,43 +578,34 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     // load assemblySize
     helper.LoadLocal(1);
 
-    // Marshal.Copy
+    // call Marshal.Copy
     helper.CallMember(marshalCopyMemberRef, false);
 
-    // System.AppDomain.CurrentDomain
+    // call System.AppDomain.CurrentDomain
     helper.CallMember(getCurrentDomainMethodRef, false);
 
     // load assemblyBytes
     helper.LoadLocal(2);
 
-    // System.AppDomain.Load
+    // call System.AppDomain.Load
     helper.CallMember(appdomainLoadMemberRef, true);
-
-    /*helper.StLocal(3);
-
-    helper.LoadLocal(3);*/
 
     // load loaderClassToken
     helper.LoadStr(loaderClassToken);
 
-    // System.Reflection.Assembly.CreateInstance
-    //helper.CallMember(assemblyCreateInstanceMemberRef, true);
-
-    //Assembly.GetType
+    // call Assembly.GetType
     helper.CallMember(assemblyGetTypeMemberRef, true);
 
-    //// newarr of object
-    //helper.CreateArray(objectTypeRef, 0);
-
-    //// set params to newarr
-    //helper.StLocal(3);
-
+    // load ctor params
     helper.LoadLocal(3);
 
+    // call Activator.CreateInstance
     helper.CallMember(activatorCreateInstanceMemberRef, false);
 
+    // pop the object
     helper.Pop();
 
+    // ret
     helper.Ret();
 
     hr = rewriter.Export(false);
