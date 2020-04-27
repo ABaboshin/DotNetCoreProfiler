@@ -26,24 +26,17 @@ private:
     ICorProfilerInfo8* corProfilerInfo;
 
     bool printEveryCall = false;
-    wstring loaderDllPath;
     wstring loaderClass;
 
     bool SkipAssembly(const wstring& name);
 
     HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
 
-    HRESULT LoadAssemblyFromFile(
+    HRESULT InjectLoadMethod(
         ModuleID moduleId,
-        mdMethodDef methodDef,
-        FunctionID functionId);
+        mdMethodDef methodDef);
 
-    HRESULT LoadAssemblyFromResource(
-        ModuleID moduleId,
-        mdMethodDef methodDef,
-        FunctionID functionId);
-
-    HRESULT GenerateLoadMerthod(ModuleID moduleId, mdMethodDef* retMethodToken);
+    HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMethodToken);
 
     wstring GetInterceptionLoaderClassName();
 

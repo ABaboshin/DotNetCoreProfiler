@@ -45,10 +45,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
     printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
-    loaderDllPath = GetEnvironmentValue("PROFILER_LOADER_DLL"_W);
     loaderClass = GetInterceptionLoaderClassName();
-
-    std::cout << "loaderClass " << ToString(loaderClass) << std::endl;
 
     profiler = this;
 
@@ -211,45 +208,32 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
-        if (!loaderDllPath.empty())
-        {
-            return LoadAssemblyFromFile(
-                moduleId,
-                functionToken,
-                functionId
-            );
-        }
-        else
-        {
-            return LoadAssemblyFromResource(
-                moduleId,
-                functionToken,
-                functionId
-            );
-        }
+        return InjectLoadMethod(
+            moduleId,
+            functionToken);
     }
 
     return Rewrite(moduleId, functionToken);
 }
 
-HRESULT CorProfiler::LoadAssemblyFromResource(ModuleID moduleId, mdMethodDef methodDef, FunctionID functionId)
+HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef)
 {
-    mdMethodDef ret_method_token;
+    mdMethodDef retMethodToken;
 
-    auto hr = GenerateLoadMerthod(moduleId, &ret_method_token);
+    auto hr = GenerateLoadMethod(moduleId, &retMethodToken);
 
     ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, methodDef);
     IfFailRet(rewriter.Import());
 
     ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
-    helper.CallMember(ret_method_token, false);
+    helper.CallMember(retMethodToken, false);
     hr = rewriter.Export(false);
 
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateLoadMerthod(ModuleID moduleId,
+HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     mdMethodDef* retMethodToken) {
 
     HRESULT hr;
@@ -506,7 +490,7 @@ HRESULT CorProfiler::GenerateLoadMerthod(ModuleID moduleId,
     // load assemblyBytes
     helper.LoadLocal(2);
 
-    // System.Reflection.Assembly System.AppDomain.Load
+    // System.AppDomain.Load
     helper.CallMember(appdomainLoadMemberRef, true);
 
     // load loaderClassToken
@@ -520,114 +504,6 @@ HRESULT CorProfiler::GenerateLoadMerthod(ModuleID moduleId,
     helper.Ret();
 
     hr = rewriter.Export(false);
-
-    std::cout << "test" << std::endl;
-
-    return S_OK;
-}
-
-HRESULT CorProfiler::LoadAssemblyFromFile(
-    ModuleID moduleId,
-    mdMethodDef methodDef,
-    FunctionID functionId)
-{
-    HRESULT hr;
-
-    ComPtr<IUnknown> metadataInterfaces;
-    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
-
-    const auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
-
-    const auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
-
-    const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
-    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, methodDef);
-
-    IfFailRet(rewriter.Import());
-
-    mdString aPath;
-    hr = metadataEmit->DefineUserString(loaderDllPath.c_str(), (ULONG)loaderDllPath.length(),
-        &aPath);
-
-    ULONG string_len = 0;
-    WCHAR string_contents[NameMaxSize]{};
-    hr = metadataImport->GetUserString(aPath, string_contents,
-        NameMaxSize, &string_len);
-    IfFailRet(hr);
-
-    // define mscorlib.dll
-    mdModuleRef mscorlibRef;
-    GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
-    IfFailRet(hr);
-
-    // define type System.Reflection.Assembly
-    mdTypeRef assemblyTypeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        mscorlibRef,
-        SystemReflectionAssembly.c_str(),
-        &assemblyTypeRef);
-
-    unsigned buffer;
-    auto size = CorSigCompressToken(assemblyTypeRef, &buffer);
-    auto* assemblyLoadSignature = new COR_SIGNATURE[size + 4];
-    unsigned offset = 0;
-    assemblyLoadSignature[offset++] = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-    assemblyLoadSignature[offset++] = 0x01;
-    assemblyLoadSignature[offset++] = ELEMENT_TYPE_CLASS;
-    memcpy(&assemblyLoadSignature[offset], &buffer, size);
-    offset += size;
-    assemblyLoadSignature[offset] = ELEMENT_TYPE_STRING;
-
-    // define method System.Reflection.Assembly.LoadFrom
-    mdMemberRef assemblyLoadMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        assemblyTypeRef,
-        LoadFrom.data(),
-        assemblyLoadSignature,
-        sizeof(assemblyLoadSignature),
-        &assemblyLoadMemberRef);
-
-    // Create method signature for Assembly.CreateInstance(string)
-    COR_SIGNATURE createInstanceSignature[] = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_STRING
-    };
-    mdMemberRef createInstanceMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        assemblyTypeRef, CreateInstance.c_str(),
-        createInstanceSignature,
-        sizeof(createInstanceSignature),
-        &createInstanceMemberRef);
-
-    // define path to a .net dll 
-    mdString profilerLoaderDllNameTextToken;
-    hr = metadataEmit->DefineUserString(loaderDllPath.data(), (ULONG)loaderDllPath.length(), &profilerLoaderDllNameTextToken);
-
-    std::cout << "AssemblyLoader " << ToString(loaderDllPath) << std::endl;
-
-    ILRewriterHelper helper(&rewriter);
-    helper.SetILPosition(rewriter.GetILList()->m_pNext);
-
-    // load assembly path
-    helper.LoadStr(profilerLoaderDllNameTextToken);
-    // load assembly
-    helper.CallMember(assemblyLoadMemberRef, false);
-
-    mdString initializerTypeToken;
-    hr = metadataEmit->DefineUserString(loaderClass.data(), (ULONG)loaderClass.length(), &initializerTypeToken);
-
-    // load initializer type name
-    helper.LoadStr(initializerTypeToken);
-    // create an instance of the initializer
-    helper.CallMember(createInstanceMemberRef, true);
-
-    // pop result as not needed
-    helper.Pop();
-
-    IfFailRet(rewriter.Export(false));
 
     return S_OK;
 }
@@ -1138,10 +1014,17 @@ extern BYTE _binary_Interception_Loader_dll_start;
 extern BYTE _binary_Interception_Loader_dll_end;
 #endif
 
+#include "resource.h"
+
 void CorProfiler::GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize)
 {
 #ifdef _WIN32
-    throw std::exception("Not implemented");
+    HINSTANCE hInstance = DllHandle;
+    auto dllLpName = MAKEINTRESOURCE(IDR_LOADER);
+    HRSRC hResAssemblyInfo = FindResource(hInstance, dllLpName, L"LOADER");
+    HGLOBAL hResAssembly = LoadResource(hInstance, hResAssemblyInfo);
+    *assemblySize = SizeofResource(hInstance, hResAssemblyInfo);
+    *assemblyArray = (LPBYTE)LockResource(hResAssembly);
 #else
     *assemblyArray = &_binary_Interception_Loader_dll_start;
     *assemblySize = &_binary_Interception_Loader_dll_end - &_binary_Interception_Loader_dll_start;
@@ -1155,14 +1038,12 @@ extern BYTE _binary_Interception_Loader_Class_Name_txt_end;
 
 wstring CorProfiler::GetInterceptionLoaderClassName()
 {
-    auto result = GetEnvironmentValue("PROFILER_LOADER_CLASS"_W);
-    if (!result.empty())
-    {
-        return result;
-    }
-
 #ifdef _WIN32
-    return wstring();
+    HINSTANCE hInstance = DllHandle;
+    TCHAR profilerLoaderClass[160];
+    LoadString(hInstance, PROFILER_LOADER_CLASS, profilerLoaderClass, sizeof(profilerLoaderClass) / sizeof(TCHAR));
+
+    return wstring(profilerLoaderClass);
 #else
     return Trim(ToWSTRING(std::string((char*)&_binary_Interception_Loader_Class_Name_txt_start)));
 #endif // _WIN32
