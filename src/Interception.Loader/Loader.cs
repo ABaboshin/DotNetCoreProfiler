@@ -9,9 +9,8 @@ namespace Interception
 {
     public class Loader
     {
-        public Loader()
+        public Loader(string interceptionDlls)
         {
-            var interceptionDlls = Environment.GetEnvironmentVariable("PROFILER_INTERCEPTION_DLLS");
             Console.WriteLine($"Interception.Loader {interceptionDlls}");
             foreach (var dll in interceptionDlls.Split(new char[] { ',' }))
             {
@@ -50,11 +49,11 @@ namespace Interception
 
                         return new ImportInterception
                         {
-                            CallerAssembly = info.attribute.GetPropertyValue<string>("CallerAssembly"),
-                            TargetAssemblyName = info.attribute.GetPropertyValue<string>("TargetAssemblyName"),
-                            TargetMethodName = info.attribute.GetPropertyValue<string>("TargetMethodName"),
-                            TargetTypeName = info.attribute.GetPropertyValue<string>("TargetTypeName"),
-                            TargetMethodParametersCount = info.attribute.GetPropertyValue<int>("TargetMethodParametersCount"),
+                            CallerAssembly = info.attribute.GetPropertyValue<string>(nameof(InterceptAttribute.CallerAssembly)),
+                            TargetAssemblyName = info.attribute.GetPropertyValue<string>(nameof(InterceptAttribute.TargetAssemblyName)),
+                            TargetMethodName = info.attribute.GetPropertyValue<string>(nameof(InterceptAttribute.TargetMethodName)),
+                            TargetTypeName = info.attribute.GetPropertyValue<string>(nameof(InterceptAttribute.TargetTypeName)),
+                            TargetMethodParametersCount = info.attribute.GetPropertyValue<int>(nameof(InterceptAttribute.TargetMethodParametersCount)),
                             InterceptorTypeName = info.method.DeclaringType.FullName,
                             InterceptorMethodName = info.method.Name,
                             InterceptorAssemblyName = info.method.DeclaringType.Assembly.GetName().Name,

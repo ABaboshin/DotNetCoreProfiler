@@ -459,33 +459,34 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     delete[] appdomainLoadSignature;
 
     // Activator.CreateInstance
-    //COR_SIGNATURE activatorCreateInstanceSignatureStart[] = {
-    //    IMAGE_CEE_CS_CALLCONV_DEFAULT,
-    //    2,
-    //    ELEMENT_TYPE_OBJECT
-    //};
-    //COR_SIGNATURE activatorCreateInstanceSignatureEnd[] = {
-    //    ELEMENT_TYPE_SZARRAY,
-    //    ELEMENT_TYPE_OBJECT
-    //};
-    //startLength = sizeof(activatorCreateInstanceSignatureStart);
-    //endLength = sizeof(activatorCreateInstanceSignatureEnd);
+    COR_SIGNATURE activatorCreateInstanceSignatureStart[] = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        2,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_CLASS
+    };
+    COR_SIGNATURE activatorCreateInstanceSignatureEnd[] = {
+        ELEMENT_TYPE_SZARRAY,
+        ELEMENT_TYPE_OBJECT
+    };
+    startLength = sizeof(activatorCreateInstanceSignatureStart);
+    endLength = sizeof(activatorCreateInstanceSignatureEnd);
 
-    ///*BYTE typeRefCompressedToken[4];
-    //tokenLength = CorSigCompressToken(typeRef, typeRefCompressedToken);*/
+    /*BYTE typeRefCompressedToken[4];*/
+    tokenLength = CorSigCompressToken(typeRef, typeRefCompressedToken);
 
-    //COR_SIGNATURE* activatorCreateInstanceSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
-    //memcpy(activatorCreateInstanceSignature,
-    //    activatorCreateInstanceSignatureStart,
-    //    startLength);
-    //memcpy(&activatorCreateInstanceSignature[startLength],
-    //    typeRefCompressedToken,
-    //    tokenLength);
-    //memcpy(&activatorCreateInstanceSignature[startLength + tokenLength],
-    //    activatorCreateInstanceSignatureEnd,
-    //    endLength);
+    COR_SIGNATURE* activatorCreateInstanceSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
+    memcpy(activatorCreateInstanceSignature,
+        activatorCreateInstanceSignatureStart,
+        startLength);
+    memcpy(&activatorCreateInstanceSignature[startLength],
+        typeRefCompressedToken,
+        tokenLength);
+    memcpy(&activatorCreateInstanceSignature[startLength + tokenLength],
+        activatorCreateInstanceSignatureEnd,
+        endLength);
 
-    COR_SIGNATURE activatorCreateInstanceSignature[] = {
+    /*COR_SIGNATURE activatorCreateInstanceSignature[] = {
         0,
         2,
         28,
@@ -500,7 +501,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         0,
         29,
         28
-    };
+    };*/
 
     mdMemberRef activatorCreateInstanceMemberRef;
     hr = metadataEmit->DefineMemberRef(
@@ -508,7 +509,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         activatorCreateInstanceSignature,
         startLength + tokenLength + endLength,
         &activatorCreateInstanceMemberRef);
-    //delete[] activatorCreateInstanceSignature;
+    delete[] activatorCreateInstanceSignature;
 
     // Assembly.CreateInstance
     COR_SIGNATURE assemblyCreateInstanceSignature[] = {
@@ -642,9 +643,9 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     //// set params to newarr
     //helper.StLocal(3);
 
-    /*helper.LoadLocal(3);
+    helper.LoadLocal(3);
 
-    helper.CallMember(activatorCreateInstanceMemberRef, false);*/
+    helper.CallMember(activatorCreateInstanceMemberRef, false);
 
     helper.Pop();
 

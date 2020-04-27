@@ -23,7 +23,7 @@ namespace SampleApp
 
         public static void Test()
         {
-            var test = Activator.CreateInstance(typeof(Program), "xxx");
+            var test = (Program)Activator.CreateInstance(typeof(Program), "xxx");
             var data = new object[] { "test" };
             var assembiles = AppDomain.CurrentDomain.GetAssemblies();
             var types = typeof(Program).Assembly.GetTypes();
