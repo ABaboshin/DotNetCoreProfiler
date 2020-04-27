@@ -241,10 +241,10 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
 
-    const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-    const auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
-    const auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
-    const auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+    auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+    auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+    auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
+    auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
@@ -255,22 +255,31 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     mdTypeRef objectTypeRef;
     metadataEmit->DefineTypeRefByName(mscorlibRef, SystemObject.data(), &objectTypeRef);
 
+    // Define System.Type
+    mdTypeRef typeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemType.data(), &typeRef);
+
+    // Define System.Activator
+    mdTypeRef activatorTypeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemActivator.data(), &activatorTypeRef);
+
     // Define an anonymous type
     mdTypeDef newTypeDef;
     hr = metadataEmit->DefineTypeDef("__InterceptionDllLoaderClass__"_W.c_str(), tdAbstract | tdSealed,
         objectTypeRef, NULL, &newTypeDef);
 
     // Define a a new static method
-    BYTE initiSignature[] = {
+    COR_SIGNATURE loadMethodSignature[] = {
       IMAGE_CEE_CS_CALLCONV_DEFAULT,
       0,
       ELEMENT_TYPE_VOID
     };
+
     hr = metadataEmit->DefineMethod(newTypeDef,
         "__InterceptionDllLoaderMethod__"_W.c_str(),
-        mdStatic,
-        initiSignature,
-        sizeof(initiSignature),
+        mdStatic | mdPublic,
+        loadMethodSignature,
+        sizeof(loadMethodSignature),
         0,
         0,
         retMethodToken);
@@ -356,26 +365,63 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         ELEMENT_TYPE_CLASS,
     };
     ULONG startLength = sizeof(getCurrentDomainSignatureStart);
+    ULONG endLength = 0;
 
     BYTE appdomainTypeRefCompressedToken[4];
-    ULONG token_length = CorSigCompressToken(appdomainTypeRef, appdomainTypeRefCompressedToken);
+    ULONG tokenLength = CorSigCompressToken(appdomainTypeRef, appdomainTypeRefCompressedToken);
 
-    COR_SIGNATURE* getCurrentDomainSignature = new COR_SIGNATURE[startLength + token_length];
+    COR_SIGNATURE* getCurrentDomainSignature = new COR_SIGNATURE[startLength + tokenLength];
     memcpy(getCurrentDomainSignature,
         getCurrentDomainSignatureStart,
         startLength);
     memcpy(&getCurrentDomainSignature[startLength],
         appdomainTypeRefCompressedToken,
-        token_length);
+        tokenLength);
 
     mdMemberRef getCurrentDomainMethodRef;
     hr = metadataEmit->DefineMemberRef(
         appdomainTypeRef,
         get_CurrentDomain.data(),
         getCurrentDomainSignature,
-        startLength + token_length,
+        startLength + tokenLength,
         &getCurrentDomainMethodRef);
     delete[] getCurrentDomainSignature;
+
+    // Assembly.GetType
+    COR_SIGNATURE assemblyGetTypeSignatureStart[] = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_CLASS
+    };
+
+    COR_SIGNATURE assemblyGetTypeSignatureEnd[] = {
+        ELEMENT_TYPE_STRING
+    };
+
+    startLength = sizeof(assemblyGetTypeSignatureStart);
+    endLength = sizeof(assemblyGetTypeSignatureEnd);
+
+    BYTE typeRefCompressedToken[4];
+    tokenLength = CorSigCompressToken(typeRef, typeRefCompressedToken);
+
+    COR_SIGNATURE* assemblyGetTypeSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
+    memcpy(assemblyGetTypeSignature,
+        assemblyGetTypeSignatureStart,
+        startLength);
+    memcpy(&assemblyGetTypeSignature[startLength],
+        typeRefCompressedToken,
+        tokenLength);
+    memcpy(&assemblyGetTypeSignature[startLength + tokenLength],
+        assemblyGetTypeSignatureEnd,
+        endLength);
+
+    mdMemberRef assemblyGetTypeMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        assemblyTypeRef, GetType.data(),
+        assemblyGetTypeSignature,
+        startLength + tokenLength + endLength,
+        &assemblyGetTypeMemberRef);
+    delete[] assemblyGetTypeSignature;
 
     // AppDomain.Load
     COR_SIGNATURE appdomainLoadSignatureStart[] = {
@@ -388,29 +434,81 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         ELEMENT_TYPE_U1
     };
     startLength = sizeof(appdomainLoadSignatureStart);
-    ULONG end_length = sizeof(appdomainLoadSignatureEnd);
+    endLength = sizeof(appdomainLoadSignatureEnd);
 
     BYTE assemblyTypeRefCompressedToken[4];
-    token_length = CorSigCompressToken(assemblyTypeRef, assemblyTypeRefCompressedToken);
+    tokenLength = CorSigCompressToken(assemblyTypeRef, assemblyTypeRefCompressedToken);
 
-    COR_SIGNATURE* appdomainLoadSignature = new COR_SIGNATURE[startLength + token_length + end_length];
+    COR_SIGNATURE* appdomainLoadSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
     memcpy(appdomainLoadSignature,
         appdomainLoadSignatureStart,
         startLength);
     memcpy(&appdomainLoadSignature[startLength],
         assemblyTypeRefCompressedToken,
-        token_length);
-    memcpy(&appdomainLoadSignature[startLength + token_length],
+        tokenLength);
+    memcpy(&appdomainLoadSignature[startLength + tokenLength],
         appdomainLoadSignatureEnd,
-        end_length);
+        endLength);
 
     mdMemberRef appdomainLoadMemberRef;
     hr = metadataEmit->DefineMemberRef(
         appdomainTypeRef, Load.data(),
         appdomainLoadSignature,
-        startLength + token_length + end_length,
+        startLength + tokenLength + endLength,
         &appdomainLoadMemberRef);
     delete[] appdomainLoadSignature;
+
+    // Activator.CreateInstance
+    //COR_SIGNATURE activatorCreateInstanceSignatureStart[] = {
+    //    IMAGE_CEE_CS_CALLCONV_DEFAULT,
+    //    2,
+    //    ELEMENT_TYPE_OBJECT
+    //};
+    //COR_SIGNATURE activatorCreateInstanceSignatureEnd[] = {
+    //    ELEMENT_TYPE_SZARRAY,
+    //    ELEMENT_TYPE_OBJECT
+    //};
+    //startLength = sizeof(activatorCreateInstanceSignatureStart);
+    //endLength = sizeof(activatorCreateInstanceSignatureEnd);
+
+    ///*BYTE typeRefCompressedToken[4];
+    //tokenLength = CorSigCompressToken(typeRef, typeRefCompressedToken);*/
+
+    //COR_SIGNATURE* activatorCreateInstanceSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
+    //memcpy(activatorCreateInstanceSignature,
+    //    activatorCreateInstanceSignatureStart,
+    //    startLength);
+    //memcpy(&activatorCreateInstanceSignature[startLength],
+    //    typeRefCompressedToken,
+    //    tokenLength);
+    //memcpy(&activatorCreateInstanceSignature[startLength + tokenLength],
+    //    activatorCreateInstanceSignatureEnd,
+    //    endLength);
+
+    COR_SIGNATURE activatorCreateInstanceSignature[] = {
+        0,
+        2,
+        28,
+        33,
+        103,
+        26,
+        57,
+        110,
+        252,
+        127,
+        0,
+        0,
+        29,
+        28
+    };
+
+    mdMemberRef activatorCreateInstanceMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        activatorTypeRef, CreateInstance.data(),
+        activatorCreateInstanceSignature,
+        startLength + tokenLength + endLength,
+        &activatorCreateInstanceMemberRef);
+    //delete[] activatorCreateInstanceSignature;
 
     // Assembly.CreateInstance
     COR_SIGNATURE assemblyCreateInstanceSignature[] = {
@@ -427,24 +525,46 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         sizeof(assemblyCreateInstanceSignature),
         &assemblyCreateInstanceMemberRef);
 
+    // loader class
     mdString loaderClassToken;
     hr = metadataEmit->DefineUserString(loaderClass.c_str(), (ULONG)loaderClass.length(),
         &loaderClassToken);
 
-    ULONG srtringLength = 0;
-    WCHAR stringContents[NameMaxSize]{};
-    hr = metadataImport->GetUserString(loaderClassToken, stringContents,
-        NameMaxSize, &srtringLength);
+    //ULONG srtringLength = 0;
+    //WCHAR stringContents[NameMaxSize]{};
+    //hr = metadataImport->GetUserString(loaderClassToken, stringContents,
+    //    NameMaxSize, &srtringLength);
 
+    // loader class param
+    auto profilerInterceptionDlls = GetEnvironmentValue("PROFILER_INTERCEPTION_DLLS"_W);
+    mdString paramToken;
+    hr = metadataEmit->DefineUserString(profilerInterceptionDlls.c_str(), (ULONG)profilerInterceptionDlls.length(),
+        &paramToken);
+
+    //ULONG srtringLength = 0;
+    //WCHAR stringContents[NameMaxSize]{};
+    //hr = metadataImport->GetUserString(loaderClassToken, stringContents,
+    //    NameMaxSize, &srtringLength);
+
+    // local sig
     mdSignature localSigToken;
-    COR_SIGNATURE localSig[6] = {
+    COR_SIGNATURE localSig[/*11*/] = {
         IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
-        3,
+        4,
         ELEMENT_TYPE_I, // assemblyPtr
         ELEMENT_TYPE_I4, // assemblySize
         ELEMENT_TYPE_SZARRAY, // assemblyBytes
-        ELEMENT_TYPE_U1
+        ELEMENT_TYPE_U1,
+        ELEMENT_TYPE_SZARRAY, // params
+        ELEMENT_TYPE_OBJECT,
+        /*01,
+        0,
+        0*/
+        //ELEMENT_TYPE_CLASS // assembly
     };
+
+    /*CorSigCompressToken(assemblyTypeRef,
+        &localSig[7]);*/
 
     hr = metadataEmit->GetTokenFromSig(localSig, sizeof(localSig),
         &localSigToken);
@@ -470,6 +590,16 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     // set assemblyBytes to newarr
     helper.StLocal(2);
+
+    // fillout params
+    helper.CreateArray(objectTypeRef, 1);
+    helper.BeginLoadValueIntoArray(0);
+    helper.LoadStr(paramToken);
+    helper.EndLoadValueIntoArray();
+
+    // set assemblyBytes to newarr
+    helper.StLocal(3);
+
     // load assemblyPtr
     helper.LoadLocal(0);
     // load assemblyBytes
@@ -493,11 +623,28 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     // System.AppDomain.Load
     helper.CallMember(appdomainLoadMemberRef, true);
 
+    /*helper.StLocal(3);
+
+    helper.LoadLocal(3);*/
+
     // load loaderClassToken
     helper.LoadStr(loaderClassToken);
 
     // System.Reflection.Assembly.CreateInstance
-    helper.CallMember(assemblyCreateInstanceMemberRef, true);
+    //helper.CallMember(assemblyCreateInstanceMemberRef, true);
+
+    //Assembly.GetType
+    helper.CallMember(assemblyGetTypeMemberRef, true);
+
+    //// newarr of object
+    //helper.CreateArray(objectTypeRef, 0);
+
+    //// set params to newarr
+    //helper.StLocal(3);
+
+    /*helper.LoadLocal(3);
+
+    helper.CallMember(activatorCreateInstanceMemberRef, false);*/
 
     helper.Pop();
 
