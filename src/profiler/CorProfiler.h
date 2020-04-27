@@ -43,7 +43,9 @@ private:
         mdMethodDef methodDef,
         FunctionID functionId);
 
-    HRESULT GenerateVoidILStartupMethod(ModuleID moduleId, mdMethodDef* retMethodToken);
+    HRESULT GenerateLoadMerthod(ModuleID moduleId, mdMethodDef* retMethodToken);
+
+    wstring GetInterceptionLoaderClassName();
 
 public:
     CorProfiler();
@@ -181,7 +183,7 @@ public:
 
     void AddInterception(ImportInterception interception);
 
-    void GetAssemblyBytes(BYTE** pAssemblyArray, int* assemblySize);
+    void GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize);
 };
 
 extern CorProfiler* profiler;

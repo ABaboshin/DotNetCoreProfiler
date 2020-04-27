@@ -13,8 +13,14 @@ add_custom_command(
     DEPENDS Interception.Loader.dll
 )
 
+add_custom_command(
+    OUTPUT Interception.Loader.Class.Name.o
+    COMMAND echo "Interception.Loader" > Interception.Loader.Class.Name.txt && ld -r -b binary -o Interception.Loader.Class.Name.o Interception.Loader.Class.Name.txt
+)
+
 SET(GENERATED_OBJ_FILES
     Interception.Loader.dll.o
+    Interception.Loader.Class.Name.o
 )
 
 SET_SOURCE_FILES_PROPERTIES(

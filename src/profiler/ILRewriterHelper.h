@@ -62,7 +62,7 @@ public:
 
     ILInstr* CreateArray(const mdTypeRef type_ref, const INT32 size)
     {
-        LoadInt32(size);
+        if (size > 0) LoadInt32(size);
         std::cout << "CEE_NEWARR" << std::endl;
         ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_NEWARR;
@@ -251,6 +251,20 @@ public:
         }
         else {
             pNewInstr->m_opcode = CEE_LDLOC;
+            pNewInstr->m_Arg16 = index;
+        }
+        m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
+    }
+
+    void LoadLocalAddress(unsigned index) const
+    {
+        ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
+        if (index <= 255) {
+            pNewInstr->m_opcode = CEE_LDLOCA_S;
+            pNewInstr->m_Arg8 = static_cast<UINT8>(index);
+        }
+        else {
+            pNewInstr->m_opcode = CEE_LDLOCA;
             pNewInstr->m_Arg16 = index;
         }
         m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
