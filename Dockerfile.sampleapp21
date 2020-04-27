@@ -22,7 +22,5 @@ ENV CORECLR_ENABLE_PROFILING="1"
 ENV CORECLR_PROFILER="{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
 ENV CORECLR_PROFILER_PATH="/profiler/DotNetCoreProfiler.so"
 ENV PROFILER_INTERCEPTION_DLLS="/profiler/Interception.dll"
-#ENV PROFILER_LOADER_DLL="/profiler/Interception.Loader.dll"
-#ENV PROFILER_LOADER_CLASS="Interception.Loader"
 
 ENTRYPOINT ["dotnet", "SampleApp.dll"]
