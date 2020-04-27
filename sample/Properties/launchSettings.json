@@ -39,8 +39,6 @@
         "CORECLR_PROFILER_PATH": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin\\DotNetCoreProfiler.dll",
         "CORECLR_PROFILER_HOME": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin",
         "PROFILER_INTERCEPTION_DLLS": "D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.dll",
-        "PROFILER_LOADER_CLASS": "Interception.Loader",
-        "PROFILER_LOADER_DLL": "D:\\playground\\DotNetCoreProfiler\\src\\Interception.Loader\\bin\\Debug\\netcoreapp2.1\\Interception.Loader.dll"
       },
       "nativeDebugging": true,
       "applicationUrl": "http://localhost:5000"
