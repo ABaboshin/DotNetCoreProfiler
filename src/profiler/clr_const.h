@@ -23,5 +23,10 @@ const auto SystemReflectionAssembly = "System.Reflection.Assembly"_W;
 const auto mscorlib = "mscorlib"_W;
 const auto LoadFrom = "LoadFrom"_W;
 const auto CreateInstance = "CreateInstance"_W;
+const auto SystemRuntimeInteropServicesMarshal = "System.Runtime.InteropServices.Marshal"_W;
+const auto Copy = "Copy"_W;
+const auto SystemAppDomain = "System.AppDomain"_W;
+const auto get_CurrentDomain = "get_CurrentDomain"_W;
+const auto Load = "Load"_W;
 
 const size_t NameMaxSize = 1024;

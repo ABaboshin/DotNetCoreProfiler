@@ -1,5 +1,4 @@
-﻿using Interception.Common;
-using System;
+﻿using System;
 
 namespace Interception
 {

@@ -1,4 +1,4 @@
-﻿using Interception.Common;
+﻿using Interception.Extensions;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -15,12 +15,14 @@ namespace Interception
             Console.WriteLine($"Interception.Loader {interceptionDlls}");
             foreach (var dll in interceptionDlls.Split(new char[] { ',' }))
             {
-                var assembly = System.Reflection.Assembly.LoadFrom(dll);
+                Console.WriteLine($"Load {dll}");
+                var assembly = Assembly.LoadFrom(dll);
+
                 var interceptors = assembly
                     .GetTypes()
                     .SelectMany(type => type.GetRuntimeMethods())
-                    .Where(method => method.GetCustomAttributes<InterceptAttribute>(false).Any())
-                    .SelectMany(method => method.GetCustomAttributes<InterceptAttribute>(false).Select(attribute => new { method, attribute }))
+                    .SelectMany(method => method.GetCustomAttributes().Select(attribute => new { method, attribute }))
+                    .Where(info => info.attribute.GetType().FullName == typeof(InterceptAttribute).FullName)
                     .Select(info =>
                     {
                         var returnType = info.method.ReturnType;
@@ -48,11 +50,11 @@ namespace Interception
 
                         return new ImportInterception
                         {
-                            CallerAssembly = info.attribute.CallerAssembly,
-                            TargetAssemblyName = info.attribute.TargetAssemblyName,
-                            TargetMethodName = info.attribute.TargetMethodName,
-                            TargetTypeName = info.attribute.TargetTypeName,
-                            TargetMethodParametersCount = info.attribute.TargetMethodParametersCount,
+                            CallerAssembly = info.attribute.GetPropertyValue<string>("CallerAssembly"),
+                            TargetAssemblyName = info.attribute.GetPropertyValue<string>("TargetAssemblyName"),
+                            TargetMethodName = info.attribute.GetPropertyValue<string>("TargetMethodName"),
+                            TargetTypeName = info.attribute.GetPropertyValue<string>("TargetTypeName"),
+                            TargetMethodParametersCount = info.attribute.GetPropertyValue<int>("TargetMethodParametersCount"),
                             InterceptorTypeName = info.method.DeclaringType.FullName,
                             InterceptorMethodName = info.method.Name,
                             InterceptorAssemblyName = info.method.DeclaringType.Assembly.GetName().Name,
@@ -70,7 +72,7 @@ namespace Interception
 
                 var initializers = assembly
                     .GetTypes()
-                    .Where(type => type.GetCustomAttributes<InitializeAttribute>(false).Any())
+                    .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(InterceptAttribute).FullName).Any())
                     .ToList();
 
                 foreach (var initializer in initializers)

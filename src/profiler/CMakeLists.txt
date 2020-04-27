@@ -7,6 +7,22 @@ add_compile_options(-std=c++11 -fPIC -fms-extensions)
 add_compile_options(-DBIT64 -DPAL_STDCPP_COMPAT -DPLATFORM_UNIX -DUNICODE)
 add_compile_options(-Wno-invalid-noreturn -Wno-macro-redefined -Wno-pragma-pack)
 
+add_custom_command(
+    OUTPUT Interception.Loader.dll.o
+    COMMAND ld -r -b binary -o Interception.Loader.dll.o Interception.Loader.dll
+    DEPENDS Interception.Loader.dll
+)
+
+add_custom_command(
+    OUTPUT Interception.Loader.Class.Name.o
+    COMMAND echo "Interception.Loader" > Interception.Loader.Class.Name.txt && ld -r -b binary -o Interception.Loader.Class.Name.o Interception.Loader.Class.Name.txt
+)
+
+SET(GENERATED_OBJ_FILES
+    Interception.Loader.dll.o
+    Interception.Loader.Class.Name.o
+)
+
 SET_SOURCE_FILES_PROPERTIES(
   ${GENERATED_OBJ_FILES}
   PROPERTIES
@@ -24,6 +40,7 @@ add_library("DotNetCoreProfiler.static" STATIC
     MethodSignature.cpp
     ${GENERATED_OBJ_FILES}
 )
+
 set_target_properties("DotNetCoreProfiler.static" PROPERTIES PREFIX "")
 target_include_directories("DotNetCoreProfiler.static"
     PUBLIC ../../lib/coreclr/src/pal/inc/rt
@@ -31,9 +48,11 @@ target_include_directories("DotNetCoreProfiler.static"
     PUBLIC ../../lib/coreclr/src/pal/inc
     PUBLIC ../../lib/coreclr/src/inc
 )
+
 add_library("DotNetCoreProfiler" SHARED
     dllmain.cpp
     interop.cpp
 )
+
 set_target_properties("DotNetCoreProfiler" PROPERTIES PREFIX "")
 target_link_libraries("DotNetCoreProfiler" "DotNetCoreProfiler.static")

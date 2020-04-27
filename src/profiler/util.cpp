@@ -49,12 +49,12 @@ wstring Trim(const wstring&str) {
 
   wstring trimmed = str;
 
-  auto lpos = trimmed.find_first_not_of(" \t"_W);
+  auto lpos = trimmed.find_first_not_of(" \t\r\n"_W);
   if (lpos != std::string::npos && lpos > 0) {
     trimmed = trimmed.substr(lpos);
   }
 
-  auto rpos = trimmed.find_last_not_of(" \t"_W);
+  auto rpos = trimmed.find_last_not_of(" \t\r\n"_W);
   if (rpos != std::string::npos) {
     trimmed = trimmed.substr(0, rpos + 1);
   }

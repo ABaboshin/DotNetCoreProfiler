@@ -33,11 +33,19 @@ private:
 
     HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
 
-    HRESULT LoadAssemblyBefore(
-        ICorProfilerFunctionControl* pICorProfilerFunctionControl,
-        ModuleID moduleID,
+    HRESULT LoadAssemblyFromFile(
+        ModuleID moduleId,
         mdMethodDef methodDef,
         FunctionID functionId);
+
+    HRESULT LoadAssemblyFromResource(
+        ModuleID moduleId,
+        mdMethodDef methodDef,
+        FunctionID functionId);
+
+    HRESULT GenerateLoadMerthod(ModuleID moduleId, mdMethodDef* retMethodToken);
+
+    wstring GetInterceptionLoaderClassName();
 
 public:
     CorProfiler();
@@ -174,6 +182,8 @@ public:
     }
 
     void AddInterception(ImportInterception interception);
+
+    void GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize);
 };
 
 extern CorProfiler* profiler;
