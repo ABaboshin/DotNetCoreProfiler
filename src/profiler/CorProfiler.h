@@ -1,7 +1,6 @@
 #pragma once
 
 #include <atomic>
-#include <mutex>
 #include <vector>
 #include <unordered_set>
 #include <unordered_map>

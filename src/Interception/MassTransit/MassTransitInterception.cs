@@ -93,6 +93,8 @@ namespace Interception.MassTransit
                     throw;
                 }
             }
+
+            Console.WriteLine("Done consuming interceptor");
         }
     }
 }
