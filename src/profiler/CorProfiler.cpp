@@ -774,7 +774,8 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     // insert type of this
     if (target.signature.IsInstanceMethod())
     {
-        auto instRaw = target.type.raw;
+        signature.push_back(ELEMENT_TYPE_OBJECT);
+        /*auto instRaw = target.type.raw;
         if (instRaw.empty())
         {
             BYTE compressedToken[40];
@@ -794,7 +795,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
         if (target.type.IsGeneric())
         {
             genericArgumentCount += 1;
-        }
+        }*/
     }
 
     // insert existing arguments
@@ -802,31 +803,32 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     
     for (const auto& arg : args)
     {
-        auto raw = arg.GetRaw();
-        
+        signature.push_back(ELEMENT_TYPE_OBJECT);
+        //auto raw = arg.GetRaw();
+        //
 
-        if (arg.IsGeneric())
-        {
-            genericArgumentCount += 1;
-            //callConvention = CorCallingConvention(callConvention | IMAGE_CEE_CS_CALLCONV_GENERIC);
+        //if (arg.IsGeneric())
+        //{
+        //    genericArgumentCount += 1;
+        //    //callConvention = CorCallingConvention(callConvention | IMAGE_CEE_CS_CALLCONV_GENERIC);
 
-            signature.push_back(ELEMENT_TYPE_CLASS);
-        }
+        //    signature.push_back(ELEMENT_TYPE_CLASS);
+        //}
 
-        signature.insert(signature.end(), raw.begin(), raw.end());
+        //signature.insert(signature.end(), raw.begin(), raw.end());
     }
 
     // calling convention respecting generic
     CorCallingConvention callConvention = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-    if (target.isGeneric || genericArgumentCount > 0)
+    /*if (target.isGeneric || genericArgumentCount > 0)
     {
         callConvention = CorCallingConvention(callConvention | IMAGE_CEE_CS_CALLCONV_GENERIC);
-    }
+    }*/
 
-    if (genericArgumentCount > 0)
+    /*if (genericArgumentCount > 0)
     {
         signature.insert(signature.begin(), genericArgumentCount);
-    }
+    }*/
 
     signature.insert(signature.begin(), callConvention);
 
@@ -837,7 +839,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
 
     hr = metadataEmit->DefineMethod(newTypeDef,
         "__InterceptionMethod__"_W.c_str(),
-        mdStatic | mdPublic | miAggressiveInlining,
+        mdStatic | mdPublic /*| miAggressiveInlining*/,
         signature.data(),
         signature.size(),
         0,
