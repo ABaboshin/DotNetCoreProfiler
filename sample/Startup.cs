@@ -13,6 +13,7 @@ using SampleApp.Redis;
 using StackExchange.Redis;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace SampleApp
 {

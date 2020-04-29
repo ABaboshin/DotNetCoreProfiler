@@ -22,3 +22,12 @@ wstring HexStr(const unsigned char* data, int len);
 std::ostream& operator<<(std::ostream& os, REFGUID guid);
 
 std::ostream& operator<<(std::ostream& os, std::vector<BYTE> vec);
+
+#include <numeric>
+#include <random>
+#include <vector>
+#include <iostream>
+#include <iterator>
+#include <functional>
+
+std::string random_string(std::size_t length);

@@ -23,7 +23,7 @@ namespace Interception
         public static object Invoke(object builder, object instance, object services, int mdToken, long moduleVersionPtr)
         {
             Console.WriteLine($"Configure additional services {builder.GetType().Name} {instance.GetType().Name} {services.GetType().Name}");
-            
+
             DiagnosticsObserver.ConfigureAndStart();
 
             StackExchangeRedisInterception.Configure();

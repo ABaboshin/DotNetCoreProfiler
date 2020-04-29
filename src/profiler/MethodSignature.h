@@ -19,6 +19,12 @@ struct MethodArgument {
     mdToken GetTypeTok(const ComPtr<IMetaDataEmit2> pEmit, mdAssemblyRef corLibRef) const;
     wstring GetTypeTokName(ComPtr<IMetaDataImport2>& pImport) const;
     int GetTypeFlags(unsigned& elementType) const;
+    std::vector<BYTE> GetRaw() const {
+        return std::vector<BYTE>(&pbBase[offset], &pbBase[offset + length]);
+    }
+    bool IsGeneric() const {
+        return pbBase[offset] == ELEMENT_TYPE_GENERICINST;
+    }
 };
 
 struct MethodSignature {
@@ -44,8 +50,8 @@ public:
     bool operator ==(const MethodSignature& other) const {
         return memcmp(pbBase, other.pbBase, len);
     }
-    CorCallingConvention CallingConvention() const {
-        return CorCallingConvention(len == 0 ? 0 : pbBase[0]);
+    COR_SIGNATURE CallingConvention() const {
+        return len == 0 ? 0 : pbBase[0];
     }
     bool IsEmpty() const {
         return len == 0;
@@ -55,13 +61,8 @@ public:
         return (CallingConvention() & IMAGE_CEE_CS_CALLCONV_HASTHIS) != 0;
     }
 
-    std::vector<BYTE> GetSignatureByteRepresentation() {
-        std::vector<BYTE> signature_data(len);
-        for (ULONG i = 0; i < len; i++) {
-            signature_data[i] = pbBase[i];
-        }
-
-        return signature_data;
+    std::vector<BYTE> GetRaw() const {
+        return std::vector<BYTE>(&pbBase[0], &pbBase[len]);
     }
 };
 

@@ -277,7 +277,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     hr = metadataEmit->DefineMethod(newTypeDef,
         "__InterceptionDllLoaderMethod__"_W.c_str(),
-        mdStatic | mdPublic,
+        mdStatic | mdPublic | miAggressiveInlining,
         loadMethodSignature,
         sizeof(loadMethodSignature),
         0,
@@ -652,7 +652,7 @@ bool CorProfiler::SkipAssembly(const wstring& name)
     return std::find(skipAssemblies.begin(), skipAssemblies.end(), name) != skipAssemblies.end();
 }
 
-HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToken)
+HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 {
     HRESULT hr;
 
@@ -666,9 +666,6 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
     auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
-    auto functionInfo = GetFunctionInfo(metadataImport, callerToken);
-    hr = functionInfo.signature.TryParse();
-
     auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
 
     if (!SkipAssembly(moduleInfo.assembly.name)) for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
@@ -677,8 +674,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
             continue;
         }
 
-        auto target =
-            GetFunctionInfo(metadataImport, pInstr->m_Arg32);
+        auto target = GetFunctionInfo(metadataImport, pInstr->m_Arg32);
         target.signature.TryParse();
 
         auto targetMdToken = pInstr->m_Arg32;
@@ -699,44 +695,18 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                 && target.name == interception.Target.MethodName && interception.Target.MethodParametersCount == target.signature.NumberOfArguments()
                 )
             {
-                auto m = modules[moduleId];
-
                 std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
                     << " num args " << target.signature.NumberOfArguments()
                     << " from assembly " << ToString(moduleInfo.assembly.name)
-                    << " module " << m
                     << std::endl << std::flush;
-
-                // define wrapper.dll
-                mdModuleRef wrapperRef;
-                GetWrapperRef(hr, metadataAssemblyEmit, wrapperRef, interception.Interceptor.AssemblyName);
-                IfFailRet(hr);
-
-                // define wrappedType
-                mdTypeRef wrapperTypeRef;
-                hr = metadataEmit->DefineTypeRefByName(
-                    wrapperRef,
-                    interception.Interceptor.TypeName.data(),
-                    &wrapperTypeRef);
-                IfFailRet(hr);
-
-                // method
-                mdMemberRef wrapperMethodRef;
-                hr = metadataEmit->DefineMemberRef(
-                    wrapperTypeRef, interception.Interceptor.MethodName.c_str(),
-                    interception.Interceptor.Signature.data(),
-                    (DWORD)(interception.Interceptor.Signature.size()),
-                    &wrapperMethodRef);
 
                 ILRewriterHelper helper(&rewriter);
                 helper.SetILPosition(pInstr);
-                helper.LoadInt32(targetMdToken);
 
-                const void* module_version_id_ptr = &modules[moduleId];
+                mdMethodDef interceptorRef;
+                GenerateInterceptMethod(moduleId, target, interception, targetMdToken, &interceptorRef);
 
-                helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
-
-                helper.CallMember(wrapperMethodRef, false);
+                helper.CallMember(interceptorRef, false);
 
                 pInstr->m_opcode = CEE_NOP;
                             
@@ -744,6 +714,189 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
             }
         }
     }
+
+    return S_OK;
+}
+
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionInfo& target, const Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken)
+{
+    HRESULT hr;
+
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+
+    auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+    auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+    auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
+    auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+
+    // define mscorlib.dll
+    mdModuleRef mscorlibRef;
+    GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
+    IfFailRet(hr);
+
+    // Define System.Object
+    mdTypeRef objectTypeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemObject.data(), &objectTypeRef);
+
+    // Define an anonymous type
+    mdTypeDef newTypeDef;
+    auto className = interception.Target.TypeName + interception.Target.MethodName + "Interception"_W;
+    std::replace(className.begin(), className.end(), '.'_W, '_'_W);
+    hr = metadataEmit->DefineTypeDef(className.c_str(), tdAbstract | tdSealed,
+        objectTypeRef, NULL, &newTypeDef);
+
+    // return type
+    auto ret = target.signature.GetRet().GetRaw();
+    
+
+    auto xxx = target;
+    auto yyy = GetFunctionInfo(metadataImport, targetMdToken);
+
+    xxx.signature.TryParse();
+
+    // number of arguments: original count //+ 2: mdToken + moduleVersionPtr
+    auto numArguments = target.signature.NumberOfArguments();// +2;
+    // and one more if it's an instance method
+    if (target.signature.IsInstanceMethod())
+    {
+        numArguments += 1;
+    }
+
+    // create method sugnature
+    std::vector<BYTE> signature{};
+    //signature.push_back(callConvention);
+    signature.push_back(numArguments);
+    signature.insert(signature.end(), ret.begin(), ret.end());
+
+    auto genericArgumentCount = 0;
+
+    // insert type of this
+    if (target.signature.IsInstanceMethod())
+    {
+        auto instRaw = target.type.raw;
+        if (instRaw.empty())
+        {
+            BYTE compressedToken[40];
+            ULONG tokenLength = CorSigCompressToken(target.type.id, compressedToken);
+
+            signature.push_back(ELEMENT_TYPE_CLASS);
+            for (size_t i = 0; i < tokenLength; i++)
+            {
+                signature.push_back(compressedToken[i]);
+            }
+        }
+        else
+        {
+            signature.insert(signature.end(), instRaw.begin(), instRaw.end());
+        }
+
+        if (target.type.IsGeneric())
+        {
+            genericArgumentCount += 1;
+        }
+    }
+
+    // insert existing arguments
+    auto args = target.signature.GetMethodArguments();
+    
+    for (const auto& arg : args)
+    {
+        auto raw = arg.GetRaw();
+        
+
+        if (arg.IsGeneric())
+        {
+            genericArgumentCount += 1;
+            //callConvention = CorCallingConvention(callConvention | IMAGE_CEE_CS_CALLCONV_GENERIC);
+
+            signature.push_back(ELEMENT_TYPE_CLASS);
+        }
+
+        signature.insert(signature.end(), raw.begin(), raw.end());
+    }
+
+    // calling convention respecting generic
+    CorCallingConvention callConvention = IMAGE_CEE_CS_CALLCONV_DEFAULT;
+    if (target.isGeneric || genericArgumentCount > 0)
+    {
+        callConvention = CorCallingConvention(callConvention | IMAGE_CEE_CS_CALLCONV_GENERIC);
+    }
+
+    if (genericArgumentCount > 0)
+    {
+        signature.insert(signature.begin(), genericArgumentCount);
+    }
+
+    signature.insert(signature.begin(), callConvention);
+
+    auto raw = target.signature.GetRaw();
+    
+    /*signature.push_back(ELEMENT_TYPE_I4);
+    signature.push_back(ELEMENT_TYPE_I8);*/
+
+    hr = metadataEmit->DefineMethod(newTypeDef,
+        "__InterceptionMethod__"_W.c_str(),
+        mdStatic | mdPublic | miAggressiveInlining,
+        signature.data(),
+        signature.size(),
+        0,
+        0,
+        retMethodToken);
+
+    // define wrapper.dll
+    mdModuleRef wrapperRef;
+    GetWrapperRef(hr, metadataAssemblyEmit, wrapperRef, interception.Interceptor.AssemblyName);
+    IfFailRet(hr);
+
+    // define wrappedType
+    mdTypeRef wrapperTypeRef;
+    hr = metadataEmit->DefineTypeRefByName(
+        wrapperRef,
+        interception.Interceptor.TypeName.data(),
+        &wrapperTypeRef);
+    IfFailRet(hr);
+
+    // method
+    mdMemberRef wrapperMethodRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef, interception.Interceptor.MethodName.c_str(),
+        interception.Interceptor.Signature.data(),
+        (DWORD)(interception.Interceptor.Signature.size()),
+        &wrapperMethodRef);
+
+    // local sig
+    mdSignature localSigToken;
+    COR_SIGNATURE localSig[/*11*/] = {
+        IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
+        0,
+    };
+
+    hr = metadataEmit->GetTokenFromSig(localSig, sizeof(localSig),
+        &localSigToken);
+
+    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
+    rewriter.InitializeTiny();
+    rewriter.SetTkLocalVarSig(localSigToken);
+    ILRewriterHelper helper(&rewriter);
+    helper.SetILPosition(rewriter.GetILList()->m_pNext);
+
+    for (size_t i = 0; i < numArguments; i++)
+    {
+        helper.LoadArgument(i);
+    }
+
+    helper.LoadInt32(targetMdToken);
+
+    helper.LoadInt64(reinterpret_cast<INT64>(&modules[moduleId]));
+
+
+    helper.CallMember(wrapperMethodRef, false);
+
+    // ret
+    helper.Ret();
+
+    hr = rewriter.Export(false);
 
     return S_OK;
 }

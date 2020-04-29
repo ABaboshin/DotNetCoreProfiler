@@ -32,7 +32,7 @@
         "entityframeworkcore_metrics__enabled": "false",
         "masstransit_metrics__PublisherEnabled": "false",
         "masstransit_metrics__ConsumerEnabled": "false",
-        "redis_metrics__Enabled": "true",
+        "redis_metrics__Enabled": "false",
         "service__name": "sampleapp",
         "CORECLR_ENABLE_PROFILING": "1",
         "CORECLR_PROFILER": "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}",

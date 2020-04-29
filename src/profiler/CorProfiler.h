@@ -30,7 +30,7 @@ private:
 
     bool SkipAssembly(const wstring& name);
 
-    HRESULT Rewrite(const ModuleID& moduleId, const mdToken& callerToken);
+    HRESULT Rewrite(ModuleID moduleId, mdToken callerToken);
 
     HRESULT InjectLoadMethod(
         ModuleID moduleId,
@@ -39,6 +39,8 @@ private:
     HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMethodToken);
 
     wstring GetInterceptionLoaderClassName();
+
+    HRESULT GenerateInterceptMethod(ModuleID moduleId, const FunctionInfo& target, const Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken);
 
 public:
     CorProfiler();

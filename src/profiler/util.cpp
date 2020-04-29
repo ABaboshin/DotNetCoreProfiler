@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <iostream>
 #include "miniutf.hpp"
+#include <random>
 
 wstring GetEnvironmentValue(const wstring&name) {
   auto cstr = std::getenv(ToString(name).c_str());
@@ -135,4 +136,22 @@ wstring operator"" _W(const char* arr, size_t size) {
 wstring ToWSTRING(const char* str)
 {
     return ToWSTRING(std::string(str));
+}
+
+std::string random_string(std::size_t length)
+{
+    const std::string CHARACTERS = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    std::random_device random_device;
+    std::mt19937 generator(random_device());
+    std::uniform_int_distribution<> distribution(0, CHARACTERS.size() - 1);
+
+    std::string random_string;
+
+    for (std::size_t i = 0; i < length; ++i)
+    {
+        random_string += CHARACTERS[distribution(generator)];
+    }
+
+    return random_string;
 }
