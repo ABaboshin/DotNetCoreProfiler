@@ -7,63 +7,150 @@
 #include <vector>
 #include "clr_const.h"
 
-AssemblyInfo GetAssemblyInfo(ICorProfilerInfo8* info,
-                             const AssemblyID& assembly_id) {
-  WCHAR assembly_name[NameMaxSize];
-  DWORD assembly_name_len = 0;
-  AppDomainID app_domain_id;
-  ModuleID manifest_module_id;
-
-  auto hr = info->GetAssemblyInfo(assembly_id, NameMaxSize, &assembly_name_len,
-                                  assembly_name, &app_domain_id, &manifest_module_id);
-
-  if (FAILED(hr) || assembly_name_len == 0) {
-    return {};
-  }
-
-  WCHAR app_domain_name[NameMaxSize];
-  DWORD app_domain_name_len = 0;
-
-  hr = info->GetAppDomainInfo(app_domain_id, NameMaxSize, &app_domain_name_len,
-                              app_domain_name, nullptr);
-
-  if (FAILED(hr) || app_domain_name_len == 0) {
-    return {};
-  }
-
-  return {assembly_id, assembly_name, manifest_module_id, app_domain_id,
-          app_domain_name};
-}
-
-ModuleInfo GetModuleInfo(ICorProfilerInfo8* info, const ModuleID& module_id)
+wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& metadaImport)
 {
-  const DWORD module_path_size = 260;
-  WCHAR module_path[module_path_size]{};
-  DWORD module_path_len = 0;
-  LPCBYTE base_load_address;
-  AssemblyID assembly_id = 0;
-  DWORD module_flags = 0;
-  const HRESULT hr = info->GetModuleInfo2(
-      module_id, &base_load_address, module_path_size, &module_path_len,
-      module_path, &assembly_id, &module_flags);
-  if (FAILED(hr) || module_path_len == 0) {
-    return {};
-  }
-  return {module_id, module_path, GetAssemblyInfo(info, assembly_id),
-          module_flags};
+    wstring tokenName = ""_W;
+    bool ref_flag = false;
+    if (*pbCur == ELEMENT_TYPE_BYREF)
+    {
+        pbCur++;
+        ref_flag = true;
+    }
+
+    switch (*pbCur) {
+    case  ELEMENT_TYPE_BOOLEAN:
+        tokenName = SystemBoolean;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_CHAR:
+        tokenName = SystemChar;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_I1:
+        tokenName = SystemByte;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_U1:
+        tokenName = SystemSByte;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_U2:
+        tokenName = SystemUInt16;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_I2:
+        tokenName = SystemInt16;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_I4:
+        tokenName = SystemInt32;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_U4:
+        tokenName = SystemUInt32;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_I8:
+        tokenName = SystemInt64;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_U8:
+        tokenName = SystemUInt64;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_R4:
+        tokenName = SystemSingle;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_R8:
+        tokenName = SystemDouble;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_I:
+        tokenName = SystemIntPtr;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_U:
+        tokenName = SystemUIntPtr;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_STRING:
+        tokenName = SystemString;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_OBJECT:
+        tokenName = SystemObject;
+        pbCur++;
+        break;
+    case  ELEMENT_TYPE_CLASS:
+    case  ELEMENT_TYPE_VALUETYPE:
+    {
+        pbCur++;
+        mdToken token;
+        pbCur += CorSigUncompressToken(pbCur, &token);
+        tokenName = GetTypeInfo(metadaImport, token).name;
+        break;
+    }
+    case  ELEMENT_TYPE_SZARRAY:
+    {
+        pbCur++;
+        tokenName = GetSigTypeTokName(pbCur, metadaImport) + "[]"_W;
+        break;
+    }
+    case  ELEMENT_TYPE_GENERICINST:
+    {
+        pbCur++;
+        tokenName = GetSigTypeTokName(pbCur, metadaImport);
+        tokenName += "["_W;
+        ULONG num = 0;
+        pbCur += CorSigUncompressData(pbCur, &num);
+        for (ULONG i = 0; i < num; i++) {
+            tokenName += GetSigTypeTokName(pbCur, metadaImport);
+            if (i != num - 1) {
+                tokenName += ","_W;
+            }
+        }
+        tokenName += "]"_W;
+        break;
+    }
+    case  ELEMENT_TYPE_MVAR:
+    {
+        pbCur++;
+        ULONG num = 0;
+        pbCur += CorSigUncompressData(pbCur, &num);
+        tokenName = "!!"_W + ToWSTRING(std::to_string(num));
+        break;
+    }
+    case  ELEMENT_TYPE_VAR:
+    {
+        pbCur++;
+        ULONG num = 0;
+        pbCur += CorSigUncompressData(pbCur, &num);
+        tokenName = "!"_W + ToWSTRING(std::to_string(num));
+        break;
+    }
+    default:
+        break;
+    }
+
+    if (ref_flag) {
+        tokenName += "&"_W;
+    }
+
+    return tokenName;
 }
 
-std::vector<BYTE> GetSignatureByteRepresentation(
-    ULONG signature_length, PCCOR_SIGNATURE raw_signature) {
-  std::vector<BYTE> signature_data(signature_length);
-  for (ULONG i = 0; i < signature_length; i++) {
-    signature_data[i] = raw_signature[i];
-  }
+HRESULT CreateAssemblyRef(const ComPtr<IMetaDataAssemblyEmit> metadataAssemblyEmit, mdAssemblyRef* libRef, const std::vector<BYTE>& public_key, ASSEMBLYMETADATA metadata, const wstring& assemblyName) {
+    HRESULT hr = metadataAssemblyEmit->DefineAssemblyRef(
+        (void*)public_key.data(),
+        (ULONG)public_key.size(),
+        assemblyName.c_str(), &metadata, NULL, 0, 0,
+        libRef);
 
-  return signature_data;
+    return hr;
 }
 
-void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef)
+void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdModuleRef& libRef)
 {
     ASSEMBLYMETADATA metadata{};
     metadata.usMajorVersion = 4;
@@ -71,10 +158,10 @@ void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataA
     metadata.usBuildNumber = 0;
     metadata.usRevisionNumber = 0;
 
-    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, mscorlib);
+    hr = CreateAssemblyRef(metadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, mscorlib);
 }
 
-void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef, const wstring& assemblyName)
+void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdModuleRef& libRef, const wstring& assemblyName)
 {
     ASSEMBLYMETADATA metadata{};
     metadata.usMajorVersion = 1;
@@ -82,15 +169,5 @@ void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAs
     metadata.usBuildNumber = 0;
     metadata.usRevisionNumber = 0;
 
-    hr = CreateAssemblyRef(pMetadataAssemblyEmit, &libRef, std::vector<BYTE>(), metadata, assemblyName);
-}
-
-HRESULT CreateAssemblyRef(const ComPtr<IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, const std::vector<BYTE>& public_key, ASSEMBLYMETADATA metadata, const wstring& assemblyName) {
-    HRESULT hr = pMetadataAssemblyEmit->DefineAssemblyRef(
-        (void*)public_key.data(),
-        (ULONG)public_key.size(),
-        assemblyName.c_str(), &metadata, NULL, 0, 0,
-        mscorlib_ref);
-
-    return hr;
+    hr = CreateAssemblyRef(metadataAssemblyEmit, &libRef, std::vector<BYTE>(), metadata, assemblyName);
 }

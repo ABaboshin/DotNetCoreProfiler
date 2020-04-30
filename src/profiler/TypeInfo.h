@@ -2,6 +2,7 @@
 
 #include "cor.h"
 #include "util.h"
+#include "ComPtr.h"
 
 struct TypeInfo {
   mdToken id;
@@ -18,3 +19,6 @@ struct TypeInfo {
   }
 
 };
+
+TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
+    const mdToken& token);

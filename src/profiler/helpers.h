@@ -6,14 +6,7 @@
 #include "ModuleInfo.h"
 #include "ComPtr.h"
 
-TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
-                     const mdToken& token);
+wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& metadaImport);
 
-ModuleInfo GetModuleInfo(ICorProfilerInfo8* info, const ModuleID& module_id);
-FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
-                             const mdToken& token);
-
-void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef);
-void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& pMetadataAssemblyEmit, mdModuleRef& libRef, const wstring& assemblyName);
-
-HRESULT CreateAssemblyRef(const ComPtr< IMetaDataAssemblyEmit> pMetadataAssemblyEmit, mdAssemblyRef* mscorlib_ref, const std::vector<BYTE>& public_key, ASSEMBLYMETADATA metadata, const wstring& assemblyName);
+void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdModuleRef& libRef);
+void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdModuleRef& libRef, const wstring& assemblyName);

@@ -113,6 +113,8 @@
     <ClInclude Include="ImportInterception.h" />
     <ClInclude Include="Interception.h" />
     <ClInclude Include="Interceptor.h" />
+    <ClInclude Include="MethodArgument.h" />
+    <ClInclude Include="MethodArgumentTypeFlag.h" />
     <ClInclude Include="MethodSignature.h" />
     <ClInclude Include="miniutf.hpp" />
     <ClInclude Include="miniutfdata.h" />
@@ -125,13 +127,20 @@
     <ClInclude Include="util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AssemblyInfo.cpp" />
     <ClCompile Include="ClassFactory.cpp" />
     <ClCompile Include="CorProfiler.cpp" />
     <ClCompile Include="dllmain.cpp" />
+    <ClCompile Include="FunctionInfo.cpp" />
+    <ClCompile Include="ILRewriter.cpp" />
+    <ClCompile Include="ILRewriterHelper.cpp" />
+    <ClCompile Include="MethodArgument.cpp" />
+    <ClCompile Include="TypeInfo.cpp" />
     <ClCompile Include="helpers.cpp" />
     <ClCompile Include="interop.cpp" />
     <ClCompile Include="MethodSignature.cpp" />
     <ClCompile Include="miniutf.cpp" />
+    <ClCompile Include="ModuleInfo.cpp" />
     <ClCompile Include="util.cpp" />
   </ItemGroup>
   <ItemGroup>
