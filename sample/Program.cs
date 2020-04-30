@@ -1,13 +1,10 @@
-﻿using Interception;
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using SampleApp.Controllers;
 using SDILReader;
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
 using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 

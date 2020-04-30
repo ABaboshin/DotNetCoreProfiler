@@ -757,31 +757,23 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     mdTypeRef objectTypeRef;
     metadataEmit->DefineTypeRefByName(mscorlibRef, SystemObject.data(), &objectTypeRef);
 
-    // Define an anonymous type
+    // Define a static type
     mdTypeDef newTypeDef;
     auto className = interception.Target.TypeName + interception.Target.MethodName + "Interception"_W;
     std::replace(className.begin(), className.end(), '.'_W, '_'_W);
     hr = metadataEmit->DefineTypeDef(className.c_str(), tdAbstract | tdSealed,
         objectTypeRef, NULL, &newTypeDef);
 
+    // create method sugnature
+    std::vector<BYTE> signature = {
+        // call convention for static method
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        // number of arguments: original count + this if instance method
+        (BYTE)(target.signature.NumberOfArguments() + (target.signature.IsInstanceMethod() ? 1 : 0))
+    };
     // return type
     auto ret = target.signature.GetRet().GetRaw();
-    
-    // number of arguments: original count //+ 2: mdToken + moduleVersionPtr
-    auto numArguments = target.signature.NumberOfArguments();// +2;
-    // and one more if it's an instance method
-    if (target.signature.IsInstanceMethod())
-    {
-        numArguments += 1;
-    }
-
-    // create method sugnature
-    std::vector<BYTE> signature{};
-    //signature.push_back(callConvention);
-    signature.push_back(numArguments);
     signature.insert(signature.end(), ret.begin(), ret.end());
-
-    auto genericArgumentCount = 0;
 
     // insert this
     if (target.signature.IsInstanceMethod())
@@ -797,16 +789,10 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
         signature.push_back(ELEMENT_TYPE_OBJECT);
     }
 
-    // calling convention respecting generic
-    auto callConvention = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-
-    signature.insert(signature.begin(), callConvention);
-
-    auto raw = target.signature.GetRaw();
-    
+    // define a method
     hr = metadataEmit->DefineMethod(newTypeDef,
         "__InterceptionMethod__"_W.c_str(),
-        mdStatic | mdPublic /*| miAggressiveInlining*/,
+        mdStatic | mdPublic | miAggressiveInlining,
         signature.data(),
         signature.size(),
         0,
@@ -953,22 +939,22 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
         helper.Cast(wrapperTypeRef);
     }
 
-    //// execute
-    //std::vector<BYTE> exeucteSignature = {
-    //    IMAGE_CEE_CS_CALLCONV_HASTHIS,
-    //    0,
-    //    ELEMENT_TYPE_OBJECT
-    //};
+    //execute
+    std::vector<BYTE> executeSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        0,
+        ELEMENT_TYPE_OBJECT,
+    };
 
-    //mdMemberRef executeRef;
-    //hr = metadataEmit->DefineMemberRef(
-    //    wrapperTypeRef,
-    //    "Execute"_W.data(),
-    //    exeucteSignature.data(),
-    //    exeucteSignature.size(),
-    //    &executeRef);
+    mdMemberRef executeRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "Execute"_W.data(),
+        executeSignature.data(),
+        executeSignature.size(),
+        &executeRef);
 
-    //helper.CallMember(executeRef, false);
+    helper.CallMember(executeRef, false);
 
     // ret
     helper.Ret();
