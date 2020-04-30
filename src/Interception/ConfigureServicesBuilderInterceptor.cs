@@ -17,27 +17,27 @@ using System;
 
 namespace Interception
 {
-    public static class ConfigureServicesBuilderInterceptor
+    [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
+    public class ConfigureServicesBuilderInterceptor : BaseInterceptor
     {
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
-        public static object Invoke(object builder, object instance, object services, int mdToken, long moduleVersionPtr)
+        public override object Execute()
         {
-            Console.WriteLine($"Configure additional services {builder.GetType().Name} {instance.GetType().Name} {services.GetType().Name}");
-            
+            Console.WriteLine($"Configure additional services {_this.GetType().Name} {_parameters[0].GetType().Name} {_parameters[1].GetType().Name}");
+
             DiagnosticsObserver.ConfigureAndStart();
 
             StackExchangeRedisInterception.Configure();
 
             var loggerFactory = new SerilogLoggerFactory(CreateLogger(), false);
-            var serviceCollection = ((IServiceCollection)services);
+            var serviceCollection = ((IServiceCollection)_parameters[1]);
             serviceCollection.AddSingleton((ILoggerFactory)loggerFactory);
 
             ConfigureMetrics(loggerFactory, serviceCollection);
 
-            return MethodExecutor.ExecuteMethod(builder, new object[] { instance, services }, mdToken, moduleVersionPtr, true);
+            return MethodExecutor.ExecuteMethod(_this, new object[] { _parameters[0], _parameters[1] }, _mdToken, _moduleVersionPtr, true);
         }
 
-        private static void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
+        private void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
         {
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
@@ -63,7 +63,7 @@ namespace Interception
             serviceCollection.AddSingleton(sp => GlobalTracer.Instance);
         }
 
-        private static Logger CreateLogger()
+        private Logger CreateLogger()
         {
             var logLevel = ParseLoggingLevel(Environment.GetEnvironmentVariable("LOG_LEVEL"));
 
@@ -76,7 +76,7 @@ namespace Interception
             return logger;
         }
 
-        private static LogEventLevel ParseLoggingLevel(string logLevelRaw)
+        private LogEventLevel ParseLoggingLevel(string logLevelRaw)
         {
             Enum.TryParse(logLevelRaw, out LogEventLevel level);
             return level as LogEventLevel? ?? LogEventLevel.Verbose;

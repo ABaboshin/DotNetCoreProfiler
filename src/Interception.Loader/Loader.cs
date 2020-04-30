@@ -2,8 +2,6 @@
 using System;
 using System.Linq;
 using System.Reflection;
-using System.Reflection.Emit;
-using System.Runtime.InteropServices;
 
 namespace Interception
 {
@@ -19,34 +17,11 @@ namespace Interception
 
                 var interceptors = assembly
                     .GetTypes()
-                    .SelectMany(type => type.GetRuntimeMethods())
-                    .SelectMany(method => method.GetCustomAttributes().Select(attribute => new { method, attribute }))
+                    .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(InterceptAttribute).FullName).Any())
+                    .SelectMany(type => type.GetCustomAttributes().Select(attribute => new { type, attribute }))
                     .Where(info => info.attribute.GetType().FullName == typeof(InterceptAttribute).FullName)
                     .Select(info =>
                     {
-                        var returnType = info.method.ReturnType;
-                        var parameters = info.method.GetParameters().Select(p => p.ParameterType).ToArray();
-                        var signatureHelper = SignatureHelper.GetMethodSigHelper(info.method.CallingConvention, returnType);
-                        signatureHelper.AddArguments(parameters, requiredCustomModifiers: null, optionalCustomModifiers: null);
-                        var signatureBytes = signatureHelper.GetSignature();
-
-                        if (info.method.IsGenericMethod)
-                        {
-                            byte IMAGE_CEE_CS_CALLCONV_GENERIC = 0x10;
-                            var genericArguments = info.method.GetGenericArguments();
-
-                            var newSignatureBytes = new byte[signatureBytes.Length + 1];
-                            newSignatureBytes[0] = (byte)(signatureBytes[0] | IMAGE_CEE_CS_CALLCONV_GENERIC);
-                            newSignatureBytes[1] = (byte)genericArguments.Length;
-                            Array.Copy(signatureBytes, 1, newSignatureBytes, 2, signatureBytes.Length - 1);
-
-                            signatureBytes = newSignatureBytes;
-                        }
-
-                        int size = Marshal.SizeOf(signatureBytes[0]) * signatureBytes.Length;
-                        IntPtr ptr = Marshal.AllocHGlobal(size);
-                        Marshal.Copy(signatureBytes, 0, ptr, signatureBytes.Length);
-
                         return new ImportInterception
                         {
                             CallerAssembly = info.attribute.GetPropertyValue<string>(nameof(InterceptAttribute.CallerAssembly)),
@@ -54,11 +29,8 @@ namespace Interception
                             TargetMethodName = info.attribute.GetPropertyValue<string>(nameof(InterceptAttribute.TargetMethodName)),
                             TargetTypeName = info.attribute.GetPropertyValue<string>(nameof(InterceptAttribute.TargetTypeName)),
                             TargetMethodParametersCount = info.attribute.GetPropertyValue<int>(nameof(InterceptAttribute.TargetMethodParametersCount)),
-                            InterceptorTypeName = info.method.DeclaringType.FullName,
-                            InterceptorMethodName = info.method.Name,
-                            InterceptorAssemblyName = info.method.DeclaringType.Assembly.GetName().Name,
-                            Signature = ptr,
-                            SignatureLength = signatureBytes.Length
+                            InterceptorTypeName = info.type.FullName,
+                            InterceptorAssemblyName = info.type.Assembly.GetName().Name,
                         };
                     })
                     .ToList();
@@ -71,7 +43,7 @@ namespace Interception
 
                 var initializers = assembly
                     .GetTypes()
-                    .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(InterceptAttribute).FullName).Any())
+                    .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(InitializeAttribute).FullName).Any())
                     .ToList();
 
                 foreach (var initializer in initializers)

@@ -277,7 +277,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     hr = metadataEmit->DefineMethod(newTypeDef,
         "__InterceptionDllLoaderMethod__"_W.c_str(),
-        mdStatic | mdPublic,
+        mdStatic | mdPublic | miAggressiveInlining,
         loadMethodSignature,
         sizeof(loadMethodSignature),
         0,
@@ -359,36 +359,44 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         &appdomainTypeRef);
 
     // System.AppDomain.get_CurrentDomain()
-    COR_SIGNATURE getCurrentDomainSignatureStart[] = {
+    /*COR_SIGNATURE getCurrentDomainSignatureStart[] = {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
         0,
         ELEMENT_TYPE_CLASS,
-    };
-    ULONG startLength = sizeof(getCurrentDomainSignatureStart);
-    ULONG endLength = 0;
+    };*/
+    /*ULONG startLength = sizeof(getCurrentDomainSignatureStart);
+    ULONG endLength = 0;*/
 
     BYTE appdomainTypeRefCompressedToken[4];
     ULONG tokenLength = CorSigCompressToken(appdomainTypeRef, appdomainTypeRefCompressedToken);
 
-    COR_SIGNATURE* getCurrentDomainSignature = new COR_SIGNATURE[startLength + tokenLength];
+    std::vector<BYTE> getCurrentDomainSignature = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        0,
+        ELEMENT_TYPE_CLASS,
+    };
+
+    getCurrentDomainSignature.insert(getCurrentDomainSignature.end(), appdomainTypeRefCompressedToken, appdomainTypeRefCompressedToken + tokenLength);
+
+    /*COR_SIGNATURE* getCurrentDomainSignature = new COR_SIGNATURE[startLength + tokenLength];
     memcpy(getCurrentDomainSignature,
         getCurrentDomainSignatureStart,
         startLength);
     memcpy(&getCurrentDomainSignature[startLength],
         appdomainTypeRefCompressedToken,
-        tokenLength);
+        tokenLength);*/
 
     mdMemberRef getCurrentDomainMethodRef;
     hr = metadataEmit->DefineMemberRef(
         appdomainTypeRef,
         get_CurrentDomain.data(),
-        getCurrentDomainSignature,
-        startLength + tokenLength,
+        getCurrentDomainSignature.data(),
+        getCurrentDomainSignature.size(),
         &getCurrentDomainMethodRef);
-    delete[] getCurrentDomainSignature;
+    //delete[] getCurrentDomainSignature;
 
     // Assembly.GetType
-    COR_SIGNATURE assemblyGetTypeSignatureStart[] = {
+    /*COR_SIGNATURE assemblyGetTypeSignatureStart[] = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
         1,
         ELEMENT_TYPE_CLASS
@@ -399,12 +407,22 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     };
 
     startLength = sizeof(assemblyGetTypeSignatureStart);
-    endLength = sizeof(assemblyGetTypeSignatureEnd);
+    endLength = sizeof(assemblyGetTypeSignatureEnd);*/
 
     BYTE typeRefCompressedToken[4];
     tokenLength = CorSigCompressToken(typeRef, typeRefCompressedToken);
 
-    COR_SIGNATURE* assemblyGetTypeSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
+    std::vector<BYTE> assemblyGetTypeSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_CLASS
+    };
+
+    assemblyGetTypeSignature.insert(assemblyGetTypeSignature.end(), typeRefCompressedToken, typeRefCompressedToken + tokenLength);
+
+    assemblyGetTypeSignature.push_back(ELEMENT_TYPE_STRING);
+
+    /*COR_SIGNATURE* assemblyGetTypeSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
     memcpy(assemblyGetTypeSignature,
         assemblyGetTypeSignatureStart,
         startLength);
@@ -413,15 +431,15 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         tokenLength);
     memcpy(&assemblyGetTypeSignature[startLength + tokenLength],
         assemblyGetTypeSignatureEnd,
-        endLength);
+        endLength);*/
 
     mdMemberRef assemblyGetTypeMemberRef;
     hr = metadataEmit->DefineMemberRef(
         assemblyTypeRef, GetType.data(),
-        assemblyGetTypeSignature,
-        startLength + tokenLength + endLength,
+        assemblyGetTypeSignature.data(),
+        assemblyGetTypeSignature.size(),
         &assemblyGetTypeMemberRef);
-    delete[] assemblyGetTypeSignature;
+    //delete[] assemblyGetTypeSignature;
 
     // AppDomain.Load
     COR_SIGNATURE appdomainLoadSignatureStart[] = {
@@ -433,8 +451,8 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         ELEMENT_TYPE_SZARRAY,
         ELEMENT_TYPE_U1
     };
-    startLength = sizeof(appdomainLoadSignatureStart);
-    endLength = sizeof(appdomainLoadSignatureEnd);
+    auto startLength = sizeof(appdomainLoadSignatureStart);
+    auto endLength = sizeof(appdomainLoadSignatureEnd);
 
     BYTE assemblyTypeRefCompressedToken[4];
     tokenLength = CorSigCompressToken(assemblyTypeRef, assemblyTypeRefCompressedToken);
@@ -652,7 +670,7 @@ bool CorProfiler::SkipAssembly(const wstring& name)
     return std::find(skipAssemblies.begin(), skipAssemblies.end(), name) != skipAssemblies.end();
 }
 
-HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToken)
+HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 {
     HRESULT hr;
 
@@ -666,9 +684,6 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
     auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
-    auto functionInfo = GetFunctionInfo(metadataImport, callerToken);
-    hr = functionInfo.signature.TryParse();
-
     auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
 
     if (!SkipAssembly(moduleInfo.assembly.name)) for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
@@ -677,8 +692,7 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
             continue;
         }
 
-        auto target =
-            GetFunctionInfo(metadataImport, pInstr->m_Arg32);
+        auto target = GetFunctionInfo(metadataImport, pInstr->m_Arg32);
         target.signature.TryParse();
 
         auto targetMdToken = pInstr->m_Arg32;
@@ -699,44 +713,18 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
                 && target.name == interception.Target.MethodName && interception.Target.MethodParametersCount == target.signature.NumberOfArguments()
                 )
             {
-                auto m = modules[moduleId];
-
                 std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
                     << " num args " << target.signature.NumberOfArguments()
                     << " from assembly " << ToString(moduleInfo.assembly.name)
-                    << " module " << m
                     << std::endl << std::flush;
-
-                // define wrapper.dll
-                mdModuleRef wrapperRef;
-                GetWrapperRef(hr, metadataAssemblyEmit, wrapperRef, interception.Interceptor.AssemblyName);
-                IfFailRet(hr);
-
-                // define wrappedType
-                mdTypeRef wrapperTypeRef;
-                hr = metadataEmit->DefineTypeRefByName(
-                    wrapperRef,
-                    interception.Interceptor.TypeName.data(),
-                    &wrapperTypeRef);
-                IfFailRet(hr);
-
-                // method
-                mdMemberRef wrapperMethodRef;
-                hr = metadataEmit->DefineMemberRef(
-                    wrapperTypeRef, interception.Interceptor.MethodName.c_str(),
-                    interception.Interceptor.Signature.data(),
-                    (DWORD)(interception.Interceptor.Signature.size()),
-                    &wrapperMethodRef);
 
                 ILRewriterHelper helper(&rewriter);
                 helper.SetILPosition(pInstr);
-                helper.LoadInt32(targetMdToken);
 
-                const void* module_version_id_ptr = &modules[moduleId];
+                mdMethodDef interceptorRef;
+                GenerateInterceptMethod(moduleId, target, interception, targetMdToken, &interceptorRef);
 
-                helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
-
-                helper.CallMember(wrapperMethodRef, false);
+                helper.CallMember(interceptorRef, false);
 
                 pInstr->m_opcode = CEE_NOP;
                             
@@ -744,6 +732,234 @@ HRESULT CorProfiler::Rewrite(const ModuleID& moduleId, const mdToken& callerToke
             }
         }
     }
+
+    return S_OK;
+}
+
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionInfo& target, const Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken)
+{
+    HRESULT hr;
+
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+
+    auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+    auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+    auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
+    auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+
+    // define mscorlib.dll
+    mdModuleRef mscorlibRef;
+    GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
+    IfFailRet(hr);
+
+    // Define System.Object
+    mdTypeRef objectTypeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemObject.data(), &objectTypeRef);
+
+    // Define a static type
+    mdTypeDef newTypeDef;
+    auto className = interception.Target.TypeName + interception.Target.MethodName + "Interception"_W;
+    std::replace(className.begin(), className.end(), '.'_W, '_'_W);
+    hr = metadataEmit->DefineTypeDef(className.c_str(), tdAbstract | tdSealed,
+        objectTypeRef, NULL, &newTypeDef);
+
+    // create method sugnature
+    std::vector<BYTE> signature = {
+        // call convention for static method
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        // number of arguments: original count + this if instance method
+        (BYTE)(target.signature.NumberOfArguments() + (target.signature.IsInstanceMethod() ? 1 : 0))
+    };
+    // return type
+    auto ret = target.signature.GetRet().GetRaw();
+    signature.insert(signature.end(), ret.begin(), ret.end());
+
+    // insert this
+    if (target.signature.IsInstanceMethod())
+    {
+        signature.push_back(ELEMENT_TYPE_OBJECT);
+    }
+
+    // insert existing arguments
+    auto args = target.signature.GetMethodArguments();
+    
+    for (const auto& arg : args)
+    {
+        signature.push_back(ELEMENT_TYPE_OBJECT);
+    }
+
+    // define a method
+    hr = metadataEmit->DefineMethod(newTypeDef,
+        "__InterceptionMethod__"_W.c_str(),
+        mdStatic | mdPublic | miAggressiveInlining,
+        signature.data(),
+        signature.size(),
+        0,
+        0,
+        retMethodToken);
+
+    // define wrapper.dll
+    mdModuleRef wrapperRef;
+    GetWrapperRef(hr, metadataAssemblyEmit, wrapperRef, interception.Interceptor.AssemblyName);
+    IfFailRet(hr);
+
+    // define wrappedType
+    mdTypeRef wrapperTypeRef;
+    hr = metadataEmit->DefineTypeRefByName(
+        wrapperRef,
+        interception.Interceptor.TypeName.data(),
+        &wrapperTypeRef);
+    IfFailRet(hr);
+
+    // local sig
+    mdSignature localSigToken;
+    std::vector<BYTE> localSig = {
+        IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
+        1,
+        ELEMENT_TYPE_CLASS
+    };
+
+    BYTE wrapperTypeCompressedToken[4];
+    ULONG tokenLength = CorSigCompressToken(wrapperTypeRef, wrapperTypeCompressedToken);
+    localSig.insert(localSig.end(), wrapperTypeCompressedToken, wrapperTypeCompressedToken + tokenLength);
+
+    hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(),
+        &localSigToken);
+
+    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
+    rewriter.InitializeTiny();
+    rewriter.SetTkLocalVarSig(localSigToken);
+    ILRewriterHelper helper(&rewriter);
+    helper.SetILPosition(rewriter.GetILList()->m_pNext);
+
+    // ctor
+    std::vector<BYTE> ctorSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        0,
+        ELEMENT_TYPE_VOID
+    };
+
+    mdMemberRef ctorRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        ctor.data(),
+        ctorSignature.data(),
+        ctorSignature.size(),
+        &ctorRef);
+
+    helper.NewObject(ctorRef);
+
+    //SetThis
+    std::vector<BYTE> setThisSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_OBJECT
+    };
+
+    mdMemberRef setThisRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "SetThis"_W.data(),
+        setThisSignature.data(),
+        setThisSignature.size(),
+        &setThisRef);
+
+    auto shift = 0;
+    if (target.signature.IsInstanceMethod())
+    {
+        shift += 1;
+        helper.LoadArgument(0);
+        helper.CallMember(setThisRef, false);
+        helper.Cast(wrapperTypeRef);
+    }
+
+    //SetMdToken
+    std::vector<BYTE> setMdTokenSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_I4
+    };
+
+    mdMemberRef setMdTokenRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "SetMdToken"_W.data(),
+        setMdTokenSignature.data(),
+        setMdTokenSignature.size(),
+        &setMdTokenRef);
+
+    helper.LoadInt32(targetMdToken);
+    helper.CallMember(setMdTokenRef, false);
+    helper.Cast(wrapperTypeRef);
+
+    //SetModuleVersionPtr
+    std::vector<BYTE> setModuleVersionPtrSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_I8
+    };
+
+    mdMemberRef setModuleVersionPtrRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "SetModuleVersionPtr"_W.data(),
+        setModuleVersionPtrSignature.data(),
+        setModuleVersionPtrSignature.size(),
+        &setModuleVersionPtrRef);
+
+    const void* module_version_id_ptr = &modules[moduleId];
+    helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
+    helper.CallMember(setModuleVersionPtrRef, false);
+    helper.Cast(wrapperTypeRef);
+
+    // AddParameter
+    std::vector<BYTE> addParameterSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_OBJECT
+    };
+
+    mdMemberRef addParameterRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "AddParameter"_W.data(),
+        addParameterSignature.data(),
+        addParameterSignature.size(),
+        &addParameterRef);
+
+    for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
+    {
+        helper.LoadArgument(shift + i);
+        helper.CallMember(addParameterRef, false);
+        helper.Cast(wrapperTypeRef);
+    }
+
+    //execute
+    std::vector<BYTE> executeSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        0,
+        ELEMENT_TYPE_OBJECT,
+    };
+
+    mdMemberRef executeRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "Execute"_W.data(),
+        executeSignature.data(),
+        executeSignature.size(),
+        &executeRef);
+
+    helper.CallMember(executeRef, false);
+
+    // ret
+    helper.Ret();
+
+    hr = rewriter.Export(false);
 
     return S_OK;
 }
@@ -1108,9 +1324,7 @@ void CorProfiler::AddInterception(ImportInterception interception)
             ToWSTRING(interception.TargetMethodName),
             interception.TargetMethodParametersCount),
         Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
-            ToWSTRING(interception.InterceptorTypeName),
-            ToWSTRING(interception.InterceptorMethodName),
-            std::vector<BYTE>(interception.Signature, interception.Signature + interception.SignatureLength))
+            ToWSTRING(interception.InterceptorTypeName))
     ));
 }
 

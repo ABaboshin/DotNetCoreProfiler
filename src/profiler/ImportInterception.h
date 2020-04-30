@@ -10,8 +10,5 @@ typedef struct _ImportInterception
 	char* TargetTypeName;
 	int TargetMethodParametersCount;
 	char* InterceptorTypeName;
-	char* InterceptorMethodName;
 	char* InterceptorAssemblyName;
-	BYTE* Signature;
-	int SignatureLength;
 } ImportInterception;

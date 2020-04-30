@@ -6,19 +6,14 @@
 struct Interceptor {
 	wstring AssemblyName;
 	wstring TypeName;
-	wstring MethodName;
-	std::vector<BYTE> Signature;
 
-	Interceptor(const wstring& assemblyName, const wstring& typeName, const wstring& methodName, std::vector<BYTE> signature) :
+	Interceptor(const wstring& assemblyName, const wstring& typeName) :
 		AssemblyName(assemblyName),
-		TypeName(typeName),
-		MethodName(methodName),
-		Signature(signature) {}
+		TypeName(typeName) {}
 
 	Interceptor() :
 		AssemblyName(""_W),
-		TypeName(""_W),
-		MethodName(""_W) {}
+		TypeName(""_W) {}
 
 	Interceptor& operator=(const Interceptor& b)
 	{
@@ -26,8 +21,6 @@ struct Interceptor {
 		{
 			AssemblyName = b.AssemblyName;
 			TypeName = b.TypeName;
-			MethodName = b.MethodName;
-			Signature = b.Signature;
 		}
 
 		return *this;

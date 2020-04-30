@@ -31,5 +31,6 @@ const auto SystemAppDomain = "System.AppDomain"_W;
 const auto get_CurrentDomain = "get_CurrentDomain"_W;
 const auto Load = "Load"_W;
 const auto GetType = "GetType"_W;
+const auto ctor = ".ctor"_W;
 
 const size_t NameMaxSize = 1024;

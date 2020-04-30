@@ -418,7 +418,9 @@ TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
             return {};
         }
 
-        return { token, GetSigTypeTokName(signature, metadata_import) };
+        auto raw = std::vector<BYTE>(&signature[0], &signature[signature_length]);
+
+        return { token, GetSigTypeTokName(signature, metadata_import), raw };
     } break;
     case mdtModuleRef:
         //std::cout << "mdtModuleRef" << std::endl;
@@ -436,7 +438,7 @@ TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
         return {};
     }
 
-    return { token, type_name };
+    return { token, type_name, {} };
 }
 
 wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& pImport)

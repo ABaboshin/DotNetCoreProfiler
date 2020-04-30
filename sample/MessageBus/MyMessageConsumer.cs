@@ -19,6 +19,7 @@ namespace SampleApp.MessageBus
         public async Task Consume(ConsumeContext<MyMessage> context)
         {
             _logger.LogInformation("MyMessageConsumer.Consume");
+            Console.WriteLine("Start consuming");
             await Task.Delay(3000);
 
             var client = new HttpClient();
@@ -30,6 +31,8 @@ namespace SampleApp.MessageBus
             };
 
             var response = await client.SendAsync(request);
+
+            Console.WriteLine("Done consuming");
         }
     }
 }

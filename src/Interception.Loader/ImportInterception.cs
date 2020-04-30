@@ -12,9 +12,6 @@ namespace Interception
         public string TargetTypeName;
         public int TargetMethodParametersCount;
         public string InterceptorTypeName;
-        public string InterceptorMethodName;
         public string InterceptorAssemblyName;
-        public IntPtr Signature;
-        public int SignatureLength;
     }
 }
