@@ -11,17 +11,8 @@ wstring ToWSTRING(const std::string& str);
 std::string ToString(const wstring& wstr);
 
 wstring GetEnvironmentValue(const wstring& name);
-std::vector<wstring> GetEnvironmentValues(const wstring& name, char delim);
-
-std::vector<wstring> Split(const wstring&s, wchar_t delim);
 
 wstring Trim(const wstring&str);
-
-wstring HexStr(const unsigned char* data, int len);
-
-std::ostream& operator<<(std::ostream& os, REFGUID guid);
-
-std::ostream& operator<<(std::ostream& os, std::vector<BYTE> vec);
 
 #include <numeric>
 #include <random>

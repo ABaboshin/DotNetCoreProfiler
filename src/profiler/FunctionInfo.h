@@ -37,3 +37,6 @@ struct FunctionInfo {
 
   bool IsValid() const { return id != 0; }
 };
+
+FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
+    const mdToken& token);

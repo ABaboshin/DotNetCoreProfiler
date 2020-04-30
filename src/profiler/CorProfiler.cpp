@@ -228,7 +228,7 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef)
     ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
     helper.CallMember(retMethodToken, false);
-    hr = rewriter.Export(false);
+    hr = rewriter.Export();
 
     return S_OK;
 }
@@ -241,9 +241,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
 
-    auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
     auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
-    auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
     auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
     // define mscorlib.dll
@@ -284,7 +282,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         0,
         retMethodToken);
 
-    // call GetAssemblyBytes
+    // define GetAssemblyBytes
     mdMethodDef getAssemblyMethodDef;
     COR_SIGNATURE getAssemblyBytesSignature[] = {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
@@ -358,17 +356,8 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         SystemAppDomain.data(),
         &appdomainTypeRef);
 
-    // System.AppDomain.get_CurrentDomain()
-    /*COR_SIGNATURE getCurrentDomainSignatureStart[] = {
-        IMAGE_CEE_CS_CALLCONV_DEFAULT,
-        0,
-        ELEMENT_TYPE_CLASS,
-    };*/
-    /*ULONG startLength = sizeof(getCurrentDomainSignatureStart);
-    ULONG endLength = 0;*/
-
-    BYTE appdomainTypeRefCompressedToken[4];
-    ULONG tokenLength = CorSigCompressToken(appdomainTypeRef, appdomainTypeRefCompressedToken);
+    BYTE compressedToken[10];
+    ULONG tokenLength = CorSigCompressToken(appdomainTypeRef, compressedToken);
 
     std::vector<BYTE> getCurrentDomainSignature = {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
@@ -376,15 +365,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         ELEMENT_TYPE_CLASS,
     };
 
-    getCurrentDomainSignature.insert(getCurrentDomainSignature.end(), appdomainTypeRefCompressedToken, appdomainTypeRefCompressedToken + tokenLength);
-
-    /*COR_SIGNATURE* getCurrentDomainSignature = new COR_SIGNATURE[startLength + tokenLength];
-    memcpy(getCurrentDomainSignature,
-        getCurrentDomainSignatureStart,
-        startLength);
-    memcpy(&getCurrentDomainSignature[startLength],
-        appdomainTypeRefCompressedToken,
-        tokenLength);*/
+    getCurrentDomainSignature.insert(getCurrentDomainSignature.end(), compressedToken, compressedToken + tokenLength);
 
     mdMemberRef getCurrentDomainMethodRef;
     hr = metadataEmit->DefineMemberRef(
@@ -393,24 +374,8 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         getCurrentDomainSignature.data(),
         getCurrentDomainSignature.size(),
         &getCurrentDomainMethodRef);
-    //delete[] getCurrentDomainSignature;
 
-    // Assembly.GetType
-    /*COR_SIGNATURE assemblyGetTypeSignatureStart[] = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_CLASS
-    };
-
-    COR_SIGNATURE assemblyGetTypeSignatureEnd[] = {
-        ELEMENT_TYPE_STRING
-    };
-
-    startLength = sizeof(assemblyGetTypeSignatureStart);
-    endLength = sizeof(assemblyGetTypeSignatureEnd);*/
-
-    BYTE typeRefCompressedToken[4];
-    tokenLength = CorSigCompressToken(typeRef, typeRefCompressedToken);
+    tokenLength = CorSigCompressToken(typeRef, compressedToken);
 
     std::vector<BYTE> assemblyGetTypeSignature = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -418,20 +383,9 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         ELEMENT_TYPE_CLASS
     };
 
-    assemblyGetTypeSignature.insert(assemblyGetTypeSignature.end(), typeRefCompressedToken, typeRefCompressedToken + tokenLength);
+    assemblyGetTypeSignature.insert(assemblyGetTypeSignature.end(), compressedToken, compressedToken + tokenLength);
 
     assemblyGetTypeSignature.push_back(ELEMENT_TYPE_STRING);
-
-    /*COR_SIGNATURE* assemblyGetTypeSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
-    memcpy(assemblyGetTypeSignature,
-        assemblyGetTypeSignatureStart,
-        startLength);
-    memcpy(&assemblyGetTypeSignature[startLength],
-        typeRefCompressedToken,
-        tokenLength);
-    memcpy(&assemblyGetTypeSignature[startLength + tokenLength],
-        assemblyGetTypeSignatureEnd,
-        endLength);*/
 
     mdMemberRef assemblyGetTypeMemberRef;
     hr = metadataEmit->DefineMemberRef(
@@ -439,78 +393,46 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         assemblyGetTypeSignature.data(),
         assemblyGetTypeSignature.size(),
         &assemblyGetTypeMemberRef);
-    //delete[] assemblyGetTypeSignature;
 
     // AppDomain.Load
-    COR_SIGNATURE appdomainLoadSignatureStart[] = {
+    tokenLength = CorSigCompressToken(assemblyTypeRef, compressedToken);
+
+    std::vector<BYTE> appdomainLoadSignature = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
         1,
         ELEMENT_TYPE_CLASS
     };
-    COR_SIGNATURE appdomainLoadSignatureEnd[] = {
-        ELEMENT_TYPE_SZARRAY,
-        ELEMENT_TYPE_U1
-    };
-    auto startLength = sizeof(appdomainLoadSignatureStart);
-    auto endLength = sizeof(appdomainLoadSignatureEnd);
-
-    BYTE assemblyTypeRefCompressedToken[4];
-    tokenLength = CorSigCompressToken(assemblyTypeRef, assemblyTypeRefCompressedToken);
-
-    COR_SIGNATURE* appdomainLoadSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
-    memcpy(appdomainLoadSignature,
-        appdomainLoadSignatureStart,
-        startLength);
-    memcpy(&appdomainLoadSignature[startLength],
-        assemblyTypeRefCompressedToken,
-        tokenLength);
-    memcpy(&appdomainLoadSignature[startLength + tokenLength],
-        appdomainLoadSignatureEnd,
-        endLength);
+    appdomainLoadSignature.insert(appdomainLoadSignature.end(), compressedToken, compressedToken + tokenLength);
+    appdomainLoadSignature.push_back(ELEMENT_TYPE_SZARRAY);
+    appdomainLoadSignature.push_back(ELEMENT_TYPE_U1);
 
     mdMemberRef appdomainLoadMemberRef;
     hr = metadataEmit->DefineMemberRef(
         appdomainTypeRef, Load.data(),
-        appdomainLoadSignature,
-        startLength + tokenLength + endLength,
+        appdomainLoadSignature.data(),
+        appdomainLoadSignature.size(),
         &appdomainLoadMemberRef);
-    delete[] appdomainLoadSignature;
 
     // Activator.CreateInstance
-    COR_SIGNATURE activatorCreateInstanceSignatureStart[] = {
+    tokenLength = CorSigCompressToken(typeRef, compressedToken);
+
+    std::vector<BYTE> activatorCreateInstanceSignature = {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
         2,
         ELEMENT_TYPE_OBJECT,
         ELEMENT_TYPE_CLASS
     };
-    COR_SIGNATURE activatorCreateInstanceSignatureEnd[] = {
-        ELEMENT_TYPE_SZARRAY,
-        ELEMENT_TYPE_OBJECT
-    };
-    startLength = sizeof(activatorCreateInstanceSignatureStart);
-    endLength = sizeof(activatorCreateInstanceSignatureEnd);
 
-    /*BYTE typeRefCompressedToken[4];*/
-    tokenLength = CorSigCompressToken(typeRef, typeRefCompressedToken);
-
-    COR_SIGNATURE* activatorCreateInstanceSignature = new COR_SIGNATURE[startLength + tokenLength + endLength];
-    memcpy(activatorCreateInstanceSignature,
-        activatorCreateInstanceSignatureStart,
-        startLength);
-    memcpy(&activatorCreateInstanceSignature[startLength],
-        typeRefCompressedToken,
-        tokenLength);
-    memcpy(&activatorCreateInstanceSignature[startLength + tokenLength],
-        activatorCreateInstanceSignatureEnd,
-        endLength);
+    activatorCreateInstanceSignature.insert(activatorCreateInstanceSignature.end(), compressedToken, compressedToken + tokenLength);
+    activatorCreateInstanceSignature.push_back(ELEMENT_TYPE_SZARRAY);
+    activatorCreateInstanceSignature.push_back(ELEMENT_TYPE_OBJECT);
 
     mdMemberRef activatorCreateInstanceMemberRef;
     hr = metadataEmit->DefineMemberRef(
         activatorTypeRef, CreateInstance.data(),
-        activatorCreateInstanceSignature,
-        startLength + tokenLength + endLength,
+        activatorCreateInstanceSignature.data(),
+        activatorCreateInstanceSignature.size(),
         &activatorCreateInstanceMemberRef);
-    delete[] activatorCreateInstanceSignature;
 
     // Assembly.CreateInstance
     COR_SIGNATURE assemblyCreateInstanceSignature[] = {
@@ -540,7 +462,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     // local sig
     mdSignature localSigToken;
-    COR_SIGNATURE localSig[/*11*/] = {
+    std::vector<BYTE> localSig = {
         IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
         4,
         ELEMENT_TYPE_I, // assemblyPtr
@@ -551,7 +473,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         ELEMENT_TYPE_OBJECT
     };
 
-    hr = metadataEmit->GetTokenFromSig(localSig, sizeof(localSig),
+    hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(),
         &localSigToken);
 
     ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
@@ -626,7 +548,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     // ret
     helper.Ret();
 
-    hr = rewriter.Export(false);
+    hr = rewriter.Export();
 
     return S_OK;
 }
@@ -728,7 +650,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 
                 pInstr->m_opcode = CEE_NOP;
                             
-                IfFailRet(rewriter.Export(false));
+                IfFailRet(rewriter.Export());
             }
         }
     }
@@ -816,13 +738,8 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     mdSignature localSigToken;
     std::vector<BYTE> localSig = {
         IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
-        1,
-        ELEMENT_TYPE_CLASS
+        0
     };
-
-    BYTE wrapperTypeCompressedToken[4];
-    ULONG tokenLength = CorSigCompressToken(wrapperTypeRef, wrapperTypeCompressedToken);
-    localSig.insert(localSig.end(), wrapperTypeCompressedToken, wrapperTypeCompressedToken + tokenLength);
 
     hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(),
         &localSigToken);
@@ -975,7 +892,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     // ret
     helper.Ret();
 
-    hr = rewriter.Export(false);
+    hr = rewriter.Export();
 
     return S_OK;
 }

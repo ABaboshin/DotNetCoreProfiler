@@ -38,6 +38,13 @@ add_library("DotNetCoreProfiler.static" STATIC
     util.cpp
     miniutf.cpp
     MethodSignature.cpp
+    AssemblyInfo.cpp
+    FunctionInfo.cpp
+    ModuleInfo.cpp
+    TypeInfo.cpp
+    MethodArgument.cpp
+    ILRewriter.cpp
+    ILRewriterHelper.cpp
     ${GENERATED_OBJ_FILES}
 )
 

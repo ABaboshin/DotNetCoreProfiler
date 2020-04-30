@@ -4,28 +4,7 @@
 #include "ComPtr.h"
 #include "TypeInfo.h"
 #include "util.h"
-
-enum MethodArgumentTypeFlag
-{
-    TypeFlagByRef = 0x01,
-    TypeFlagVoid = 0x02,
-    TypeFlagBoxedType = 0x04
-};
-
-struct MethodArgument {
-    ULONG offset;
-    ULONG length;
-    PCCOR_SIGNATURE pbBase;
-    mdToken GetTypeTok(const ComPtr<IMetaDataEmit2> pEmit, mdAssemblyRef corLibRef) const;
-    wstring GetTypeTokName(ComPtr<IMetaDataImport2>& pImport) const;
-    int GetTypeFlags(unsigned& elementType) const;
-    std::vector<BYTE> GetRaw() const {
-        return std::vector<BYTE>(&pbBase[offset], &pbBase[offset + length]);
-    }
-    bool IsGeneric() const {
-        return pbBase[offset] == ELEMENT_TYPE_GENERICINST;
-    }
-};
+#include "MethodArgument.h"
 
 struct MethodSignature {
 private:
@@ -43,7 +22,6 @@ public:
     };
     ULONG NumberOfTypeArguments() const { return numberOfTypeArguments; }
     ULONG NumberOfArguments() const { return numberOfArguments; }
-    wstring str() const { return HexStr(pbBase, len); }
     MethodArgument GetRet() const { return  ret; }
     std::vector<MethodArgument> GetMethodArguments() const { return params; }
     HRESULT TryParse();
@@ -65,14 +43,3 @@ public:
         return std::vector<BYTE>(&pbBase[0], &pbBase[len]);
     }
 };
-
-bool ParseType(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd);
-bool ParseByte(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd, unsigned char* pbOut);
-bool ParseTypeDefOrRefEncoded(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd,
-    unsigned char* pIndexTypeOut, unsigned* pIndexOut);
-bool ParseNumber(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd, unsigned* pOut);
-
-TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
-    const mdToken& token);
-
-wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& pImport);
