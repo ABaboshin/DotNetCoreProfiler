@@ -37,38 +37,10 @@ namespace SampleApp.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<MyEntity>>> Get()
         {
-            await Test();
-
-            Test2();
-
-            Test3();
-
-            var test = (ValuesController)Test4("xx", false);
-
             _myDbContext.Database.ExecuteSqlCommand("SELECT 1;");
             await _myDbContext.Database.ExecuteSqlCommandAsync("SELECT 2;");
 
             return await _myDbContext.MyEntities.Where(e => e.Id > 0).ToListAsync();
-        }
-
-        void Test2()
-        { 
-        }
-
-        int Test3()
-        {
-            return 4;
-        }
-
-        object Test4(string s, bool i)
-        {
-            return this;
-        }
-
-        async Task<int> Test()
-        {
-            await Task.Delay(1000);
-            return 3;
         }
 
         /// <summary>
