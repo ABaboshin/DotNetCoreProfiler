@@ -2,7 +2,7 @@
 
 namespace Interception
 {
-    [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
     public class InterceptAttribute : Attribute
     {
         public string CallerAssembly { get; set; }

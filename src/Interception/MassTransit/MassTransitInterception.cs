@@ -17,7 +17,7 @@ namespace Interception.MassTransit
     {
         public static MassTransitConfiguration MassTransitConfiguration;
 
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit.RabbitMqTransport", TargetMethodName = "CreateUsingRabbitMq", TargetTypeName = "MassTransit.BusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
+        //[Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit.RabbitMqTransport", TargetMethodName = "CreateUsingRabbitMq", TargetTypeName = "MassTransit.BusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
         public static object CreateUsingRabbitMq(object selector, object configure, int mdToken, long moduleVersionPtr)
         {
             var configuration = new ConfigurationBuilder()
@@ -41,7 +41,7 @@ namespace Interception.MassTransit
             return MethodExecutor.ExecuteMethod(null, new object[] { selector, myConfigure }, mdToken, moduleVersionPtr);
         }
 
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1[!1]", TargetMethodParametersCount = 1)]
+        //[Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1[!1]", TargetMethodParametersCount = 1)]
         public static object Consume(object consumer, object context, int mdToken, long moduleVersionPtr)
         {
             var method = consumer.GetType().GetMethod("Consume");

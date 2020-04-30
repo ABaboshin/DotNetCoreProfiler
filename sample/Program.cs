@@ -1,6 +1,8 @@
-﻿using MassTransit;
+﻿using Interception;
+using MassTransit;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
+using SampleApp.Controllers;
 using SDILReader;
 using System;
 using System.Linq;
@@ -21,40 +23,57 @@ namespace SampleApp
         public static void Main(string[] args)
         {
             //Test();
-            //var methods = typeof(Program).GetMethods();
-            //var method = methods.Where(m => m.Name == "Test").First();
+            var methods = typeof(ConfigureServicesBuilderInterceptor).GetMethods();
+            var method = methods.Where(m => m.Name == "SetThis").First();
 
-            //var returnType = method.ReturnType;
-            //var parameters = method.GetParameters().Select(p => p.ParameterType).ToArray();
-            //var signatureHelper = SignatureHelper.GetMethodSigHelper(method.CallingConvention, returnType);
-            //signatureHelper.AddArguments(parameters, requiredCustomModifiers: null, optionalCustomModifiers: null);
-            //var signatureBytes = signatureHelper.GetSignature();
+            var returnType = method.ReturnType;
+            var parameters = method.GetParameters().Select(p => p.ParameterType).ToArray();
+            var signatureHelper = SignatureHelper.GetMethodSigHelper(method.CallingConvention, returnType);
+            signatureHelper.AddArguments(parameters, requiredCustomModifiers: null, optionalCustomModifiers: null);
+            var signatureBytes = signatureHelper.GetSignature();
 
-            //if (method.IsGenericMethod)
-            //{
-            //    byte IMAGE_CEE_CS_CALLCONV_GENERIC = 0x10;
-            //    var genericArguments = method.GetGenericArguments();
+            if (method.IsGenericMethod)
+            {
+                byte IMAGE_CEE_CS_CALLCONV_GENERIC = 0x10;
+                var genericArguments = method.GetGenericArguments();
 
-            //    var newSignatureBytes = new byte[signatureBytes.Length + 1];
-            //    newSignatureBytes[0] = (byte)(signatureBytes[0] | IMAGE_CEE_CS_CALLCONV_GENERIC);
-            //    newSignatureBytes[1] = (byte)genericArguments.Length;
-            //    Array.Copy(signatureBytes, 1, newSignatureBytes, 2, signatureBytes.Length - 1);
+                var newSignatureBytes = new byte[signatureBytes.Length + 1];
+                newSignatureBytes[0] = (byte)(signatureBytes[0] | IMAGE_CEE_CS_CALLCONV_GENERIC);
+                newSignatureBytes[1] = (byte)genericArguments.Length;
+                Array.Copy(signatureBytes, 1, newSignatureBytes, 2, signatureBytes.Length - 1);
 
-            //    signatureBytes = newSignatureBytes;
-            //}
+                signatureBytes = newSignatureBytes;
+            }
 
-            //foreach (var b in signatureBytes)
-            //{
-            //    Console.WriteLine(b.ToString("X2"));
-            //}
+            foreach (var b in signatureBytes)
+            {
+                Console.WriteLine(b.ToString("X2"));
+            }
 
+            try
+            {
+                CreateWebHostBuilder(args).Build().Run();
+            }
+            catch (Exception ex)
+            {
 
-            CreateWebHostBuilder(args).Build().Run();
+                throw;
+            }
         }
 
-        public Program(string str)
+        static void Test4(object obj)
+        {
+            new Program().Test1(obj);
+        }
+
+        public Program()
         {
 
+        }
+
+        public Program Test1(object obj)
+        {
+            return this;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

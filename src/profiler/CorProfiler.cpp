@@ -749,12 +749,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     // return type
     auto ret = target.signature.GetRet().GetRaw();
     
-
-    auto xxx = target;
-    auto yyy = GetFunctionInfo(metadataImport, targetMdToken);
-
-    xxx.signature.TryParse();
-
     // number of arguments: original count //+ 2: mdToken + moduleVersionPtr
     auto numArguments = target.signature.NumberOfArguments();// +2;
     // and one more if it's an instance method
@@ -771,31 +765,10 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
 
     auto genericArgumentCount = 0;
 
-    // insert type of this
+    // insert this
     if (target.signature.IsInstanceMethod())
     {
         signature.push_back(ELEMENT_TYPE_OBJECT);
-        /*auto instRaw = target.type.raw;
-        if (instRaw.empty())
-        {
-            BYTE compressedToken[40];
-            ULONG tokenLength = CorSigCompressToken(target.type.id, compressedToken);
-
-            signature.push_back(ELEMENT_TYPE_CLASS);
-            for (size_t i = 0; i < tokenLength; i++)
-            {
-                signature.push_back(compressedToken[i]);
-            }
-        }
-        else
-        {
-            signature.insert(signature.end(), instRaw.begin(), instRaw.end());
-        }
-
-        if (target.type.IsGeneric())
-        {
-            genericArgumentCount += 1;
-        }*/
     }
 
     // insert existing arguments
@@ -804,39 +777,15 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     for (const auto& arg : args)
     {
         signature.push_back(ELEMENT_TYPE_OBJECT);
-        //auto raw = arg.GetRaw();
-        //
-
-        //if (arg.IsGeneric())
-        //{
-        //    genericArgumentCount += 1;
-        //    //callConvention = CorCallingConvention(callConvention | IMAGE_CEE_CS_CALLCONV_GENERIC);
-
-        //    signature.push_back(ELEMENT_TYPE_CLASS);
-        //}
-
-        //signature.insert(signature.end(), raw.begin(), raw.end());
     }
 
     // calling convention respecting generic
-    CorCallingConvention callConvention = IMAGE_CEE_CS_CALLCONV_DEFAULT;
-    /*if (target.isGeneric || genericArgumentCount > 0)
-    {
-        callConvention = CorCallingConvention(callConvention | IMAGE_CEE_CS_CALLCONV_GENERIC);
-    }*/
-
-    /*if (genericArgumentCount > 0)
-    {
-        signature.insert(signature.begin(), genericArgumentCount);
-    }*/
+    auto callConvention = IMAGE_CEE_CS_CALLCONV_DEFAULT;
 
     signature.insert(signature.begin(), callConvention);
 
     auto raw = target.signature.GetRaw();
     
-    /*signature.push_back(ELEMENT_TYPE_I4);
-    signature.push_back(ELEMENT_TYPE_I8);*/
-
     hr = metadataEmit->DefineMethod(newTypeDef,
         "__InterceptionMethod__"_W.c_str(),
         mdStatic | mdPublic /*| miAggressiveInlining*/,
@@ -859,22 +808,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
         &wrapperTypeRef);
     IfFailRet(hr);
 
-    // method
-    mdMemberRef wrapperMethodRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef, interception.Interceptor.MethodName.c_str(),
-        interception.Interceptor.Signature.data(),
-        (DWORD)(interception.Interceptor.Signature.size()),
-        &wrapperMethodRef);
-
     // local sig
     mdSignature localSigToken;
-    COR_SIGNATURE localSig[/*11*/] = {
+    std::vector<BYTE> localSig = {
         IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
         0,
     };
 
-    hr = metadataEmit->GetTokenFromSig(localSig, sizeof(localSig),
+    hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(),
         &localSigToken);
 
     ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
@@ -883,17 +824,70 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
-    for (size_t i = 0; i < numArguments; i++)
+
+    std::vector<BYTE> ctorSignature{};
+    std::vector<BYTE> setThisSignature{};
+
+    /*for (const auto& m : modules)
     {
-        helper.LoadArgument(i);
-    }
+        ComPtr<IUnknown> mi;
+        IfFailRet(this->corProfilerInfo->GetModuleMetaData(m.first, ofRead | ofWrite, IID_IMetaDataImport, mi.GetAddressOf()));
+        auto interceptorMetadataImport = mi.As<IMetaDataImport2>(IID_IMetaDataImport);
+        mdTypeDef interceptorTypeDef;
+        hr = interceptorMetadataImport->FindTypeDefByName(interception.Interceptor.TypeName.c_str(), 0, &interceptorTypeDef);
+        if (hr == S_OK)
+        {
+            HCORENUM phEnum = NULL;
+            ULONG pcTokens = 0;
+            mdMethodDef ctorDef;
+            hr = interceptorMetadataImport->EnumMembersWithName(&phEnum, interceptorTypeDef, L".ctor", &ctorDef, 1, &pcTokens);
+            auto ctorInfo = GetFunctionInfo(interceptorMetadataImport, ctorDef);
+            ctorSignature = ctorInfo.signature.GetRaw();
 
-    helper.LoadInt32(targetMdToken);
+            phEnum = NULL;
+            mdMethodDef setThisDef;
+            hr = interceptorMetadataImport->EnumMembersWithName(&phEnum, interceptorTypeDef, L"SetThis", &setThisDef, 1, &pcTokens);
+            auto setThisInfo = GetFunctionInfo(interceptorMetadataImport, setThisDef);
+            setThisSignature = setThisInfo.signature.GetRaw();
 
-    helper.LoadInt64(reinterpret_cast<INT64>(&modules[moduleId]));
+            break;
+        }
+    }*/
 
+    // ctor
+    mdMemberRef ctorRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        ctor.data(),
+        ctorSignature.data(),
+        ctorSignature.size(),
+        &ctorRef);
 
-    helper.CallMember(wrapperMethodRef, false);
+    helper.NewObject(ctorRef);
+
+    setThisSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_CLASS
+    };
+
+    BYTE wrapperTypeCompressedToken[4];
+    ULONG tokenLength = CorSigCompressToken(wrapperTypeRef, wrapperTypeCompressedToken);
+    setThisSignature.insert(setThisSignature.end(), wrapperTypeCompressedToken, wrapperTypeCompressedToken + tokenLength);
+
+    setThisSignature.push_back(ELEMENT_TYPE_OBJECT);
+
+    // SetThis
+    mdMemberRef setThisRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "SetThis"_W.data(),
+        setThisSignature.data(),
+        setThisSignature.size(),
+        &setThisRef);
+
+    helper.LoadArgument(0);
+    helper.CallMember(setThisRef, false);
 
     // ret
     helper.Ret();
@@ -1263,9 +1257,7 @@ void CorProfiler::AddInterception(ImportInterception interception)
             ToWSTRING(interception.TargetMethodName),
             interception.TargetMethodParametersCount),
         Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
-            ToWSTRING(interception.InterceptorTypeName),
-            ToWSTRING(interception.InterceptorMethodName),
-            std::vector<BYTE>(interception.Signature, interception.Signature + interception.SignatureLength))
+            ToWSTRING(interception.InterceptorTypeName))
     ));
 }
 

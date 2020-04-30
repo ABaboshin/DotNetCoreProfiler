@@ -28,7 +28,7 @@ namespace Interception.StackExchangeRedis
             RedisConfiguration = configuration.GetSection(RedisConfiguration.SectionKey).Get<RedisConfiguration>();
         }
 
-        [Intercept(CallerAssembly = "SampleApp", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "GetSubscriber", TargetTypeName = "StackExchange.Redis.IConnectionMultiplexer", TargetMethodParametersCount = 1)]
+        //[Intercept(CallerAssembly = "SampleApp", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "GetSubscriber", TargetTypeName = "StackExchange.Redis.IConnectionMultiplexer", TargetMethodParametersCount = 1)]
         public static object GetSubscriber(object multiplexer, object asyncState, int mdToken, long moduleVersionPtr)
         {
             if (RedisConfiguration.Enabled)
@@ -42,7 +42,7 @@ namespace Interception.StackExchangeRedis
             }
         }
 
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "TryComplete", TargetTypeName = "StackExchange.Redis.ICompletable", TargetMethodParametersCount = 1)]
+        //[Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "TryComplete", TargetTypeName = "StackExchange.Redis.ICompletable", TargetMethodParametersCount = 1)]
         public static bool TryComplete(object messageCompletable, bool isAsync, int mdToken, long moduleVersionPtr)
         {
             Console.WriteLine($"MessageCompletable {messageCompletable.GetType().Name} isAsync {isAsync}");
@@ -101,7 +101,7 @@ namespace Interception.StackExchangeRedis
             }
         }
 
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "OnMessageSyncImpl", TargetTypeName = "StackExchange.Redis.ChannelMessageQueue", TargetMethodParametersCount = 0)]
+        //[Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "OnMessageSyncImpl", TargetTypeName = "StackExchange.Redis.ChannelMessageQueue", TargetMethodParametersCount = 0)]
         public static object OnMessageSyncImpl(object channelMessageQueue, int mdToken, long moduleVersionPtr)
         {
             Console.WriteLine($"OnMessageSyncImpl {channelMessageQueue}");
@@ -111,7 +111,7 @@ namespace Interception.StackExchangeRedis
             });
         }
 
-        [Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "OnMessageAsyncImpl", TargetTypeName = "StackExchange.Redis.ChannelMessageQueue", TargetMethodParametersCount = 0)]
+        //[Intercept(CallerAssembly = "", TargetAssemblyName = "StackExchange.Redis", TargetMethodName = "OnMessageAsyncImpl", TargetTypeName = "StackExchange.Redis.ChannelMessageQueue", TargetMethodParametersCount = 0)]
         public static async Task OnMessageAsyncImpl(object channelMessageQueue, int mdToken, long moduleVersionPtr)
         {
             await OnMessageImpl(channelMessageQueue, mdToken, moduleVersionPtr, async (handler, next) => {

@@ -63,7 +63,6 @@ public:
     ILInstr* CreateArray(const mdTypeRef type_ref, const INT32 size)
     {
         if (size > 0) LoadInt32(size);
-        std::cout << "CEE_NEWARR" << std::endl;
         ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_NEWARR;
         pNewInstr->m_Arg32 = type_ref;
@@ -72,7 +71,6 @@ public:
     }
 
     void Duplicate() const {
-        std::cout << "CEE_DUP" << std::endl;
         ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_DUP;
         m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
@@ -88,7 +86,6 @@ public:
 
         if (value >= 0 && value <= 8) {
             pNewInstr->m_opcode = opcodes[value];
-            std::cout << "LoadInt32 " << opcodes[value] << std::endl;
         }
         else if (value == -1) {
             pNewInstr->m_opcode = CEE_LDC_I4_M1;
@@ -134,7 +131,6 @@ public:
 
         if (index >= 0 && index <= 3) {
             pNewInstr->m_opcode = opcodes[index];
-            std::cout << "LoadArgument " << opcodes[index] << std::endl;
         }
         else if (index <= 255) {
             pNewInstr->m_opcode = CEE_LDARG_S;
@@ -186,7 +182,6 @@ public:
         }
 
         if (op_code > 0) {
-            std::cout << "LoadIND " << op_code << std::endl;
             ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
             pNewInstr->m_opcode = op_code;
             m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);
@@ -194,7 +189,6 @@ public:
     }
 
     void Box(const mdTypeRef type_ref) const {
-        std::cout << CEE_BOX << std::endl;
         ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_BOX;
         pNewInstr->m_Arg32 = type_ref;
@@ -202,7 +196,6 @@ public:
     }
 
     void EndLoadValueIntoArray() const {
-        std::cout << "CEE_STELEM_REF" << std::endl;
         // stelem.ref (store value into array at the specified index)
         ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_STELEM_REF;
@@ -312,7 +305,6 @@ public:
 
     void Nop()
     {
-        std::cout << "CEE_NOP" << std::endl;
         ILInstr* pNewInstr = m_ILRewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_NOP;
         m_ILRewriter->InsertBefore(m_ILInstr, pNewInstr);

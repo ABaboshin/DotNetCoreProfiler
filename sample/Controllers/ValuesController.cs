@@ -41,6 +41,10 @@ namespace SampleApp.Controllers
 
             Test2();
 
+            Test3();
+
+            var test = (ValuesController)Test4("xx", false);
+
             _myDbContext.Database.ExecuteSqlCommand("SELECT 1;");
             await _myDbContext.Database.ExecuteSqlCommandAsync("SELECT 2;");
 
@@ -49,6 +53,16 @@ namespace SampleApp.Controllers
 
         void Test2()
         { 
+        }
+
+        int Test3()
+        {
+            return 4;
+        }
+
+        object Test4(string s, bool i)
+        {
+            return this;
         }
 
         async Task<int> Test()
