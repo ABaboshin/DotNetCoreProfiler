@@ -14,55 +14,13 @@ using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Json;
 using System;
-using System.Collections.Generic;
 
 namespace Interception
 {
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
-    public class ConfigureServicesBuilderInterceptor
+    public class ConfigureServicesBuilderInterceptor : BaseInterceptor
     {
-        private List<object> _parameters = new List<object>();
-
-        private object _this;
-
-        private int _mdToken;
-
-        private long _moduleVersionPtr;
-
-        public ConfigureServicesBuilderInterceptor()
-        {
-            Console.WriteLine("ConfigureServicesBuilderInterceptor");
-        }
-
-        public object SetThis(object _this)
-        {
-            Console.WriteLine($"SetThis {_this}");
-            this._this = _this;
-            return this;
-        }
-
-        public object AddParameter(object value)
-        {
-            Console.WriteLine($"AddParameter {value}");
-            _parameters.Add(value);
-            return this;
-        }
-
-        public object SetMdToken(int mdToken)
-        {
-            Console.WriteLine($"SetMdToken {mdToken}");
-            _mdToken = mdToken;
-            return this;
-        }
-
-        public object SetModuleVersionPtr(long moduleVersionPtr)
-        {
-            Console.WriteLine($"SetModuleVersionPtr {moduleVersionPtr}");
-            _moduleVersionPtr = moduleVersionPtr;
-            return this;
-        }
-
-        public object Execute()
+        public override object Execute()
         {
             Console.WriteLine($"Configure additional services {_this.GetType().Name} {_parameters[0].GetType().Name} {_parameters[1].GetType().Name}");
 
