@@ -21,48 +21,62 @@ namespace Interception
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
     public class ConfigureServicesBuilderInterceptor
     {
-        private readonly List<object> parameters = new List<object>();
+        private List<object> _parameters = new List<object>();
 
         private object _this;
 
-        public int MdToken { get; set; }
+        private int _mdToken;
 
-        public long ModuleVersionPtr { get; set; }
+        private long _moduleVersionPtr;
 
         public ConfigureServicesBuilderInterceptor()
         {
             Console.WriteLine("ConfigureServicesBuilderInterceptor");
         }
 
-        public ConfigureServicesBuilderInterceptor SetThis(object _this)
+        public object SetThis(object _this)
         {
             Console.WriteLine("SetThis");
             this._this = _this;
             return this;
         }
 
-        public ConfigureServicesBuilderInterceptor AddParameter(object value)
+        public object AddParameter(object value)
         {
             Console.WriteLine("AddParameter");
-            parameters.Add(value);
+            _parameters.Add(value);
+            return this;
+        }
+
+        public object SetMdToken(int mdToken)
+        {
+            Console.WriteLine("SetMdToken");
+            _mdToken = mdToken;
+            return this;
+        }
+
+        public object SetModuleVersionPtr(long moduleVersionPtr)
+        {
+            Console.WriteLine("SetModuleVersionPtr");
+            _moduleVersionPtr = moduleVersionPtr;
             return this;
         }
 
         public object Execute()
         {
-            Console.WriteLine($"Configure additional services {_this.GetType().Name} {parameters[0].GetType().Name} {parameters[1].GetType().Name}");
+            Console.WriteLine($"Configure additional services {_this.GetType().Name} {_parameters[0].GetType().Name} {_parameters[1].GetType().Name}");
 
             DiagnosticsObserver.ConfigureAndStart();
 
             StackExchangeRedisInterception.Configure();
 
             var loggerFactory = new SerilogLoggerFactory(CreateLogger(), false);
-            var serviceCollection = ((IServiceCollection)parameters[1]);
+            var serviceCollection = ((IServiceCollection)_parameters[1]);
             serviceCollection.AddSingleton((ILoggerFactory)loggerFactory);
 
             ConfigureMetrics(loggerFactory, serviceCollection);
 
-            return MethodExecutor.ExecuteMethod(_this, new object[] { parameters[0], parameters[1] }, MdToken, ModuleVersionPtr, true);
+            return MethodExecutor.ExecuteMethod(_this, new object[] { _parameters[0], _parameters[1] }, _mdToken, _moduleVersionPtr, true);
         }
 
         private void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
