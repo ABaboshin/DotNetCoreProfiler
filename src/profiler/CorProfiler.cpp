@@ -909,8 +909,28 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     helper.CallMember(setMdTokenRef, false);
     helper.Cast(wrapperTypeRef);
 
-    //                 const void* module_version_id_ptr = &modules[moduleId];
-    //                 helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
+    //SetModuleVersionPtr
+    std::vector<BYTE> setModuleVersionPtrSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_I8
+    };
+
+    mdMemberRef setModuleVersionPtrRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "SetModuleVersionPtr"_W.data(),
+        setModuleVersionPtrSignature.data(),
+        setModuleVersionPtrSignature.size(),
+        &setModuleVersionPtrRef);
+
+    const void* module_version_id_ptr = &modules[moduleId];
+    helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
+    helper.CallMember(setModuleVersionPtrRef, false);
+    helper.Cast(wrapperTypeRef);
+
+    
 
     // add parameters
     for (size_t i = 0; i < target.signature.NumberOfTypeArguments(); i++)
