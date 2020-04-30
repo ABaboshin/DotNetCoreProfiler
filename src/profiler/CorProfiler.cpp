@@ -847,41 +847,13 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
-
+    // ctor
     std::vector<BYTE> ctorSignature = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
         0,
         ELEMENT_TYPE_VOID
     };
-    std::vector<BYTE> setThisSignature{};
 
-    /*for (const auto& m : modules)
-    {
-        ComPtr<IUnknown> mi;
-        IfFailRet(this->corProfilerInfo->GetModuleMetaData(m.first, ofRead | ofWrite, IID_IMetaDataImport, mi.GetAddressOf()));
-        auto interceptorMetadataImport = mi.As<IMetaDataImport2>(IID_IMetaDataImport);
-        mdTypeDef interceptorTypeDef;
-        hr = interceptorMetadataImport->FindTypeDefByName(interception.Interceptor.TypeName.c_str(), 0, &interceptorTypeDef);
-        if (hr == S_OK)
-        {
-            HCORENUM phEnum = NULL;
-            ULONG pcTokens = 0;
-            mdMethodDef ctorDef;
-            hr = interceptorMetadataImport->EnumMembersWithName(&phEnum, interceptorTypeDef, L".ctor", &ctorDef, 1, &pcTokens);
-            auto ctorInfo = GetFunctionInfo(interceptorMetadataImport, ctorDef);
-            ctorSignature = ctorInfo.signature.GetRaw();
-
-            phEnum = NULL;
-            mdMethodDef setThisDef;
-            hr = interceptorMetadataImport->EnumMembersWithName(&phEnum, interceptorTypeDef, L"SetThis", &setThisDef, 1, &pcTokens);
-            auto setThisInfo = GetFunctionInfo(interceptorMetadataImport, setThisDef);
-            setThisSignature = setThisInfo.signature.GetRaw();
-
-            break;
-        }
-    }*/
-
-    // ctor
     mdMemberRef ctorRef;
     hr = metadataEmit->DefineMemberRef(
         wrapperTypeRef,
@@ -892,37 +864,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
 
     helper.NewObject(ctorRef);
 
-    //// test
-    //std::vector<BYTE> testSignature = {
-    //    IMAGE_CEE_CS_CALLCONV_HASTHIS,
-    //    0,
-    //    ELEMENT_TYPE_VOID
-    //};
-    //mdMemberRef testRef;
-    //hr = metadataEmit->DefineMemberRef(
-    //    wrapperTypeRef,
-    //    "Test"_W.data(),
-    //    testSignature.data(),
-    //    testSignature.size(),
-    //    &testRef);
-
-    //helper.CallMember(testRef, false);
-
-    setThisSignature = {
+    //SetThis
+    std::vector<BYTE> setThisSignature = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
         1,
-        //ELEMENT_TYPE_CLASS
         ELEMENT_TYPE_OBJECT,
         ELEMENT_TYPE_OBJECT
     };
 
-    ////BYTE wrapperTypeCompressedToken[4];
-    ////ULONG tokenLength = CorSigCompressToken(wrapperTypeRef, wrapperTypeCompressedToken);
-    ////setThisSignature.insert(setThisSignature.end(), wrapperTypeCompressedToken, wrapperTypeCompressedToken + tokenLength);
-
-    ////setThisSignature.push_back(ELEMENT_TYPE_OBJECT);
-
-    // SetThis
     mdMemberRef setThisRef;
     hr = metadataEmit->DefineMemberRef(
         wrapperTypeRef,
@@ -931,11 +880,42 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
         setThisSignature.size(),
         &setThisRef);
 
+    auto shift = 0;
     if (target.signature.IsInstanceMethod())
     {
+        shift += 1;
         helper.LoadArgument(0);
         helper.CallMember(setThisRef, false);
         helper.Cast(wrapperTypeRef);
+    }
+
+    //SetMdToken
+    std::vector<BYTE> setMdTokenSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_I4
+    };
+
+    mdMemberRef setMdTokenRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "SetMdToken"_W.data(),
+        setMdTokenSignature.data(),
+        setMdTokenSignature.size(),
+        &setMdTokenRef);
+
+    helper.LoadInt32(targetMdToken);
+    helper.CallMember(setMdTokenRef, false);
+    helper.Cast(wrapperTypeRef);
+
+    //                 const void* module_version_id_ptr = &modules[moduleId];
+    //                 helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
+
+    // add parameters
+    for (size_t i = 0; i < target.signature.NumberOfTypeArguments(); i++)
+    {
+
     }
 
     //// execute
