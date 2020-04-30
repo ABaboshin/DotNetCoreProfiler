@@ -959,7 +959,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     // ret
     helper.Ret();
 
-    hr = rewriter.Export(true);
+    hr = rewriter.Export(false);
 
     return S_OK;
 }
