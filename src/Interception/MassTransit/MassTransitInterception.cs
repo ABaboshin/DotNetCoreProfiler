@@ -1,8 +1,5 @@
-﻿using Interception.Common;
-using Interception.Tracing.Extensions;
+﻿using Interception.Tracing.Extensions;
 using MassTransit;
-using MassTransit.RabbitMqTransport;
-using Microsoft.Extensions.Configuration;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
@@ -16,30 +13,6 @@ namespace Interception.MassTransit
     public static class MassTransitInterception
     {
         public static MassTransitConfiguration MassTransitConfiguration;
-
-        //[Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit.RabbitMqTransport", TargetMethodName = "CreateUsingRabbitMq", TargetTypeName = "MassTransit.BusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
-        public static object CreateUsingRabbitMq(object selector, object configure, int mdToken, long moduleVersionPtr)
-        {
-            var configuration = new ConfigurationBuilder()
-                .AddEnvironmentVariables()
-                .Build();
-
-            MassTransitConfiguration = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
-
-            var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)configure;
-            Action<IRabbitMqBusFactoryConfigurator> myConfigure = (IRabbitMqBusFactoryConfigurator cfg) => {
-                Console.WriteLine("Masstransit configuration Injected");
-
-                if (MassTransitConfiguration.PublisherEnabled)
-                {
-                    cfg.ConfigurePublish(configurator => configurator.AddPipeSpecification(new OpenTracingPipeSpecification()));
-                }
-
-                typedConfigure(cfg);
-            };
-
-            return MethodExecutor.ExecuteMethod(null, new object[] { selector, myConfigure }, mdToken, moduleVersionPtr);
-        }
 
         //[Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1[!1]", TargetMethodParametersCount = 1)]
         public static object Consume(object consumer, object context, int mdToken, long moduleVersionPtr)
