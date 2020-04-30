@@ -930,12 +930,27 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     helper.CallMember(setModuleVersionPtrRef, false);
     helper.Cast(wrapperTypeRef);
 
-    
+    // AddParameter
+    std::vector<BYTE> addParameterSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_OBJECT
+    };
 
-    // add parameters
-    for (size_t i = 0; i < target.signature.NumberOfTypeArguments(); i++)
+    mdMemberRef addParameterRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "AddParameter"_W.data(),
+        addParameterSignature.data(),
+        addParameterSignature.size(),
+        &addParameterRef);
+
+    for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-
+        helper.LoadArgument(shift + i);
+        helper.CallMember(addParameterRef, false);
+        helper.Cast(wrapperTypeRef);
     }
 
     //// execute
