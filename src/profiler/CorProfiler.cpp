@@ -772,9 +772,9 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
         (BYTE)(target.signature.NumberOfArguments() + (target.signature.IsInstanceMethod() ? 1 : 0))
     };
     // return type
-    auto ret = target.signature.GetRet().GetRaw();
-    signature.insert(signature.end(), ret.begin(), ret.end());
-
+    auto retType = target.signature.GetRet().GetRaw();
+    signature.insert(signature.end(), retType.begin(), retType.end());
+    
     // insert this
     if (target.signature.IsInstanceMethod())
     {
@@ -940,16 +940,32 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     }
 
     //execute
-    std::vector<BYTE> executeSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        0,
-        ELEMENT_TYPE_OBJECT,
-    };
+    wstring executeMethodName;
+    std::vector<BYTE> executeSignature{};
+    if (retType.size() == 1 && retType[0] == ELEMENT_TYPE_VOID)
+    {
+        executeMethodName = "ExecuteVoid"_W;
+        executeSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_VOID,
+        };
+    }
+    else
+    {
+        executeMethodName = "Execute"_W;
+
+        executeSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_OBJECT,
+        };
+    }
 
     mdMemberRef executeRef;
     hr = metadataEmit->DefineMemberRef(
         wrapperTypeRef,
-        "Execute"_W.data(),
+        executeMethodName.data(),
         executeSignature.data(),
         executeSignature.size(),
         &executeRef);
