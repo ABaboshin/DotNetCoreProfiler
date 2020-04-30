@@ -1,5 +1,6 @@
 ﻿using Interception.Common;
 using Interception.Observers;
+using Interception.Observers.Configuration;
 using Interception.OpenTracing.Prometheus;
 using Interception.Serilog;
 using Interception.StackExchangeRedis;
@@ -15,12 +16,12 @@ using Serilog.Events;
 using Serilog.Formatting.Json;
 using System;
 
-namespace Interception
+namespace Interception.AspNetCore
 {
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
     public class ConfigureServicesBuilderInterceptor : BaseInterceptor
     {
-        public override object Execute()
+        public object Execute()
         {
             Console.WriteLine($"Configure additional services {_this.GetType().Name} {_parameters[0].GetType().Name} {_parameters[1].GetType().Name}");
 
@@ -32,9 +33,15 @@ namespace Interception
             var serviceCollection = ((IServiceCollection)_parameters[1]);
             serviceCollection.AddSingleton((ILoggerFactory)loggerFactory);
 
+            var configuration = new ConfigurationBuilder()
+                .AddEnvironmentVariables()
+                .Build();
+
+            serviceCollection.Configure<AspNetCoreConfiguration>(configuration.GetSection(AspNetCoreConfiguration.SectionKey));
+
             ConfigureMetrics(loggerFactory, serviceCollection);
 
-            return MethodExecutor.ExecuteMethod(_this, new object[] { _parameters[0], _parameters[1] }, _mdToken, _moduleVersionPtr, true);
+            return MethodExecutor.ExecuteMethod(_this, _parameters.ToArray(), _mdToken, _moduleVersionPtr, true);
         }
 
         private void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)

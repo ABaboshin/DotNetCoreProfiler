@@ -41,6 +41,16 @@ namespace Interception
             return this;
         }
 
-        public abstract object Execute();
+        //public object Execute()
+        //{
+        //    return ExecuteInernal();
+        //}
+
+        //public void ExecuteVoid()
+        //{
+        //    ExecuteInernal();
+        //}
+
+        //public abstract object ExecuteInernal();
     }
 }

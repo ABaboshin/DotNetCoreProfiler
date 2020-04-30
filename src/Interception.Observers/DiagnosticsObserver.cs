@@ -28,7 +28,7 @@ namespace Interception.Observers
 
         public void OnNext(DiagnosticListener diagnosticListener)
         {
-            new AspNetCoreDiagnostics(_aspNetCoreConfiguration).Subscribe(diagnosticListener);
+            //new AspNetCoreDiagnostics(_aspNetCoreConfiguration).Subscribe(diagnosticListener);
             new EntityFrameworkCoreObserver(_entityFrameworkCoreConfiguration).Subscribe(diagnosticListener);
             new HttpHandlerDiagnostrics(_httpHandlerConfiguration).Subscribe(diagnosticListener);
         }

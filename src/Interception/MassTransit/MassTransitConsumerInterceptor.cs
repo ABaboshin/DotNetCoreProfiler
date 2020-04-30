@@ -13,7 +13,7 @@ namespace Interception.MassTransit
     [Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1[!1]", TargetMethodParametersCount = 1)]
     public class MassTransitConsumerInterceptor : BaseInterceptor
     {
-        public override object Execute()
+        public object Execute()
         {
             var method = _this.GetType().GetMethod("Consume");
 

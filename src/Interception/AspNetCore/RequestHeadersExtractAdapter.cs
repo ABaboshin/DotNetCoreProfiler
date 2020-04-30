@@ -6,7 +6,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Interception.Observers
+namespace Interception.AspNetCore
 {
     internal class RequestHeadersExtractAdapter : ITextMap
     {
