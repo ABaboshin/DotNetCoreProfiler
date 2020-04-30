@@ -1,6 +1,5 @@
 ﻿using Interception.Common;
 using Interception.Observers;
-using Interception.Observers.Configuration;
 using Interception.OpenTracing.Prometheus;
 using Interception.Serilog;
 using Interception.StackExchangeRedis;
@@ -21,7 +20,7 @@ namespace Interception.AspNetCore
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
     public class ConfigureServicesBuilderInterceptor : BaseInterceptor
     {
-        public object Execute()
+        public override object Execute()
         {
             Console.WriteLine($"Configure additional services {_this.GetType().Name} {_parameters[0].GetType().Name} {_parameters[1].GetType().Name}");
 

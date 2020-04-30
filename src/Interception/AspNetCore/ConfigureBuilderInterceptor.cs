@@ -1,6 +1,5 @@
 ﻿using Interception.Common;
 using Interception.Common.Extensions;
-using Interception.Observers.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -10,9 +9,9 @@ using System.Reflection;
 namespace Interception.AspNetCore
 {
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureBuilder", TargetMethodParametersCount = 2)]
-    public class ConfigureBuilderInterceptor : BaseInterceptor
+    public class ConfigureBuilderInterceptor : BaseVoidInterceptor
     {
-        public void ExecuteVoid()
+        public override void ExecuteVoid()
         {
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()

@@ -773,15 +773,8 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     };
     // return type
     auto retType = target.signature.GetRet().GetRaw();
-    /*if (retType.size() == 1 && retType[0] == ELEMENT_TYPE_VOID)
-    {
-        signature.push_back(ELEMENT_TYPE_OBJECT);
-    }
-    else
-    {*/
-        signature.insert(signature.end(), retType.begin(), retType.end());
-    //}
-
+    signature.insert(signature.end(), retType.begin(), retType.end());
+    
     // insert this
     if (target.signature.IsInstanceMethod())
     {
@@ -978,8 +971,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
         &executeRef);
 
     helper.CallMember(executeRef, false);
-
-    
 
     // ret
     helper.Ret();

@@ -1,5 +1,4 @@
-﻿using Interception.Observers.Configuration;
-using Interception.Tracing;
+﻿using Interception.Tracing;
 using Interception.Tracing.Extensions;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;

@@ -1,4 +1,4 @@
-﻿namespace Interception.Observers.Configuration
+﻿namespace Interception.AspNetCore
 {
     /// <summary>
     /// Configuration for aspnetcore
