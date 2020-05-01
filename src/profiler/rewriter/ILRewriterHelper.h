@@ -2,47 +2,50 @@
 
 #include "ILRewriter.h"
 
-class ILRewriterHelper
+namespace rewriter
 {
-private:
-    ILRewriter* const _rewriter;
-    ILInstr* _instr;
+    class ILRewriterHelper
+    {
+    private:
+        ILRewriter* const _rewriter;
+        ILInstr* _instr;
 
-public:
-    ILRewriterHelper(ILRewriter* const rewriter)
-        : _rewriter(rewriter), _instr(nullptr) {}
-    
-    void SetILPosition(ILInstr* instr);
+    public:
+        ILRewriterHelper(ILRewriter* const rewriter)
+            : _rewriter(rewriter), _instr(nullptr) {}
 
-    void StLocal(unsigned index);
+        void SetILPosition(ILInstr* instr);
 
-    void CreateArray(const mdTypeRef typeRef, INT32 size);
+        void StLocal(unsigned index);
 
-    void Duplicate();
+        void CreateArray(const mdTypeRef typeRef, INT32 size);
 
-    void LoadInt32(INT32 value);
+        void Duplicate();
 
-    void LoadInt64(INT64 value);
+        void LoadInt32(INT32 value);
 
-    void BeginLoadValueIntoArray(INT32 arrayIndex);
+        void LoadInt64(INT64 value);
 
-    void LoadArgument(UINT16 index);
+        void BeginLoadValueIntoArray(INT32 arrayIndex);
 
-    void EndLoadValueIntoArray();
+        void LoadArgument(UINT16 index);
 
-    void CallMember(mdMemberRef memberRef, bool isVirtual);
+        void EndLoadValueIntoArray();
 
-    void Cast(mdTypeRef typeRef);
+        void CallMember(mdMemberRef memberRef, bool isVirtual);
 
-    void LoadLocal(unsigned index);
+        void Cast(mdTypeRef typeRef);
 
-    void LoadLocalAddress(unsigned index);
+        void LoadLocal(unsigned index);
 
-    void NewObject(mdToken token);
+        void LoadLocalAddress(unsigned index);
 
-    void Pop();
+        void NewObject(mdToken token);
 
-    void Ret();
+        void Pop();
 
-    void LoadStr(mdToken token);
-};
+        void Ret();
+
+        void LoadStr(mdToken token);
+    };
+}

@@ -222,10 +222,10 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef)
 
     auto hr = GenerateLoadMethod(moduleId, &retMethodToken);
 
-    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, methodDef);
+    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, methodDef);
     IfFailRet(rewriter.Import());
 
-    ILRewriterHelper helper(&rewriter);
+    rewriter::ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
     helper.CallMember(retMethodToken, false);
     hr = rewriter.Export();
@@ -476,10 +476,10 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(),
         &localSigToken);
 
-    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
+    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
     rewriter.InitializeTiny();
     rewriter.SetTkLocalVarSig(localSigToken);
-    ILRewriterHelper helper(&rewriter);
+    rewriter::ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
     // load addr of assemblyPtr
@@ -581,9 +581,6 @@ bool CorProfiler::SkipAssembly(const wstring& name)
       "ISymWrapper"_W,
       "Interception"_W,
       "Interception.Common"_W,
-      "Interception.Executor"_W,
-      "Interception.Generator"_W,
-      "Interception.Metrics"_W,
       "Interception.Observers"_W,
       "StatsdClient"_W,
       "Newtonsoft.Json"_W
@@ -596,7 +593,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 {
     HRESULT hr;
 
-    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
+    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
     IfFailRet(rewriter.Import());
 
     ComPtr<IUnknown> metadataInterfaces;
@@ -608,9 +605,9 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 
     auto moduleInfo = GetModuleInfo(this->corProfilerInfo, moduleId);
 
-    if (!SkipAssembly(moduleInfo.assembly.name)) for (ILInstr* pInstr = rewriter.GetILList()->m_pNext;
+    if (!SkipAssembly(moduleInfo.assembly.name)) for (rewriter::ILInstr* pInstr = rewriter.GetILList()->m_pNext;
         pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext) {
-        if (pInstr->m_opcode != CEE_CALL && pInstr->m_opcode != CEE_CALLVIRT) {
+        if (pInstr->m_opcode != rewriter::CEE_CALL && pInstr->m_opcode != rewriter::CEE_CALLVIRT) {
             continue;
         }
 
@@ -640,7 +637,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
                     << " from assembly " << ToString(moduleInfo.assembly.name)
                     << std::endl << std::flush;
 
-                ILRewriterHelper helper(&rewriter);
+                rewriter::ILRewriterHelper helper(&rewriter);
                 helper.SetILPosition(pInstr);
 
                 mdMethodDef interceptorRef;
@@ -648,7 +645,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 
                 helper.CallMember(interceptorRef, false);
 
-                pInstr->m_opcode = CEE_NOP;
+                pInstr->m_opcode = rewriter::CEE_NOP;
                             
                 IfFailRet(rewriter.Export());
             }
@@ -744,10 +741,10 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(),
         &localSigToken);
 
-    ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
+    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
     rewriter.InitializeTiny();
     rewriter.SetTkLocalVarSig(localSigToken);
-    ILRewriterHelper helper(&rewriter);
+    rewriter::ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
     // ctor
