@@ -3,4 +3,4 @@ FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
 COPY src src
 
 RUN dotnet publish -c Debug -o /interception src/Interception/Interception.csproj
-#RUN dotnet publish -c Debug -o /interception src/Interception.Loader/Interception.Loader.csproj
+RUN dotnet publish -c Debug -o /interception src/Interception.Loader/Interception.Loader.csproj

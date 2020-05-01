@@ -104,6 +104,8 @@ namespace Interception
         {
             var method = FindMethod();
 
+            var ps = method.GetParameters();
+
             using (var scope = CreateScope())
             {
                 try

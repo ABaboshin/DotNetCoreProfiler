@@ -17,6 +17,8 @@ namespace Interception.MassTransit
 
             MassTransitInterception.MassTransitConfiguration = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
 
+            Console.WriteLine(MassTransitInterception.MassTransitConfiguration);
+
             var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)_parameters[1];
             Action<IRabbitMqBusFactoryConfigurator> myConfigure = (IRabbitMqBusFactoryConfigurator cfg) => {
                 Console.WriteLine("Masstransit configuration Injected");
@@ -28,6 +30,8 @@ namespace Interception.MassTransit
 
                 typedConfigure(cfg);
             };
+
+            _parameters = new System.Collections.Generic.List<object> { _parameters[0], myConfigure };
 
             return ExecuteInternal(false);
         }

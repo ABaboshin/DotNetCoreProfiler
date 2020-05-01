@@ -15,6 +15,7 @@ namespace Interception.MassTransit
     {
         public override object Execute()
         {
+            Console.WriteLine(MassTransitInterception.MassTransitConfiguration);
             return ExecuteInternal(MassTransitInterception.MassTransitConfiguration.ConsumerEnabled);
         }
 
