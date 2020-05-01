@@ -42,7 +42,7 @@
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>$(VC_IncludePath);$(CORECLR_PATH)\src\pal\prebuilt\inc;$(CORECLR_PATH)\src\inc;$(CORECLR_PATH)\bin\Product\$(BuildOS).$(BuildArch).$(BuildType)\inc;$(NETFXSDKDir)Include\um;$(WindowsSDK_IncludePath);</IncludePath>
+    <IncludePath>$(MSBuildProjectDirectory);$(VC_IncludePath);$(CORECLR_PATH)\src\pal\prebuilt\inc;$(CORECLR_PATH)\src\inc;$(CORECLR_PATH)\bin\Product\$(BuildOS).$(BuildArch).$(BuildType)\inc;$(NETFXSDKDir)Include\um;$(WindowsSDK_IncludePath)</IncludePath>
     <OutDir>.\bin</OutDir>
     <TargetName>DotNetCoreProfiler</TargetName>
   </PropertyGroup>
@@ -99,49 +99,49 @@
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="AssemblyInfo.h" />
+    <ClInclude Include="info\AssemblyInfo.h" />
     <ClInclude Include="ClassFactory.h" />
-    <ClInclude Include="clr_const.h" />
-    <ClInclude Include="ComPtr.h" />
-    <ClInclude Include="Configuration.h" />
-    <ClInclude Include="CorProfiler.h" />
+    <ClInclude Include="util\clr_const.h" />
+    <ClInclude Include="util\ComPtr.h" />
+    <ClInclude Include="configuration\Configuration.h" />
+    <ClInclude Include="profiler\CorProfiler.h" />
     <ClInclude Include="dllmain.h" />
-    <ClInclude Include="FunctionInfo.h" />
-    <ClInclude Include="helpers.h" />
-    <ClInclude Include="ILRewriter.h" />
-    <ClInclude Include="ILRewriterHelper.h" />
-    <ClInclude Include="ImportInterception.h" />
-    <ClInclude Include="Interception.h" />
-    <ClInclude Include="Interceptor.h" />
-    <ClInclude Include="MethodArgument.h" />
-    <ClInclude Include="MethodArgumentTypeFlag.h" />
-    <ClInclude Include="MethodSignature.h" />
-    <ClInclude Include="miniutf.hpp" />
-    <ClInclude Include="miniutfdata.h" />
-    <ClInclude Include="ModuleInfo.h" />
+    <ClInclude Include="info\FunctionInfo.h" />
+    <ClInclude Include="util\helpers.h" />
+    <ClInclude Include="rewriter\ILRewriter.h" />
+    <ClInclude Include="rewriter\ILRewriterHelper.h" />
+    <ClInclude Include="configuration\ImportInterception.h" />
+    <ClInclude Include="configuration\Interception.h" />
+    <ClInclude Include="configuration\Interceptor.h" />
+    <ClInclude Include="info\MethodArgument.h" />
+    <ClInclude Include="info\MethodArgumentTypeFlag.h" />
+    <ClInclude Include="info\MethodSignature.h" />
+    <ClInclude Include="miniutf\miniutf.hpp" />
+    <ClInclude Include="miniutf\miniutfdata.h" />
+    <ClInclude Include="info\ModuleInfo.h" />
     <ClInclude Include="nlohmann\json.hpp" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="TargetMethod.h" />
-    <ClInclude Include="TypeInfo.h" />
-    <ClInclude Include="types.h" />
-    <ClInclude Include="util.h" />
+    <ClInclude Include="configuration\TargetMethod.h" />
+    <ClInclude Include="info\TypeInfo.h" />
+    <ClInclude Include="util\types.h" />
+    <ClInclude Include="util\util.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="AssemblyInfo.cpp" />
+    <ClCompile Include="info\AssemblyInfo.cpp" />
     <ClCompile Include="ClassFactory.cpp" />
-    <ClCompile Include="CorProfiler.cpp" />
+    <ClCompile Include="profiler\CorProfiler.cpp" />
     <ClCompile Include="dllmain.cpp" />
-    <ClCompile Include="FunctionInfo.cpp" />
-    <ClCompile Include="ILRewriter.cpp" />
-    <ClCompile Include="ILRewriterHelper.cpp" />
-    <ClCompile Include="MethodArgument.cpp" />
-    <ClCompile Include="TypeInfo.cpp" />
-    <ClCompile Include="helpers.cpp" />
+    <ClCompile Include="info\FunctionInfo.cpp" />
+    <ClCompile Include="rewriter\ILRewriter.cpp" />
+    <ClCompile Include="rewriter\ILRewriterHelper.cpp" />
+    <ClCompile Include="info\MethodArgument.cpp" />
+    <ClCompile Include="info\TypeInfo.cpp" />
+    <ClCompile Include="util\helpers.cpp" />
     <ClCompile Include="interop.cpp" />
-    <ClCompile Include="MethodSignature.cpp" />
-    <ClCompile Include="miniutf.cpp" />
-    <ClCompile Include="ModuleInfo.cpp" />
-    <ClCompile Include="util.cpp" />
+    <ClCompile Include="info\MethodSignature.cpp" />
+    <ClCompile Include="miniutf\miniutf.cpp" />
+    <ClCompile Include="info\ModuleInfo.cpp" />
+    <ClCompile Include="util\util.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource.rc" />

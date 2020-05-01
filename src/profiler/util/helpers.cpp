@@ -1,6 +1,6 @@
 #include "helpers.h"
-#include "AssemblyInfo.h"
-#include "ModuleInfo.h"
+#include "info/AssemblyInfo.h"
+#include "info/ModuleInfo.h"
 #include "util.h"
 #include <cstring>
 #include <iostream>

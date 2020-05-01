@@ -1,6 +1,6 @@
 #include "TypeInfo.h"
-#include "clr_const.h"
-#include "helpers.h"
+#include "util/clr_const.h"
+#include "util/helpers.h"
 
 TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     const mdToken& token) {

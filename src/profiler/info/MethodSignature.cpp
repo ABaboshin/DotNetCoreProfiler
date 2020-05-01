@@ -1,11 +1,11 @@
 #include "MethodSignature.h"
 #include "corhlpr.h"
-#include "clr_const.h"
+#include "util/clr_const.h"
 #include "TypeInfo.h"
 #include "FunctionInfo.h"
 #include <iostream>
 #include <string>
-#include "helpers.h"
+#include "util/helpers.h"
 
 bool ParseType(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd);
 bool ParseByte(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd, unsigned char* pbOut);

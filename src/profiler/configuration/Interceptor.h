@@ -1,7 +1,7 @@
 #pragma once
 
 #include <vector>
-#include "util.h"
+#include "util/util.h"
 
 struct Interceptor {
 	wstring AssemblyName;

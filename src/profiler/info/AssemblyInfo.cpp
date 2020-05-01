@@ -1,5 +1,5 @@
 #include "AssemblyInfo.h"
-#include "clr_const.h"
+#include "util/clr_const.h"
 
 AssemblyInfo GetAssemblyInfo(ICorProfilerInfo8* info,
     AssemblyID assemblyId) {

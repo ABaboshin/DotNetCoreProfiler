@@ -2,8 +2,8 @@
 
 #include "cor.h"
 #include "corprof.h"
-#include "util.h"
-#include "ComPtr.h"
+#include "util/util.h"
+#include "util/ComPtr.h"
 
 struct AssemblyInfo {
   AssemblyID id;

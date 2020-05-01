@@ -1,9 +1,9 @@
 #pragma once
 
 #include <iomanip>
-#include "ComPtr.h"
+#include "util/ComPtr.h"
 #include "TypeInfo.h"
-#include "util.h"
+#include "util/util.h"
 #include "MethodArgument.h"
 
 struct MethodSignature {

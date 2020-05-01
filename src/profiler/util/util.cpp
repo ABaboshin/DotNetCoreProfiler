@@ -1,7 +1,7 @@
 #include "util.h"
 #include <cstdlib>
 #include <iostream>
-#include "miniutf.hpp"
+#include "miniutf/miniutf.hpp"
 #include <random>
 
 wstring GetEnvironmentValue(const wstring&name) {

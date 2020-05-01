@@ -1,7 +1,7 @@
 #include "MethodArgument.h"
 #include "MethodArgumentTypeFlag.h"
-#include "clr_const.h"
-#include "helpers.h"
+#include "util/clr_const.h"
+#include "util/helpers.h"
 
 int MethodArgument::GetTypeFlags(unsigned& elementType) const {
 

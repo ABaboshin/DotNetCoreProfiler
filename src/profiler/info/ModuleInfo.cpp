@@ -1,6 +1,6 @@
 #include "ModuleInfo.h"
 #include "AssemblyInfo.h"
-#include "clr_const.h"
+#include "util/clr_const.h"
 
 ModuleInfo GetModuleInfo(ICorProfilerInfo8* info, ModuleID moduleId)
 {

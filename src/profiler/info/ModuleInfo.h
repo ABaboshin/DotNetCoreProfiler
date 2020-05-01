@@ -1,7 +1,7 @@
 #pragma once
 
 #include "AssemblyInfo.h"
-#include "util.h"
+#include "util/util.h"
 
 struct ModuleInfo {
   ModuleID id;

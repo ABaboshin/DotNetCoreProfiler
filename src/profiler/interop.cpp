@@ -1,4 +1,4 @@
-#include "CorProfiler.h"
+#include "profiler/CorProfiler.h"
 
 extern "C" void __cdecl AddInterceptor(ImportInterception interception)
 {

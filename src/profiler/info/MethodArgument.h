@@ -1,7 +1,7 @@
 #pragma once
 
-#include "ComPtr.h"
-#include "util.h"
+#include "util/ComPtr.h"
+#include "util/util.h"
 
 struct MethodArgument {
     ULONG offset;

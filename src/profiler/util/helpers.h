@@ -2,8 +2,8 @@
 
 #include "cor.h"
 #include "corprof.h"
-#include "FunctionInfo.h"
-#include "ModuleInfo.h"
+#include "info/FunctionInfo.h"
+#include "info/ModuleInfo.h"
 #include "ComPtr.h"
 
 wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& metadaImport);

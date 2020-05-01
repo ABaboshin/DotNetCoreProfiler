@@ -7,10 +7,10 @@
 #include <iostream>
 #include "cor.h"
 #include "corprof.h"
-#include "FunctionInfo.h"
-#include "ModuleInfo.h"
-#include "Configuration.h"
-#include "ImportInterception.h"
+#include "info/FunctionInfo.h"
+#include "info/ModuleInfo.h"
+#include "configuration/Configuration.h"
+#include "configuration/ImportInterception.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {

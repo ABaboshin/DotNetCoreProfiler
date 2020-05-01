@@ -32,19 +32,18 @@ SET_SOURCE_FILES_PROPERTIES(
 
 add_library("DotNetCoreProfiler.static" STATIC
     ClassFactory.cpp
-    CorProfiler.cpp
-    helpers.cpp
-    miniutf.cpp
-    util.cpp
-    miniutf.cpp
-    MethodSignature.cpp
-    AssemblyInfo.cpp
-    FunctionInfo.cpp
-    ModuleInfo.cpp
-    TypeInfo.cpp
-    MethodArgument.cpp
-    ILRewriter.cpp
-    ILRewriterHelper.cpp
+    profiler/CorProfiler.cpp
+    miniutf/miniutf.cpp
+    util/util.cpp
+    util/helpers.cpp
+    info/MethodSignature.cpp
+    info/AssemblyInfo.cpp
+    info/FunctionInfo.cpp
+    info/ModuleInfo.cpp
+    info/TypeInfo.cpp
+    info/MethodArgument.cpp
+    rewriter/ILRewriter.cpp
+    rewriter/ILRewriterHelper.cpp
     ${GENERATED_OBJ_FILES}
 )
 
@@ -54,6 +53,7 @@ target_include_directories("DotNetCoreProfiler.static"
     PUBLIC ../../lib/coreclr/src/pal/prebuilt/inc
     PUBLIC ../../lib/coreclr/src/pal/inc
     PUBLIC ../../lib/coreclr/src/inc
+    PUBLIC .
 )
 
 add_library("DotNetCoreProfiler" SHARED

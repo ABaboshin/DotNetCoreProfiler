@@ -1,5 +1,5 @@
 #include "FunctionInfo.h"
-#include "clr_const.h"
+#include "util/clr_const.h"
 
 FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     const mdToken& token) {

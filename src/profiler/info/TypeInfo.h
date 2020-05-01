@@ -1,8 +1,8 @@
 #pragma once
 
 #include "cor.h"
-#include "util.h"
-#include "ComPtr.h"
+#include "util/util.h"
+#include "util/ComPtr.h"
 
 struct TypeInfo {
   mdToken id;
