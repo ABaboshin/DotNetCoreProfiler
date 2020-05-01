@@ -1,11 +1,11 @@
 #include "FunctionInfo.h"
-#include "util/clr_const.h"
+#include "const/const.h"
 
 FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     const mdToken& token) {
 
     mdToken parent_token = mdTokenNil;
-    WCHAR function_name[NameMaxSize]{};
+    WCHAR function_name[_const::NameMaxSize]{};
     DWORD function_name_len = 0;
 
     PCCOR_SIGNATURE raw_signature;
@@ -16,12 +16,12 @@ FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     switch (token_type) {
     case mdtMemberRef:
         hr = metadata_import->GetMemberRefProps(
-            token, &parent_token, function_name, NameMaxSize, &function_name_len,
+            token, &parent_token, function_name, _const::NameMaxSize, &function_name_len,
             &raw_signature, &raw_signature_len);
         break;
     case mdtMethodDef:
         hr = metadata_import->GetMemberProps(
-            token, &parent_token, function_name, NameMaxSize, &function_name_len,
+            token, &parent_token, function_name, _const::NameMaxSize, &function_name_len,
             nullptr, &raw_signature, &raw_signature_len, nullptr, nullptr,
             nullptr, nullptr, nullptr);
         break;

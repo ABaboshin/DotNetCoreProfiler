@@ -1,10 +1,11 @@
-#include "MethodSignature.h"
-#include "corhlpr.h"
-#include "util/clr_const.h"
-#include "TypeInfo.h"
-#include "FunctionInfo.h"
 #include <iostream>
 #include <string>
+#include "corhlpr.h"
+
+#include "FunctionInfo.h"
+#include "MethodSignature.h"
+#include "TypeInfo.h"
+#include "const/const.h"
 #include "util/helpers.h"
 
 bool ParseType(PCCOR_SIGNATURE& pbCur, PCCOR_SIGNATURE pbEnd);

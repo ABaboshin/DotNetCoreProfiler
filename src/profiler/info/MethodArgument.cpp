@@ -1,6 +1,6 @@
 #include "MethodArgument.h"
 #include "MethodArgumentTypeFlag.h"
-#include "util/clr_const.h"
+#include "const/const.h"
 #include "util/helpers.h"
 
 int MethodArgument::GetTypeFlags(unsigned& elementType) const {
@@ -66,52 +66,52 @@ mdToken MethodArgument::GetTypeTok(const ComPtr<IMetaDataEmit2> pEmit,
 
     switch (*pbCur) {
     case  ELEMENT_TYPE_BOOLEAN:
-        pEmit->DefineTypeRefByName(corLibRef, SystemBoolean.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemBoolean.data(), &token);
         break;
     case  ELEMENT_TYPE_CHAR:
-        pEmit->DefineTypeRefByName(corLibRef, SystemChar.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemChar.data(), &token);
         break;
     case  ELEMENT_TYPE_I1:
-        pEmit->DefineTypeRefByName(corLibRef, SystemByte.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemByte.data(), &token);
         break;
     case  ELEMENT_TYPE_U1:
-        pEmit->DefineTypeRefByName(corLibRef, SystemSByte.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemSByte.data(), &token);
         break;
     case  ELEMENT_TYPE_U2:
-        pEmit->DefineTypeRefByName(corLibRef, SystemUInt16.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemUInt16.data(), &token);
         break;
     case  ELEMENT_TYPE_I2:
-        pEmit->DefineTypeRefByName(corLibRef, SystemInt16.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemInt16.data(), &token);
         break;
     case  ELEMENT_TYPE_I4:
-        pEmit->DefineTypeRefByName(corLibRef, SystemInt32.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemInt32.data(), &token);
         break;
     case  ELEMENT_TYPE_U4:
-        pEmit->DefineTypeRefByName(corLibRef, SystemUInt32.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemUInt32.data(), &token);
         break;
     case  ELEMENT_TYPE_I8:
-        pEmit->DefineTypeRefByName(corLibRef, SystemInt64.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemInt64.data(), &token);
         break;
     case  ELEMENT_TYPE_U8:
-        pEmit->DefineTypeRefByName(corLibRef, SystemUInt64.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemUInt64.data(), &token);
         break;
     case  ELEMENT_TYPE_R4:
-        pEmit->DefineTypeRefByName(corLibRef, SystemSingle.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemSingle.data(), &token);
         break;
     case  ELEMENT_TYPE_R8:
-        pEmit->DefineTypeRefByName(corLibRef, SystemDouble.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemDouble.data(), &token);
         break;
     case  ELEMENT_TYPE_I:
-        pEmit->DefineTypeRefByName(corLibRef, SystemIntPtr.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemIntPtr.data(), &token);
         break;
     case  ELEMENT_TYPE_U:
-        pEmit->DefineTypeRefByName(corLibRef, SystemUIntPtr.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemUIntPtr.data(), &token);
         break;
     case  ELEMENT_TYPE_STRING:
-        pEmit->DefineTypeRefByName(corLibRef, SystemString.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemString.data(), &token);
         break;
     case  ELEMENT_TYPE_OBJECT:
-        pEmit->DefineTypeRefByName(corLibRef, SystemObject.data(), &token);
+        pEmit->DefineTypeRefByName(corLibRef, _const::SystemObject.data(), &token);
         break;
     case  ELEMENT_TYPE_CLASS:
         pbCur++;

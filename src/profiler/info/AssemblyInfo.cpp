@@ -1,23 +1,23 @@
 #include "AssemblyInfo.h"
-#include "util/clr_const.h"
+#include "const/const.h"
 
 AssemblyInfo GetAssemblyInfo(ICorProfilerInfo8* info,
     AssemblyID assemblyId) {
-    WCHAR assemblyName[NameMaxSize];
+    WCHAR assemblyName[_const::NameMaxSize];
     DWORD len = 0;
     AppDomainID appDomainId;
     ModuleID manifestModuleId;
 
-    auto hr = info->GetAssemblyInfo(assemblyId, NameMaxSize, &len,
+    auto hr = info->GetAssemblyInfo(assemblyId, _const::NameMaxSize, &len,
         assemblyName, &appDomainId, &manifestModuleId);
 
     if (FAILED(hr) || len == 0) {
         return {};
     }
 
-    WCHAR appDomainName[NameMaxSize];
+    WCHAR appDomainName[_const::NameMaxSize];
 
-    hr = info->GetAppDomainInfo(appDomainId, NameMaxSize, &len,
+    hr = info->GetAppDomainInfo(appDomainId, _const::NameMaxSize, &len,
         appDomainName, nullptr);
 
     if (FAILED(hr) || len == 0) {

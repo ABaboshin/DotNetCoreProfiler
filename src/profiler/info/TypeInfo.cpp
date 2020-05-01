@@ -1,11 +1,11 @@
 #include "TypeInfo.h"
-#include "util/clr_const.h"
+#include "const/const.h"
 #include "util/helpers.h"
 
 TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     const mdToken& token) {
     mdToken parent_token = mdTokenNil;
-    WCHAR type_name[NameMaxSize]{};
+    WCHAR type_name[_const::NameMaxSize]{};
     DWORD type_name_len = 0;
 
     HRESULT hr = E_FAIL;
@@ -13,13 +13,13 @@ TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     switch (token_type) {
     case mdtTypeDef:
         //std::cout << "mdtTypeDef" << std::endl;
-        hr = metadata_import->GetTypeDefProps(token, type_name, NameMaxSize,
+        hr = metadata_import->GetTypeDefProps(token, type_name, _const::NameMaxSize,
             &type_name_len, nullptr, nullptr);
         break;
     case mdtTypeRef:
         //std::cout << "mdtTypeRef" << std::endl;
         hr = metadata_import->GetTypeRefProps(token, &parent_token, type_name,
-            NameMaxSize, &type_name_len);
+            _const::NameMaxSize, &type_name_len);
         break;
     case mdtTypeSpec: {
         //std::cout << "mdtTypeSpec" << std::endl;
@@ -39,7 +39,7 @@ TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
     } break;
     case mdtModuleRef:
         //std::cout << "mdtModuleRef" << std::endl;
-        metadata_import->GetModuleRefProps(token, type_name, NameMaxSize,
+        metadata_import->GetModuleRefProps(token, type_name, _const::NameMaxSize,
             &type_name_len);
         break;
     case mdtMemberRef:

@@ -9,7 +9,7 @@
 #include "util/util.h"
 #include "util/ComPtr.h"
 #include "rewriter/ILRewriterHelper.h"
-#include "util/clr_const.h"
+#include "const/const.h"
 #include "configuration/Configuration.h"
 #include "dllmain.h"
 
@@ -251,15 +251,15 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     // Define System.Object
     mdTypeRef objectTypeRef;
-    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemObject.data(), &objectTypeRef);
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemObject.data(), &objectTypeRef);
 
     // Define System.Type
     mdTypeRef typeRef;
-    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemType.data(), &typeRef);
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemType.data(), &typeRef);
 
     // Define System.Activator
     mdTypeRef activatorTypeRef;
-    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemActivator.data(), &activatorTypeRef);
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemActivator.data(), &activatorTypeRef);
 
     // Define an anonymous type
     mdTypeDef newTypeDef;
@@ -319,13 +319,13 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     // System.Byte
     mdTypeRef byteTypeRef;
     hr = metadataEmit->DefineTypeRefByName(mscorlibRef,
-        SystemByte.data(),
+        _const::SystemByte.data(),
         &byteTypeRef);
 
     // System.Runtime.InteropServices.Marshal
     mdTypeRef marshalTypeRef;
     hr = metadataEmit->DefineTypeRefByName(mscorlibRef,
-        SystemRuntimeInteropServicesMarshal.data(),
+        _const::SystemRuntimeInteropServicesMarshal.data(),
         &marshalTypeRef);
 
     // System.Runtime.InteropServices.Marshal.Copy
@@ -341,19 +341,19 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
         ELEMENT_TYPE_I4
     };
     hr = metadataEmit->DefineMemberRef(
-        marshalTypeRef, Copy.data(), marshal_copy_signature,
+        marshalTypeRef, _const::Copy.data(), marshal_copy_signature,
         sizeof(marshal_copy_signature), &marshalCopyMemberRef);
 
     // System.Reflection.Assembly
     mdTypeRef assemblyTypeRef;
     hr = metadataEmit->DefineTypeRefByName(mscorlibRef,
-        SystemReflectionAssembly.data(),
+        _const::SystemReflectionAssembly.data(),
         &assemblyTypeRef);
 
     // System.AppDomain
     mdTypeRef appdomainTypeRef;
     hr = metadataEmit->DefineTypeRefByName(mscorlibRef,
-        SystemAppDomain.data(),
+        _const::SystemAppDomain.data(),
         &appdomainTypeRef);
 
     BYTE compressedToken[10];
@@ -370,7 +370,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
     mdMemberRef getCurrentDomainMethodRef;
     hr = metadataEmit->DefineMemberRef(
         appdomainTypeRef,
-        get_CurrentDomain.data(),
+        _const::get_CurrentDomain.data(),
         getCurrentDomainSignature.data(),
         getCurrentDomainSignature.size(),
         &getCurrentDomainMethodRef);
@@ -389,7 +389,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     mdMemberRef assemblyGetTypeMemberRef;
     hr = metadataEmit->DefineMemberRef(
-        assemblyTypeRef, GetType.data(),
+        assemblyTypeRef, _const::GetType.data(),
         assemblyGetTypeSignature.data(),
         assemblyGetTypeSignature.size(),
         &assemblyGetTypeMemberRef);
@@ -408,7 +408,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     mdMemberRef appdomainLoadMemberRef;
     hr = metadataEmit->DefineMemberRef(
-        appdomainTypeRef, Load.data(),
+        appdomainTypeRef, _const::Load.data(),
         appdomainLoadSignature.data(),
         appdomainLoadSignature.size(),
         &appdomainLoadMemberRef);
@@ -429,7 +429,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     mdMemberRef activatorCreateInstanceMemberRef;
     hr = metadataEmit->DefineMemberRef(
-        activatorTypeRef, CreateInstance.data(),
+        activatorTypeRef, _const::CreateInstance.data(),
         activatorCreateInstanceSignature.data(),
         activatorCreateInstanceSignature.size(),
         &activatorCreateInstanceMemberRef);
@@ -444,7 +444,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
 
     mdMemberRef assemblyCreateInstanceMemberRef;
     hr = metadataEmit->DefineMemberRef(
-        assemblyTypeRef, CreateInstance.data(),
+        assemblyTypeRef, _const::CreateInstance.data(),
         assemblyCreateInstanceSignature,
         sizeof(assemblyCreateInstanceSignature),
         &assemblyCreateInstanceMemberRef);
@@ -677,7 +677,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
 
     // Define System.Object
     mdTypeRef objectTypeRef;
-    metadataEmit->DefineTypeRefByName(mscorlibRef, SystemObject.data(), &objectTypeRef);
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemObject.data(), &objectTypeRef);
 
     // Define a static type
     mdTypeDef newTypeDef;
@@ -760,7 +760,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     mdMemberRef ctorRef;
     hr = metadataEmit->DefineMemberRef(
         wrapperTypeRef,
-        ctor.data(),
+        _const::ctor.data(),
         ctorSignature.data(),
         ctorSignature.size(),
         &ctorRef);

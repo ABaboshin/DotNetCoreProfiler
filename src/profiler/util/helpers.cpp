@@ -1,11 +1,12 @@
-#include "helpers.h"
-#include "info/AssemblyInfo.h"
-#include "info/ModuleInfo.h"
-#include "util.h"
 #include <cstring>
 #include <iostream>
 #include <vector>
-#include "clr_const.h"
+
+#include "info/AssemblyInfo.h"
+#include "info/ModuleInfo.h"
+#include "const/const.h"
+#include "helpers.h"
+#include "util.h"
 
 wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>& metadaImport)
 {
@@ -19,67 +20,67 @@ wstring GetSigTypeTokName(PCCOR_SIGNATURE& pbCur, const ComPtr<IMetaDataImport2>
 
     switch (*pbCur) {
     case  ELEMENT_TYPE_BOOLEAN:
-        tokenName = SystemBoolean;
+        tokenName = _const::SystemBoolean;
         pbCur++;
         break;
     case  ELEMENT_TYPE_CHAR:
-        tokenName = SystemChar;
+        tokenName = _const::SystemChar;
         pbCur++;
         break;
     case  ELEMENT_TYPE_I1:
-        tokenName = SystemByte;
+        tokenName = _const::SystemByte;
         pbCur++;
         break;
     case  ELEMENT_TYPE_U1:
-        tokenName = SystemSByte;
+        tokenName = _const::SystemSByte;
         pbCur++;
         break;
     case  ELEMENT_TYPE_U2:
-        tokenName = SystemUInt16;
+        tokenName = _const::SystemUInt16;
         pbCur++;
         break;
     case  ELEMENT_TYPE_I2:
-        tokenName = SystemInt16;
+        tokenName = _const::SystemInt16;
         pbCur++;
         break;
     case  ELEMENT_TYPE_I4:
-        tokenName = SystemInt32;
+        tokenName = _const::SystemInt32;
         pbCur++;
         break;
     case  ELEMENT_TYPE_U4:
-        tokenName = SystemUInt32;
+        tokenName = _const::SystemUInt32;
         pbCur++;
         break;
     case  ELEMENT_TYPE_I8:
-        tokenName = SystemInt64;
+        tokenName = _const::SystemInt64;
         pbCur++;
         break;
     case  ELEMENT_TYPE_U8:
-        tokenName = SystemUInt64;
+        tokenName = _const::SystemUInt64;
         pbCur++;
         break;
     case  ELEMENT_TYPE_R4:
-        tokenName = SystemSingle;
+        tokenName = _const::SystemSingle;
         pbCur++;
         break;
     case  ELEMENT_TYPE_R8:
-        tokenName = SystemDouble;
+        tokenName = _const::SystemDouble;
         pbCur++;
         break;
     case  ELEMENT_TYPE_I:
-        tokenName = SystemIntPtr;
+        tokenName = _const::SystemIntPtr;
         pbCur++;
         break;
     case  ELEMENT_TYPE_U:
-        tokenName = SystemUIntPtr;
+        tokenName = _const::SystemUIntPtr;
         pbCur++;
         break;
     case  ELEMENT_TYPE_STRING:
-        tokenName = SystemString;
+        tokenName = _const::SystemString;
         pbCur++;
         break;
     case  ELEMENT_TYPE_OBJECT:
-        tokenName = SystemObject;
+        tokenName = _const::SystemObject;
         pbCur++;
         break;
     case  ELEMENT_TYPE_CLASS:
@@ -158,7 +159,7 @@ void GetMsCorLibRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& metadataAs
     metadata.usBuildNumber = 0;
     metadata.usRevisionNumber = 0;
 
-    hr = CreateAssemblyRef(metadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, mscorlib);
+    hr = CreateAssemblyRef(metadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, _const::mscorlib);
 }
 
 void GetWrapperRef(HRESULT& hr, const ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdModuleRef& libRef, const wstring& assemblyName)

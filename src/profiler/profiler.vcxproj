@@ -101,7 +101,7 @@
   <ItemGroup>
     <ClInclude Include="info\AssemblyInfo.h" />
     <ClInclude Include="ClassFactory.h" />
-    <ClInclude Include="util\clr_const.h" />
+    <ClInclude Include="const\const.h" />
     <ClInclude Include="util\ComPtr.h" />
     <ClInclude Include="configuration\Configuration.h" />
     <ClInclude Include="profiler\CorProfiler.h" />
