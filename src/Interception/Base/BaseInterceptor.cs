@@ -1,7 +1,9 @@
-﻿using Interception.Tracing.Extensions;
+﻿using Interception.Common.Extensions;
+using Interception.Tracing.Extensions;
 using OpenTracing;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -51,6 +53,10 @@ namespace Interception.Base
 
         public abstract object Execute();
 
+        protected virtual void EnrichAfterExecution(object result, IScope scope)
+        {
+        }
+
         protected virtual IScope CreateScope()
         {
             throw new NotImplementedException();
@@ -75,9 +81,13 @@ namespace Interception.Base
             {
                 return ExecuteSyncInternal();
             }
-            else
+            else if (!_methodExecutor.IsReturnTypeTaskWithResult(method))
             {
                 return ExecuteAsyncInternal();
+            }
+            else
+            {
+                return ExecuteAsyncWithResultInternal();
             }
         }
 
@@ -89,7 +99,9 @@ namespace Interception.Base
             {
                 try
                 {
-                    return _methodExecutor.ExecuteSync(method, _this, _parameters.ToArray());
+                    var result = _methodExecutor.ExecuteSync(method, _this, _parameters.ToArray());
+                    EnrichAfterExecution(result, scope);
+                    return result;
                 }
                 catch (Exception ex)
                 {
@@ -101,6 +113,7 @@ namespace Interception.Base
 
         protected async Task ExecuteAsyncInternal()
         {
+            Console.WriteLine("ExecuteAsyncInternal");
             var method = FindMethod();
 
             using (var scope = CreateScope())
@@ -108,6 +121,37 @@ namespace Interception.Base
                 try
                 {
                     await _methodExecutor.ExecuteAsync(method, _this, _parameters.ToArray());
+                }
+                catch (Exception ex)
+                {
+                    scope.Span.SetException(ex);
+                    throw;
+                }
+            }
+        }
+
+        protected async Task<object> ExecuteAsyncWithResultInternal()
+        {
+            Console.WriteLine("ExecuteAsyncWithResultInternal");
+            var method = FindMethod();
+
+            using (var scope = CreateScope())
+            {
+                try
+                {
+                    var task = _methodExecutor.ExecuteAsyncWithResult(method, _this, _parameters.ToArray());
+                    await task.ConfigureAwait(false);
+
+                    var result = task.GetPropertyValue<object>("Result");
+
+                    var fromResultGeneric = typeof(Task).GetMethods(BindingFlags.Public | BindingFlags.Static).Where(m => m.Name == "FromResult").First();
+                    var fromResultMethod = fromResultGeneric.MakeGenericMethod(typeof(int));
+
+                    var resultTask = fromResultMethod.Invoke(null, new object[] { result });
+
+                    EnrichAfterExecution(result, scope);
+
+                    return resultTask;
                 }
                 catch (Exception ex)
                 {
