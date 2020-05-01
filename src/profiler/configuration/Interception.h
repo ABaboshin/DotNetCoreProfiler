@@ -1,19 +1,22 @@
 #pragma once
 
-#include "util/util.h"
 #include"Interceptor.h"
 #include "TargetMethod.h"
+#include "util/util.h"
 
-struct Interception {
-	wstring callerAssemblyName;
-	TargetMethod Target{};
-	Interceptor Interceptor{};
+namespace configuration
+{
+	struct Interception {
+		wstring callerAssemblyName;
+		TargetMethod Target{};
+		Interceptor Interceptor{};
 
-	Interception(const wstring& callerAssemblyName, const TargetMethod& targetMethod, const ::Interceptor& interceptor) :
-		callerAssemblyName(callerAssemblyName),
-		Target(targetMethod),
-		Interceptor(interceptor) {}
+		Interception(const wstring& callerAssemblyName, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor) :
+			callerAssemblyName(callerAssemblyName),
+			Target(targetMethod),
+			Interceptor(interceptor) {}
 
-	Interception() :
-		callerAssemblyName(""_W) {}
-};
+		Interception() :
+			callerAssemblyName(""_W) {}
+	};
+}

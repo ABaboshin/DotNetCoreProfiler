@@ -3,26 +3,29 @@
 #include <vector>
 #include "util/util.h"
 
-struct Interceptor {
-	wstring AssemblyName;
-	wstring TypeName;
+namespace configuration
+{
+	struct Interceptor {
+		wstring AssemblyName;
+		wstring TypeName;
 
-	Interceptor(const wstring& assemblyName, const wstring& typeName) :
-		AssemblyName(assemblyName),
-		TypeName(typeName) {}
+		Interceptor(const wstring& assemblyName, const wstring& typeName) :
+			AssemblyName(assemblyName),
+			TypeName(typeName) {}
 
-	Interceptor() :
-		AssemblyName(""_W),
-		TypeName(""_W) {}
+		Interceptor() :
+			AssemblyName(""_W),
+			TypeName(""_W) {}
 
-	Interceptor& operator=(const Interceptor& b)
-	{
-		if (this != &b)
+		Interceptor& operator=(const Interceptor& b)
 		{
-			AssemblyName = b.AssemblyName;
-			TypeName = b.TypeName;
-		}
+			if (this != &b)
+			{
+				AssemblyName = b.AssemblyName;
+				TypeName = b.TypeName;
+			}
 
-		return *this;
-	}
-};
+			return *this;
+		}
+	};
+}

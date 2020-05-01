@@ -1,14 +1,18 @@
 #pragma once
+
 #include <vector>
 #include "Interception.h"
 
-class Configuration
+namespace configuration
 {
-public:
-	std::vector<Interception> interceptions{};
+	class Configuration
+	{
+	public:
+		std::vector<Interception> interceptions{};
 
-	Configuration(std::vector<Interception> interceptions) :
-		interceptions(interceptions) {}
+		Configuration(std::vector<Interception> interceptions) :
+			interceptions(interceptions) {}
 
-	Configuration() {}
-};
+		Configuration() {}
+	};
+}

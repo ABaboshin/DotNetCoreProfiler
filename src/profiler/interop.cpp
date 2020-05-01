@@ -1,6 +1,6 @@
 #include "profiler/CorProfiler.h"
 
-extern "C" void __cdecl AddInterceptor(ImportInterception interception)
+extern "C" void __cdecl AddInterceptor(configuration::ImportInterception interception)
 {
 	profiler->AddInterception(interception);
 }

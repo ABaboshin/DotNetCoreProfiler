@@ -658,7 +658,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionInfo& target, const Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionInfo& target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken)
 {
     HRESULT hr;
 
@@ -1236,16 +1236,16 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
     return S_OK;
 }
 
-void CorProfiler::AddInterception(ImportInterception interception)
+void CorProfiler::AddInterception(configuration::ImportInterception interception)
 {
-    configuration.interceptions.push_back(Interception(
+    configuration.interceptions.push_back(configuration::Interception(
         ToWSTRING(interception.CallerAssembly),
-        TargetMethod(
+        configuration::TargetMethod(
             ToWSTRING(interception.TargetAssemblyName),
             ToWSTRING(interception.TargetTypeName),
             ToWSTRING(interception.TargetMethodName),
             interception.TargetMethodParametersCount),
-        Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
+        configuration::Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
             ToWSTRING(interception.InterceptorTypeName))
     ));
 }

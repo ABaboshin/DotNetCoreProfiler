@@ -21,7 +21,7 @@ private:
 
     std::unordered_map<ModuleID, GUID> modules;
 
-    Configuration configuration{};
+    configuration::Configuration configuration{};
     ICorProfilerInfo8* corProfilerInfo;
 
     bool printEveryCall = false;
@@ -39,7 +39,7 @@ private:
 
     wstring GetInterceptionLoaderClassName();
 
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, const FunctionInfo& target, const Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken);
+    HRESULT GenerateInterceptMethod(ModuleID moduleId, const FunctionInfo& target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken);
 
 public:
     CorProfiler();
@@ -175,7 +175,7 @@ public:
         return count;
     }
 
-    void AddInterception(ImportInterception interception);
+    void AddInterception(configuration::ImportInterception interception);
 
     void GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize);
 };
