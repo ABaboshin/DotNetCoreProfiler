@@ -50,12 +50,12 @@ HRESULT STDMETHODCALLTYPE ClassFactory::CreateInstance(IUnknown *pUnkOuter, REFI
     }
 
     auto profiler = new profiler::CorProfiler();
-    if (profiler::profiler == nullptr)
+    if (profiler == nullptr)
     {
         return E_FAIL;
     }
 
-    return profiler::profiler->QueryInterface(riid, ppvObject);
+    return profiler->QueryInterface(riid, ppvObject);
 }
 
 HRESULT STDMETHODCALLTYPE ClassFactory::LockServer(BOOL fLock)
