@@ -1,18 +1,21 @@
-﻿using System.Runtime.InteropServices;
+﻿using System;
+using System.Runtime.InteropServices;
 
 namespace Interception
 {
     public static class NativeMethods
     {
-        public static void AddInterceptor(ImportInterception interception)
+        public static void AddInterceptor(ImportInterception intercepion)
         {
+            Console.WriteLine($"{intercepion.CallerAssembly} {intercepion.TargetAssemblyName} {intercepion.TargetMethodName} {intercepion.TargetTypeName} {intercepion.TargetMethodParametersCount} ");
+
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {
-                Windows.AddInterceptor(interception);
+                Windows.AddInterceptor(intercepion);
             }
             else
             {
-                NonWindows.AddInterceptor(interception);
+                NonWindows.AddInterceptor(intercepion);
             }
         }
 

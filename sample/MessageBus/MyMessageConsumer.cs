@@ -1,6 +1,8 @@
-﻿using MassTransit;
+﻿using Interception.Attributes;
+using MassTransit;
 using Microsoft.Extensions.Logging;
 using System;
+using System.Collections.Generic;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -20,7 +22,7 @@ namespace SampleApp.MessageBus
         {
             _logger.LogInformation("MyMessageConsumer.Consume");
             Console.WriteLine("Start consuming");
-            await Task.Delay(3000);
+            await LongAction(new { x = 1 }, "test");
 
             var client = new HttpClient();
 
@@ -33,6 +35,12 @@ namespace SampleApp.MessageBus
             var response = await client.SendAsync(request);
 
             Console.WriteLine("Done consuming");
+        }
+
+        [Monitor]
+        async Task LongAction(object o1, object o2)
+        {
+            await Task.Delay(3000);
         }
     }
 }

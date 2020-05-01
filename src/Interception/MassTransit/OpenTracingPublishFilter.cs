@@ -3,6 +3,7 @@ using MassTransit;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
 using OpenTracing.Util;
+using System;
 using System.Threading.Tasks;
 
 namespace Interception.MassTransit
@@ -15,11 +16,7 @@ namespace Interception.MassTransit
 
         public async Task Send(PublishContext context, IPipe<PublishContext> next)
         {
-            if (!MassTransitInterception.MassTransitConfiguration.PublisherEnabled)
-            {
-                await next.Send(context);
-                return;
-            }
+            Console.WriteLine($"PublishFilter {GlobalTracer.Instance.ActiveSpan != null}");
 
             var baseSpan = GlobalTracer.Instance
                 .BuildSpan(MassTransitInterception.MassTransitConfiguration.PublisherName)

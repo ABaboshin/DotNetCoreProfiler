@@ -1,4 +1,5 @@
-﻿using Interception.Tracing.Extensions;
+﻿using Interception.Attributes;
+using Interception.Base;
 using MassTransit;
 using OpenTracing;
 using OpenTracing.Propagation;
@@ -6,7 +7,7 @@ using OpenTracing.Tag;
 using OpenTracing.Util;
 using System;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Reflection;
 
 namespace Interception.MassTransit
 {
@@ -15,21 +16,19 @@ namespace Interception.MassTransit
     {
         public override object Execute()
         {
-            var method = _this.GetType().GetMethod("Consume");
-
-            return Execute(async () => {
-                var task = (Task)method.Invoke(_this, _parameters.ToArray());
-                await task;
-            }, _this.GetType().FullName, (ConsumeContext)_parameters[0]);
+            Console.WriteLine(MassTransitInterception.MassTransitConfiguration);
+            return ExecuteInternal(MassTransitInterception.MassTransitConfiguration.ConsumerEnabled);
         }
 
-        private async Task Execute(Func<Task> action, string consumerName, ConsumeContext context)
+        protected override MethodBase FindMethod()
         {
-            if (!MassTransitInterception.MassTransitConfiguration.ConsumerEnabled)
-            {
-                await action();
-                return;
-            }
+            return _this.GetType().GetMethod("Consume");
+        }
+
+        protected override IScope CreateScope()
+        {
+            var context = (ConsumeContext)_parameters[0];
+            var consumerName = _this.GetType().FullName;
 
             ISpanBuilder spanBuilder;
 
@@ -52,20 +51,7 @@ namespace Interception.MassTransit
                 .WithTag("consumer", consumerName)
                 .WithTag("message-id", context.MessageId?.ToString());
 
-            using (spanBuilder.StartActive(true))
-            {
-                try
-                {
-                    await action();
-                }
-                catch (Exception ex)
-                {
-                    GlobalTracer.Instance.ActiveSpan.SetException(ex);
-                    throw;
-                }
-            }
-
-            Console.WriteLine("Done consuming interceptor");
+            return spanBuilder.StartActive(true);
         }
     }
 }

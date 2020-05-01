@@ -1,11 +1,14 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Interception.Common\Interception.Common.csproj" />
+    <Compile Include="..\Interception.Attributes\InitializeAttribute.cs" Link="InitializeAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\InterceptAttribute.cs" Link="InterceptAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\MonitorAttribute.cs" Link="MonitorAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\MonitoringInterceptAttribute.cs" Link="MonitoringInterceptAttribute.cs" />
   </ItemGroup>
 
 </Project>

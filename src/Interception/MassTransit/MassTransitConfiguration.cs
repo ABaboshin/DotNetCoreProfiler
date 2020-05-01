@@ -29,5 +29,10 @@
         /// consumer metric name
         /// </summary>
         public string ConsumerName { get; set; } = "masstransit_consumer";
+
+        public override string ToString()
+        {
+            return $"PublisherEnabled {PublisherEnabled} PublisherName {PublisherName} ConsumerEnabled {ConsumerEnabled} ConsumerName {ConsumerName}";
+        }
     }
 }
