@@ -32,6 +32,8 @@
         "entityframeworkcore_metrics__enabled": "true",
         "masstransit_metrics__PublisherEnabled": "true",
         "masstransit_metrics__ConsumerEnabled": "true",
+        "masstransit_metrics__PublisherName": "pn",
+        "masstransit_metrics__ConsumerName": "cn",
         "redis_metrics__Enabled": "false",
         "service__name": "sampleapp",
         "CORECLR_ENABLE_PROFILING": "1",

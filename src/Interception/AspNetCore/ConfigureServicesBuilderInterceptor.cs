@@ -1,5 +1,6 @@
 ﻿using Interception.Attributes;
 using Interception.Base;
+using Interception.MassTransit;
 using Interception.Observers;
 using Interception.OpenTracing.Prometheus;
 using Interception.Serilog;
@@ -35,6 +36,7 @@ namespace Interception.AspNetCore
                 .Build();
 
             serviceCollection.Configure<AspNetCoreConfiguration>(configuration.GetSection(AspNetCoreConfiguration.SectionKey));
+            serviceCollection.Configure<MassTransitConfiguration>(configuration.GetSection(MassTransitConfiguration.SectionKey));
 
             ConfigureMetrics(loggerFactory, serviceCollection);
 

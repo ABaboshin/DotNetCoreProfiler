@@ -16,15 +16,15 @@ namespace Interception.MassTransit
                 .AddEnvironmentVariables()
                 .Build();
 
-            MassTransitInterception.MassTransitConfiguration = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
+            var config = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
 
-            Console.WriteLine(MassTransitInterception.MassTransitConfiguration);
+            Console.WriteLine(config);
 
             var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)_parameters[1];
             Action<IRabbitMqBusFactoryConfigurator> myConfigure = (IRabbitMqBusFactoryConfigurator cfg) => {
                 Console.WriteLine("Masstransit configuration Injected");
 
-                if (MassTransitInterception.MassTransitConfiguration.PublisherEnabled)
+                if (config.PublisherEnabled)
                 {
                     cfg.ConfigurePublish(configurator => configurator.AddPipeSpecification(new OpenTracingPipeSpecification()));
                 }
