@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 #include "ClassFactory.h"
-#include "CorProfiler.h"
+#include "profiler/CorProfiler.h"
 
 ClassFactory::ClassFactory() : refCount(0)
 {
@@ -49,13 +49,14 @@ HRESULT STDMETHODCALLTYPE ClassFactory::CreateInstance(IUnknown *pUnkOuter, REFI
         return CLASS_E_NOAGGREGATION;
     }
 
-    CorProfiler* profiler = new CorProfiler();
-    if (profiler == nullptr)
+    auto p = new CorProfiler();
+    if (p == nullptr)
     {
         return E_FAIL;
     }
 
-    return profiler->QueryInterface(riid, ppvObject);
+
+    return p->QueryInterface(riid, ppvObject);
 }
 
 HRESULT STDMETHODCALLTYPE ClassFactory::LockServer(BOOL fLock)
