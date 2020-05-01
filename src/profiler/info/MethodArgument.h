@@ -3,6 +3,8 @@
 #include "util/ComPtr.h"
 #include "util/util.h"
 
+using namespace util;
+
 struct MethodArgument {
     ULONG offset;
     ULONG length;

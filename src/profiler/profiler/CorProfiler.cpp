@@ -630,7 +630,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
         for (const auto& interception : configuration.interceptions)
         {
             if (
-                (moduleInfo.assembly.name == interception.callerAssemblyName || interception.callerAssemblyName.empty())
+                (moduleInfo.assembly.name == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
                 && target.type.name == interception.Target.TypeName
                 && target.name == interception.Target.MethodName && interception.Target.MethodParametersCount == target.signature.NumberOfArguments()
                 )

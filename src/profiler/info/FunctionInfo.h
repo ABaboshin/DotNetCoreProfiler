@@ -3,6 +3,8 @@
 #include "MethodSignature.h"
 #include "TypeInfo.h"
 
+using namespace util;
+
 struct FunctionInfo {
   mdToken id;
   wstring name;

@@ -4,6 +4,8 @@
 
 namespace configuration
 {
+	using namespace util;
+
 	struct TargetMethod {
 		wstring AssemblyName;
 		wstring TypeName;

@@ -4,6 +4,8 @@
 #include "util/util.h"
 #include "util/ComPtr.h"
 
+using namespace util;
+
 struct TypeInfo {
   mdToken id;
   wstring name;

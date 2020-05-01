@@ -3,4 +3,7 @@
 #include <corhlpr.h>
 #include <string>
 
-typedef std::basic_string<WCHAR> wstring;
+namespace util
+{
+	typedef std::basic_string<WCHAR> wstring;
+}

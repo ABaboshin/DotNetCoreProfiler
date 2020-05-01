@@ -5,6 +5,8 @@
 #include "util/util.h"
 #include "util/ComPtr.h"
 
+using namespace util;
+
 struct AssemblyInfo {
   AssemblyID id;
   wstring name;

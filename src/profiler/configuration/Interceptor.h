@@ -5,6 +5,8 @@
 
 namespace configuration
 {
+	using namespace util;
+
 	struct Interceptor {
 		wstring AssemblyName;
 		wstring TypeName;

@@ -4,19 +4,21 @@
 #include "TargetMethod.h"
 #include "util/util.h"
 
+using namespace util;
+
 namespace configuration
 {
 	struct Interception {
-		wstring callerAssemblyName;
+		wstring CallerAssemblyName;
 		TargetMethod Target{};
 		Interceptor Interceptor{};
 
 		Interception(const wstring& callerAssemblyName, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor) :
-			callerAssemblyName(callerAssemblyName),
+			CallerAssemblyName(callerAssemblyName),
 			Target(targetMethod),
 			Interceptor(interceptor) {}
 
 		Interception() :
-			callerAssemblyName(""_W) {}
+			CallerAssemblyName(""_W) {}
 	};
 }

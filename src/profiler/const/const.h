@@ -4,6 +4,8 @@
 
 namespace _const
 {
+	using namespace util;
+
 	const auto SystemActivator = "System.Activator"_W;
 	const auto SystemBoolean = "System.Boolean"_W;
 	const auto SystemChar = "System.Char"_W;
