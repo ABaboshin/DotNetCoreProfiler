@@ -13,9 +13,7 @@
 #include "CorProfiler.h"
 #include "dllmain.h"
 
-namespace profiler
-{
-CorProfiler* profiler = nullptr;
+CorProfiler* profilerInstance = nullptr;
 
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
 {
@@ -49,7 +47,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
     loaderClass = GetInterceptionLoaderClassName();
 
-    profiler = this;
+    profilerInstance = this;
 
     return S_OK;
 }
@@ -1287,5 +1285,4 @@ wstring CorProfiler::GetInterceptionLoaderClassName()
 #else
     return Trim(ToWSTRING(std::string((char*)&_binary_Interception_Loader_Class_Name_txt_start)));
 #endif // _WIN32
-}
 }
