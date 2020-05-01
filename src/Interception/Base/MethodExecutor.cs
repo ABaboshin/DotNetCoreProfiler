@@ -11,16 +11,15 @@ namespace Interception.Base
             return method.Invoke(obj, param);
         }
 
-        public async Task<T> ExecuteAsync<T>(MethodBase method, object obj, object[] param)
+        public Task ExecuteAsyncWithResult(MethodBase method, object obj, object[] param)
         {
-            var result = (Task<T>)method.Invoke(obj, param);
-            return await result;
+            return (Task)method.Invoke(obj, param);
         }
 
         public async Task ExecuteAsync(MethodBase method, object obj, object[] param)
         {
             var result = (Task)method.Invoke(obj, param);
-            await result;
+            await result.ConfigureAwait(false);
         }
 
         public bool IsReturnTypeTask(MethodBase method)
@@ -43,6 +42,13 @@ namespace Interception.Base
             }
 
             return false;
+        }
+
+        public bool IsReturnTypeTaskWithResult(MethodBase method)
+        {
+            var methodInfo = (MethodInfo)method;
+            var returnType = methodInfo.ReturnType;
+            return IsReturnTypeTask(returnType) && returnType != typeof(Task);
         }
     }
 }

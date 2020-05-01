@@ -22,7 +22,9 @@ namespace SampleApp.MessageBus
         {
             _logger.LogInformation("MyMessageConsumer.Consume");
             Console.WriteLine("Start consuming");
-            await LongAction(new { x = 1 }, "test");
+            var test = await LongAction(new { x = 1 }, "test");
+
+            Console.WriteLine($"test {test}");
 
             var client = new HttpClient();
 
@@ -37,10 +39,11 @@ namespace SampleApp.MessageBus
             Console.WriteLine("Done consuming");
         }
 
-        [Monitor]
-        async Task LongAction(object o1, object o2)
+        [Monitor(Name = "Test", Parameters = new[] { "o2" }, ReturnValue = true)]
+        async Task<int> LongAction(object o1, object o2)
         {
             await Task.Delay(3000);
+            return 3;
         }
     }
 }
