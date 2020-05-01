@@ -1,18 +1,20 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
-#include "CorProfiler.h"
 #include "corhlpr.h"
 #include "corhdr.h"
+#include "configuration/Configuration.h"
+#include "const/const.h"
 #include "rewriter/ILRewriter.h"
+#include "rewriter/ILRewriterHelper.h"
 #include "util/helpers.h"
 #include "util/util.h"
 #include "util/ComPtr.h"
-#include "rewriter/ILRewriterHelper.h"
-#include "const/const.h"
-#include "configuration/Configuration.h"
+#include "CorProfiler.h"
 #include "dllmain.h"
 
+namespace profiler
+{
 CorProfiler* profiler = nullptr;
 
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
@@ -1285,4 +1287,5 @@ wstring CorProfiler::GetInterceptionLoaderClassName()
 #else
     return Trim(ToWSTRING(std::string((char*)&_binary_Interception_Loader_Class_Name_txt_start)));
 #endif // _WIN32
+}
 }

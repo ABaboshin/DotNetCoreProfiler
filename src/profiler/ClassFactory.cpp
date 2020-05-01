@@ -49,13 +49,13 @@ HRESULT STDMETHODCALLTYPE ClassFactory::CreateInstance(IUnknown *pUnkOuter, REFI
         return CLASS_E_NOAGGREGATION;
     }
 
-    CorProfiler* profiler = new CorProfiler();
-    if (profiler == nullptr)
+    auto profiler = new profiler::CorProfiler();
+    if (profiler::profiler == nullptr)
     {
         return E_FAIL;
     }
 
-    return profiler->QueryInterface(riid, ppvObject);
+    return profiler::profiler->QueryInterface(riid, ppvObject);
 }
 
 HRESULT STDMETHODCALLTYPE ClassFactory::LockServer(BOOL fLock)
