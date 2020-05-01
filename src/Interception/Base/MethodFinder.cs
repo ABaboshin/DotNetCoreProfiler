@@ -2,11 +2,11 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace Interception.Common
+namespace Interception.Base
 {
-    public static class MethodFinder
+    public class MethodFinder : IMethodFinder
     {
-        public static MethodBase FindMethod(int mdToken, long moduleVersionPtr, Type[] genericTypeArguments)
+        public MethodBase FindMethod(int mdToken, long moduleVersionPtr, Type[] genericTypeArguments = null)
         {
             Console.WriteLine($"Call FindMethod {mdToken} {moduleVersionPtr}");
 
@@ -32,7 +32,7 @@ namespace Interception.Common
                             {
                                 method = module.ResolveMethod(mdToken);
                             }
-                            
+
                             Console.WriteLine($"Found {method.DeclaringType.Name}.{method.Name} Call, {mdToken}, {moduleVersionPtr}, {moduleVersionId}");
 
                             return method;

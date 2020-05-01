@@ -1,4 +1,4 @@
-﻿using Interception.Common;
+﻿using Interception.Attributes;
 using MassTransit.RabbitMqTransport;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -29,7 +29,7 @@ namespace Interception.MassTransit
                 typedConfigure(cfg);
             };
 
-            return MethodExecutor.ExecuteMethod(null, new object[] { _parameters[0], myConfigure }, _mdToken, _moduleVersionPtr);
+            return ExecuteInternal(false);
         }
     }
 }

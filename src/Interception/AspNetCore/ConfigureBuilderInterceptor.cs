@@ -1,4 +1,4 @@
-﻿using Interception.Common;
+﻿using Interception.Attributes;
 using Interception.Common.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
@@ -9,9 +9,9 @@ using System.Reflection;
 namespace Interception.AspNetCore
 {
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureBuilder", TargetMethodParametersCount = 2)]
-    public class ConfigureBuilderInterceptor : BaseVoidInterceptor
+    public class ConfigureBuilderInterceptor : BaseInterceptor
     {
-        public override void ExecuteVoid()
+        public override object Execute()
         {
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
@@ -21,7 +21,7 @@ namespace Interception.AspNetCore
 
             if (!aspNetCoreConfiguration.Enabled)
             {
-                MethodExecutor.ExecuteMethod(_this, _parameters.ToArray(), _mdToken, _moduleVersionPtr, true);
+                return ExecuteInternal(false);
             }
 
             var instance = _parameters[0];
@@ -57,7 +57,7 @@ namespace Interception.AspNetCore
                 methodInfo.Invoke(instance, parameters2);
             }
 
-            //return null;
+            return null;
         }
     }
 }

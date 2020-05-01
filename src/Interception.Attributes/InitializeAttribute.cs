@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Interception
+namespace Interception.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
     public class InitializeAttribute : Attribute

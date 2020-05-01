@@ -857,37 +857,26 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const FunctionIn
     }
 
     //execute
-    wstring executeMethodName;
-    std::vector<BYTE> executeSignature{};
-    if (retType.size() == 1 && retType[0] == ELEMENT_TYPE_VOID)
-    {
-        executeMethodName = "ExecuteVoid"_W;
-        executeSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            0,
-            ELEMENT_TYPE_VOID,
-        };
-    }
-    else
-    {
-        executeMethodName = "Execute"_W;
-
-        executeSignature = {
+    std::vector<BYTE> executeSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
             0,
             ELEMENT_TYPE_OBJECT,
-        };
-    }
+    };
 
     mdMemberRef executeRef;
     hr = metadataEmit->DefineMemberRef(
         wrapperTypeRef,
-        executeMethodName.data(),
+        "Execute"_W.data(),
         executeSignature.data(),
         executeSignature.size(),
         &executeRef);
 
     helper.CallMember(executeRef, false);
+
+    if (retType.size() == 1 && retType[0] == ELEMENT_TYPE_VOID)
+    {
+        helper.Pop();
+    }
 
     // ret
     helper.Ret();

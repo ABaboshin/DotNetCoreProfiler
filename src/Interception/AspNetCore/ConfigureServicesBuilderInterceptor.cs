@@ -1,8 +1,7 @@
-﻿using Interception.Common;
+﻿using Interception.Attributes;
 using Interception.Observers;
 using Interception.OpenTracing.Prometheus;
 using Interception.Serilog;
-using Interception.StackExchangeRedis;
 using Interception.Tracing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,8 +25,6 @@ namespace Interception.AspNetCore
 
             DiagnosticsObserver.ConfigureAndStart();
 
-            StackExchangeRedisInterception.Configure();
-
             var loggerFactory = new SerilogLoggerFactory(CreateLogger(), false);
             var serviceCollection = ((IServiceCollection)_parameters[1]);
             serviceCollection.AddSingleton((ILoggerFactory)loggerFactory);
@@ -40,7 +37,7 @@ namespace Interception.AspNetCore
 
             ConfigureMetrics(loggerFactory, serviceCollection);
 
-            return MethodExecutor.ExecuteMethod(_this, _parameters.ToArray(), _mdToken, _moduleVersionPtr, true);
+            return ExecuteInternal(false);
         }
 
         private void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
