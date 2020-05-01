@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Base;
 using MassTransit;
 using OpenTracing;
 using OpenTracing.Propagation;

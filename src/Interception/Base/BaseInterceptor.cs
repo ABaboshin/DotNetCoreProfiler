@@ -1,12 +1,11 @@
-﻿using Interception.Base;
-using Interception.Tracing.Extensions;
+﻿using Interception.Tracing.Extensions;
 using OpenTracing;
 using System;
 using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Interception
+namespace Interception.Base
 {
     public abstract class BaseInterceptor
     {
@@ -103,8 +102,6 @@ namespace Interception
         protected async Task ExecuteAsyncInternal()
         {
             var method = FindMethod();
-
-            var ps = method.GetParameters();
 
             using (var scope = CreateScope())
             {

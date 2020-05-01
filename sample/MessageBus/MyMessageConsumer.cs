@@ -37,7 +37,7 @@ namespace SampleApp.MessageBus
             Console.WriteLine("Done consuming");
         }
 
-        [Monitor(Name = "MyLongAction", MonitorReturnValue = false, MonitorParameters = new[] { "o1" })]
+        [Monitor]
         async Task LongAction(object o1, object o2)
         {
             await Task.Delay(3000);

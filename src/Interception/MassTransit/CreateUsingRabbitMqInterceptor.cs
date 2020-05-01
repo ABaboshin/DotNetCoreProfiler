@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Base;
 using MassTransit.RabbitMqTransport;
 using Microsoft.Extensions.Configuration;
 using System;

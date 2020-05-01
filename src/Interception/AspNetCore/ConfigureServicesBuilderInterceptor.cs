@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Base;
 using Interception.Observers;
 using Interception.OpenTracing.Prometheus;
 using Interception.Serilog;

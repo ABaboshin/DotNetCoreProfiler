@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Base;
 using Interception.Common.Extensions;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.Configuration;
