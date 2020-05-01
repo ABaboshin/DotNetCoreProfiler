@@ -1,8 +1,11 @@
 #pragma once
 
-enum MethodArgumentTypeFlag
+namespace info
 {
-    TypeFlagByRef = 0x01,
-    TypeFlagVoid = 0x02,
-    TypeFlagBoxedType = 0x04
-};
+    enum MethodArgumentTypeFlag
+    {
+        TypeFlagByRef = 0x01,
+        TypeFlagVoid = 0x02,
+        TypeFlagBoxedType = 0x04
+    };
+}

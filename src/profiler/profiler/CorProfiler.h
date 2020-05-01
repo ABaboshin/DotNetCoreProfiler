@@ -41,7 +41,7 @@ namespace profiler
 
         wstring GetInterceptionLoaderClassName();
 
-        HRESULT GenerateInterceptMethod(ModuleID moduleId, const FunctionInfo& target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken);
+        HRESULT GenerateInterceptMethod(ModuleID moduleId, const info::FunctionInfo& target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken);
 
     public:
         CorProfiler();

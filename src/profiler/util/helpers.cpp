@@ -91,7 +91,7 @@ namespace util
             pbCur++;
             mdToken token;
             pbCur += CorSigUncompressToken(pbCur, &token);
-            tokenName = GetTypeInfo(metadaImport, token).name;
+            tokenName = info::GetTypeInfo(metadaImport, token).name;
             break;
         }
         case  ELEMENT_TYPE_SZARRAY:
