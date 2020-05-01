@@ -1894,7 +1894,7 @@ static const uint8_t lowercase_offset_t2[] = {
 };
 
 int32_t lowercase_offset(int32_t codepoint) {
-        int offset_index;
+    int offset_index;
     if (codepoint >= 66600) return 0;
     offset_index = lowercase_offset_t2[(lowercase_offset_t1[codepoint >> 6] << 6) + (codepoint & 63)];
     return lowercase_offset_values[offset_index];
