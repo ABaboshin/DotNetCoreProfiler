@@ -22,16 +22,21 @@ namespace SampleApp.MessageBus
             //var method = FindMethod();
 
             // arg count: parameters count + 1 if is instance method
+            var effectiveTypes = new List<Type>();
             var parameterTypes = new List<Type>();
             var parameters = new List<object>();
             if (_this != null)
             {
                 parameters.Add(_this);
-                parameterTypes.Add(method.DeclaringType);
+                //parameterTypes.Add(method.DeclaringType);
+                parameterTypes.Add(typeof(object));
+                effectiveTypes.Add(method.DeclaringType);
             }
 
             parameters.AddRange(_parameters);
-            parameterTypes.AddRange(method.GetParameters().Select(p => p.ParameterType));
+            //parameterTypes.AddRange(method.GetParameters().Select(p => p.ParameterType));
+            parameterTypes.AddRange(method.GetParameters().Select(p => typeof(object)));
+            effectiveTypes.AddRange(method.GetParameters().Select(p => p.ParameterType));
 
             Console.WriteLine($"parameters {parameters.Count()}");
             // resolve Func<T1, ... Task<TResult>>
@@ -59,11 +64,11 @@ namespace SampleApp.MessageBus
                 ilGenerator.Emit(OpCodes.Ldarg, i);
                 if (parameterTypes[i].IsValueType && parameterTypes[i] == typeof(object))
                 {
-                    ilGenerator.Emit(OpCodes.Unbox_Any, parameterTypes[i]);
+                    ilGenerator.Emit(OpCodes.Unbox_Any, effectiveTypes[i]);
                 }
-                else if (parameters[i].GetType() != parameterTypes[i])
+                else if (effectiveTypes[i] != parameterTypes[i])
                 {
-                    ilGenerator.Emit(OpCodes.Castclass, parameterTypes[i]);
+                    ilGenerator.Emit(OpCodes.Castclass, effectiveTypes[i]);
                 }
             }
 
@@ -76,7 +81,13 @@ namespace SampleApp.MessageBus
 
             var dynamicMethodDelegate = dynamicMethod.CreateDelegate(funcType);
 
-            return dynamicMethodDelegate.DynamicInvoke(parameters);
+            var mi = dynamicMethodDelegate.GetMethodInfo();
+            var pi = mi.GetParameters();
+
+            //var test = (Func<object, object, object, Task<int>>)dynamicMethodDelegate;
+            //return test(parameters[0], parameters[1], parameters[2]);
+
+            return dynamicMethodDelegate.DynamicInvoke(parameters.ToArray());
         }
     }
 }
