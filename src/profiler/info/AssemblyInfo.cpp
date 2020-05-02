@@ -3,7 +3,7 @@
 
 namespace info
 {
-    AssemblyInfo GetAssemblyInfo(ICorProfilerInfo8* info,
+    AssemblyInfo AssemblyInfo::GetAssemblyInfo(ICorProfilerInfo8* info,
         AssemblyID assemblyId) {
         WCHAR assemblyName[_const::NameMaxSize];
         DWORD len = 0;
