@@ -2,6 +2,7 @@
 using Interception.Base;
 using OpenTracing;
 using OpenTracing.Util;
+using System;
 using System.Linq;
 
 namespace Interception
@@ -35,10 +36,10 @@ namespace Interception
                 foreach (var p in attr.Parameters)
                 {
                     var index = methodParameters.FindIndex(mp => mp.Name == p);
-                    if (index > 0)
+                    if (index != -1)
                     {
                         spanBuilder = spanBuilder
-                            .WithTag(p, _parameters[index]?.ToString());
+                            .WithTag($"parameter.{p}", _parameters[index]?.ToString());
                     }
                 }
             }

@@ -54,6 +54,7 @@ namespace Interception.Base
 
         protected virtual void EnrichAfterExecution(object result, IScope scope)
         {
+            scope.Span.SetTag("result", result.ToString());
         }
 
         protected virtual IScope CreateScope()
@@ -139,7 +140,13 @@ namespace Interception.Base
 
         protected object ExecuteAsyncWithResultInternal()
         {
-            // arg count: parameters count + 1 if is instance method
+            var method = FindMethod();
+            Delegate executionDelegate = CreateExecutionDelegate();
+
+            var executeWithMetricsGeneric = typeof(BaseInterceptor).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Where(m => m.Name == nameof(ExecuteWithMetrics)).First();
+            var underilyingType = ((TypeInfo)method.ReturnType).GenericTypeArguments[0];
+            var executeWithMetrics = executeWithMetricsGeneric.MakeGenericMethod(underilyingType);
+
             var parameters = new List<object>();
             if (_this != null)
             {
@@ -148,23 +155,63 @@ namespace Interception.Base
 
             parameters.AddRange(_parameters);
 
-            Console.WriteLine($"parameters {parameters.Count()}");
+            return executeWithMetrics.Invoke(this, new object[] { executionDelegate, parameters.ToArray() });
+        }
+
+        private async Task<T> ExecuteWithMetrics<T>(Delegate func, object[] parameters)
+        {
+            using (var scope = CreateScope())
+            {
+                try
+                {
+                    var result = await (Task<T>)func.DynamicInvoke(parameters);
+
+                    Console.WriteLine($"result {result} {result.GetType().Name}");
+
+                    EnrichAfterExecution(result, scope);
+                    return result;
+                }
+                catch (Exception ex)
+                {
+                    scope.Span.SetException(ex);
+                    throw;
+                }
+            }
+        }
+
+        private Delegate CreateExecutionDelegate()
+        {
+            var method = FindMethod();
+
+            // arg count: parameters count + 1 if is instance method
+            var effectiveTypes = new List<Type>();
+            var parameterTypes = new List<Type>();
+            var parameters = new List<object>();
+            if (_this != null)
+            {
+                parameters.Add(_this);
+                parameterTypes.Add(typeof(object));
+                effectiveTypes.Add(method.DeclaringType);
+            }
+
+            parameters.AddRange(_parameters);
+            parameterTypes.AddRange(method.GetParameters().Select(p => typeof(object)));
+            effectiveTypes.AddRange(method.GetParameters().Select(p => p.ParameterType));
+
             // resolve Func<T1, ... Task<TResult>>
             var genericFuncType = typeof(Func<>).Assembly
                 .GetTypes().OfType<TypeInfo>()
                 .Where(t => t.Name.StartsWith("Func`") && t.GenericTypeParameters.Count() == parameters.Count() + 1).First();
 
             // taskType Task<TResult>
-            var method = FindMethod();
             var returnType = method.ReturnType;
 
-            var parameterTypes = parameters.Select(p => p.GetType()).ToList();
-            var funcArguments = parameterTypes;
+            var funcArguments = new List<Type>(parameterTypes);
             funcArguments.Add(returnType);
             var funcType = genericFuncType.MakeGenericType(funcArguments.ToArray());
 
             // delegate
-            var dynamicMethodName = Guid.NewGuid().ToString().Replace("-", "");
+            var dynamicMethodName = "_m" + Guid.NewGuid().ToString().Replace("-", "");
             var dynamicMethod = new DynamicMethod(dynamicMethodName, returnType, parameterTypes.ToArray(), Module, skipVisibility: true);
 
             // generate il
@@ -174,18 +221,18 @@ namespace Interception.Base
             for (int i = 0; i < parameterTypes.Count(); i++)
             {
                 ilGenerator.Emit(OpCodes.Ldarg, i);
-                if (parameterTypes[i].IsValueType)
+                if (parameterTypes[i].IsValueType && parameterTypes[i] == typeof(object))
                 {
-                    ilGenerator.Emit(OpCodes.Unbox_Any, parameterTypes[i]);
+                    ilGenerator.Emit(OpCodes.Unbox_Any, effectiveTypes[i]);
                 }
-                else
+                else if (effectiveTypes[i] != parameterTypes[i])
                 {
-                    ilGenerator.Emit(OpCodes.Castclass, parameterTypes[i]);
+                    ilGenerator.Emit(OpCodes.Castclass, effectiveTypes[i]);
                 }
             }
 
             // call method
-            ilGenerator.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
+            ilGenerator.EmitCall(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method, null);
             // cast result
             ilGenerator.Emit(OpCodes.Castclass, returnType);
             // return
@@ -193,7 +240,7 @@ namespace Interception.Base
 
             var dynamicMethodDelegate = dynamicMethod.CreateDelegate(funcType);
 
-            return dynamicMethodDelegate.DynamicInvoke(parameters);
+            return dynamicMethodDelegate;
         }
     }
 }
