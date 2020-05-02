@@ -11,25 +11,26 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Interception.MassTransit
 {
-    public class OpenTracingPublishFilter : IFilter<PublishContext>
+    public class OpenTracingPublishMessageFilter<TMessage> : IFilter<PublishContext<TMessage>> where TMessage : class
     {
         public void Probe(ProbeContext context)
         {
         }
 
-        public async Task Send(PublishContext context, IPipe<PublishContext> next)
+        public async Task Send(PublishContext<TMessage> context, IPipe<PublishContext<TMessage>> next)
         {
             Console.WriteLine($"PublishFilter {GlobalTracer.Instance.ActiveSpan != null}");
 
             var baseSpan = GlobalTracer.Instance
                 .BuildSpan(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.PublisherName)
                 .AsChildOf(GlobalTracer.Instance.ActiveSpan);
-            
+
             using (var scope = baseSpan.StartActive(finishSpanOnDispose: true))
             {
                 var span = scope.Span
                     .SetTag(Tags.SpanKind, Tags.SpanKindProducer)
-                    .SetTag("message-id", context.MessageId?.ToString());
+                    .SetTag("message-id", context.MessageId?.ToString())
+                    .SetTag("message-type", context.Message.GetType().FullName);
 
                 GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new MassTransitTextMapInjectAdapter(context));
 
