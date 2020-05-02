@@ -1,10 +1,11 @@
-﻿using Interception.Common.Extensions;
+﻿using Interception.Base.Extensions;
 using Interception.Tracing.Extensions;
 using OpenTracing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Threading.Tasks;
 
 namespace Interception.Base
@@ -12,8 +13,6 @@ namespace Interception.Base
     public abstract class BaseInterceptor
     {
         protected IMethodFinder _methodFinder = new MethodFinder();
-
-        protected IMethodExecutor _methodExecutor = new MethodExecutor();
 
         protected List<object> _parameters = new List<object>();
 
@@ -62,26 +61,26 @@ namespace Interception.Base
             throw new NotImplementedException();
         }
 
-        protected virtual MethodBase FindMethod()
+        protected virtual MethodInfo FindMethod()
         { 
-            return _methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
+            return (MethodInfo)_methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
         }
 
         protected object ExecuteInternal(bool metricsEnabled)
         {
             var method = FindMethod();
-            var isAsync = _methodExecutor.IsReturnTypeTask(method);
+            var isAsync = method.IsReturnTypeTask();
 
             if (!metricsEnabled)
             {
-                return _methodExecutor.ExecuteSync(method, _this, _parameters.ToArray());
+                return method.Invoke(_this, _parameters.ToArray());
             }
 
             if (!isAsync)
             {
                 return ExecuteSyncInternal();
             }
-            else if (!_methodExecutor.IsReturnTypeTaskWithResult(method))
+            else if (!method.IsReturnTypeTaskWithResult())
             {
                 return ExecuteAsyncInternal();
             }
@@ -99,7 +98,7 @@ namespace Interception.Base
             {
                 try
                 {
-                    var result = _methodExecutor.ExecuteSync(method, _this, _parameters.ToArray());
+                    var result = method.Invoke(_this, _parameters.ToArray());
                     EnrichAfterExecution(result, scope);
                     return result;
                 }
@@ -120,7 +119,7 @@ namespace Interception.Base
             {
                 try
                 {
-                    await _methodExecutor.ExecuteAsync(method, _this, _parameters.ToArray());
+                    await (Task)method.Invoke(_this, _parameters.ToArray());
                 }
                 catch (Exception ex)
                 {
@@ -130,35 +129,71 @@ namespace Interception.Base
             }
         }
 
-        protected async Task<object> ExecuteAsyncWithResultInternal()
+        internal static readonly ModuleBuilder Module;
+
+        static BaseInterceptor()
         {
-            Console.WriteLine("ExecuteAsyncWithResultInternal");
-            var method = FindMethod();
+            var asm = AssemblyBuilder.DefineDynamicAssembly(new AssemblyName("Interception"), AssemblyBuilderAccess.Run);
+            Module = asm.DefineDynamicModule("DynamicModule");
+        }
 
-            using (var scope = CreateScope())
+        protected object ExecuteAsyncWithResultInternal()
+        {
+            // arg count: parameters count + 1 if is instance method
+            var parameters = new List<object>();
+            if (_this != null)
             {
-                try
+                parameters.Add(_this);
+            }
+
+            parameters.AddRange(_parameters);
+
+            Console.WriteLine($"parameters {parameters.Count()}");
+            // resolve Func<T1, ... Task<TResult>>
+            var genericFuncType = typeof(Func<>).Assembly
+                .GetTypes().OfType<TypeInfo>()
+                .Where(t => t.Name.StartsWith("Func`") && t.GenericTypeParameters.Count() == parameters.Count() + 1).First();
+
+            // taskType Task<TResult>
+            var method = FindMethod();
+            var returnType = method.ReturnType;
+
+            var parameterTypes = parameters.Select(p => p.GetType()).ToList();
+            var funcArguments = parameterTypes;
+            funcArguments.Add(returnType);
+            var funcType = genericFuncType.MakeGenericType(funcArguments.ToArray());
+
+            // delegate
+            var dynamicMethodName = Guid.NewGuid().ToString().Replace("-", "");
+            var dynamicMethod = new DynamicMethod(dynamicMethodName, returnType, parameterTypes.ToArray(), Module, skipVisibility: true);
+
+            // generate il
+            var ilGenerator = dynamicMethod.GetILGenerator();
+
+            // load parameters
+            for (int i = 0; i < parameterTypes.Count(); i++)
+            {
+                ilGenerator.Emit(OpCodes.Ldarg, i);
+                if (parameterTypes[i].IsValueType)
                 {
-                    var task = _methodExecutor.ExecuteAsyncWithResult(method, _this, _parameters.ToArray());
-                    await task.ConfigureAwait(false);
-
-                    var result = task.GetPropertyValue<object>("Result");
-
-                    var fromResultGeneric = typeof(Task).GetMethods(BindingFlags.Public | BindingFlags.Static).Where(m => m.Name == "FromResult").First();
-                    var fromResultMethod = fromResultGeneric.MakeGenericMethod(typeof(int));
-
-                    var resultTask = fromResultMethod.Invoke(null, new object[] { result });
-
-                    EnrichAfterExecution(result, scope);
-
-                    return resultTask;
+                    ilGenerator.Emit(OpCodes.Unbox_Any, parameterTypes[i]);
                 }
-                catch (Exception ex)
+                else
                 {
-                    scope.Span.SetException(ex);
-                    throw;
+                    ilGenerator.Emit(OpCodes.Castclass, parameterTypes[i]);
                 }
             }
+
+            // call method
+            ilGenerator.Emit(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method);
+            // cast result
+            ilGenerator.Emit(OpCodes.Castclass, returnType);
+            // return
+            ilGenerator.Emit(OpCodes.Ret);
+
+            var dynamicMethodDelegate = dynamicMethod.CreateDelegate(funcType);
+
+            return dynamicMethodDelegate.DynamicInvoke(parameters);
         }
     }
 }

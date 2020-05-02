@@ -26,7 +26,7 @@ namespace Interception.MassTransit
             return ExecuteInternal(options.Value.ConsumerEnabled);
         }
 
-        protected override MethodBase FindMethod()
+        protected override MethodInfo FindMethod()
         {
             return _this.GetType().GetMethod("Consume");
         }

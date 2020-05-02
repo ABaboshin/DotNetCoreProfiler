@@ -3,6 +3,7 @@ using MassTransit;
 using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -22,6 +23,12 @@ namespace SampleApp.MessageBus
         {
             _logger.LogInformation("MyMessageConsumer.Consume");
             Console.WriteLine("Start consuming");
+
+            var longAction = GetType().GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Where(m => m.Name == "LongAction").FirstOrDefault();
+            var task = (Task<int>)Executor.Execute(this, new List<object> { new { x = 1 }, "test" }, longAction);
+            await task;
+
+
             var test = await LongAction(new { x = 1 }, "test");
 
             Console.WriteLine($"test {test}");
