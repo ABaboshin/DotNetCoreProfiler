@@ -7,11 +7,17 @@ namespace info
         const mdToken& token) {
 
         mdToken parentToken = mdTokenNil;
-        WCHAR functionName[_const::NameMaxSize]{};
+        mdToken methodSpecToken = mdTokenNil;
+        mdToken methodDefToken = mdTokenNil;
+
+        std::vector<WCHAR> functionName(_const::NameMaxSize, (WCHAR)0);
         DWORD functionNameLength = 0;
 
         PCCOR_SIGNATURE rawSignature;
         ULONG rawSignatureLength;
+
+        std::vector<BYTE> finalSignature{};
+        std::vector<BYTE> methodSpecSignature{};
 
         bool isGeneric = false;
 
@@ -20,25 +26,29 @@ namespace info
         switch (token_type) {
         case mdtMemberRef:
             hr = metadataImport->GetMemberRefProps(
-                token, &parentToken, functionName, _const::NameMaxSize, &functionNameLength,
+                token, &parentToken, &functionName[0], _const::NameMaxSize, &functionNameLength,
                 &rawSignature, &rawSignatureLength);
             break;
         case mdtMethodDef:
             hr = metadataImport->GetMemberProps(
-                token, &parentToken, functionName, _const::NameMaxSize, &functionNameLength,
+                token, &parentToken, &functionName[0], _const::NameMaxSize, &functionNameLength,
                 nullptr, &rawSignature, &rawSignatureLength, nullptr, nullptr,
                 nullptr, nullptr, nullptr);
             break;
         case mdtMethodSpec: {
+            isGeneric = true;
             hr = metadataImport->GetMethodSpecProps(
                 token, &parentToken, &rawSignature, &rawSignatureLength);
             if (FAILED(hr)) {
                 return {};
             }
             auto genericInfo = GetFunctionInfo(metadataImport, parentToken);
-            memcpy(functionName, genericInfo.name.c_str(),
-                sizeof(WCHAR) * (genericInfo.name.length() + 1));
-            functionNameLength = (DWORD)(genericInfo.name.length() + 1);
+            functionName = util::ToRaw(genericInfo.name);
+            functionNameLength = functionName.size();
+            methodSpecToken = token;
+            methodDefToken = genericInfo.id;
+            finalSignature = genericInfo.signature.raw;
+            methodSpecSignature = util::ToRaw(rawSignature, rawSignatureLength);
         } break;
         default:
             break;
@@ -47,10 +57,14 @@ namespace info
             return {};
         }
 
-        // parent_token could be: TypeDef, TypeRef, TypeSpec, ModuleRef, MethodDef
-        const auto typeInfo = GetTypeInfo(metadataImport, parentToken);
+        const auto typeInfo = TypeInfo::GetTypeInfo(metadataImport, parentToken);
 
-        return { token, functionName, typeInfo,
-                MethodSignature(rawSignature,rawSignatureLength) };
+        if (isGeneric)
+        {
+            return {methodSpecToken, util::ToString(functionName), typeInfo, MethodSignature(finalSignature), MethodSignature(methodSpecSignature), methodDefToken};
+        }
+
+        return { token, util::ToString(functionName), typeInfo,
+                MethodSignature(util::ToRaw(rawSignature,rawSignatureLength)) };
     }
 }

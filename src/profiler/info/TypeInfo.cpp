@@ -5,22 +5,23 @@
 
 namespace info
 {
-    TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport,
+    TypeInfo TypeInfo::GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport,
         const mdToken& token) {
         mdToken parent_token = mdTokenNil;
-        WCHAR type_name[_const::NameMaxSize]{};
-        DWORD type_name_len = 0;
+
+        std::vector<WCHAR> typeName(_const::NameMaxSize, (WCHAR)0);
+        DWORD length = 0;
 
         HRESULT hr = E_FAIL;
         const auto token_type = TypeFromToken(token);
         switch (token_type) {
         case mdtTypeDef:
-            hr = metadataImport->GetTypeDefProps(token, type_name, _const::NameMaxSize,
-                &type_name_len, nullptr, nullptr);
+            hr = metadataImport->GetTypeDefProps(token, &typeName[0], _const::NameMaxSize,
+                &length, nullptr, nullptr);
             break;
         case mdtTypeRef:
-            hr = metadataImport->GetTypeRefProps(token, &parent_token, type_name,
-                _const::NameMaxSize, &type_name_len);
+            hr = metadataImport->GetTypeRefProps(token, &parent_token, &typeName[0],
+                _const::NameMaxSize, &length);
             break;
         case mdtTypeSpec: {
             PCCOR_SIGNATURE signature{};
@@ -33,20 +34,16 @@ namespace info
                 return {};
             }
 
-            auto raw = std::vector<BYTE>(&signature[0], &signature[signature_length]);
+            if (signature[0] & ELEMENT_TYPE_GENERICINST) {
+                mdToken typeToken;
+                CorSigUncompressToken(&signature[2], &typeToken);
+                return GetTypeInfo(metadataImport, typeToken);
+            }
 
-            //if (signature[0] & ELEMENT_TYPE_GENERICINST) {
-            //    mdToken type_token;
-            //    CorSigUncompressToken(&signature[2], &type_token);
-            //    auto xxx = GetTypeInfo(metadataImport, type_token);
-            //    std::cout << "Generic " << util::ToString(xxx.name) << std::endl;
-            //}
-
-            return { token, GetSigTypeTokName(signature, metadataImport), raw };
         } break;
         case mdtModuleRef:
-            metadataImport->GetModuleRefProps(token, type_name, _const::NameMaxSize,
-                &type_name_len);
+            metadataImport->GetModuleRefProps(token, &typeName[0], _const::NameMaxSize,
+                &length);
             break;
         case mdtMemberRef:
             return FunctionInfo::GetFunctionInfo(metadataImport, token).type;
@@ -55,10 +52,10 @@ namespace info
             return FunctionInfo::GetFunctionInfo(metadataImport, token).type;
             break;
         }
-        if (FAILED(hr) || type_name_len == 0) {
+        if (FAILED(hr) || length == 0) {
             return {};
         }
 
-        return { token, type_name, {} };
+        return { token, util::ToString(typeName) };
     }
 }

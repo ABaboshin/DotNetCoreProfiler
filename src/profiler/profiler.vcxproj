@@ -102,6 +102,7 @@
     <ClInclude Include="info\AssemblyInfo.h" />
     <ClInclude Include="ClassFactory.h" />
     <ClInclude Include="const\const.h" />
+    <ClInclude Include="info\parser.h" />
     <ClInclude Include="util\ComPtr.h" />
     <ClInclude Include="configuration\Configuration.h" />
     <ClInclude Include="profiler\CorProfiler.h" />
@@ -113,8 +114,6 @@
     <ClInclude Include="configuration\ImportInterception.h" />
     <ClInclude Include="configuration\Interception.h" />
     <ClInclude Include="configuration\Interceptor.h" />
-    <ClInclude Include="info\MethodArgument.h" />
-    <ClInclude Include="info\MethodArgumentTypeFlag.h" />
     <ClInclude Include="info\MethodSignature.h" />
     <ClInclude Include="miniutf\miniutf.hpp" />
     <ClInclude Include="miniutf\miniutfdata.h" />
@@ -129,12 +128,12 @@
   <ItemGroup>
     <ClCompile Include="info\AssemblyInfo.cpp" />
     <ClCompile Include="ClassFactory.cpp" />
+    <ClCompile Include="info\parser.cpp" />
     <ClCompile Include="profiler\CorProfiler.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="info\FunctionInfo.cpp" />
     <ClCompile Include="rewriter\ILRewriter.cpp" />
     <ClCompile Include="rewriter\ILRewriterHelper.cpp" />
-    <ClCompile Include="info\MethodArgument.cpp" />
     <ClCompile Include="info\TypeInfo.cpp" />
     <ClCompile Include="util\helpers.cpp" />
     <ClCompile Include="interop.cpp" />

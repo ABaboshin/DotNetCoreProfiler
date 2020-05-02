@@ -12,8 +12,8 @@ namespace info
         wstring name;
         TypeInfo type;
         BOOL isGeneric;
-        MethodSignature signature;
-        MethodSignature functionSpecSignature;
+        MethodSignature signature{};
+        MethodSignature functionSpecSignature{};
         mdToken methodDefId;
 
         FunctionInfo()

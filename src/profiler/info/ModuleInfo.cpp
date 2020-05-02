@@ -17,7 +17,7 @@ namespace info
         if (FAILED(hr) || length == 0) {
             return {};
         }
-        return { moduleId, util::ToString(modulePath, length), AssemblyInfo::GetAssemblyInfo(info, assemblyId),
+        return { moduleId, util::ToString(modulePath), AssemblyInfo::GetAssemblyInfo(info, assemblyId),
                 moduleFlags };
     }
 }
