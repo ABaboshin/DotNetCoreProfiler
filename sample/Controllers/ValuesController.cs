@@ -8,7 +8,6 @@ using Microsoft.EntityFrameworkCore;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
-using StackExchange.Redis;
 
 namespace SampleApp.Controllers
 {
@@ -21,13 +20,11 @@ namespace SampleApp.Controllers
     {
         private readonly IBusControl _busControl;
         private readonly MyDbContext _myDbContext;
-        private readonly ConnectionMultiplexer _connectionMultiplexer;
 
-        public ValuesController(IBusControl busControl, MyDbContext myDbContext, ConnectionMultiplexer connectionMultiplexer)
+        public ValuesController(IBusControl busControl, MyDbContext myDbContext)
         {
             _busControl = busControl;
             _myDbContext = myDbContext;
-            _connectionMultiplexer = connectionMultiplexer;
         }
 
         /// <summary>
@@ -69,39 +66,6 @@ namespace SampleApp.Controllers
         public async Task<ActionResult<string>> Publish(int id)
         {
             await _busControl.Publish(new MyMessage { Id = id });
-            return Ok();
-        }
-
-        /// <summary>
-        /// publish a message with redis
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpGet("publish-redis-sync")]
-        public ActionResult<string> PublishRedisSync()
-        {
-            _connectionMultiplexer
-                .GetDatabase()
-                .Multiplexer
-                .GetSubscriber()
-                .Publish("channel1", "value1");
-
-            return Ok();
-        }
-
-        /// <summary>
-        /// publish a message with redis
-        /// </summary>
-        /// <param name="id"></param>
-        /// <returns></returns>
-        [HttpGet("publish-redis-async")]
-        public async Task<ActionResult<string>> PublishRedisAsync()
-        {
-            await _connectionMultiplexer
-                .GetDatabase()
-                .Multiplexer
-                .GetSubscriber()
-                .PublishAsync("channel2", "value2");
             return Ok();
         }
 

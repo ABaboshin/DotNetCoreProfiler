@@ -26,7 +26,9 @@ namespace Interception.MassTransit
 
                 if (config.PublisherEnabled)
                 {
-                    cfg.ConfigurePublish(configurator => configurator.AddPipeSpecification(new OpenTracingPipeSpecification()));
+                    cfg.ConfigurePublish(configurator => {
+                        configurator.ConnectPublishPipeSpecificationObserver(new OpenTracingPublishPipeSpecificationObserver());
+                    });
                 }
 
                 typedConfigure(cfg);
