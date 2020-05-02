@@ -41,7 +41,7 @@ add_library("DotNetCoreProfiler.static" STATIC
     info/FunctionInfo.cpp
     info/ModuleInfo.cpp
     info/TypeInfo.cpp
-    info/MethodArgument.cpp
+    info/parser.cpp
     rewriter/ILRewriter.cpp
     rewriter/ILRewriterHelper.cpp
     ${GENERATED_OBJ_FILES}

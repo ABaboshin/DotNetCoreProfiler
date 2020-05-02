@@ -3,30 +3,31 @@
 
 namespace info
 {
-    AssemblyInfo GetAssemblyInfo(ICorProfilerInfo8* info,
+    AssemblyInfo AssemblyInfo::GetAssemblyInfo(ICorProfilerInfo8* info,
         AssemblyID assemblyId) {
-        WCHAR assemblyName[_const::NameMaxSize];
-        DWORD len = 0;
+        std::vector<WCHAR> assemblyName(_const::NameMaxSize, (WCHAR)0);
+        DWORD assemblyNameLength = 0;
         AppDomainID appDomainId;
         ModuleID manifestModuleId;
 
-        auto hr = info->GetAssemblyInfo(assemblyId, _const::NameMaxSize, &len,
-            assemblyName, &appDomainId, &manifestModuleId);
+        auto hr = info->GetAssemblyInfo(assemblyId, _const::NameMaxSize, &assemblyNameLength,
+            &assemblyName[0], &appDomainId, &manifestModuleId);
 
-        if (FAILED(hr) || len == 0) {
+        if (FAILED(hr) || assemblyNameLength == 0) {
             return {};
         }
 
-        WCHAR appDomainName[_const::NameMaxSize];
+        std::vector<WCHAR> appDomainName(_const::NameMaxSize, (WCHAR)0);
+        DWORD appDomainNameLength = 0;
 
-        hr = info->GetAppDomainInfo(appDomainId, _const::NameMaxSize, &len,
-            appDomainName, nullptr);
+        hr = info->GetAppDomainInfo(appDomainId, _const::NameMaxSize, &appDomainNameLength,
+            &appDomainName[0], nullptr);
 
-        if (FAILED(hr) || len == 0) {
+        if (FAILED(hr) || appDomainNameLength == 0) {
             return {};
         }
 
-        return { assemblyId, assemblyName, manifestModuleId, appDomainId,
-                appDomainName };
+        return { assemblyId, util::ToString(assemblyName), manifestModuleId, appDomainId,
+                util::ToString(appDomainName) };
     }
 }

@@ -26,8 +26,6 @@ namespace info
             appDomainId(appDomainId),
             appDomainName(appDomainName) {}
 
-        bool IsValid() const { return id != 0; }
+        static AssemblyInfo GetAssemblyInfo(ICorProfilerInfo8* info, AssemblyID assemblyId);
     };
-
-    AssemblyInfo GetAssemblyInfo(ICorProfilerInfo8* info, AssemblyID assemblyId);
 }

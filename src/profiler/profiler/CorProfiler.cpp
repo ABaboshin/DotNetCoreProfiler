@@ -111,7 +111,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadStarted(ModuleID moduleId)
 HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRESULT hrStatus)
 {
     HRESULT hr;
-    const auto module_info = info::GetModuleInfo(this->corProfilerInfo, moduleId);
+    const auto module_info = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
     auto app_domain_id = module_info.assembly.appDomainId;
 
     ComPtr<IUnknown> metadataInterfaces;
@@ -179,7 +179,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     IfFailRet(this->corProfilerInfo->GetFunctionInfo(functionId, &classId, &moduleId, &functionToken));
 
-    auto moduleInfo = info::GetModuleInfo(this->corProfilerInfo, moduleId);
+    auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
 
     // if the current call is not a call to one of skipped assemblies
     if (SkipAssembly(moduleInfo.assembly.name))
@@ -197,9 +197,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
         const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
-        auto functionInfo = info::GetFunctionInfo(metadataImport, functionToken);
+        auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
 
-        hr = functionInfo.signature.TryParse();
         IfFailRet(hr);
 
         std::cout << "Load into app_domain_id " << moduleInfo.assembly.appDomainId
@@ -603,7 +602,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
     auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
-    auto moduleInfo = info::GetModuleInfo(this->corProfilerInfo, moduleId);
+    auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
 
     if (!SkipAssembly(moduleInfo.assembly.name)) for (rewriter::ILInstr* pInstr = rewriter.GetILList()->m_pNext;
         pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext) {
@@ -611,8 +610,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
             continue;
         }
 
-        auto target = info::GetFunctionInfo(metadataImport, pInstr->m_Arg32);
-        target.signature.TryParse();
+        auto target = info::FunctionInfo::GetFunctionInfo(metadataImport, pInstr->m_Arg32);
 
         auto targetMdToken = pInstr->m_Arg32;
 
@@ -655,7 +653,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const info::FunctionInfo& target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken)
 {
     HRESULT hr;
 
@@ -691,7 +689,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const info::Func
         (BYTE)(target.signature.NumberOfArguments() + (target.signature.IsInstanceMethod() ? 1 : 0))
     };
     // return type
-    auto retType = target.signature.GetRet().GetRaw();
+    auto retType = target.signature.GetRet();
     signature.insert(signature.end(), retType.begin(), retType.end());
     
     // insert this
@@ -701,13 +699,11 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, const info::Func
     }
 
     // insert existing arguments
-    auto args = target.signature.GetMethodArguments();
-    
-    for (const auto& arg : args)
+    for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
         signature.push_back(ELEMENT_TYPE_OBJECT);
     }
-
+    
     // define a method
     hr = metadataEmit->DefineMethod(newTypeDef,
         "__InterceptionMethod__"_W.c_str(),

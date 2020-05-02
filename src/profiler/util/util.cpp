@@ -35,6 +35,21 @@ namespace util
         return trimmed;
     }
 
+	wstring ToString(const std::vector<WCHAR>& data)
+	{
+        return wstring(&data[0]);
+	}
+
+    std::vector<WCHAR> ToRaw(const wstring& str)
+    {
+        return std::vector<WCHAR>(str.begin(), str.end());
+    }
+
+	std::vector<BYTE> ToRaw(PCCOR_SIGNATURE signature, ULONG length)
+	{
+        return std::vector<BYTE>(&signature[0], &signature[length]);
+	}
+
     wstring ToWSTRING(const std::string& str) {
         auto ustr = miniutf::to_utf16(str);
         return wstring(reinterpret_cast<const WCHAR*>(ustr.c_str()));
