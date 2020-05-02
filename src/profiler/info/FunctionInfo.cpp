@@ -3,52 +3,54 @@
 
 namespace info
 {
-    FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
+    FunctionInfo FunctionInfo::GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport,
         const mdToken& token) {
 
-        mdToken parent_token = mdTokenNil;
-        WCHAR function_name[_const::NameMaxSize]{};
-        DWORD function_name_len = 0;
+        mdToken parentToken = mdTokenNil;
+        WCHAR functionName[_const::NameMaxSize]{};
+        DWORD functionNameLength = 0;
 
-        PCCOR_SIGNATURE raw_signature;
-        ULONG raw_signature_len;
+        PCCOR_SIGNATURE rawSignature;
+        ULONG rawSignatureLength;
+
+        bool isGeneric = false;
 
         HRESULT hr = E_FAIL;
         const auto token_type = TypeFromToken(token);
         switch (token_type) {
         case mdtMemberRef:
-            hr = metadata_import->GetMemberRefProps(
-                token, &parent_token, function_name, _const::NameMaxSize, &function_name_len,
-                &raw_signature, &raw_signature_len);
+            hr = metadataImport->GetMemberRefProps(
+                token, &parentToken, functionName, _const::NameMaxSize, &functionNameLength,
+                &rawSignature, &rawSignatureLength);
             break;
         case mdtMethodDef:
-            hr = metadata_import->GetMemberProps(
-                token, &parent_token, function_name, _const::NameMaxSize, &function_name_len,
-                nullptr, &raw_signature, &raw_signature_len, nullptr, nullptr,
+            hr = metadataImport->GetMemberProps(
+                token, &parentToken, functionName, _const::NameMaxSize, &functionNameLength,
+                nullptr, &rawSignature, &rawSignatureLength, nullptr, nullptr,
                 nullptr, nullptr, nullptr);
             break;
         case mdtMethodSpec: {
-            hr = metadata_import->GetMethodSpecProps(
-                token, &parent_token, &raw_signature, &raw_signature_len);
+            hr = metadataImport->GetMethodSpecProps(
+                token, &parentToken, &rawSignature, &rawSignatureLength);
             if (FAILED(hr)) {
                 return {};
             }
-            auto generic_info = GetFunctionInfo(metadata_import, parent_token);
-            memcpy(function_name, generic_info.name.c_str(),
-                sizeof(WCHAR) * (generic_info.name.length() + 1));
-            function_name_len = (DWORD)(generic_info.name.length() + 1);
+            auto genericInfo = GetFunctionInfo(metadataImport, parentToken);
+            memcpy(functionName, genericInfo.name.c_str(),
+                sizeof(WCHAR) * (genericInfo.name.length() + 1));
+            functionNameLength = (DWORD)(genericInfo.name.length() + 1);
         } break;
         default:
             break;
         }
-        if (FAILED(hr) || function_name_len == 0) {
+        if (FAILED(hr) || functionNameLength == 0) {
             return {};
         }
 
         // parent_token could be: TypeDef, TypeRef, TypeSpec, ModuleRef, MethodDef
-        const auto type_info = GetTypeInfo(metadata_import, parent_token);
+        const auto typeInfo = GetTypeInfo(metadataImport, parentToken);
 
-        return { token, function_name, type_info,
-                MethodSignature(raw_signature,raw_signature_len) };
+        return { token, functionName, typeInfo,
+                MethodSignature(rawSignature,rawSignatureLength) };
     }
 }

@@ -35,6 +35,11 @@ namespace util
         return trimmed;
     }
 
+	wstring ToString(const std::vector<WCHAR>& data, size_t length)
+	{
+        return wstring(&data[0], &data[length]);
+	}
+
     wstring ToWSTRING(const std::string& str) {
         auto ustr = miniutf::to_utf16(str);
         return wstring(reinterpret_cast<const WCHAR*>(ustr.c_str()));

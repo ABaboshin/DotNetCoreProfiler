@@ -6,18 +6,18 @@ namespace info
 {
     ModuleInfo ModuleInfo::GetModuleInfo(ICorProfilerInfo8* info, ModuleID moduleId)
     {
-        WCHAR modulePath[_const::NameMaxSize]{};
-        DWORD len = 0;
+        std::vector<WCHAR> modulePath(_const::NameMaxSize, (WCHAR)0);
+        DWORD length = 0;
         LPCBYTE baseLoadAddress;
         AssemblyID assemblyId = 0;
         DWORD moduleFlags = 0;
         const HRESULT hr = info->GetModuleInfo2(
-            moduleId, &baseLoadAddress, _const::NameMaxSize, &len,
-            modulePath, &assemblyId, &moduleFlags);
-        if (FAILED(hr) || len == 0) {
+            moduleId, &baseLoadAddress, _const::NameMaxSize, &length,
+            &modulePath[0], &assemblyId, &moduleFlags);
+        if (FAILED(hr) || length == 0) {
             return {};
         }
-        return { moduleId, modulePath, AssemblyInfo::GetAssemblyInfo(info, assemblyId),
+        return { moduleId, util::ToString(modulePath, length), AssemblyInfo::GetAssemblyInfo(info, assemblyId),
                 moduleFlags };
     }
 }

@@ -15,4 +15,6 @@ namespace util
 	wstring GetEnvironmentValue(const wstring& name);
 
 	wstring Trim(const wstring& str);
+
+	wstring ToString(const std::vector<WCHAR>& data, size_t length);
 }

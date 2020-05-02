@@ -197,7 +197,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
         const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
-        auto functionInfo = info::GetFunctionInfo(metadataImport, functionToken);
+        auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
 
         hr = functionInfo.signature.TryParse();
         IfFailRet(hr);
@@ -611,7 +611,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
             continue;
         }
 
-        auto target = info::GetFunctionInfo(metadataImport, pInstr->m_Arg32);
+        auto target = info::FunctionInfo::GetFunctionInfo(metadataImport, pInstr->m_Arg32);
         target.signature.TryParse();
 
         auto targetMdToken = pInstr->m_Arg32;

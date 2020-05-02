@@ -39,9 +39,7 @@ namespace info
             signature(signature),
             methodDefId(0) {}
 
-        bool IsValid() const { return id != 0; }
+        static FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport,
+            const mdToken& token);
     };
-
-    FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadata_import,
-        const mdToken& token);
 }

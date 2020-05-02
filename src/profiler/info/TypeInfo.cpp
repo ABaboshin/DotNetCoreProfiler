@@ -35,12 +35,12 @@ namespace info
 
             auto raw = std::vector<BYTE>(&signature[0], &signature[signature_length]);
 
-            if (signature[0] & ELEMENT_TYPE_GENERICINST) {
-                mdToken type_token;
-                CorSigUncompressToken(&signature[2], &type_token);
-                auto xxx = GetTypeInfo(metadataImport, type_token);
-                std::cout << "Generic " << util::ToString(xxx.name) << std::endl;
-            }
+            //if (signature[0] & ELEMENT_TYPE_GENERICINST) {
+            //    mdToken type_token;
+            //    CorSigUncompressToken(&signature[2], &type_token);
+            //    auto xxx = GetTypeInfo(metadataImport, type_token);
+            //    std::cout << "Generic " << util::ToString(xxx.name) << std::endl;
+            //}
 
             return { token, GetSigTypeTokName(signature, metadataImport), raw };
         } break;
@@ -49,10 +49,10 @@ namespace info
                 &type_name_len);
             break;
         case mdtMemberRef:
-            return GetFunctionInfo(metadataImport, token).type;
+            return FunctionInfo::GetFunctionInfo(metadataImport, token).type;
             break;
         case mdtMethodDef:
-            return GetFunctionInfo(metadataImport, token).type;
+            return FunctionInfo::GetFunctionInfo(metadataImport, token).type;
             break;
         }
         if (FAILED(hr) || type_name_len == 0) {
