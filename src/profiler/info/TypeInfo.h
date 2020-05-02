@@ -24,6 +24,6 @@ namespace info
 
     };
 
-    TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadata_import,
+    TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport,
         const mdToken& token);
 }

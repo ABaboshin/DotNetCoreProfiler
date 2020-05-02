@@ -111,7 +111,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadStarted(ModuleID moduleId)
 HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRESULT hrStatus)
 {
     HRESULT hr;
-    const auto module_info = info::GetModuleInfo(this->corProfilerInfo, moduleId);
+    const auto module_info = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
     auto app_domain_id = module_info.assembly.appDomainId;
 
     ComPtr<IUnknown> metadataInterfaces;
@@ -179,7 +179,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     IfFailRet(this->corProfilerInfo->GetFunctionInfo(functionId, &classId, &moduleId, &functionToken));
 
-    auto moduleInfo = info::GetModuleInfo(this->corProfilerInfo, moduleId);
+    auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
 
     // if the current call is not a call to one of skipped assemblies
     if (SkipAssembly(moduleInfo.assembly.name))
@@ -603,7 +603,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
     auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
-    auto moduleInfo = info::GetModuleInfo(this->corProfilerInfo, moduleId);
+    auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
 
     if (!SkipAssembly(moduleInfo.assembly.name)) for (rewriter::ILInstr* pInstr = rewriter.GetILList()->m_pNext;
         pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext) {

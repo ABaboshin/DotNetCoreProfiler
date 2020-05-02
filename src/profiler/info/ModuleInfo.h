@@ -20,7 +20,7 @@ namespace info
         bool IsWindowsRuntime() const {
             return ((flags & COR_PRF_MODULE_WINDOWS_RUNTIME) != 0);
         }
-    };
 
-    ModuleInfo GetModuleInfo(ICorProfilerInfo8* info, ModuleID moduleId);
+        static ModuleInfo GetModuleInfo(ICorProfilerInfo8* info, ModuleID moduleId);
+    };
 }

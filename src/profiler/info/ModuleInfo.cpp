@@ -4,7 +4,7 @@
 
 namespace info
 {
-    ModuleInfo GetModuleInfo(ICorProfilerInfo8* info, ModuleID moduleId)
+    ModuleInfo ModuleInfo::GetModuleInfo(ICorProfilerInfo8* info, ModuleID moduleId)
     {
         WCHAR modulePath[_const::NameMaxSize]{};
         DWORD len = 0;
