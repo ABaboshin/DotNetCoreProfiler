@@ -19,8 +19,48 @@ namespace SampleApp.MessageBus
 
         public static object Execute(object _this, List<object> _parameters, MethodInfo method)
         {
+            /*
+             
+            async Task<T> ExecuteWithMetrics<T>(Func<Task<T>> func, object[] parameters)
+            {
+                using(var scope = CreateScope())
+                {
+                    return await func;
+                }
+            }
+             
+             */
+
             //var method = FindMethod();
 
+            Delegate executionDelegate = CreateExecutionDelegate(_this, _parameters, method);
+
+            var executeWithMetricsGeneric = typeof(Executor).GetMethods(BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == nameof(ExecuteWithMetrics)).FirstOrDefault();
+            var underilyingType = ((TypeInfo)method.ReturnType).GenericTypeArguments[0];
+            var executeWithMetrics = executeWithMetricsGeneric.MakeGenericMethod(underilyingType);
+
+            var parameters = new List<object>();
+            if (_this != null)
+            {
+                parameters.Add(_this);
+            }
+
+            parameters.AddRange(_parameters);
+
+            return executeWithMetrics.Invoke(null, new object[] { executionDelegate, parameters.ToArray() });
+        }
+
+        static async Task<T> ExecuteWithMetrics<T>(Delegate func, object[] parameters)
+        {
+            Console.WriteLine("Before");
+            var result = await (Task<T>)func.DynamicInvoke(parameters);
+            Console.WriteLine("after");
+
+            return result;
+        }
+
+        private static Delegate CreateExecutionDelegate(object _this, List<object> _parameters, MethodInfo method)
+        {
             // arg count: parameters count + 1 if is instance method
             var effectiveTypes = new List<Type>();
             var parameterTypes = new List<Type>();
@@ -81,13 +121,7 @@ namespace SampleApp.MessageBus
 
             var dynamicMethodDelegate = dynamicMethod.CreateDelegate(funcType);
 
-            var mi = dynamicMethodDelegate.GetMethodInfo();
-            var pi = mi.GetParameters();
-
-            //var test = (Func<object, object, object, Task<int>>)dynamicMethodDelegate;
-            //return test(parameters[0], parameters[1], parameters[2]);
-
-            return dynamicMethodDelegate.DynamicInvoke(parameters.ToArray());
+            return dynamicMethodDelegate;
         }
     }
 }

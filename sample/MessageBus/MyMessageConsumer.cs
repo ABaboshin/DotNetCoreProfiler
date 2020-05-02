@@ -26,10 +26,10 @@ namespace SampleApp.MessageBus
 
             var longAction = GetType().GetMethods(System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).Where(m => m.Name == "LongAction").FirstOrDefault();
             var task = (Task<int>)Executor.Execute(this, new List<object> { new { x = 1 }, "test" }, longAction);
-            await task;
+            var test = await task;
 
 
-            var test = await LongAction(new { x = 1 }, "test");
+            //var test = await LongAction(new { x = 1 }, "test");
 
             Console.WriteLine($"test {test}");
 
