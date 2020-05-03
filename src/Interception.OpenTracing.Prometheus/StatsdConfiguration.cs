@@ -19,5 +19,10 @@
         /// statsd port
         /// </summary>
         public int Port { get; set; }
+
+        /// <summary>
+        /// send metric as a protobuf message
+        /// </summary>
+        public bool Protobuf { get; set; }
     }
 }

@@ -29,8 +29,8 @@ namespace Interception.MassTransit
             {
                 var span = scope.Span
                     .SetTag(Tags.SpanKind, Tags.SpanKindProducer)
-                    .SetTag("message-id", context.MessageId?.ToString())
-                    .SetTag("message-type", context.Message.GetType().FullName);
+                    .SetTag("MessageId", context.MessageId?.ToString())
+                    .SetTag("MessageType", context.Message.GetType().FullName);
 
                 GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new MassTransitTextMapInjectAdapter(context));
 

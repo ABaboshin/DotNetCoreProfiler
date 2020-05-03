@@ -73,3 +73,14 @@ It will create an app running on `http://localhost:5000` with the following endp
     - three entity framework core metric
     - one custom "A long time action metric" with result and one of the parameters
 ![good query sample](./good.png)
+
+
+# Statsd protobuf (experimental)
+
+C:\tools\protoc\bin\protoc.exe --csharp_out=protobuf --proto_path=D:\playground\statsd_exporter\protobuf\  D:\playground\statsd_exporter\protobuf\metric.proto
+
+ - Pull https://github.com/ABaboshin/statsd_exporter
+ - build a docker image `docker build -t statsd:protobuf .`
+ - Set statsd image to `statsd:protobuf`
+ - Set `STATSD__Protobuf` to `"true"` for sampleapp service
+ - set `tracing__collector` to `prometheus` for sampleapp service

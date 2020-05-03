@@ -23,9 +23,10 @@
         "JAEGER_AGENT_HOST": "localhost",
         "JAEGER_AGENT_PORT": "6831",
         "JAEGER_SAMPLER_TYPE": "const",
-        "tracing__collector": "jaeger",
+        "tracing__collector": "prometheus",
         "STATSD__SERVER": "localhost",
         "STATSD__PORT": "9125",
+        "STATSD__Protobuf": "true",
         "aspnetcore_metrics__enabled": "true",
         "httphandler_metrics__enabled": "true",
         "entityframeworkcore_metrics__enabled": "true",
@@ -40,7 +41,7 @@
         "CORECLR_PROFILER_HOME": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin",
         "PROFILER_INTERCEPTION_DLLS": "D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.dll"
       },
-      "nativeDebugging": true,
+      "nativeDebugging": false,
       "applicationUrl": "http://localhost:5000"
     }
   }
