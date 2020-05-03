@@ -83,3 +83,4 @@ C:\tools\protoc\bin\protoc.exe --csharp_out=protobuf --proto_path=D:\playground\
  - build a docker image `docker build -t statsd:protobuf .`
  - Set statsd image to `statsd:protobuf`
  - Set `STATSD__Protobuf` to `"true"` for sampleapp service
+ - set `tracing__collector` to `prometheus` for sampleapp service

@@ -44,7 +44,7 @@ services:
       JAEGER_AGENT_HOST: "jaeger"
       JAEGER_AGENT_PORT: "6831"
       JAEGER_SAMPLER_TYPE: "const"
-      tracing__collector: "prometheus"
+      tracing__collector: "jaeger"
       masstransit_metrics__PublisherEnabled: "true"
       masstransit_metrics__PublisherName: "masstransit_publish"
       masstransit_metrics__ConsumerEnabled: "true"
