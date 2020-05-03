@@ -75,7 +75,11 @@ It will create an app running on `http://localhost:5000` with the following endp
 ![good query sample](./good.png)
 
 
-# protobuf
+# Statsd protobuf (experimental)
+
 C:\tools\protoc\bin\protoc.exe --csharp_out=protobuf --proto_path=D:\playground\statsd_exporter\protobuf\  D:\playground\statsd_exporter\protobuf\metric.proto
 
-See https://github.com/ABaboshin/statsd_exporter/pull/1
+ - Pull https://github.com/ABaboshin/statsd_exporter
+ - build a docker image `docker build -t statsd:protobuf .`
+ - Set statsd image to `statsd:protobuf`
+ - Set `STATSD__Protobuf` to `"true"` for sampleapp service

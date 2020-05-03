@@ -2,7 +2,7 @@ version: '3.3'
 
 services:
   statsd:
-    image: statsd:protobuf
+    image: prom/statsd-exporter:v0.12.2
     ports:
       - "9102:9102"
       - "9125:9125/udp"
@@ -30,7 +30,7 @@ services:
       LOG_LEVEL: Error
       STATSD__PORT: "9125"
       STATSD__SERVER: "statsd"
-      STATSD__Protobuf: "true"
+      STATSD__Protobuf: "false"
       aspnetcore_metrics__enabled: "true"
       aspnetcore_metrics__name: "incoming"
       httphandler_metrics__enabled: "true"
