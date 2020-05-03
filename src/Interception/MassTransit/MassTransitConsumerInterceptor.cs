@@ -55,7 +55,7 @@ namespace Interception.MassTransit
 
             spanBuilder
                 .WithTag("consumer", consumerName)
-                .WithTag("message-id", context.MessageId?.ToString());
+                .WithTag("MessageId", context.MessageId?.ToString());
 
             return spanBuilder.StartActive(true);
         }

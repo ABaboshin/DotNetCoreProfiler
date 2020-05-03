@@ -70,7 +70,8 @@ namespace Interception.OpenTracing.Prometheus
             metric.Tags.Add(new TraceMetric.Types.Tag { Name = "StartDate", Value = span.StartTimestampUtc.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString() });
             metric.Tags.Add(new TraceMetric.Types.Tag { Name = "FinishDate", Value = span.FinishTimestampUtc?.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString() });
 
-            metric.Tags.AddRange(span.Context.GetBaggageItems().Select(item => new TraceMetric.Types.Tag { Name = item.Key.Replace("-", "_"), Value = item.Value }));
+            metric.Tags.AddRange(span.Context.GetBaggageItems().Select(item => new TraceMetric.Types.Tag { Name = item.Key.EscapeTagName(), Value = item.Value }));
+            metric.Tags.Add(span.GetTags().Select(item => new TraceMetric.Types.Tag { Name = item.Key.EscapeTagName(), Value = item.Value.ToString() }));
 
             _protobufClient.Send(metric);
         }
@@ -91,10 +92,19 @@ namespace Interception.OpenTracing.Prometheus
 
             foreach (var item in span.Context.GetBaggageItems())
             {
-                var key = item.Key.Replace("-", "_");
+                var key = item.Key.EscapeTagName();
                 if (!tags.ContainsKey(key))
                 {
                     tags.Add(item.Key, item.Value);
+                }
+            }
+
+            foreach (var item in span.GetTags())
+            {
+                var key = item.Key.EscapeTagName();
+                if (!tags.ContainsKey(key))
+                {
+                    tags.Add(item.Key, item.Value.ToString());
                 }
             }
 

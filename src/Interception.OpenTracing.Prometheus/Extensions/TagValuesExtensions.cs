@@ -16,5 +16,10 @@ namespace Interception.OpenTracing.Prometheus.Extensions
         {
             return value.Replace(Environment.NewLine, " ").Replace(",", " ");
         }
+
+        public static string EscapeTagName(this string value)
+        {
+            return value.Replace("-", "_").Replace(".", "_");
+        }
     }
 }
