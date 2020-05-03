@@ -73,3 +73,9 @@ It will create an app running on `http://localhost:5000` with the following endp
     - three entity framework core metric
     - one custom "A long time action metric" with result and one of the parameters
 ![good query sample](./good.png)
+
+
+# protobuf
+C:\tools\protoc\bin\protoc.exe --csharp_out=protobuf --proto_path=D:\playground\statsd_exporter\protobuf\  D:\playground\statsd_exporter\protobuf\metric.proto
+
+See https://github.com/ABaboshin/statsd_exporter/pull/1

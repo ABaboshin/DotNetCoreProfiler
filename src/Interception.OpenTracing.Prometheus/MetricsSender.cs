@@ -1,6 +1,8 @@
 ﻿using Interception.OpenTracing.Prometheus.Extensions;
+using Interception.OpenTracing.Prometheus.protobuf;
 using Interception.Tracing;
 using Microsoft.Extensions.Logging;
+using Statsd.Protobuf.Metrics;
 using StatsdClient;
 using System;
 using System.Collections.Generic;
@@ -11,19 +13,69 @@ namespace Interception.OpenTracing.Prometheus
     internal class MetricsSender
     {
         internal static ServiceConfiguration _serviceConfiguration;
+        internal static StatsdConfiguration _statsdConfiguration;
+        internal static ProtobufClient _protobufClient;
 
         public static void Configure(StatsdConfiguration statsdConfiguration, ServiceConfiguration serviceConfiguration)
         {
-            DogStatsd.Configure(new StatsdConfig
-            {
-                StatsdServerName = statsdConfiguration.Server,
-                StatsdPort = statsdConfiguration.Port
-            });
-
             _serviceConfiguration = serviceConfiguration;
+            _statsdConfiguration = statsdConfiguration;
+
+            if (!_statsdConfiguration.Protobuf)
+            {
+                DogStatsd.Configure(new StatsdConfig
+                {
+                    StatsdServerName = statsdConfiguration.Server,
+                    StatsdPort = statsdConfiguration.Port
+                });
+            }
+            else
+            {
+                _protobufClient = new ProtobufClient(_statsdConfiguration);
+            }
         }
 
         public static void Histogram(Span span, ILoggerFactory loggerFactory)
+        {
+            if (!_statsdConfiguration.Protobuf)
+            {
+                SendStatsdFormat(span, loggerFactory);
+            }
+            else
+            {
+                try
+                {
+                    SendProtobufFormat(span, loggerFactory);
+                }
+                catch (Exception)
+                {
+                }
+            }
+        }
+
+        private static void SendProtobufFormat(Span span, ILoggerFactory loggerFactory)
+        {
+            var metric = new TraceMetric
+            {
+                Value = span.Duration.TotalMilliseconds,
+                Name = "interception",
+                Type = "h",
+            };
+
+            metric.Tags.Add(new TraceMetric.Types.Tag { Name = "OperationName", Value = span.OperationName });
+            metric.Tags.Add(new TraceMetric.Types.Tag { Name = "TraceId", Value = span.Context.TraceId });
+            metric.Tags.Add(new TraceMetric.Types.Tag { Name = "SpanId", Value = span.Context.SpanId });
+            metric.Tags.Add(new TraceMetric.Types.Tag { Name = "ParentSpanId", Value = span.Context.ParentSpanId });
+            metric.Tags.Add(new TraceMetric.Types.Tag { Name = "Service", Value = _serviceConfiguration.Name });
+            metric.Tags.Add(new TraceMetric.Types.Tag { Name = "StartDate", Value = span.StartTimestampUtc.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString() });
+            metric.Tags.Add(new TraceMetric.Types.Tag { Name = "FinishDate", Value = span.FinishTimestampUtc?.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString() });
+
+            metric.Tags.AddRange(span.Context.GetBaggageItems().Select(item => new TraceMetric.Types.Tag { Name = item.Key.Replace("-", "_"), Value = item.Value }));
+
+            _protobufClient.Send(metric);
+        }
+
+        private static void SendStatsdFormat(Span span, ILoggerFactory loggerFactory)
         {
             var duration = span.Duration.TotalMilliseconds;
             var metricName = span.OperationName;
@@ -39,7 +91,8 @@ namespace Interception.OpenTracing.Prometheus
 
             foreach (var item in span.Context.GetBaggageItems())
             {
-                if (!tags.ContainsKey(item.Key))
+                var key = item.Key.Replace("-", "_");
+                if (!tags.ContainsKey(key))
                 {
                     tags.Add(item.Key, item.Value);
                 }

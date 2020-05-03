@@ -2,10 +2,11 @@ version: '3.3'
 
 services:
   statsd:
-    image: prom/statsd-exporter:v0.12.2
+    image: statsd:protobuf
     ports:
       - "9102:9102"
       - "9125:9125/udp"
+      - "9125:9125/tcp"
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
     environment:
@@ -29,6 +30,7 @@ services:
       LOG_LEVEL: Error
       STATSD__PORT: "9125"
       STATSD__SERVER: "statsd"
+      STATSD__Protobuf: "true"
       aspnetcore_metrics__enabled: "true"
       aspnetcore_metrics__name: "incoming"
       httphandler_metrics__enabled: "true"
@@ -42,7 +44,7 @@ services:
       JAEGER_AGENT_HOST: "jaeger"
       JAEGER_AGENT_PORT: "6831"
       JAEGER_SAMPLER_TYPE: "const"
-      tracing__collector: "jaeger"
+      tracing__collector: "prometheus"
       masstransit_metrics__PublisherEnabled: "true"
       masstransit_metrics__PublisherName: "masstransit_publish"
       masstransit_metrics__ConsumerEnabled: "true"

@@ -48,7 +48,8 @@ namespace SampleApp.Controllers
         [HttpGet("bad")]
         public ActionResult<IEnumerable<BadEntity>> Bad()   
         {
-            return _myDbContext.BadEntities;
+            return new List<BadEntity>();
+            //return _myDbContext.BadEntities;
         }
 
         /// <summary>
