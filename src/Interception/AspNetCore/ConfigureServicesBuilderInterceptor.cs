@@ -5,6 +5,7 @@ using Interception.Observers;
 using Interception.OpenTracing.Prometheus;
 using Interception.Serilog;
 using Interception.Tracing;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,8 @@ namespace Interception.AspNetCore
 
             serviceCollection.Configure<AspNetCoreConfiguration>(configuration.GetSection(AspNetCoreConfiguration.SectionKey));
             serviceCollection.Configure<MassTransitConfiguration>(configuration.GetSection(MassTransitConfiguration.SectionKey));
+
+            serviceCollection.AddSingleton<IStartupFilter>(_ => new TracingStartupFilter());
 
             ConfigureMetrics(loggerFactory, serviceCollection);
 
