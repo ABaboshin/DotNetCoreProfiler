@@ -58,8 +58,18 @@ See [src/Interception.OpenTracing.Prometheus](Interception.OpenTracing.Prometheu
 See [sample](sample).
 
 In order to run the sample execute
+
 ```
-yarn run:all:21
+# Supply metrics to jaeger, see X-Trace-Id header, Jaeger is hosted under http://localhost:16686/
+yarn run:all:jaeger:21
+
+# Supply metrics to prometheus, see X-Trace-Id header, prometheus is hosted under http://localhost:9090/, metric name is interception, trace field is X_Trace_Id
+yarn run:all:prometheus:21
+
+# Supply metrics to prometheus using protobuf, see X-Trace-Id header, prometheus is hosted under http://localhost:9090/, metric name is interception, trace field is X_Trace_Id
+# Pull https://github.com/ABaboshin/statsd_exporter
+# and build an image docker build -t statsd:protobuf .
+yarn run:all:prometheus:protobuf:21
 ```
 
 It will create an app running on `http://localhost:5000` with the following endpoints:
@@ -73,14 +83,3 @@ It will create an app running on `http://localhost:5000` with the following endp
     - three entity framework core metric
     - one custom "A long time action metric" with result and one of the parameters
 ![good query sample](./good.png)
-
-
-# Statsd protobuf (experimental)
-
-C:\tools\protoc\bin\protoc.exe --csharp_out=protobuf --proto_path=D:\playground\statsd_exporter\protobuf\  D:\playground\statsd_exporter\protobuf\metric.proto
-
- - Pull https://github.com/ABaboshin/statsd_exporter
- - build a docker image `docker build -t statsd:protobuf .`
- - Set statsd image to `statsd:protobuf`
- - Set `STATSD__Protobuf` to `"true"` for sampleapp service
- - set `tracing__collector` to `prometheus` for sampleapp service
