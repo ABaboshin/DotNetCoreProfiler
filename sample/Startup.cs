@@ -6,9 +6,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Quartz;
+using Quartz.Impl;
+using Quartz.Spi;
 using SampleApp.Database;
 using SampleApp.Database.Entities;
 using SampleApp.MessageBus;
+using SampleApp.ScheduledJobs;
 using System;
 using System.Linq;
 
@@ -61,6 +65,11 @@ namespace SampleApp
             });
 
             services.AddHostedService<BusService>();
+
+            services.AddSingleton<SampleJob>();
+            services.AddSingleton<IJobFactory, JobFactory>();
+            services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+            services.AddHostedService<SchedulerService>();
         }
 
         private void ConfigureDatabase(IServiceCollection services)

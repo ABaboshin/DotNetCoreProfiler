@@ -3,6 +3,7 @@ using Interception.Base;
 using Interception.MassTransit;
 using Interception.Observers;
 using Interception.OpenTracing.Prometheus;
+using Interception.Quartz;
 using Interception.Serilog;
 using Interception.Tracing;
 using Microsoft.AspNetCore.Hosting;
@@ -38,6 +39,7 @@ namespace Interception.AspNetCore
 
             serviceCollection.Configure<AspNetCoreConfiguration>(configuration.GetSection(AspNetCoreConfiguration.SectionKey));
             serviceCollection.Configure<MassTransitConfiguration>(configuration.GetSection(MassTransitConfiguration.SectionKey));
+            serviceCollection.Configure<QuartzConfiguration>(configuration.GetSection(QuartzConfiguration.SectionKey));
 
             serviceCollection.AddSingleton<IStartupFilter>(_ => new TracingStartupFilter());
 
