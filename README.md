@@ -13,6 +13,7 @@ This project has a goal to demonstrate injection of the following devops-related
     - masstransit publish
     - masstransit consume
     - EntityFrameworkCore queries
+    - Quartz scheduled jobs
     - User-defined using MonitorAttribute (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/src/Interception.Attributes/MonitorAttribute.cs)
  - Store collected metrics in:
     - prometheus
@@ -37,6 +38,7 @@ See [src/Interception](src/Interception):
   - `ConfigureBuilderInterceptor` intercepts the `Startup.Configure` call and inject tracing middleware
   - `CreateUsingRabbitMqInterceptor` intercepts the rabbitmq masstransit bus configuration and injects tracing into publishing pipeline
   - `MassTransitConsumerInterceptor` intercepts consuming of masstransit messages in order to handle the tracing
+  - `QuartzJobExecuteInterceptor` intercepts the execution of the quartz jobs
   - `MonitoringInterceptor` finds the usage of `MonitorAttribute` and intercepts the marked calls with measuring execution time, In addition the following monitor parameters can be injected:
       - Customited metric name
       - Passed parameters
