@@ -54,7 +54,7 @@ namespace Interception.Base
 
         protected virtual void EnrichAfterExecution(object result, IScope scope)
         {
-            scope.Span.SetTag("result", result.ToString());
+            scope.Span.SetTag("result", result?.ToString());
         }
 
         protected virtual IScope CreateScope()
@@ -141,30 +141,28 @@ namespace Interception.Base
         protected object ExecuteAsyncWithResultInternal()
         {
             var method = FindMethod();
-            Delegate executionDelegate = CreateExecutionDelegate();
+
+            var underilyingType = ((TypeInfo)method.ReturnType).GenericTypeArguments[0];
+
+            var createExecutionDelegateGeneric = typeof(BaseInterceptor).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Where(m => m.Name == nameof(CreateExecutionDelegate)).First();
+            var createExecutionDelegate = createExecutionDelegateGeneric.MakeGenericMethod(underilyingType);
+            var executionDelegate = createExecutionDelegate.Invoke(this, new object[] { });
 
             var executeWithMetricsGeneric = typeof(BaseInterceptor).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Where(m => m.Name == nameof(ExecuteWithMetrics)).First();
-            var underilyingType = ((TypeInfo)method.ReturnType).GenericTypeArguments[0];
             var executeWithMetrics = executeWithMetricsGeneric.MakeGenericMethod(underilyingType);
 
-            var parameters = new List<object>();
-            if (_this != null)
-            {
-                parameters.Add(_this);
-            }
-
-            parameters.AddRange(_parameters);
-
-            return executeWithMetrics.Invoke(this, new object[] { executionDelegate, parameters.ToArray() });
+            return executeWithMetrics.Invoke(this, new object[] { executionDelegate });
         }
 
-        private async Task<T> ExecuteWithMetrics<T>(Delegate func, object[] parameters)
+        private async Task<T> ExecuteWithMetrics<T>(Delegate funcDelegate)
         {
             using (var scope = CreateScope())
             {
                 try
                 {
-                    var result = await (Task<T>)func.DynamicInvoke(parameters);
+                    var func = (Func<Task<T>>)funcDelegate;
+
+                    var result = await func.Invoke();
 
                     Console.WriteLine($"result {result} {result.GetType().Name}");
 
@@ -179,68 +177,15 @@ namespace Interception.Base
             }
         }
 
-        private Delegate CreateExecutionDelegate()
+        private Delegate CreateExecutionDelegate<T>()
         {
             var method = FindMethod();
 
-            // arg count: parameters count + 1 if is instance method
-            var effectiveTypes = new List<Type>();
-            var parameterTypes = new List<Type>();
-            var parameters = new List<object>();
-            if (_this != null)
-            {
-                parameters.Add(_this);
-                parameterTypes.Add(typeof(object));
-                effectiveTypes.Add(method.DeclaringType);
-            }
+            Func<Task<T>> func = () => {
+                return (Task<T>)method.Invoke(_this, _parameters.ToArray());
+            };
 
-            parameters.AddRange(_parameters);
-            parameterTypes.AddRange(method.GetParameters().Select(p => typeof(object)));
-            effectiveTypes.AddRange(method.GetParameters().Select(p => p.ParameterType));
-
-            // resolve Func<T1, ... Task<TResult>>
-            var genericFuncType = typeof(Func<>).Assembly
-                .GetTypes().OfType<TypeInfo>()
-                .Where(t => t.Name.StartsWith("Func`") && t.GenericTypeParameters.Count() == parameters.Count() + 1).First();
-
-            // taskType Task<TResult>
-            var returnType = method.ReturnType;
-
-            var funcArguments = new List<Type>(parameterTypes);
-            funcArguments.Add(returnType);
-            var funcType = genericFuncType.MakeGenericType(funcArguments.ToArray());
-
-            // delegate
-            var dynamicMethodName = "_m" + Guid.NewGuid().ToString().Replace("-", "");
-            var dynamicMethod = new DynamicMethod(dynamicMethodName, returnType, parameterTypes.ToArray(), Module, skipVisibility: true);
-
-            // generate il
-            var ilGenerator = dynamicMethod.GetILGenerator();
-
-            // load parameters
-            for (int i = 0; i < parameterTypes.Count(); i++)
-            {
-                ilGenerator.Emit(OpCodes.Ldarg, i);
-                if (parameterTypes[i].IsValueType && parameterTypes[i] == typeof(object))
-                {
-                    ilGenerator.Emit(OpCodes.Unbox_Any, effectiveTypes[i]);
-                }
-                else if (effectiveTypes[i] != parameterTypes[i])
-                {
-                    ilGenerator.Emit(OpCodes.Castclass, effectiveTypes[i]);
-                }
-            }
-
-            // call method
-            ilGenerator.EmitCall(method.IsStatic ? OpCodes.Call : OpCodes.Callvirt, method, null);
-            // cast result
-            ilGenerator.Emit(OpCodes.Castclass, returnType);
-            // return
-            ilGenerator.Emit(OpCodes.Ret);
-
-            var dynamicMethodDelegate = dynamicMethod.CreateDelegate(funcType);
-
-            return dynamicMethodDelegate;
+            return func;
         }
     }
 }
