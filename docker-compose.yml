@@ -118,3 +118,11 @@ services:
       - "14268:14268"
       - "14250:14250"
       - "9411:9411"
+
+  grafana:
+    image: grafana:local
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+    ports:
+      - "3000:3000"

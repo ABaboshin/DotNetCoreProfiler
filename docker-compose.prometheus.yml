@@ -60,11 +60,11 @@ services:
       PROFILER_INTERCEPTION_DLLS: "/profiler/Interception.dll"
     ports:
       - "5000:5000"
-    # logging:
-    #   driver: gelf
-    #   options:
-    #     gelf-address: tcp://localhost:12201
-    #     tag: sampleapp
+    logging:
+      driver: gelf
+      options:
+        gelf-address: tcp://localhost:12201
+        tag: sampleapp
 
   prometheus:
     image: prometheus:local
@@ -105,16 +105,10 @@ services:
       - "9600:9600"
       - "5044:5044"
 
-  jaeger:
-    image: jaegertracing/all-in-one:1.17
+  grafana:
+    image: grafana:local
     environment:
-      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
     ports:
-      - "5775:5775/udp"
-      - "6831:6831/udp"
-      - "6832:6832/udp"
-      - "5778:5778"
-      - "16686:16686"
-      - "14268:14268"
-      - "14250:14250"
-      - "9411:9411"
+      - "3000:3000"
