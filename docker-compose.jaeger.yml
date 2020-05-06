@@ -1,12 +1,6 @@
 version: '3.3'
 
 services:
-  statsd:
-    image: prom/statsd-exporter:v0.12.2
-    ports:
-      - "9102:9102"
-      - "9125:9125/udp"
-      - "9125:9125/tcp"
   sqlserver:
     image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
     environment:
@@ -60,28 +54,11 @@ services:
       PROFILER_INTERCEPTION_DLLS: "/profiler/Interception.dll"
     ports:
       - "5000:5000"
-    # logging:
-    #   driver: gelf
-    #   options:
-    #     gelf-address: tcp://localhost:12201
-    #     tag: sampleapp
-
-  prometheus:
-    image: prometheus:local
-    environment:
-      ENV: "local"
-      SERVICES: "sampleapp"
-    ports:
-      - "9090:9090"
-    command:
-      - '--config.file=/etc/prometheus/prometheus.yml'
-      - '--web.enable-lifecycle'
-      - '--web.enable-admin-api'
-      - '--web.console.libraries=/etc/prometheus/console_libraries'
-      - '--web.console.templates=/etc/prometheus/consoles'
-      - '--storage.tsdb.path=/prometheus'
-      - '--storage.tsdb.retention.time=2d'
-      - '--query.lookback-delta=1m'
+    logging:
+      driver: gelf
+      options:
+        gelf-address: tcp://localhost:12201
+        tag: sampleapp
 
   kibana:
     image: kibana:7.5.2
@@ -118,3 +95,11 @@ services:
       - "14268:14268"
       - "14250:14250"
       - "9411:9411"
+
+  grafana:
+    image: grafana:local
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=password
+    ports:
+      - "3000:3000"
