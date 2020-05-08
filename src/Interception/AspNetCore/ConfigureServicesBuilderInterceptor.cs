@@ -23,7 +23,11 @@ namespace Interception.AspNetCore
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
     public class ConfigureServicesBuilderInterceptor : BaseInterceptor
     {
-        public override object Execute()
+        protected override void ExecuteAfter(object result, Exception exception)
+        {
+        }
+
+        protected override void ExecuteBefore()
         {
             Console.WriteLine($"Configure additional services {_this.GetType().Name} {_parameters[0].GetType().Name} {_parameters[1].GetType().Name}");
 
@@ -44,8 +48,6 @@ namespace Interception.AspNetCore
             serviceCollection.AddSingleton<IStartupFilter>(_ => new TracingStartupFilter());
 
             ConfigureMetrics(loggerFactory, serviceCollection);
-
-            return ExecuteInternal(false);
         }
 
         private void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)

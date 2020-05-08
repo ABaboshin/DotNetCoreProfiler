@@ -1,28 +1,18 @@
 ﻿using Interception.Attributes;
 using Interception.Base;
-using OpenTracing;
 using OpenTracing.Util;
-using System;
 using System.Linq;
 
 namespace Interception
 {
     [MonitoringIntercept]
-    public class MonitoringInterceptor : BaseInterceptor
+    public class MonitoringInterceptor : BaseMetricsInterceptor
     {
-        public override object Execute()
+        public MonitoringInterceptor() : base(true)
         {
-            return ExecuteInternal(true);
         }
 
-        protected override void EnrichAfterExecution(object result, IScope scope)
-        {
-            scope.Span.SetTag("result", result.ToString());
-
-            base.EnrichAfterExecution(result, scope);
-        }
-
-        protected override IScope CreateScope()
+        protected override void CreateScope()
         {
             var mb = _methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
             var attr = (MonitorAttribute)mb.GetCustomAttributes(typeof(MonitorAttribute), false).FirstOrDefault();
@@ -44,7 +34,7 @@ namespace Interception
                 }
             }
 
-            return spanBuilder.StartActive();
+            _scope = spanBuilder.StartActive();
         }
     }
 }

@@ -11,18 +11,13 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Interception.Quartz
 {
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Quartz", TargetMethodName = "Execute", TargetTypeName = "Quartz.IJob", TargetMethodParametersCount = 1)]
-    public class QuartzJobExecuteInterceptor : BaseInterceptor
+    public class QuartzJobExecuteInterceptor : BaseMetricsInterceptor
     {
-        public override object Execute()
+        public QuartzJobExecuteInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Enabled)
         {
-            var options = DependencyInjection.ServiceProvider.GetService<IOptions<QuartzConfiguration>>();
-
-            Console.WriteLine($"options {options.Value}");
-
-            return ExecuteInternal(options.Value.Enabled);
         }
 
-        protected override IScope CreateScope()
+        protected override void CreateScope()
         {
             var consumerName = _this.GetType().FullName;
 
@@ -31,7 +26,7 @@ namespace Interception.Quartz
                     .WithTag(Tags.SpanKind, Tags.SpanKindServer)
                     .WithTag("task", consumerName);
 
-            return spanBuilder.StartActive(true);
+            _scope = spanBuilder.StartActive(true);
         }
     }
 }

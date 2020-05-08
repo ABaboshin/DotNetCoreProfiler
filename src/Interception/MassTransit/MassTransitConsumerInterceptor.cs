@@ -15,15 +15,10 @@ using Microsoft.Extensions.DependencyInjection;
 namespace Interception.MassTransit
 {
     [Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
-    public class MassTransitConsumerInterceptor : BaseInterceptor
+    public class MassTransitConsumerInterceptor : BaseMetricsInterceptor
     {
-        public override object Execute()
+        public MassTransitConsumerInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)
         {
-            var options = DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>();
-
-            Console.WriteLine($"options {options.Value}");
-
-            return ExecuteInternal(options.Value.ConsumerEnabled);
         }
 
         protected override MethodInfo FindMethod()
@@ -31,7 +26,7 @@ namespace Interception.MassTransit
             return _this.GetType().GetMethod("Consume");
         }
 
-        protected override IScope CreateScope()
+        protected override void CreateScope()
         {
             var context = (ConsumeContext)_parameters[0];
             var consumerName = _this.GetType().FullName;
@@ -54,10 +49,10 @@ namespace Interception.MassTransit
             }
 
             spanBuilder
-                .WithTag("consumer", consumerName)
+                .WithTag("Consumer", consumerName)
                 .WithTag("MessageId", context.MessageId?.ToString());
 
-            return spanBuilder.StartActive(true);
+            _scope = spanBuilder.StartActive(true);
         }
     }
 }
