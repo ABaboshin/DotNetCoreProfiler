@@ -14,16 +14,16 @@ namespace Interception
 
         protected override void CreateScope()
         {
-            var mb = _methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
-            var attr = (MonitorAttribute)mb.GetCustomAttributes(typeof(MonitorAttribute), false).FirstOrDefault();
+            var method = _methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
+            var attribute = (MonitorAttribute)method.GetCustomAttributes(typeof(MonitorAttribute), false).FirstOrDefault();
 
-            var spanBuilder = GlobalTracer.Instance.BuildSpan(attr.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
+            var spanBuilder = GlobalTracer.Instance.BuildSpan(attribute.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
 
-            if (attr.Parameters != null && attr.Parameters.Any())
+            if (attribute.Parameters != null && attribute.Parameters.Any())
             {
-                var methodParameters = mb.GetParameters().ToList();
+                var methodParameters = method.GetParameters().ToList();
 
-                foreach (var p in attr.Parameters)
+                foreach (var p in attribute.Parameters)
                 {
                     var index = methodParameters.FindIndex(mp => mp.Name == p);
                     if (index != -1)

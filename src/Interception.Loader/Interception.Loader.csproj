@@ -5,6 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="..\Interception.Attributes\CacheAttribute.cs" Link="CacheAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\CacheInterceptorAttribute.cs" Link="CacheInterceptorAttribute.cs" />
     <Compile Include="..\Interception.Attributes\InitializeAttribute.cs" Link="InitializeAttribute.cs" />
     <Compile Include="..\Interception.Attributes\InterceptAttribute.cs" Link="InterceptAttribute.cs" />
     <Compile Include="..\Interception.Attributes\MonitorAttribute.cs" Link="MonitorAttribute.cs" />
