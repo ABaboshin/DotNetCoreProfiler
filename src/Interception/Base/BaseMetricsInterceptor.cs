@@ -33,6 +33,9 @@ namespace Interception.Base
                 }
 
                 _scope.Span.SetTag("result", result?.ToString());
+
+                _scope.Dispose();
+                _scope = null;
             }
         }
 

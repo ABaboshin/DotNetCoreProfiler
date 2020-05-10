@@ -165,14 +165,12 @@ namespace Microsoft.Extensions.Caching.StackExchangeRedis
 
         private void Connect()
         {
-            Console.WriteLine("Connect");
             if (_cache != null)
             {
                 return;
             }
 
             _connectionLock.Wait();
-            Console.WriteLine("wait done");
             try
             {
                 if (_cache == null)
@@ -183,23 +181,15 @@ namespace Microsoft.Extensions.Caching.StackExchangeRedis
                     }
                     else
                     {
-                        Console.WriteLine($"Connect {_options.Configuration}");
                         _connection = ConnectionMultiplexer.Connect(_options.Configuration);
                     }
                     _cache = _connection.GetDatabase();
                 }
             }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Connect finally {ex.Message}");
-            }
             finally
             {
-                Console.WriteLine("Connect finally");
                 _connectionLock.Release();
             }
-
-            Console.WriteLine("Connect done");
         }
 
         private async Task ConnectAsync(CancellationToken token = default(CancellationToken))

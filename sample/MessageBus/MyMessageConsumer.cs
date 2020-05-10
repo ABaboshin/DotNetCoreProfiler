@@ -46,9 +46,8 @@ namespace SampleApp.MessageBus
         [Monitor(Name = "Fibonacci call")]
         void FibonacciCall()
         {
-            Fibonacci(50);
+            Console.WriteLine($"Fibonacci(100): {Fibonacci(100)}");
         }
-
 
         [Monitor(Name = "A long time action", Parameters = new[] { "o1" }, ReturnValue = true)]
         async Task<int> LongAction(object o1, object o2)

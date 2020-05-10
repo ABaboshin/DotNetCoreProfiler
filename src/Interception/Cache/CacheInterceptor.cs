@@ -53,17 +53,17 @@ namespace Interception.Cache
 
         public override object Execute()
         {
-            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} {DistributedCache}");
+            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} {GetCacheKey()}");
             var cached = DistributedCache.Get(GetCacheKey());
 
-            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cache {cached != null}");
+            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cache {cached != null} {GetCacheKey()}");
 
-            if (cached != null)
+            if (cached is null)
             {
                 return base.Execute();
             }
 
-            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cached result");
+            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cached result {GetCacheKey()}");
 
             DistributedCache.Refresh(GetCacheKey());
 

@@ -1,6 +1,7 @@
 ﻿using Interception.Attributes;
 using Interception.Base;
 using OpenTracing.Util;
+using System;
 using System.Linq;
 
 namespace Interception
@@ -18,6 +19,8 @@ namespace Interception
             var attribute = (MonitorAttribute)method.GetCustomAttributes(typeof(MonitorAttribute), false).FirstOrDefault();
 
             var spanBuilder = GlobalTracer.Instance.BuildSpan(attribute.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
+
+            Console.WriteLine($"CreateScope {attribute.Name}");
 
             if (attribute.Parameters != null && attribute.Parameters.Any())
             {
