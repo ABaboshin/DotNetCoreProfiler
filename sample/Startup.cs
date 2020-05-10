@@ -32,7 +32,7 @@ namespace SampleApp
             ConfigureDatabase(serviceCollection);
 
             serviceCollection.AddMvc();
-            //ConfigureMessageBus(serviceCollection);
+            ConfigureMessageBus(serviceCollection);
 
             ConfigureQuartz(serviceCollection);
         }
@@ -91,7 +91,7 @@ namespace SampleApp
             //}
 
             app.UseMvc();
-            //MigrateDatabase(app);
+            MigrateDatabase(app);
         }
 
         private static void MigrateDatabase(IApplicationBuilder app)

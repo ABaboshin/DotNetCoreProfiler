@@ -1,5 +1,6 @@
 ﻿using Interception.Attributes;
 using Interception.Base;
+using Interception.Cache;
 using Interception.MassTransit;
 using Interception.Observers;
 using Interception.OpenTracing.Prometheus;
@@ -7,9 +8,12 @@ using Interception.Quartz;
 using Interception.Serilog;
 using Interception.Tracing;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Caching.StackExchangeRedis;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OpenTracing.Util;
 using Serilog;
 using Serilog.AspNetCore;
@@ -33,8 +37,9 @@ namespace Interception.AspNetCore
 
             DiagnosticsObserver.ConfigureAndStart();
 
-            var loggerFactory = new SerilogLoggerFactory(CreateLogger(), false);
             var serviceCollection = ((IServiceCollection)_parameters[1]);
+
+            var loggerFactory = new SerilogLoggerFactory(CreateLogger(), false);
             serviceCollection.AddSingleton((ILoggerFactory)loggerFactory);
 
             var configuration = new ConfigurationBuilder()
@@ -48,6 +53,22 @@ namespace Interception.AspNetCore
             serviceCollection.AddSingleton<IStartupFilter>(_ => new TracingStartupFilter());
 
             ConfigureMetrics(loggerFactory, serviceCollection);
+
+            ConfigureCache(serviceCollection, configuration);
+        }
+
+        private void ConfigureCache(IServiceCollection serviceCollection, IConfigurationRoot configuration)
+        {
+            serviceCollection.Configure<CacheConfiguration>(configuration.GetSection(CacheConfiguration.SectionKey));
+            serviceCollection.AddSingleton<IDistributedCache>(sp => {
+                var ccOptions = sp.GetRequiredService<IOptions<CacheConfiguration>>();
+                if (ccOptions.Value.Type == "redis")
+                {
+                    return new RedisCache(Options.Create(new RedisCacheOptions { Configuration = ccOptions.Value.Configuration }));
+                }
+
+                return null;
+            });
         }
 
         private void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)

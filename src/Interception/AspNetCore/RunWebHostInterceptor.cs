@@ -19,11 +19,11 @@ namespace Interception.AspNetCore
 
             DependencyInjection.ServiceProvider = ((IWebHost)_parameters[0]).Services;
 
-            //var cts = (CancellationTokenSource)_parameters[1];
-            //if (cts != null)
-            //{
-            //    _parameters[1] = cts.Token;
-            //}
+            var cts = (CancellationTokenSource)_parameters[1];
+            if (cts != null)
+            {
+                _parameters[1] = cts.Token;
+            }
         }
     }
 }

@@ -46,7 +46,7 @@ namespace SampleApp.MessageBus
         [Monitor(Name = "Fibonacci call")]
         void FibonacciCall()
         {
-            Fibonacci(100);
+            Fibonacci(50);
         }
 
 

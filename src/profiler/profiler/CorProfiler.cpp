@@ -706,8 +706,18 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     // insert existing arguments
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-        signature.insert(signature.end(), target.signature.arguments[i].raw.begin(), target.signature.arguments[i].raw.end());
+        /*if (target.signature.arguments[i].isBoxed)
+        {
+            auto token = util::GetTypeToken(metadataEmit, mscorlibRef, target.signature.arguments[i].raw);
+            helper.Box(token);
+        }*/
+
+        //signature.insert(signature.end(), target.signature.arguments[i].raw.begin(), target.signature.arguments[i].raw.end());
         //signature.push_back(ELEMENT_TYPE_OBJECT);
+
+        std::cout << std::hex << "push " << (int)target.signature.arguments[i].typeDef << std::endl;
+
+        signature.push_back(target.signature.arguments[i].typeDef);
     }
     
     // define a method
@@ -850,7 +860,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-        std::cout << std::hex << "LoadArgument " << i << " " << (int)target.signature.arguments[i].typeDef << std::endl;
         helper.LoadArgument(shift + i);
 
         if (target.signature.arguments[i].isBoxed)

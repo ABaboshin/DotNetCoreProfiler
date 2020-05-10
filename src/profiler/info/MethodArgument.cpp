@@ -25,7 +25,7 @@ namespace info
         case ELEMENT_TYPE_R8:
         case ELEMENT_TYPE_I:
         case ELEMENT_TYPE_U:
-        case ELEMENT_TYPE_VALUETYPE:
+        //case ELEMENT_TYPE_VALUETYPE:
         case ELEMENT_TYPE_MVAR:
         case ELEMENT_TYPE_VAR:
         //case ELEMENT_TYPE_STRING:

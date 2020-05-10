@@ -80,19 +80,19 @@ namespace Interception
 
             if (monitoringInterceptor != null)
             {
-                //foreach (var monitor in monitorMethods)
-                //{
-                //    NativeMethods.AddInterceptor(new ImportInterception
-                //    {
-                //        CallerAssembly = "",
-                //        InterceptorAssemblyName = monitoringInterceptor.Assembly.GetName().Name,
-                //        InterceptorTypeName = monitoringInterceptor.FullName,
-                //        TargetAssemblyName = monitor.DeclaringType.Assembly.GetName().Name,
-                //        TargetTypeName = monitor.DeclaringType.FullName,
-                //        TargetMethodName = monitor.Name,
-                //        TargetMethodParametersCount = monitor.GetParameters().Length
-                //    });
-                //}
+                foreach (var monitor in monitorMethods)
+                {
+                    NativeMethods.AddInterceptor(new ImportInterception
+                    {
+                        CallerAssembly = "",
+                        InterceptorAssemblyName = monitoringInterceptor.Assembly.GetName().Name,
+                        InterceptorTypeName = monitoringInterceptor.FullName,
+                        TargetAssemblyName = monitor.DeclaringType.Assembly.GetName().Name,
+                        TargetTypeName = monitor.DeclaringType.FullName,
+                        TargetMethodName = monitor.Name,
+                        TargetMethodParametersCount = monitor.GetParameters().Length
+                    });
+                }
             }
 
             Console.WriteLine($"cacheInterceptor {cacheInterceptor}");
