@@ -24,21 +24,21 @@ namespace Interception.Base
 
         public object SetThis(object _this)
         {
-            Console.WriteLine($"SetThis {_this}");
+            //Console.WriteLine($"SetThis {_this}");
             this._this = _this;
             return this;
         }
 
         public object AddParameter(object value)
         {
-            Console.WriteLine($"AddParameter {value}");
+            //Console.WriteLine($"AddParameter {value}");
             _parameters.Add(value);
             return this;
         }
 
         public object SetMdToken(int mdToken)
         {
-            Console.WriteLine($"SetMdToken {mdToken}");
+            //Console.WriteLine($"SetMdToken {mdToken}");
             _mdToken = mdToken;
             return this;
         }

@@ -103,6 +103,7 @@
     <ClInclude Include="ClassFactory.h" />
     <ClInclude Include="const\const.h" />
     <ClInclude Include="info\parser.h" />
+    <ClInclude Include="info\MethodArgument.h" />
     <ClInclude Include="util\ComPtr.h" />
     <ClInclude Include="configuration\Configuration.h" />
     <ClInclude Include="profiler\CorProfiler.h" />
@@ -129,6 +130,7 @@
     <ClCompile Include="info\AssemblyInfo.cpp" />
     <ClCompile Include="ClassFactory.cpp" />
     <ClCompile Include="info\parser.cpp" />
+    <ClCompile Include="info\MethodArgument.cpp" />
     <ClCompile Include="profiler\CorProfiler.cpp" />
     <ClCompile Include="dllmain.cpp" />
     <ClCompile Include="info\FunctionInfo.cpp" />

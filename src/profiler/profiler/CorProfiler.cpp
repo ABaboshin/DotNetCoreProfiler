@@ -689,7 +689,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         (BYTE)(target.signature.NumberOfArguments() + (target.signature.IsInstanceMethod() ? 1 : 0))
     };
     // return type
-    auto retType = target.signature.GetRet();
+    auto retType = target.signature.ret;
     signature.insert(signature.end(), retType.begin(), retType.end());
     
     // insert this
@@ -698,10 +698,16 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         signature.push_back(ELEMENT_TYPE_OBJECT);
     }
 
+    target.signature.ParseArguments();
+    //auto arguments = target.signature.arguments;
+
+    //signature.insert(signature.end(), arguments.begin(), arguments.end());
+
     // insert existing arguments
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-        signature.push_back(ELEMENT_TYPE_OBJECT);
+        signature.insert(signature.end(), target.signature.arguments[i].raw.begin(), target.signature.arguments[i].raw.end());
+        //signature.push_back(ELEMENT_TYPE_OBJECT);
     }
     
     // define a method
@@ -844,7 +850,15 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
+        std::cout << std::hex << "LoadArgument " << i << " " << (int)target.signature.arguments[i].typeDef << std::endl;
         helper.LoadArgument(shift + i);
+
+        if (target.signature.arguments[i].isBoxed)
+        {
+            auto token = util::GetTypeToken(metadataEmit, mscorlibRef, target.signature.arguments[i].raw);
+            helper.Box(token);
+        }
+
         helper.CallMember(addParameterRef, false);
         helper.Cast(wrapperTypeRef);
     }

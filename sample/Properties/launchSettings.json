@@ -43,7 +43,7 @@
         "CORECLR_PROFILER_HOME": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin",
         "PROFILER_INTERCEPTION_DLLS": "D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.dll"
       },
-      "nativeDebugging": false,
+      "nativeDebugging": true,
       "applicationUrl": "http://localhost:5000"
     }
   }

@@ -206,4 +206,12 @@ namespace rewriter
         pNewInstr->m_Arg32 = token;
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
+
+	void ILRewriterHelper::Box(mdToken token)
+	{
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_BOX;
+        pNewInstr->m_Arg32 = token;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+	}
 }

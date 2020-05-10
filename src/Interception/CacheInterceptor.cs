@@ -38,15 +38,18 @@ namespace Interception
 
         protected override void ExecuteAfter(object result, Exception exception)
         {
+            Console.WriteLine("Cache.ExecuteAfter");
             _cache.Set(GetCacheKey(), result);
         }
 
         protected override void ExecuteBefore()
         {
+            Console.WriteLine("Cache.ExecuteBefore");
         }
 
         public override object Execute()
         {
+            Console.WriteLine("Cache.Execute");
             _cache.TryGetValue(GetCacheKey(), out object result);
             if (result is null)
             {

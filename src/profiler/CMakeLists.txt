@@ -36,6 +36,7 @@ add_library("DotNetCoreProfiler.static" STATIC
     miniutf/miniutf.cpp
     util/util.cpp
     util/helpers.cpp
+    info/MethodArgument.cpp
     info/MethodSignature.cpp
     info/AssemblyInfo.cpp
     info/FunctionInfo.cpp

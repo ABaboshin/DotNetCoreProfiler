@@ -32,14 +32,24 @@ namespace SampleApp
             ConfigureDatabase(serviceCollection);
 
             serviceCollection.AddMvc();
-            ConfigureMessageBus(serviceCollection);
+            //ConfigureMessageBus(serviceCollection);
+
+            ConfigureQuartz(serviceCollection);
         }
 
-        private void ConfigureMessageBus(IServiceCollection services)
+        private static void ConfigureQuartz(IServiceCollection serviceCollection)
         {
-            services.Configure<RabbitMQConfiguration>(Configuration.GetSection(RabbitMQConfiguration.SectionKey));
+            serviceCollection.AddSingleton<SampleJob>();
+            serviceCollection.AddSingleton<IJobFactory, JobFactory>();
+            serviceCollection.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
+            serviceCollection.AddHostedService<SchedulerService>();
+        }
 
-            services.AddMassTransit(x =>
+        private void ConfigureMessageBus(IServiceCollection serviceCollection)
+        {
+            serviceCollection.Configure<RabbitMQConfiguration>(Configuration.GetSection(RabbitMQConfiguration.SectionKey));
+
+            serviceCollection.AddMassTransit(x =>
             {
                 x.AddBus(context =>
                 {
@@ -64,12 +74,7 @@ namespace SampleApp
                 });
             });
 
-            services.AddHostedService<BusService>();
-
-            services.AddSingleton<SampleJob>();
-            services.AddSingleton<IJobFactory, JobFactory>();
-            services.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
-            services.AddHostedService<SchedulerService>();
+            serviceCollection.AddHostedService<BusService>();
         }
 
         private void ConfigureDatabase(IServiceCollection services)
@@ -86,7 +91,7 @@ namespace SampleApp
             //}
 
             app.UseMvc();
-            MigrateDatabase(app);
+            //MigrateDatabase(app);
         }
 
         private static void MigrateDatabase(IApplicationBuilder app)

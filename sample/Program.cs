@@ -7,6 +7,7 @@ namespace SampleApp
     {
         public static void Main(string[] args)
         {
+            int i;
             CreateWebHostBuilder(args).Build().Run();
         }
 

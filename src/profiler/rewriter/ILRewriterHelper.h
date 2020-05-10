@@ -47,5 +47,7 @@ namespace rewriter
         void Ret();
 
         void LoadStr(mdToken token);
+
+        void Box(mdToken token);
     };
 }
