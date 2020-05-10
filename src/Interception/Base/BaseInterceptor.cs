@@ -1,6 +1,4 @@
 ﻿using Interception.Base.Extensions;
-using Interception.Tracing.Extensions;
-using OpenTracing;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,6 +8,9 @@ using System.Threading.Tasks;
 
 namespace Interception.Base
 {
+    /// <summary>
+    /// base interceptor
+    /// </summary>
     public abstract class BaseInterceptor : IInterceptor
     {
         protected IMethodFinder _methodFinder = new MethodFinder();

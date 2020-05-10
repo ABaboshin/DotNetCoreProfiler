@@ -5,12 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Interception.Attributes\CacheAttribute.cs" Link="CacheAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\CacheInterceptorAttribute.cs" Link="CacheInterceptorAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\IInterceptorAttribute.cs" Link="IInterceptorAttribute.cs" />
     <Compile Include="..\Interception.Attributes\InitializeAttribute.cs" Link="InitializeAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\InterceptAttribute.cs" Link="InterceptAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\MonitorAttribute.cs" Link="MonitorAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\MonitoringInterceptAttribute.cs" Link="MonitoringInterceptAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\IUsageAttribute.cs" Link="IUsageAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\StrictInterceptAttribute.cs" Link="StrictInterceptAttribute.cs" />
   </ItemGroup>
 
 </Project>

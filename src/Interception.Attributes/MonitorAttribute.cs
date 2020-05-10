@@ -2,11 +2,25 @@
 
 namespace Interception.Attributes
 {
+    /// <summary>
+    /// monitor attribute
+    /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-    public class MonitorAttribute : Attribute
+    public class MonitorAttribute : Attribute, IUsageAttribute
     {
+        /// <summary>
+        /// metric name
+        /// </summary>
         public string Name { get; set; }
+
+        /// <summary>
+        /// inject parameter values into metrc
+        /// </summary>
         public string[] Parameters { get; set; } = new string[] { };
-        public bool ReturnValue { get; set; }
+
+        /// <summary>
+        /// inject return value into metric
+        /// </summary>
+        public bool ReturnValue { get; set; } = false;
     }
 }

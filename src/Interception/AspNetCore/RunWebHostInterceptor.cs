@@ -6,7 +6,11 @@ using System.Threading;
 
 namespace Interception.AspNetCore
 {
-    [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "RunAsync", TargetTypeName = "Microsoft.AspNetCore.Hosting.WebHostExtensions", TargetMethodParametersCount = 3)]
+    /// <summary>
+    /// intercept WebHost.Run
+    /// and get the DI
+    /// </summary>
+    [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "RunAsync", TargetTypeName = "Microsoft.AspNetCore.Hosting.WebHostExtensions", TargetMethodParametersCount = 3)]
     public class RunWebHostInterceptor : BaseInterceptor
     {
         protected override void ExecuteAfter(object result, Exception exception)

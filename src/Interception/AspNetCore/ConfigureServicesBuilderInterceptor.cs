@@ -24,7 +24,12 @@ using System;
 
 namespace Interception.AspNetCore
 {
-    [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
+    /// <summary>
+    /// intercept Startup.ConfigureService and inject
+    /// logging
+    /// tracing
+    /// </summary>
+    [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
     public class ConfigureServicesBuilderInterceptor : BaseInterceptor
     {
         protected override void ExecuteAfter(object result, Exception exception)
