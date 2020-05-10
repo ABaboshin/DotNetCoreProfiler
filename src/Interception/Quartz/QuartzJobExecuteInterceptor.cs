@@ -2,15 +2,17 @@
 using Interception.Attributes;
 using Interception.Base;
 using Microsoft.Extensions.Options;
-using OpenTracing;
 using OpenTracing.Tag;
 using OpenTracing.Util;
-using System;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Interception.Quartz
 {
-    [Intercept(CallerAssembly = "", TargetAssemblyName = "Quartz", TargetMethodName = "Execute", TargetTypeName = "Quartz.IJob", TargetMethodParametersCount = 1)]
+    /// <summary>
+    /// intercept quartz job running
+    /// and inject tracing
+    /// </summary>
+    [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "Quartz", TargetMethodName = "Execute", TargetTypeName = "Quartz.IJob", TargetMethodParametersCount = 1)]
     public class QuartzJobExecuteInterceptor : BaseMetricsInterceptor
     {
         public QuartzJobExecuteInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Enabled)

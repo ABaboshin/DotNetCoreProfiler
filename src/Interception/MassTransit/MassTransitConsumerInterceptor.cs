@@ -14,7 +14,11 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Interception.MassTransit
 {
-    [Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
+    /// <summary>
+    /// intercept masstransit consumer
+    /// and inject tracing
+    /// </summary>
+    [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
     public class MassTransitConsumerInterceptor : BaseMetricsInterceptor
     {
         public MassTransitConsumerInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)

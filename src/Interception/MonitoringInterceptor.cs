@@ -6,6 +6,9 @@ using System.Linq;
 
 namespace Interception
 {
+    /// <summary>
+    /// monitor interceptor
+    /// </summary>
     [MonitoringIntercept]
     public class MonitoringInterceptor : BaseMetricsInterceptor
     {

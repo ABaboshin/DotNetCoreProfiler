@@ -6,7 +6,11 @@ using System;
 
 namespace Interception.MassTransit
 {
-    [Intercept(CallerAssembly = "", TargetAssemblyName = "MassTransit.RabbitMqTransport", TargetMethodName = "CreateUsingRabbitMq", TargetTypeName = "MassTransit.BusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
+    /// <summary>
+    /// intercept rabbitmq masstransit configuration
+    /// and inject tracing
+    /// </summary>
+    [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "MassTransit.RabbitMqTransport", TargetMethodName = "CreateUsingRabbitMq", TargetTypeName = "MassTransit.BusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
     public class CreateUsingRabbitMqInterceptor : BaseInterceptor
     {
         protected override void ExecuteAfter(object result, Exception exception)

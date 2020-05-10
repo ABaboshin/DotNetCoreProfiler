@@ -8,6 +8,9 @@ using System.Linq;
 
 namespace Interception.Cache
 {
+    /// <summary>
+    /// cache interceptor
+    /// </summary>
     [CacheInterceptor]
     public class CacheInterceptor : BaseInterceptor
     {

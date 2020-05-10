@@ -4,6 +4,9 @@ using System;
 
 namespace Interception.Base
 {
+    /// <summary>
+    /// base tracing interceptor
+    /// </summary>
     public abstract class BaseMetricsInterceptor : BaseInterceptor
     {
         protected IScope _scope;
