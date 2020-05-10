@@ -53,6 +53,8 @@ services:
       entityframeworkcore_metrics__name: "db_call"
       quartz_metrics__name: "schdeduled_job"
       quartz_metrics__enabled: "true"
+      cache__type: "redis"
+      cache__configuration: "redis:6379"
       PROFILER_PRINT_EVERY_CALL: "false"
       CORECLR_ENABLE_PROFILING: "1"
       CORECLR_PROFILER: "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
@@ -112,3 +114,8 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=password
     ports:
       - "3000:3000"
+
+  redis:
+    image: redis:5.0.8
+    ports:
+      - "6379:6379"
