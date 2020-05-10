@@ -1,6 +1,5 @@
 ﻿using Interception.Attributes;
 using Interception.Base;
-using OpenTracing;
 using OpenTracing.Util;
 using System;
 using System.Linq;
@@ -8,32 +7,26 @@ using System.Linq;
 namespace Interception
 {
     [MonitoringIntercept]
-    public class MonitoringInterceptor : BaseInterceptor
+    public class MonitoringInterceptor : BaseMetricsInterceptor
     {
-        public override object Execute()
+        public MonitoringInterceptor() : base(true)
         {
-            return ExecuteInternal(true);
         }
 
-        protected override void EnrichAfterExecution(object result, IScope scope)
+        protected override void CreateScope()
         {
-            scope.Span.SetTag("result", result.ToString());
+            var method = _methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
+            var attribute = (MonitorAttribute)method.GetCustomAttributes(typeof(MonitorAttribute), false).FirstOrDefault();
 
-            base.EnrichAfterExecution(result, scope);
-        }
+            var spanBuilder = GlobalTracer.Instance.BuildSpan(attribute.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
 
-        protected override IScope CreateScope()
-        {
-            var mb = _methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
-            var attr = (MonitorAttribute)mb.GetCustomAttributes(typeof(MonitorAttribute), false).FirstOrDefault();
+            Console.WriteLine($"CreateScope {attribute.Name}");
 
-            var spanBuilder = GlobalTracer.Instance.BuildSpan(attr.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
-
-            if (attr.Parameters != null && attr.Parameters.Any())
+            if (attribute.Parameters != null && attribute.Parameters.Any())
             {
-                var methodParameters = mb.GetParameters().ToList();
+                var methodParameters = method.GetParameters().ToList();
 
-                foreach (var p in attr.Parameters)
+                foreach (var p in attribute.Parameters)
                 {
                     var index = methodParameters.FindIndex(mp => mp.Name == p);
                     if (index != -1)
@@ -44,7 +37,7 @@ namespace Interception
                 }
             }
 
-            return spanBuilder.StartActive();
+            _scope = spanBuilder.StartActive();
         }
     }
 }

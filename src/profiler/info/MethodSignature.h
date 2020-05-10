@@ -4,15 +4,21 @@
 #include "util/ComPtr.h"
 #include "util/util.h"
 #include "TypeInfo.h"
+#include "MethodArgument.h"
 
 namespace info
 {
     struct MethodSignature {
+        size_t argumentsOffset = 0;
     public:
         std::vector<BYTE> raw{};
+        std::vector<BYTE> ret{};
+        std::vector<MethodArgument> arguments{};
 
         MethodSignature() {}
-        MethodSignature(std::vector<BYTE> raw) : raw(raw) {};
+        MethodSignature(std::vector<BYTE> raw);
+
+        void ParseArguments();
 
         COR_SIGNATURE CallingConvention() const { return raw.empty() ? 0 : raw[0]; }
 
@@ -37,7 +43,5 @@ namespace info
 
             return 0;
         }
-
-        std::vector<BYTE> GetRet();
     };
 }

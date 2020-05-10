@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:2.1.803 as build
+FROM mcr.microsoft.com/dotnet/core/sdk:2.1.805 as build
 
 COPY src/Interception.Attributes sample/src/Interception.Attributes
 COPY sample/ sample/SampleApp/
@@ -9,7 +9,7 @@ FROM profiler:native as profiler
 
 FROM profiler:interception as interception
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.1.15
+FROM mcr.microsoft.com/dotnet/core/aspnet:2.1.17
 COPY --from=build /app /app
 RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler

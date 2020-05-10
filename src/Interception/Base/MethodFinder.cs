@@ -8,8 +8,6 @@ namespace Interception.Base
     {
         public MethodBase FindMethod(int mdToken, long moduleVersionPtr, Type[] genericTypeArguments = null)
         {
-            Console.WriteLine($"Call FindMethod {mdToken} {moduleVersionPtr}");
-
             var ptr = new IntPtr(moduleVersionPtr);
             var moduleVersionId = Marshal.PtrToStructure<Guid>(ptr);
 
@@ -32,8 +30,6 @@ namespace Interception.Base
                             {
                                 method = module.ResolveMethod(mdToken);
                             }
-
-                            Console.WriteLine($"Found {method.DeclaringType.Name}.{method.Name} Call, {mdToken}, {moduleVersionPtr}, {moduleVersionId}");
 
                             return method;
                         }

@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace Interception.Base
 {
-    public abstract class BaseInterceptor
+    public abstract class BaseInterceptor : IInterceptor
     {
         protected IMethodFinder _methodFinder = new MethodFinder();
 
@@ -24,21 +24,21 @@ namespace Interception.Base
 
         public object SetThis(object _this)
         {
-            Console.WriteLine($"SetThis {_this}");
+            //Console.WriteLine($"SetThis {_this}");
             this._this = _this;
             return this;
         }
 
         public object AddParameter(object value)
         {
-            Console.WriteLine($"AddParameter {value}");
+            //Console.WriteLine($"AddParameter {value}");
             _parameters.Add(value);
             return this;
         }
 
         public object SetMdToken(int mdToken)
         {
-            Console.WriteLine($"SetMdToken {mdToken}");
+            //Console.WriteLine($"SetMdToken {mdToken}");
             _mdToken = mdToken;
             return this;
         }
@@ -50,32 +50,10 @@ namespace Interception.Base
             return this;
         }
 
-        public abstract object Execute();
-
-        protected virtual void EnrichAfterExecution(object result, IScope scope)
-        {
-            scope.Span.SetTag("result", result?.ToString());
-        }
-
-        protected virtual IScope CreateScope()
-        {
-            throw new NotImplementedException();
-        }
-
-        protected virtual MethodInfo FindMethod()
-        { 
-            return (MethodInfo)_methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
-        }
-
-        protected object ExecuteInternal(bool metricsEnabled)
+        public virtual object Execute()
         {
             var method = FindMethod();
             var isAsync = method.IsReturnTypeTask();
-
-            if (!metricsEnabled)
-            {
-                return method.Invoke(_this, _parameters.ToArray());
-            }
 
             if (!isAsync)
             {
@@ -91,23 +69,30 @@ namespace Interception.Base
             }
         }
 
+        protected abstract void ExecuteBefore();
+
+        protected abstract void ExecuteAfter(object result, Exception exception);
+
+        protected virtual MethodInfo FindMethod()
+        {
+            return (MethodInfo)_methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
+        }
+
         protected object ExecuteSyncInternal()
         {
             var method = FindMethod();
 
-            using (var scope = CreateScope())
+            try
             {
-                try
-                {
-                    var result = method.Invoke(_this, _parameters.ToArray());
-                    EnrichAfterExecution(result, scope);
-                    return result;
-                }
-                catch (Exception ex)
-                {
-                    scope.Span.SetException(ex);
-                    throw;
-                }
+                ExecuteBefore();
+                var result = method.Invoke(_this, _parameters.ToArray());
+                ExecuteAfter(result, null);
+                return result;
+            }
+            catch (Exception ex)
+            {
+                ExecuteAfter(null, ex);
+                throw;
             }
         }
 
@@ -116,17 +101,17 @@ namespace Interception.Base
             Console.WriteLine("ExecuteAsyncInternal");
             var method = FindMethod();
 
-            using (var scope = CreateScope())
+            try
             {
-                try
-                {
-                    await (Task)method.Invoke(_this, _parameters.ToArray());
-                }
-                catch (Exception ex)
-                {
-                    scope.Span.SetException(ex);
-                    throw;
-                }
+                ExecuteBefore();
+                var result = (Task)method.Invoke(_this, _parameters.ToArray());
+                await result;
+                ExecuteAfter(result, null);
+            }
+            catch (Exception ex)
+            {
+                ExecuteAfter(null, ex);
+                throw;
             }
         }
 
@@ -156,24 +141,21 @@ namespace Interception.Base
 
         private async Task<T> ExecuteWithMetrics<T>(Delegate funcDelegate)
         {
-            using (var scope = CreateScope())
+            try
             {
-                try
-                {
-                    var func = (Func<Task<T>>)funcDelegate;
+                ExecuteBefore();
 
-                    var result = await func.Invoke();
+                var func = (Func<Task<T>>)funcDelegate;
+                var result = await func.Invoke();
 
-                    Console.WriteLine($"result {result} {result.GetType().Name}");
+                ExecuteAfter(result, null);
 
-                    EnrichAfterExecution(result, scope);
-                    return result;
-                }
-                catch (Exception ex)
-                {
-                    scope.Span.SetException(ex);
-                    throw;
-                }
+                return result;
+            }
+            catch (Exception ex)
+            {
+                ExecuteAfter(null, ex);
+                throw;
             }
         }
 

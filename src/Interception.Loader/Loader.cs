@@ -13,6 +13,7 @@ namespace Interception
             Console.WriteLine($"Interception.Loader {interceptionDlls}");
 
             Type monitoringInterceptor = null;
+            Type cacheInterceptor = null;
 
             foreach (var dll in interceptionDlls.Split(new char[] { ',' }))
             {
@@ -24,6 +25,14 @@ namespace Interception
                     monitoringInterceptor = assembly
                         .GetTypes()
                         .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(MonitoringInterceptAttribute).FullName).Any())
+                        .FirstOrDefault();
+                }
+
+                if (cacheInterceptor is null)
+                {
+                    cacheInterceptor = assembly
+                        .GetTypes()
+                        .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(CacheInterceptorAttribute).FullName).Any())
                         .FirstOrDefault();
                 }
 
@@ -73,7 +82,8 @@ namespace Interception
             {
                 foreach (var monitor in monitorMethods)
                 {
-                    NativeMethods.AddInterceptor(new ImportInterception {
+                    NativeMethods.AddInterceptor(new ImportInterception
+                    {
                         CallerAssembly = "",
                         InterceptorAssemblyName = monitoringInterceptor.Assembly.GetName().Name,
                         InterceptorTypeName = monitoringInterceptor.FullName,
@@ -81,6 +91,33 @@ namespace Interception
                         TargetTypeName = monitor.DeclaringType.FullName,
                         TargetMethodName = monitor.Name,
                         TargetMethodParametersCount = monitor.GetParameters().Length
+                    });
+                }
+            }
+
+            Console.WriteLine($"cacheInterceptor {cacheInterceptor}");
+
+            var cacheMethods = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .SelectMany(t => t.GetRuntimeMethods())
+                .Where(m => m.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(CacheAttribute).FullName).Any())
+                .ToList();
+
+            Console.WriteLine($"cacheMethods {cacheMethods.Count()}");
+
+            if (cacheInterceptor != null)
+            {
+                foreach (var cache in cacheMethods)
+                {
+                    NativeMethods.AddInterceptor(new ImportInterception
+                    {
+                        CallerAssembly = "",
+                        InterceptorAssemblyName = cacheInterceptor.Assembly.GetName().Name,
+                        InterceptorTypeName = cacheInterceptor.FullName,
+                        TargetAssemblyName = cache.DeclaringType.Assembly.GetName().Name,
+                        TargetTypeName = cache.DeclaringType.FullName,
+                        TargetMethodName = cache.Name,
+                        TargetMethodParametersCount = cache.GetParameters().Length
                     });
                 }
             }

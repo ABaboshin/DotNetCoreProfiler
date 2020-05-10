@@ -38,7 +38,7 @@ namespace SampleApp.ScheduledJobs
             var trigger = TriggerBuilder.Create()
                     .WithIdentity(nameof(SampleJob))
                     .StartNow()
-                    .WithSimpleSchedule(x => x.WithIntervalInMinutes(1).RepeatForever())
+                    .WithSimpleSchedule(x => x.WithIntervalInMinutes(5).RepeatForever())
                     .Build()
                     ;
 

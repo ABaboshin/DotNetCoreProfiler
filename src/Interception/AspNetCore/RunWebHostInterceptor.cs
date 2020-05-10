@@ -9,7 +9,11 @@ namespace Interception.AspNetCore
     [Intercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "RunAsync", TargetTypeName = "Microsoft.AspNetCore.Hosting.WebHostExtensions", TargetMethodParametersCount = 3)]
     public class RunWebHostInterceptor : BaseInterceptor
     {
-        public override object Execute()
+        protected override void ExecuteAfter(object result, Exception exception)
+        {
+        }
+
+        protected override void ExecuteBefore()
         {
             Console.WriteLine($"RunWebHostInterceptor this: {_this} {_parameters[0]} {_parameters[1]} {_parameters[2]}");
 
@@ -20,8 +24,6 @@ namespace Interception.AspNetCore
             {
                 _parameters[1] = cts.Token;
             }
-
-            return ExecuteInternal(false);
         }
     }
 }

@@ -14,7 +14,8 @@ This project has a goal to demonstrate injection of the following devops-related
     - masstransit consume
     - EntityFrameworkCore queries
     - Quartz scheduled jobs
-    - User-defined using MonitorAttribute (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/src/Interception.Attributes/MonitorAttribute.cs)
+    - User-defined using `MonitorAttribute` (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/src/Interception.Attributes/MonitorAttribute.cs)
+ - Cache using `CacheAttribute`
  - Store collected metrics in:
     - prometheus
     - jaeger
@@ -23,7 +24,7 @@ This project has a goal to demonstrate injection of the following devops-related
 ***Limitations***
  - Ref parameters cannot be intercepted
  - Out parameters cannot be intercepted
- - Function with more then 15 (14 in case of an instance methods) cannot be intercepted
+ - Dynamic methods are not supported
 
 ## Project structure
 
@@ -43,7 +44,9 @@ See [src/Interception](src/Interception):
       - Customited metric name
       - Passed parameters
       - Return value
-      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L42
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L53
+  - `CacheInterceptor` find the usage of `CacheAttribute` and cache the results for the given amount of seconds, the parameters which have to be taken into accout can be configured:
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L60
 
 ### Observers
 
@@ -84,4 +87,5 @@ It will create an app running on `http://localhost:5000` with the following endp
     - one masstransit outgoing http metric
     - three entity framework core metric
     - one custom "A long time action metric" with result and one of the parameters
+    - two custom "Fibonacci call" metrics
 ![good query sample](./good.png)
