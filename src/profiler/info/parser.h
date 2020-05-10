@@ -5,4 +5,6 @@
 namespace info {
 	bool ParseRetType(std::vector<BYTE>::iterator& begin);
 	bool ParseType(std::vector<BYTE>::iterator& begin);
+	bool ParseNumber(std::vector<BYTE>::iterator& begin, ULONG& number);
+	bool ParseParam(std::vector<BYTE>::iterator& begin);
 }
