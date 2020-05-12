@@ -7,6 +7,8 @@ namespace info
     {
         isRefType = raw.size() > 0 && raw[0] == ELEMENT_TYPE_BYREF;
 
+        isVoid = raw.size() > 0 && raw[0] == ELEMENT_TYPE_VOID;
+
         auto shift = isRefType ? 1 : 0;
 
         switch (raw[isRefType]) {

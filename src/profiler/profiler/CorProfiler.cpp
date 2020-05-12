@@ -5,6 +5,7 @@
 #include "corhdr.h"
 #include "configuration/Configuration.h"
 #include "const/const.h"
+#include "info/parser.h"
 #include "rewriter/ILRewriter.h"
 #include "rewriter/ILRewriterHelper.h"
 #include "util/helpers.h"
@@ -232,8 +233,7 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef)
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId,
-    mdMethodDef* retMethodToken) {
+HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMethodToken) {
 
     HRESULT hr;
 
@@ -639,7 +639,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
                 helper.SetILPosition(pInstr);
 
                 mdMethodDef interceptorRef;
-                GenerateInterceptMethod(moduleId, target, interception, targetMdToken, &interceptorRef);
+                GenerateInterceptMethod(moduleId, target, interception, targetMdToken, interceptorRef);
 
                 helper.CallMember(interceptorRef, false);
 
@@ -653,7 +653,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef* retMethodToken)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef& retMethodToken)
 {
     HRESULT hr;
 
@@ -702,6 +702,11 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     // insert existing arguments
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
+        if (target.signature.arguments[i].isRefType)
+        {
+            signature.push_back(ELEMENT_TYPE_BYREF);
+        }
+
         signature.push_back(target.signature.arguments[i].typeDef);
     }
     
@@ -713,7 +718,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         signature.size(),
         0,
         0,
-        retMethodToken);
+        &retMethodToken);
 
     // define wrapper.dll
     mdModuleRef wrapperRef;
@@ -728,21 +733,17 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         &wrapperTypeRef);
     IfFailRet(hr);
 
-    // local sig
-    mdSignature localSigToken;
-    std::vector<BYTE> localSig = {
-        IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
-        0
-    };
-
-    hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(),
-        &localSigToken);
-
-    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
-    rewriter.InitializeTiny();
-    rewriter.SetTkLocalVarSig(localSigToken);
+    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, retMethodToken);
     rewriter::ILRewriterHelper helper(&rewriter);
+    rewriter.InitializeTiny();
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
+
+    // local sig
+    int wrapperIndex = 0;
+    helper.AddLocalVariable(wrapperTypeRef, wrapperIndex);
+
+    int returnIndex = 0;
+    helper.AddLocalVariable(objectTypeRef, returnIndex);
 
     // ctor
     std::vector<BYTE> ctorSignature = {
@@ -760,12 +761,13 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         &ctorRef);
 
     helper.NewObject(ctorRef);
+    helper.StLocal(wrapperIndex);
 
     //SetThis
     std::vector<BYTE> setThisSignature = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
         1,
-        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_VOID,
         ELEMENT_TYPE_OBJECT
     };
 
@@ -781,16 +783,16 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     if (target.signature.IsInstanceMethod())
     {
         shift += 1;
+        helper.LoadLocal(wrapperIndex);
         helper.LoadArgument(0);
         helper.CallMember(setThisRef, false);
-        helper.Cast(wrapperTypeRef);
     }
 
     //SetMdToken
     std::vector<BYTE> setMdTokenSignature = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
         1,
-        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_VOID,
         ELEMENT_TYPE_I4
     };
 
@@ -802,15 +804,15 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         setMdTokenSignature.size(),
         &setMdTokenRef);
 
+    helper.LoadLocal(wrapperIndex);
     helper.LoadInt32(targetMdToken);
     helper.CallMember(setMdTokenRef, false);
-    helper.Cast(wrapperTypeRef);
 
     //SetModuleVersionPtr
     std::vector<BYTE> setModuleVersionPtrSignature = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
         1,
-        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_VOID,
         ELEMENT_TYPE_I8
     };
 
@@ -822,16 +824,37 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         setModuleVersionPtrSignature.size(),
         &setModuleVersionPtrRef);
 
+    helper.LoadLocal(wrapperIndex);
     const void* module_version_id_ptr = &modules[moduleId];
     helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
     helper.CallMember(setModuleVersionPtrRef, false);
-    helper.Cast(wrapperTypeRef);
+
+    //SetArgumentNumber
+    std::vector<BYTE> setArgumentNumberSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_VOID,
+        ELEMENT_TYPE_I4
+    };
+
+    mdMemberRef setArgumentNumberRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "SetArgumentNumber"_W.data(),
+        setArgumentNumberSignature.data(),
+        setArgumentNumberSignature.size(),
+        &setArgumentNumberRef);
+
+    helper.LoadLocal(wrapperIndex);
+    helper.LoadInt32(target.signature.NumberOfArguments());
+    helper.CallMember(setArgumentNumberRef, false);
 
     // AddParameter
     std::vector<BYTE> addParameterSignature = {
         IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_OBJECT,
+        2,
+        ELEMENT_TYPE_VOID,
+        ELEMENT_TYPE_I4,
         ELEMENT_TYPE_OBJECT
     };
 
@@ -845,7 +868,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
+        helper.LoadLocal(wrapperIndex);
+        helper.LoadInt32(i);
         helper.LoadArgument(shift + i);
+
+        if (target.signature.arguments[i].isRefType)
+        {
+            helper.LoadInd(target.signature.arguments[i].typeDef);
+        }
 
         if (target.signature.arguments[i].isBoxed)
         {
@@ -854,7 +884,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         }
 
         helper.CallMember(addParameterRef, false);
-        helper.Cast(wrapperTypeRef);
     }
 
     //execute
@@ -872,11 +901,53 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         executeSignature.size(),
         &executeRef);
 
+    helper.LoadLocal(wrapperIndex);
     helper.CallMember(executeRef, false);
 
-    if (retType.size() == 1 && retType[0] == ELEMENT_TYPE_VOID)
+    helper.StLocal(returnIndex);
+
+    // GetParameter
+    std::vector<BYTE> getParameterSignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_I4
+    };
+
+    mdMemberRef getParameterRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "GetParameter"_W.data(),
+        getParameterSignature.data(),
+        getParameterSignature.size(),
+        &getParameterRef);
+
+    for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-        helper.Pop();
+        if (!target.signature.arguments[i].isRefType)
+        {
+            continue;
+        }
+
+        helper.LoadArgument(shift + i);
+
+        helper.LoadLocal(wrapperIndex);
+        helper.LoadInt32(i);
+        helper.CallMember(getParameterRef, false);
+
+        auto token = util::GetTypeToken(metadataEmit, mscorlibRef, target.signature.arguments[i].raw);
+
+        if (target.signature.arguments[i].isBoxed)
+        {
+            helper.UnboxAny(token);
+        }
+
+        helper.StInd(target.signature.arguments[i].typeDef);
+    }
+
+    if (!info::IsVoid(retType))
+    {
+        helper.LoadLocal(returnIndex);
     }
 
     // ret

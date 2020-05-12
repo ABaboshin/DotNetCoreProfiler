@@ -10,28 +10,43 @@
         /// </summary>
         /// <param name="_this"></param>
         /// <returns></returns>
-        object SetThis(object _this);
+        void SetThis(object _this);
+
+        /// <summary>
+        /// set argument number
+        /// </summary>
+        /// <param name="number"></param>
+        /// <returns></returns>
+        void SetArgumentNumber(int number);
 
         /// <summary>
         /// add parameter of intercepted method
         /// </summary>
+        /// <param name="num"></param>
         /// <param name="value"></param>
         /// <returns></returns>
-        object AddParameter(object value);
+        void AddParameter(int num, object value);
+
+        /// <summary>
+        /// get paraemeter value
+        /// </summary>
+        /// <param name="num"></param>
+        /// <returns></returns>
+        object GetParameter(int num);
 
         /// <summary>
         /// set md token of intercepted method
         /// </summary>
         /// <param name="mdToken"></param>
         /// <returns></returns>
-        object SetMdToken(int mdToken);
+        void SetMdToken(int mdToken);
 
         /// <summary>
         /// set pointer to module version of intercepted method
         /// </summary>
         /// <param name="moduleVersionPtr"></param>
         /// <returns></returns>
-        object SetModuleVersionPtr(long moduleVersionPtr);
+        void SetModuleVersionPtr(long moduleVersionPtr);
 
         /// <summary>
         /// execute interceptor
