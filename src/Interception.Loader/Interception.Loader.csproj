@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Interception.Attributes\IInterceptorAttribute.cs" Link="IInterceptorAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\IMethodInterceptorAttribute.cs" Link="IMethodInterceptorAttribute.cs" />
+    <Compile Include="..\Interception.Attributes\IMethodInterceptorImplementationAttribute.cs" Link="IMethodInterceptorImplementationAttribute.cs" />
     <Compile Include="..\Interception.Attributes\InitializeAttribute.cs" Link="InitializeAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\IUsageAttribute.cs" Link="IUsageAttribute.cs" />
     <Compile Include="..\Interception.Attributes\StrictInterceptAttribute.cs" Link="StrictInterceptAttribute.cs" />
   </ItemGroup>
 

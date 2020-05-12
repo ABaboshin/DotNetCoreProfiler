@@ -9,7 +9,7 @@ namespace Interception
     /// <summary>
     /// monitor interceptor
     /// </summary>
-    [MonitoringIntercept]
+    [MethodInterceptorImplementation(typeof(MonitorAttribute))]
     public class MonitoringInterceptor : BaseMetricsInterceptor
     {
         public MonitoringInterceptor() : base(true)
@@ -19,7 +19,7 @@ namespace Interception
         protected override void CreateScope()
         {
             var method = _methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
-            var attribute = (MonitorAttribute)method.GetCustomAttributes(typeof(MonitorAttribute), false).FirstOrDefault();
+            var attribute = GetCustomAttribute<MonitorAttribute>();
 
             var spanBuilder = GlobalTracer.Instance.BuildSpan(attribute.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
 

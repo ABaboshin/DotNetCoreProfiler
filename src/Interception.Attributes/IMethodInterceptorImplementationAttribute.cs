@@ -5,8 +5,8 @@ namespace Interception.Attributes
     /// <summary>
     /// base interceptor attribute
     /// </summary>
-    public interface IInterceptorAttribute
+    public interface IMethodInterceptorImplementationAttribute
     {
-        Type UserAttributeType { get; }
+        Type MethodInterceptorAttribute { get; set; }
     }
 }

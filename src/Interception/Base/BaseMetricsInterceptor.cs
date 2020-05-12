@@ -7,7 +7,7 @@ namespace Interception.Base
     /// <summary>
     /// base tracing interceptor
     /// </summary>
-    public abstract class BaseMetricsInterceptor : BaseInterceptor
+    public abstract class BaseMetricsInterceptor : BaseAttributedInterceptor
     {
         protected IScope _scope;
 
