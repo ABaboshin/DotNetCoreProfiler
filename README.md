@@ -24,6 +24,7 @@ This project has a goal to demonstrate injection of the following devops-related
 
 ***Limitations***
  - Dynamic methods are not supported
+ - Only one interceptor per method is supported
 
 ## Project structure
 
