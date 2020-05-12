@@ -3,7 +3,7 @@
     /// <summary>
     /// base usage attribute
     /// </summary>
-    public interface IUsageAttribute
+    public interface IMethodInterceptorAttribute
     {
     }
 }

@@ -36,7 +36,7 @@ namespace SampleApp
             return 111;
         }
 
-        [Monitor]
+        //[Monitor]
         static void TestM(
             ref object q,
             ref int i,

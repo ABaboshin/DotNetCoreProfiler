@@ -11,15 +11,15 @@ namespace Interception.Cache
     /// <summary>
     /// cache interceptor
     /// </summary>
-    [CacheInterceptor]
-    public class CacheInterceptor : BaseInterceptor
+    [MethodInterceptorImplementation(typeof(CacheAttribute))]
+    public class CacheInterceptor : BaseAttributedInterceptor
     {
         IDistributedCache DistributedCache => DependencyInjection.ServiceProvider.GetRequiredService<IDistributedCache>();
 
         string GetCacheKey()
         {
             var method = FindMethod();
-            var attribute = (CacheAttribute)method.GetCustomAttributes(typeof(CacheAttribute), false).First();
+            var attribute = GetCustomAttribute<CacheAttribute>();
 
             var key = method.Name;
 

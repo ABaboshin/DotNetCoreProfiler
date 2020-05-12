@@ -6,7 +6,7 @@ namespace Interception.Attributes
     /// monitor attribute
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-    public class MonitorAttribute : Attribute, IUsageAttribute
+    public class MonitorAttribute : Attribute, IMethodInterceptorAttribute
     {
         /// <summary>
         /// metric name

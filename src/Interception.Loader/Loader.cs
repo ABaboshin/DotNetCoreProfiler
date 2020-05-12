@@ -36,8 +36,8 @@ namespace Interception
 
         private static void ProcessAttributedInterceptor(Type attributedInterceptor)
         {
-            var attribute = attributedInterceptor.GetCustomAttributes().Where(a => a.GetType().GetInterfaces().Where(i => i.Name == nameof(IInterceptorAttribute)).Any()).First();
-            var userAttribute = attribute.GetPropertyValue<Type>(nameof(IInterceptorAttribute.UserAttributeType));
+            var attribute = attributedInterceptor.GetCustomAttributes().Where(a => a.GetType().GetInterfaces().Where(i => i.Name == nameof(IMethodInterceptorImplementationAttribute)).Any()).First();
+            var userAttribute = attribute.GetPropertyValue<Type>(nameof(IMethodInterceptorImplementationAttribute.MethodInterceptorAttribute));
 
             var attributedMethods = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
@@ -64,7 +64,7 @@ namespace Interception
         {
             return assembly
                 .GetTypes()
-                .Where(type => type.GetCustomAttributes().Where(a => a.GetType().GetInterfaces().Where(i => i.Name == nameof(IInterceptorAttribute)).Any()).Any())
+                .Where(type => type.GetCustomAttributes().Where(a => a.GetType().GetInterfaces().Where(i => i.Name == nameof(IMethodInterceptorImplementationAttribute)).Any()).Any())
                 .ToList();
         }
 
