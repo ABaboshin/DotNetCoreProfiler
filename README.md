@@ -20,6 +20,7 @@ This project has a goal to demonstrate injection of the following devops-related
     - prometheus
     - jaeger
  - Intercept creation of `IServiceProvider` and provide full access to the DI for the injected code
+ - Validate method parameters, see i.e. https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/src/Interception.Attributes/Validation/NotNullAttribute.cs
 
 ***Limitations***
  - Dynamic methods are not supported
@@ -51,6 +52,12 @@ See [src/Interception](src/Interception):
 See [src/Interception.Observers](src/Interception.Observers):
   - `EntityFrameworkCoreObserver` observers and measure execution time of entity framework core queries
   - `HttpHandlerDiagnostrics` observers and measure execution time of outgoing http requests
+
+### Method parameter validation
+
+See [src/Interception.Attributes](src/Interception.Attributes):
+  - `NotNullAttribute` checks if a passed parameter value is not null,
+  - `GreatThenZeroAttribute` checks if a passed int value is positive
 
 ### Prometheus/Statsd reporter
 

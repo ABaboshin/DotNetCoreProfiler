@@ -6,7 +6,7 @@ namespace Interception.Attributes
     /// cache attribute
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = false, Inherited = false)]
-    public class CacheAttribute : Attribute, IMethodInterceptorAttribute
+    public class CacheAttribute : MethodInterceptorAttribute
     {
         /// <summary>
         /// cache for seconds
