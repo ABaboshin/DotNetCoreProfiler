@@ -36,7 +36,7 @@ namespace Interception
             }
         }
 
-        private static void ProcessMethodLevelAttributedInterceptor(Type attributedInterceptor)
+        private void ProcessMethodLevelAttributedInterceptor(Type attributedInterceptor)
         {
             var attribute = attributedInterceptor.GetCustomAttributes().Where(a => a.GetType().Name == nameof(MethodInterceptorImplementationAttribute)).First();
             var userAttribute = attribute.GetPropertyValue<Type>(nameof(MethodInterceptorImplementationAttribute.MethodInterceptorAttribute));
@@ -49,7 +49,7 @@ namespace Interception
 
             foreach (var attributedMethod in attributedMethods)
             {
-                NativeMethods.AddInterceptor(new ImportInterception
+                AddInterceptor(new ImportInterception
                 {
                     CallerAssembly = "",
                     InterceptorAssemblyName = attributedInterceptor.Assembly.GetName().Name,
@@ -62,7 +62,7 @@ namespace Interception
             }
         }
 
-        private static void ProcessParameterLevelAttributedInterceptor(Type attributedInterceptor)
+        private void ProcessParameterLevelAttributedInterceptor(Type attributedInterceptor)
         {
             var attribute = attributedInterceptor.GetCustomAttributes().Where(a => a.GetType().Name == nameof(MethodInterceptorImplementationAttribute)).First();
             var userAttribute = attribute.GetPropertyValue<Type>(nameof(MethodInterceptorImplementationAttribute.MethodInterceptorAttribute));
@@ -77,7 +77,7 @@ namespace Interception
             {
                 Console.WriteLine($"Found {attributedMethod.Name}");
 
-                NativeMethods.AddInterceptor(new ImportInterception
+                AddInterceptor(new ImportInterception
                 {
                     CallerAssembly = "",
                     InterceptorAssemblyName = attributedInterceptor.Assembly.GetName().Name,
@@ -135,7 +135,21 @@ namespace Interception
 
             foreach (var interceptor in interceptors)
             {
+                AddInterceptor(interceptor);
+            }
+        }
+
+        private List<ImportInterception> _interceptors = new List<ImportInterception>();
+        private void AddInterceptor(ImportInterception interceptor)
+        {
+            if (!_interceptors.Any(i => i.TargetAssemblyName == interceptor.TargetAssemblyName && i.TargetMethodName == interceptor.TargetMethodName && i.TargetTypeName == interceptor.TargetTypeName && i.TargetMethodParametersCount == interceptor.TargetMethodParametersCount))
+            {
+                _interceptors.Add(interceptor);
                 NativeMethods.AddInterceptor(interceptor);
+            }
+            else
+            {
+                Console.WriteLine($"Skip {interceptor.InterceptorTypeName}");
             }
         }
     }
