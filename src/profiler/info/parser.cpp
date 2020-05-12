@@ -243,4 +243,9 @@ namespace info {
 
         return ParseType(begin);
     }
+
+    bool IsVoid(const std::vector<BYTE>& type)
+    {
+        return type.size() == 1 && type[0] == ELEMENT_TYPE_VOID;
+    }
 }

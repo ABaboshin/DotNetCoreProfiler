@@ -49,5 +49,15 @@ namespace rewriter
         void LoadStr(mdToken token);
 
         void Box(mdToken token);
+
+        void UnboxAny(mdTypeRef typeRef);
+
+        void LoadInd(BYTE typeDef);
+
+        void StInd(BYTE typeDef);
+
+        HRESULT AddLocalVariable(mdTypeRef typeRef, int& newIndex);
+
+        
     };
 }

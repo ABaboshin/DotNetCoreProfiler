@@ -11,6 +11,7 @@ namespace info
         bool isRefType = false;
         BYTE typeDef = 0;
         bool isBoxed = false;
+        bool isVoid = false;
 
         MethodArgument(const std::vector<BYTE>& raw);
     };

@@ -153,5 +153,13 @@ namespace rewriter
 
         void InitializeTiny();
         void SetTkLocalVarSig(mdToken tkLocalVarSig);
+
+        mdToken GetTkLocalVarSig() const { return m_tkLocalVarSig; }
+
+        unsigned GetEHCount() const { return m_nEH; }
+
+        ICorProfilerInfo* GetCorProfilerInfo() { return m_pICorProfilerInfo; }
+
+        ModuleID GetModuleId() { return m_moduleId; }
     };
 }

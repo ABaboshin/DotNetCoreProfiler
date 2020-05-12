@@ -29,7 +29,7 @@ namespace Interception.MassTransit
             Console.WriteLine(config);
 
             var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)_parameters[1];
-            Action<IRabbitMqBusFactoryConfigurator> myConfigure = (IRabbitMqBusFactoryConfigurator cfg) => {
+            Action<IRabbitMqBusFactoryConfigurator> configure = (IRabbitMqBusFactoryConfigurator cfg) => {
                 Console.WriteLine("Masstransit configuration Injected");
 
                 if (config.PublisherEnabled)
@@ -42,7 +42,7 @@ namespace Interception.MassTransit
                 typedConfigure(cfg);
             };
 
-            _parameters = new System.Collections.Generic.List<object> { _parameters[0], myConfigure };
+            _parameters[1] = configure;
         }
     }
 }

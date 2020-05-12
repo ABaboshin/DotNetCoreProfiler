@@ -1,6 +1,5 @@
 ﻿using Interception.Base.Extensions;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
@@ -15,7 +14,7 @@ namespace Interception.Base
     {
         protected IMethodFinder _methodFinder = new MethodFinder();
 
-        protected List<object> _parameters = new List<object>();
+        protected object[] _parameters;
 
         protected object _this;
 
@@ -23,32 +22,48 @@ namespace Interception.Base
 
         protected long _moduleVersionPtr;
 
-        public object SetThis(object _this)
+        public void SetThis(object _this)
         {
-            //Console.WriteLine($"SetThis {_this}");
+            Console.WriteLine($"SetThis {_this}");
             this._this = _this;
-            return this;
         }
 
-        public object AddParameter(object value)
+        public void AddParameter(int num, object value)
         {
-            //Console.WriteLine($"AddParameter {value}");
-            _parameters.Add(value);
-            return this;
+            Console.WriteLine($"AddParameter {num} {value}");
+
+            if (value is null)
+            {
+                Console.WriteLine("value is null");
+            }
+            else
+            {
+                Console.WriteLine("value is not null");
+            }
+
+            _parameters[num] = value;
         }
 
-        public object SetMdToken(int mdToken)
+        public void SetMdToken(int mdToken)
         {
-            //Console.WriteLine($"SetMdToken {mdToken}");
+            Console.WriteLine($"SetMdToken {mdToken}");
             _mdToken = mdToken;
-            return this;
         }
 
-        public object SetModuleVersionPtr(long moduleVersionPtr)
+        public void SetModuleVersionPtr(long moduleVersionPtr)
         {
             Console.WriteLine($"SetModuleVersionPtr {moduleVersionPtr}");
             _moduleVersionPtr = moduleVersionPtr;
-            return this;
+        }
+
+        public object GetParameter(int num)
+        {
+            return _parameters[num];
+        }
+
+        public void SetArgumentNumber(int number)
+        {
+            _parameters = new object[number];
         }
 
         public virtual object Execute()
@@ -86,7 +101,7 @@ namespace Interception.Base
             try
             {
                 ExecuteBefore();
-                var result = method.Invoke(_this, _parameters.ToArray());
+                var result = method.Invoke(_this, _parameters);
                 ExecuteAfter(result, null);
                 return result;
             }
@@ -105,7 +120,7 @@ namespace Interception.Base
             try
             {
                 ExecuteBefore();
-                var result = (Task)method.Invoke(_this, _parameters.ToArray());
+                var result = (Task)method.Invoke(_this, _parameters);
                 await result;
                 ExecuteAfter(result, null);
             }
@@ -165,7 +180,7 @@ namespace Interception.Base
             var method = FindMethod();
 
             Func<Task<T>> func = () => {
-                return (Task<T>)method.Invoke(_this, _parameters.ToArray());
+                return (Task<T>)method.Invoke(_this, _parameters);
             };
 
             return func;

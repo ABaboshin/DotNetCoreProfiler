@@ -22,8 +22,6 @@ This project has a goal to demonstrate injection of the following devops-related
  - Intercept creation of `IServiceProvider` and provide full access to the DI for the injected code
 
 ***Limitations***
- - Ref parameters cannot be intercepted
- - Out parameters cannot be intercepted
  - Dynamic methods are not supported
 
 ## Project structure
