@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\src\Interception.Attributes\Interception.Attributes.csproj" />
+    <ProjectReference Include="..\src\Interception.Loader\Interception.Loader.csproj" />
   </ItemGroup>
 
 </Project>

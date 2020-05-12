@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Attributes.Validation;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using System;
@@ -9,6 +10,8 @@ namespace SampleApp
     {
         public static void Main(string[] args)
         {
+            //new Interception.Loader(Environment.GetEnvironmentVariable("PROFILER_INTERCEPTION_DLLS"));
+
             Wrapped();
 
             CreateWebHostBuilder(args).Build().Run();
@@ -21,13 +24,21 @@ namespace SampleApp
 
         private static void NewMethod()
         {
-            int i = 1;
-            object o = "test";
+            int i = -25;
+            object o = null;
             int j = 4;
             object p = new { d = 3 };
             int k = -1;
             object q = null;
-            TestM(ref o, ref i, out object oo, out int oi, out Program op, new Program(), out bool b, out UInt32 ou);
+            try
+            {
+                TestM(ref o, ref i, out object oo, out int oi, out Program op, new Program(), out bool b, out UInt32 ou);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception");
+                Console.WriteLine(ex);
+            }
             //TestM(i, o, ref j, ref p, /*out*/ /*int*/ k, /*out*/ /*object*/ q);
         }
 
@@ -38,7 +49,9 @@ namespace SampleApp
 
         //[Monitor]
         static void TestM(
+            //[NotNull]
             ref object q,
+            [GreatThenZero]
             ref int i,
             out object oo,
             out int oi,

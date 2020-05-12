@@ -1,4 +1,5 @@
-﻿using Interception.Base.Extensions;
+﻿using Interception.Attributes;
+using Interception.Base.Extensions;
 using System;
 using System.Linq;
 using System.Reflection;
@@ -68,6 +69,7 @@ namespace Interception.Base
 
         public virtual object Execute()
         {
+            Validate();
             var method = FindMethod();
             var isAsync = method.IsReturnTypeTask();
 
@@ -184,6 +186,20 @@ namespace Interception.Base
             };
 
             return func;
+        }
+
+        protected void Validate()
+        {
+            var method = FindMethod();
+            foreach (var p in method.GetParameters())
+            {
+                var validationAttributes = p.GetCustomAttributes<ParameterValidationAttribute>();
+
+                foreach (var validationAttribute in validationAttributes)
+                {
+                    validationAttribute.Validate(_parameters[p.Position]);
+                }
+            }
         }
     }
 }

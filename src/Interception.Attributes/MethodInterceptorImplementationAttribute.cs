@@ -3,7 +3,7 @@
 namespace Interception.Attributes
 {
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = false, Inherited = false)]
-    public class MethodInterceptorImplementationAttribute : Attribute, IMethodInterceptorImplementationAttribute
+    public sealed class MethodInterceptorImplementationAttribute : Attribute
     {
         public Type MethodInterceptorAttribute { get; set; }
 

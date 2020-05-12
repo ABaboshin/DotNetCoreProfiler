@@ -30,14 +30,16 @@ namespace Interception
 
             foreach (var attributedInterceptor in attributedInterceptors)
             {
-                ProcessAttributedInterceptor(attributedInterceptor);
+                Console.WriteLine($"Process {attributedInterceptor.FullName}");
+                ProcessMethodLevelAttributedInterceptor(attributedInterceptor);
+                ProcessParameterLevelAttributedInterceptor(attributedInterceptor);
             }
         }
 
-        private static void ProcessAttributedInterceptor(Type attributedInterceptor)
+        private static void ProcessMethodLevelAttributedInterceptor(Type attributedInterceptor)
         {
-            var attribute = attributedInterceptor.GetCustomAttributes().Where(a => a.GetType().GetInterfaces().Where(i => i.Name == nameof(IMethodInterceptorImplementationAttribute)).Any()).First();
-            var userAttribute = attribute.GetPropertyValue<Type>(nameof(IMethodInterceptorImplementationAttribute.MethodInterceptorAttribute));
+            var attribute = attributedInterceptor.GetCustomAttributes().Where(a => a.GetType().Name == nameof(MethodInterceptorImplementationAttribute)).First();
+            var userAttribute = attribute.GetPropertyValue<Type>(nameof(MethodInterceptorImplementationAttribute.MethodInterceptorAttribute));
 
             var attributedMethods = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(a => a.GetTypes())
@@ -60,11 +62,39 @@ namespace Interception
             }
         }
 
+        private static void ProcessParameterLevelAttributedInterceptor(Type attributedInterceptor)
+        {
+            var attribute = attributedInterceptor.GetCustomAttributes().Where(a => a.GetType().Name == nameof(MethodInterceptorImplementationAttribute)).First();
+            var userAttribute = attribute.GetPropertyValue<Type>(nameof(MethodInterceptorImplementationAttribute.MethodInterceptorAttribute));
+
+            var attributedMethods = AppDomain.CurrentDomain.GetAssemblies()
+                .SelectMany(a => a.GetTypes())
+                .SelectMany(t => t.GetRuntimeMethods())
+                .Where(m => m.GetParameters().Where(p => p.GetCustomAttributes(userAttribute).Any()).Any())
+                .ToList();
+
+            foreach (var attributedMethod in attributedMethods)
+            {
+                Console.WriteLine($"Found {attributedMethod.Name}");
+
+                NativeMethods.AddInterceptor(new ImportInterception
+                {
+                    CallerAssembly = "",
+                    InterceptorAssemblyName = attributedInterceptor.Assembly.GetName().Name,
+                    InterceptorTypeName = attributedInterceptor.FullName,
+                    TargetAssemblyName = attributedMethod.DeclaringType.Assembly.GetName().Name,
+                    TargetTypeName = attributedMethod.DeclaringType.FullName,
+                    TargetMethodName = attributedMethod.Name,
+                    TargetMethodParametersCount = attributedMethod.GetParameters().Length
+                });
+            }
+        }
+
         private IEnumerable<Type> FindAttributedInterceptors(Assembly assembly)
         {
             return assembly
                 .GetTypes()
-                .Where(type => type.GetCustomAttributes().Where(a => a.GetType().GetInterfaces().Where(i => i.Name == nameof(IMethodInterceptorImplementationAttribute)).Any()).Any())
+                .Where(type => type.GetCustomAttributes().Where(a => a.GetType().Name == nameof(MethodInterceptorImplementationAttribute)).Any())
                 .ToList();
         }
 
