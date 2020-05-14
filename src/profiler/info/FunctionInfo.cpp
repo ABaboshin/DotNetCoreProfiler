@@ -61,10 +61,10 @@ namespace info
 
         if (isGeneric)
         {
-            return {methodSpecToken, util::ToString(functionName), typeInfo, MethodSignature(finalSignature), MethodSignature(methodSpecSignature), methodDefToken};
+            return {methodSpecToken, util::ToString(functionName, functionNameLength), typeInfo, MethodSignature(finalSignature), MethodSignature(methodSpecSignature), methodDefToken};
         }
 
-        return { token, util::ToString(functionName), typeInfo,
+        return { token, util::ToString(functionName, functionNameLength), typeInfo,
                 MethodSignature(util::ToRaw(rawSignature,rawSignatureLength)) };
     }
 }

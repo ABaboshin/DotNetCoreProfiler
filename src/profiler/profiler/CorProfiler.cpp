@@ -699,6 +699,9 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     }
 
     target.signature.ParseArguments();
+
+    auto xxx = info::FunctionInfo::GetFunctionInfo(metadataImport, targetMdToken);
+
     // insert existing arguments
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
@@ -805,6 +808,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         &setMdTokenRef);
 
     helper.LoadLocal(wrapperIndex);
+    //helper.LoadInt32(target.signature.IsGeneric() ? target.methodDefId : targetMdToken);
     helper.LoadInt32(targetMdToken);
     helper.CallMember(setMdTokenRef, false);
 

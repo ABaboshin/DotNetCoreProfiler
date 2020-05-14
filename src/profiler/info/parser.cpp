@@ -135,11 +135,11 @@ namespace info {
 
     bool ParseType(std::vector<BYTE>::iterator& begin) {
 
-        auto cor_element_type = *begin;
+        auto elementType = *begin;
         ULONG number = 0;
         std::advance(begin, 1);
 
-        switch (cor_element_type) {
+        switch (elementType) {
         case ELEMENT_TYPE_VOID:
         case ELEMENT_TYPE_BOOLEAN:
         case ELEMENT_TYPE_CHAR:

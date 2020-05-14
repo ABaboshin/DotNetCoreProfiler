@@ -53,7 +53,7 @@ namespace info
                 break;
             }
 
-            arguments.push_back(MethodArgument(std::vector<BYTE>(begin, iter)));
+            arguments.push_back(TypeInfo(std::vector<BYTE>(begin, iter)));
         }
     }
 }

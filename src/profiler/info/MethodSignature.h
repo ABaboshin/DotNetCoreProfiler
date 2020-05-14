@@ -4,7 +4,6 @@
 #include "util/ComPtr.h"
 #include "util/util.h"
 #include "TypeInfo.h"
-#include "MethodArgument.h"
 
 namespace info
 {
@@ -13,7 +12,7 @@ namespace info
     public:
         std::vector<BYTE> raw{};
         std::vector<BYTE> ret{};
-        std::vector<MethodArgument> arguments{};
+        std::vector<TypeInfo> arguments{};
 
         MethodSignature() {}
         MethodSignature(std::vector<BYTE> raw);
