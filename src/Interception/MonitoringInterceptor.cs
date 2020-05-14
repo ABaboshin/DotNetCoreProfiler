@@ -1,5 +1,5 @@
 ﻿using Interception.Attributes;
-using Interception.Base;
+using Interception.Tracing;
 using OpenTracing.Util;
 using System;
 using System.Linq;
@@ -18,12 +18,12 @@ namespace Interception
 
         protected override void CreateScope()
         {
-            var method = _methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
+            var method = FindMethod();
             var attribute = GetCustomAttribute<MonitorAttribute>();
 
             var spanBuilder = GlobalTracer.Instance.BuildSpan(attribute.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
 
-            Console.WriteLine($"CreateScope {attribute.Name}");
+            //Console.WriteLine($"CreateScope {attribute.Name}");
 
             if (attribute.Parameters != null && attribute.Parameters.Any())
             {
@@ -35,7 +35,7 @@ namespace Interception
                     if (index != -1)
                     {
                         spanBuilder = spanBuilder
-                            .WithTag($"parameter.{p}", _parameters[index]?.ToString());
+                            .WithTag($"parameter.{p}", GetParameter(index)?.ToString());
                     }
                 }
             }

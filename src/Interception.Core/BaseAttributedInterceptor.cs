@@ -1,7 +1,7 @@
 ﻿using Interception.Attributes;
 using System.Linq;
 
-namespace Interception.Base
+namespace Interception.Core
 {
     /// <summary>
     /// base interceptor

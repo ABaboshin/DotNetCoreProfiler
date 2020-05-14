@@ -19,7 +19,7 @@ namespace Interception.MassTransit
 
         public async Task Send(PublishContext<TMessage> context, IPipe<PublishContext<TMessage>> next)
         {
-            Console.WriteLine($"PublishFilter {GlobalTracer.Instance.ActiveSpan != null}");
+            //Console.WriteLine($"PublishFilter {GlobalTracer.Instance.ActiveSpan != null}");
 
             var baseSpan = GlobalTracer.Instance
                 .BuildSpan(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.PublisherName)

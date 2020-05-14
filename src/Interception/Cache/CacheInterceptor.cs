@@ -1,6 +1,6 @@
 ﻿using Interception.AspNetCore;
 using Interception.Attributes;
-using Interception.Base;
+using Interception.Core;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
 using System;
@@ -32,7 +32,7 @@ namespace Interception.Cache
                     var index = methodParameters.FindIndex(mp => mp.Name == p);
                     if (index != -1)
                     {
-                        key += "-" + _parameters[index]?.ToString();
+                        key += "-" + GetParameter(index)?.ToString();
                     }
                 }
             }
@@ -42,7 +42,7 @@ namespace Interception.Cache
 
         protected override void ExecuteAfter(object result, Exception exception)
         {
-            Console.WriteLine($"Cache.ExecuteAfter {DateTime.UtcNow}");
+            //Console.WriteLine($"Cache.ExecuteAfter {DateTime.UtcNow}");
 
             var method = FindMethod();
             var attribute = (CacheAttribute)method.GetCustomAttributes(typeof(CacheAttribute), false).First();
@@ -56,17 +56,17 @@ namespace Interception.Cache
 
         public override object Execute()
         {
-            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} {GetCacheKey()}");
+            //Console.WriteLine($"Cache.Execute {DateTime.UtcNow} {GetCacheKey()}");
             var cached = DistributedCache.Get(GetCacheKey());
 
-            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cache {cached != null} {GetCacheKey()}");
+            //Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cache {cached != null} {GetCacheKey()}");
 
             if (cached is null)
             {
                 return base.Execute();
             }
 
-            Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cached result {GetCacheKey()}");
+            //Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cached result {GetCacheKey()}");
 
             DistributedCache.Refresh(GetCacheKey());
 

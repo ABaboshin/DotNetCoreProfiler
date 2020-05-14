@@ -1,6 +1,6 @@
 ﻿using Interception.Attributes;
-using Interception.Base;
 using Interception.Cache;
+using Interception.Core;
 using Interception.MassTransit;
 using Interception.Observers;
 using Interception.OpenTracing.Prometheus;
@@ -38,11 +38,9 @@ namespace Interception.AspNetCore
 
         protected override void ExecuteBefore()
         {
-            Console.WriteLine($"Configure additional services {_this.GetType().Name} {_parameters[0].GetType().Name} {_parameters[1].GetType().Name}");
-
             DiagnosticsObserver.ConfigureAndStart();
 
-            var serviceCollection = ((IServiceCollection)_parameters[1]);
+            var serviceCollection = ((IServiceCollection)GetParameter(1));
 
             var loggerFactory = new SerilogLoggerFactory(CreateLogger(), false);
             serviceCollection.AddSingleton((ILoggerFactory)loggerFactory);

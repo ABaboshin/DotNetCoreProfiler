@@ -2,7 +2,7 @@
 using System.Reflection;
 using System.Runtime.InteropServices;
 
-namespace Interception.Base
+namespace Interception.Core
 {
     public class MethodFinder : IMethodFinder
     {

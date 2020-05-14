@@ -1,5 +1,5 @@
 ﻿using Interception.Attributes;
-using Interception.Base;
+using Interception.Core;
 using MassTransit.RabbitMqTransport;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -19,18 +19,18 @@ namespace Interception.MassTransit
 
         protected override void ExecuteBefore()
         {
-            Console.WriteLine("Masstransit configuration Intercepted");
+            //Console.WriteLine("Masstransit configuration Intercepted");
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
 
             var config = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
 
-            Console.WriteLine(config);
+            //Console.WriteLine(config);
 
-            var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)_parameters[1];
+            var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)GetParameter(1);
             Action<IRabbitMqBusFactoryConfigurator> configure = (IRabbitMqBusFactoryConfigurator cfg) => {
-                Console.WriteLine("Masstransit configuration Injected");
+                //Console.WriteLine("Masstransit configuration Injected");
 
                 if (config.PublisherEnabled)
                 {
@@ -42,7 +42,7 @@ namespace Interception.MassTransit
                 typedConfigure(cfg);
             };
 
-            _parameters[1] = configure;
+            UpdateParameter(1, configure);
         }
     }
 }

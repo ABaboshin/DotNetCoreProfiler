@@ -8,7 +8,7 @@ namespace Interception
     {
         public ConfigureMetrics()
         {
-            Console.WriteLine("ConfigureMetrics");
+            //Console.WriteLine("ConfigureMetrics");
         }
     }
 

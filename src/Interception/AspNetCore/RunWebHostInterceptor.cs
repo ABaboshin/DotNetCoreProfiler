@@ -1,5 +1,5 @@
 ﻿using Interception.Attributes;
-using Interception.Base;
+using Interception.Core;
 using Microsoft.AspNetCore.Hosting;
 using System;
 using System.Threading;
@@ -19,14 +19,12 @@ namespace Interception.AspNetCore
 
         protected override void ExecuteBefore()
         {
-            Console.WriteLine($"RunWebHostInterceptor this: {_this} {_parameters[0]} {_parameters[1]} {_parameters[2]}");
+            DependencyInjection.ServiceProvider = ((IWebHost)GetParameter(0)).Services;
 
-            DependencyInjection.ServiceProvider = ((IWebHost)_parameters[0]).Services;
-
-            var cts = (CancellationTokenSource)_parameters[1];
+            var cts = (CancellationTokenSource)GetParameter(1);
             if (cts != null)
             {
-                _parameters[1] = cts.Token;
+                UpdateParameter(1, cts.Token);
             }
         }
     }

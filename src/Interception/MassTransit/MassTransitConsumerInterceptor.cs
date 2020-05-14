@@ -1,6 +1,5 @@
 ﻿using Interception.AspNetCore;
 using Interception.Attributes;
-using Interception.Base;
 using MassTransit;
 using Microsoft.Extensions.Options;
 using OpenTracing;
@@ -9,8 +8,9 @@ using OpenTracing.Tag;
 using OpenTracing.Util;
 using System;
 using System.Linq;
-using System.Reflection;
 using Microsoft.Extensions.DependencyInjection;
+using Interception.Tracing;
+using System.Reflection;
 
 namespace Interception.MassTransit
 {
@@ -27,13 +27,13 @@ namespace Interception.MassTransit
 
         protected override MethodInfo FindMethod()
         {
-            return _this.GetType().GetMethod("Consume");
+            return GetThis().GetType().GetMethod("Consume");
         }
 
         protected override void CreateScope()
         {
-            var context = (ConsumeContext)_parameters[0];
-            var consumerName = _this.GetType().FullName;
+            var context = (ConsumeContext)GetParameter(0);
+            var consumerName = GetThis().GetType().FullName;
 
             ISpanBuilder spanBuilder;
 
