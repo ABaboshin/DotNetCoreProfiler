@@ -68,16 +68,20 @@ namespace info
                 MethodSignature(util::ToRaw(rawSignature,rawSignatureLength)) };
     }
 
-    TypeInfo FunctionInfo::Resolve(const TypeInfo& typeInfo)
+    TypeInfo FunctionInfo::ResolveParameterType(const TypeInfo& typeInfo)
     {
         if (typeInfo.isGenericClassRef)
         {
-            return type.generics[typeInfo.genericRefNumber];
+            auto parameterType = type.generics[typeInfo.genericRefNumber];
+            parameterType.isRefType = typeInfo.isRefType;
+            return parameterType;
         }
 
         if (typeInfo.isGenericMethodRef)
         {
-            return functionSpecSignature.generics[typeInfo.genericRefNumber];
+            auto parameterType = functionSpecSignature.generics[typeInfo.genericRefNumber];
+            parameterType.isRefType = typeInfo.isRefType;
+            return parameterType;
         }
 
         return typeInfo;

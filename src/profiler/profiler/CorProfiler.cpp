@@ -689,7 +689,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         (BYTE)(target.signature.NumberOfArguments() + (target.signature.IsInstanceMethod() ? 1 : 0))
     };
     // return type
-    auto retType = target.Resolve(target.signature.ret);
+    auto retType = target.ResolveParameterType(target.signature.ret);
     signature.insert(signature.end(), retType.raw.begin(), retType.raw.end());
     
     // insert this
@@ -705,7 +705,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     // insert existing arguments
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-        auto argument = target.Resolve(target.signature.arguments[i]);
+        auto argument = target.ResolveParameterType(target.signature.arguments[i]);
         if (argument.isRefType)
         {
             signature.push_back(ELEMENT_TYPE_BYREF);
@@ -877,7 +877,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.LoadInt32(i);
         helper.LoadArgument(shift + i);
 
-        auto argument = target.Resolve(target.signature.arguments[i]);
+        auto argument = target.ResolveParameterType(target.signature.arguments[i]);
 
         if (argument.isRefType)
         {
@@ -931,7 +931,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-        auto argument = target.Resolve(target.signature.arguments[i]);
+        auto argument = target.ResolveParameterType(target.signature.arguments[i]);
 
         if (!argument.isRefType)
         {
@@ -946,12 +946,12 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.raw);
 
-        if (target.signature.arguments[i].isBoxed)
+        if (argument.isBoxed)
         {
             helper.UnboxAny(token);
         }
 
-        helper.StInd(target.signature.arguments[i].typeDef);
+        helper.StInd(argument.typeDef);
     }
 
     if (!retType.isVoid)

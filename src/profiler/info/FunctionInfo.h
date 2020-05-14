@@ -40,6 +40,6 @@ namespace info
         static FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport,
             const mdToken& token);
 
-        TypeInfo Resolve(const TypeInfo& typeInfo);
+        TypeInfo ResolveParameterType(const TypeInfo& typeInfo);
     };
 }

@@ -40,7 +40,7 @@ namespace info
         {
             isGenericMethodRef = true;
             auto iter = this->raw.begin();
-            std::advance(iter, 1);
+            std::advance(iter, 1 + shift);
             ParseNumber(iter, genericRefNumber);
         }
         break;
@@ -48,7 +48,7 @@ namespace info
         {
             isGenericClassRef = true;
             auto iter = this->raw.begin();
-            std::advance(iter, 1);
+            std::advance(iter, 1 + shift);
             ParseNumber(iter, genericRefNumber);
         }
         break;
