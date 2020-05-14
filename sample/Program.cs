@@ -32,7 +32,9 @@ namespace SampleApp
             //object q = null;
             try
             {
-                new TGeneric<int, Program>().Test<object, string>(1, "test");
+                var teststr = "test";
+                var result = new TGeneric<int, Program>().Test<object, string, Program>(1, ref teststr);
+                Console.WriteLine($"NewMethod {result} {teststr}");
                 //new TGeneric<int>().Test2();
                 //TestM(ref o, ref i, out object oo, out int oi, out Program op, new Program(), out bool b, out UInt32 ou);
             }
@@ -111,10 +113,16 @@ namespace SampleApp
 
     public class TGeneric<CT1, CT2>
     {
-        [Monitor]
-        public MT1 Test<MT1, MT2>(CT1 t1, MT2 t2/*int t1, string t2*/)
+        //[Monitor]
+        public MT3 Test<MT1, MT2, MT3>([NotNull] CT1 t1, ref MT2 t2/*int t1, string t2*/)
         {
             Console.WriteLine($"Test<T2> {t1} {t2}");
+
+            if (typeof(MT2) == typeof(string))
+            {
+                t2 = (MT2)(object)"changed";
+            }
+
             return default;
         }
 

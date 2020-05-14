@@ -3,7 +3,7 @@
 #include <iomanip>
 #include "util/ComPtr.h"
 #include "util/util.h"
-#include "TypeInfo.h"
+#include "info/TypeInfo.h"
 
 namespace info
 {
@@ -11,7 +11,7 @@ namespace info
         size_t argumentsOffset = 0;
     public:
         std::vector<BYTE> raw{};
-        std::vector<BYTE> ret{};
+        TypeInfo ret{};
         std::vector<TypeInfo> arguments{};
 
         MethodSignature() {}

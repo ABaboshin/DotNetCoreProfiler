@@ -14,7 +14,7 @@ namespace info
 {
     MethodSignature::MethodSignature(std::vector<BYTE> raw) : raw(raw)
     {
-        auto begin= this->raw.begin() + 2 + (IsGeneric() ? 1 : 0);
+        auto begin = this->raw.begin() + 2 + (IsGeneric() ? 1 : 0);
         auto iter = begin;
         if (ParseRetType(iter))
         {
@@ -23,21 +23,6 @@ namespace info
 
             argumentsOffset = std::distance(this->raw.begin(), iter);
         }
-
-        /*for (size_t i = 0; i < NumberOfArguments(); i++)
-        {
-            begin = iter;
-            ParseParam(iter);
-            auto distance = std::distance(begin, iter);
-            auto param = std::vector<BYTE>(begin, iter);
-
-            std::cout << "Parse " << i << " from " << NumberOfArguments() << " bytes " << param.size() << std::endl;
-
-            for (size_t i = 0; i < param.size(); i++)
-            {
-                std::cout << (int)param[i] << std::endl;
-            }
-        }*/
     }
 
     void MethodSignature::ParseArguments()

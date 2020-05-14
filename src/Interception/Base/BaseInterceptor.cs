@@ -64,6 +64,7 @@ namespace Interception.Base
 
         public void SetArgumentNumber(int number)
         {
+            Console.WriteLine($"SetArgumentNumber {number}");
             _parameters = new object[number];
         }
 

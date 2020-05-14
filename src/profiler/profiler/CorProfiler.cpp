@@ -689,8 +689,8 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         (BYTE)(target.signature.NumberOfArguments() + (target.signature.IsInstanceMethod() ? 1 : 0))
     };
     // return type
-    auto retType = target.signature.ret;
-    signature.insert(signature.end(), retType.begin(), retType.end());
+    auto retType = target.Resolve(target.signature.ret);
+    signature.insert(signature.end(), retType.raw.begin(), retType.raw.end());
     
     // insert this
     if (target.signature.IsInstanceMethod())
@@ -705,12 +705,13 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     // insert existing arguments
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-        if (target.signature.arguments[i].isRefType)
+        auto argument = target.Resolve(target.signature.arguments[i]);
+        if (argument.isRefType)
         {
             signature.push_back(ELEMENT_TYPE_BYREF);
         }
 
-        signature.push_back(target.signature.arguments[i].typeDef);
+        signature.push_back(argument.typeDef);
     }
     
     // define a method
@@ -876,14 +877,16 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.LoadInt32(i);
         helper.LoadArgument(shift + i);
 
-        if (target.signature.arguments[i].isRefType)
+        auto argument = target.Resolve(target.signature.arguments[i]);
+
+        if (argument.isRefType)
         {
-            helper.LoadInd(target.signature.arguments[i].typeDef);
+            helper.LoadInd(argument.typeDef);
         }
 
-        if (target.signature.arguments[i].isBoxed)
+        if (argument.isBoxed)
         {
-            auto token = util::GetTypeToken(metadataEmit, mscorlibRef, target.signature.arguments[i].raw);
+            auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.raw);
             helper.Box(token);
         }
 
@@ -928,7 +931,9 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
-        if (!target.signature.arguments[i].isRefType)
+        auto argument = target.Resolve(target.signature.arguments[i]);
+
+        if (!argument.isRefType)
         {
             continue;
         }
@@ -939,7 +944,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.LoadInt32(i);
         helper.CallMember(getParameterRef, false);
 
-        auto token = util::GetTypeToken(metadataEmit, mscorlibRef, target.signature.arguments[i].raw);
+        auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.raw);
 
         if (target.signature.arguments[i].isBoxed)
         {
@@ -949,7 +954,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.StInd(target.signature.arguments[i].typeDef);
     }
 
-    if (!info::IsVoid(retType))
+    if (!retType.isVoid)
     {
         helper.LoadLocal(returnIndex);
     }

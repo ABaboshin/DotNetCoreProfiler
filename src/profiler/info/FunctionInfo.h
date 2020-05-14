@@ -2,6 +2,7 @@
 
 #include "MethodSignature.h"
 #include "TypeInfo.h"
+#include "info/GenericMethodSignature.h"
 
 namespace info
 {
@@ -11,21 +12,19 @@ namespace info
         mdToken id;
         wstring name;
         TypeInfo type;
-        BOOL isGeneric;
         MethodSignature signature{};
-        MethodSignature functionSpecSignature{};
+        GenericMethodSignature functionSpecSignature{};
         mdToken methodDefId;
 
         FunctionInfo()
-            : id(0), name(""_W), type({}), isGeneric(false), methodDefId(0) {}
+            : id(0), name(""_W), type({}), methodDefId(0) {}
 
         FunctionInfo(mdToken id, wstring name, TypeInfo type,
             MethodSignature signature,
-            MethodSignature functionSpecSignature, mdToken methodDefId)
+            GenericMethodSignature functionSpecSignature, mdToken methodDefId)
             : id(id),
             name(name),
             type(type),
-            isGeneric(true),
             signature(signature),
             functionSpecSignature(functionSpecSignature),
             methodDefId(methodDefId) {}
@@ -35,11 +34,12 @@ namespace info
             : id(id),
             name(name),
             type(type),
-            isGeneric(false),
             signature(signature),
             methodDefId(0) {}
 
         static FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport,
             const mdToken& token);
+
+        TypeInfo Resolve(const TypeInfo& typeInfo);
     };
 }
