@@ -16,7 +16,7 @@ namespace util
 
 	wstring Trim(const wstring& str);
 
-	wstring ToString(const std::vector<WCHAR>& data);
+	wstring ToString(const std::vector<WCHAR>& data, size_t length);
 	std::vector<WCHAR> ToRaw(const wstring& str);
 	std::vector<BYTE> ToRaw(PCCOR_SIGNATURE signature, ULONG length);
 }

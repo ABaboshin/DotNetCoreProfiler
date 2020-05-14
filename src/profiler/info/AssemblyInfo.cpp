@@ -27,7 +27,7 @@ namespace info
             return {};
         }
 
-        return { assemblyId, util::ToString(assemblyName), manifestModuleId, appDomainId,
-                util::ToString(appDomainName) };
+        return { assemblyId, util::ToString(assemblyName, assemblyNameLength), manifestModuleId, appDomainId,
+                util::ToString(appDomainName, appDomainNameLength) };
     }
 }

@@ -3,8 +3,7 @@
 #include <iomanip>
 #include "util/ComPtr.h"
 #include "util/util.h"
-#include "TypeInfo.h"
-#include "MethodArgument.h"
+#include "info/TypeInfo.h"
 
 namespace info
 {
@@ -12,8 +11,8 @@ namespace info
         size_t argumentsOffset = 0;
     public:
         std::vector<BYTE> raw{};
-        std::vector<BYTE> ret{};
-        std::vector<MethodArgument> arguments{};
+        TypeInfo ret{};
+        std::vector<TypeInfo> arguments{};
 
         MethodSignature() {}
         MethodSignature(std::vector<BYTE> raw);

@@ -15,29 +15,20 @@ namespace util
         return ToWSTRING(std::string(cstr));
     }
 
-    wstring Trim(const wstring& str) {
-        if (str.length() == 0) {
-            return ""_W;
-        }
-
-        wstring trimmed = str;
-
-        auto lpos = trimmed.find_first_not_of(" \t\r\n"_W);
-        if (lpos != std::string::npos && lpos > 0) {
-            trimmed = trimmed.substr(lpos);
-        }
-
-        auto rpos = trimmed.find_last_not_of(" \t\r\n"_W);
-        if (rpos != std::string::npos) {
-            trimmed = trimmed.substr(0, rpos + 1);
-        }
-
-        return trimmed;
-    }
-
-	wstring ToString(const std::vector<WCHAR>& data)
+	wstring ToString(const std::vector<WCHAR>& data, size_t length)
 	{
-        return wstring(&data[0]);
+        if (data.empty())
+        {
+            return wstring();
+        }
+
+        auto result = wstring(data.begin(), data.begin() + length);
+        while (result[result.length() - 1] == 0)
+        {
+            result.resize(result.length() - 1);
+        }
+
+        return result;
 	}
 
     std::vector<WCHAR> ToRaw(const wstring& str)
@@ -70,5 +61,27 @@ namespace util
     wstring ToWSTRING(const char* str)
     {
         return ToWSTRING(std::string(str));
+    }
+
+    wstring Trim(const wstring& str) {
+        if (str.length() == 0) {
+            return ""_W;
+        }
+
+        wstring trimmed = str;
+
+        auto trimSymbols = " \t\r\n"_W;
+
+        auto lpos = trimmed.find_first_not_of(trimSymbols);
+        if (lpos != std::string::npos && lpos > 0) {
+            trimmed = trimmed.substr(lpos);
+        }
+
+        auto rpos = trimmed.find_last_not_of(trimSymbols);
+        if (rpos != std::string::npos) {
+            trimmed = trimmed.substr(0, rpos + 1);
+        }
+
+        return trimmed;
     }
 }

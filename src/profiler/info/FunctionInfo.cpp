@@ -61,10 +61,29 @@ namespace info
 
         if (isGeneric)
         {
-            return {methodSpecToken, util::ToString(functionName), typeInfo, MethodSignature(finalSignature), MethodSignature(methodSpecSignature), methodDefToken};
+            return {methodSpecToken, util::ToString(functionName, functionNameLength), typeInfo, MethodSignature(finalSignature), GenericMethodSignature(methodSpecSignature), methodDefToken};
         }
 
-        return { token, util::ToString(functionName), typeInfo,
+        return { token, util::ToString(functionName, functionNameLength), typeInfo,
                 MethodSignature(util::ToRaw(rawSignature,rawSignatureLength)) };
+    }
+
+    TypeInfo FunctionInfo::ResolveParameterType(const TypeInfo& typeInfo)
+    {
+        if (typeInfo.isGenericClassRef)
+        {
+            auto parameterType = type.generics[typeInfo.genericRefNumber];
+            parameterType.isRefType = typeInfo.isRefType;
+            return parameterType;
+        }
+
+        if (typeInfo.isGenericMethodRef)
+        {
+            auto parameterType = functionSpecSignature.generics[typeInfo.genericRefNumber];
+            parameterType.isRefType = typeInfo.isRefType;
+            return parameterType;
+        }
+
+        return typeInfo;
     }
 }
