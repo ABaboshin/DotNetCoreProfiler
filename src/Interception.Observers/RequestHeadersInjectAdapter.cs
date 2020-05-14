@@ -12,7 +12,7 @@ namespace Interception.Observers
 
         public RequestHeadersInjectAdapter(HttpRequestMessage request)
         {
-            Console.WriteLine($"RequestHeadersInjectAdapter");
+            //Console.WriteLine($"RequestHeadersInjectAdapter");
             _request = request;
         }
 
@@ -23,7 +23,7 @@ namespace Interception.Observers
 
         public void Set(string key, string value)
         {
-            Console.WriteLine($"INJECT {key} {value}");
+            //Console.WriteLine($"INJECT {key} {value}");
             if (_request.Headers.Contains(key))
             {
                 _request.Headers.Remove(key);

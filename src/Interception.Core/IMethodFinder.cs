@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Reflection;
 
-namespace Interception.Base
+namespace Interception.Core
 {
     public interface IMethodFinder
     {

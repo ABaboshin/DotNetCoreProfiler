@@ -1,4 +1,4 @@
-﻿namespace Interception.Base
+﻿namespace Interception.Core
 {
     /// <summary>
     /// interceptor
@@ -11,6 +11,12 @@
         /// <param name="_this"></param>
         /// <returns></returns>
         void SetThis(object _this);
+
+        /// <summary>
+        /// get this of intercepted class
+        /// </summary>
+        /// <returns></returns>
+        object GetThis();
 
         /// <summary>
         /// set argument number
@@ -33,6 +39,13 @@
         /// <param name="num"></param>
         /// <returns></returns>
         object GetParameter(int num);
+
+        /// <summary>
+        /// update parameter value
+        /// </summary>
+        /// <param name="num"></param>
+        /// <param name="value"></param>
+        void UpdateParameter(int num, object value);
 
         /// <summary>
         /// set md token of intercepted method

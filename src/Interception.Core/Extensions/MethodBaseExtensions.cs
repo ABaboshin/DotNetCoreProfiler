@@ -1,7 +1,7 @@
 ﻿using System.Reflection;
 using System.Threading.Tasks;
 
-namespace Interception.Base.Extensions
+namespace Interception.Core.Extensions
 {
     public static class MethodBaseExtensions
     {

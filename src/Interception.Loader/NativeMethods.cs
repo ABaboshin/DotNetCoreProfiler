@@ -7,7 +7,7 @@ namespace Interception
     {
         public static void AddInterceptor(ImportInterception intercepion)
         {
-            Console.WriteLine($"{intercepion.CallerAssembly} {intercepion.TargetAssemblyName} {intercepion.TargetMethodName} {intercepion.TargetTypeName} {intercepion.TargetMethodParametersCount} ");
+            //Console.WriteLine($"{intercepion.CallerAssembly} {intercepion.TargetAssemblyName} {intercepion.TargetMethodName} {intercepion.TargetTypeName} {intercepion.TargetMethodParametersCount} ");
 
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
             {

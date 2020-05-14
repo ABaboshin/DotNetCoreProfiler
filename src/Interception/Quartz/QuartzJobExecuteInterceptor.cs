@@ -1,10 +1,10 @@
 ﻿using Interception.AspNetCore;
 using Interception.Attributes;
-using Interception.Base;
 using Microsoft.Extensions.Options;
 using OpenTracing.Tag;
 using OpenTracing.Util;
 using Microsoft.Extensions.DependencyInjection;
+using Interception.Tracing;
 
 namespace Interception.Quartz
 {
@@ -21,7 +21,7 @@ namespace Interception.Quartz
 
         protected override void CreateScope()
         {
-            var consumerName = _this.GetType().FullName;
+            var consumerName = GetThis().GetType().FullName;
 
             var spanBuilder = GlobalTracer.Instance
                     .BuildSpan(DependencyInjection.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Name)

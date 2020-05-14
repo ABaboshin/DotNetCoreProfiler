@@ -1,8 +1,9 @@
-﻿using Interception.Tracing.Extensions;
+﻿using Interception.Core;
+using Interception.Tracing.Extensions;
 using OpenTracing;
 using System;
 
-namespace Interception.Base
+namespace Interception.Tracing
 {
     /// <summary>
     /// base tracing interceptor

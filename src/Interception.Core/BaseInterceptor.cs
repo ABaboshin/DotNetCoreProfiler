@@ -1,59 +1,54 @@
 ﻿using Interception.Attributes;
-using Interception.Base.Extensions;
+using Interception.Core.Extensions;
 using System;
 using System.Linq;
 using System.Reflection;
 using System.Reflection.Emit;
 using System.Threading.Tasks;
 
-namespace Interception.Base
+namespace Interception.Core
 {
     /// <summary>
     /// base interceptor
     /// </summary>
     public abstract class BaseInterceptor : IInterceptor
     {
-        protected IMethodFinder _methodFinder = new MethodFinder();
+        private IMethodFinder _methodFinder = new MethodFinder();
 
-        protected object[] _parameters;
+        private object[] _parameters;
 
-        protected object _this;
+        private object _this;
 
-        protected int _mdToken;
+        private int _mdToken;
 
-        protected long _moduleVersionPtr;
+        private long _moduleVersionPtr;
 
         public void SetThis(object _this)
         {
-            Console.WriteLine($"SetThis {_this}");
+            //Console.WriteLine($"SetThis {_this}");
             this._this = _this;
+        }
+
+        public object GetThis()
+        {
+            return _this;
         }
 
         public void AddParameter(int num, object value)
         {
-            Console.WriteLine($"AddParameter {num} {value}");
-
-            if (value is null)
-            {
-                Console.WriteLine("value is null");
-            }
-            else
-            {
-                Console.WriteLine("value is not null");
-            }
-
+            //Console.WriteLine($"AddParameter {num} {value}");
             _parameters[num] = value;
         }
 
         public void SetMdToken(int mdToken)
         {
-            Console.WriteLine($"SetMdToken {mdToken}");
+            //Console.WriteLine($"SetMdToken {mdToken}");
             _mdToken = mdToken;
         }
 
         public void SetModuleVersionPtr(long moduleVersionPtr)
         {
-            Console.WriteLine($"SetModuleVersionPtr {moduleVersionPtr}");
+            //Console.WriteLine($"SetModuleVersionPtr {moduleVersionPtr}");
             _moduleVersionPtr = moduleVersionPtr;
         }
 
@@ -62,9 +57,14 @@ namespace Interception.Base
             return _parameters[num];
         }
 
+        public void UpdateParameter(int num, object value)
+        {
+            _parameters[num] = value;
+        }
+
         public void SetArgumentNumber(int number)
         {
-            Console.WriteLine($"SetArgumentNumber {number}");
+            //Console.WriteLine($"SetArgumentNumber {number}");
             _parameters = new object[number];
         }
 
@@ -117,7 +117,7 @@ namespace Interception.Base
 
         protected async Task ExecuteAsyncInternal()
         {
-            Console.WriteLine("ExecuteAsyncInternal");
+            //Console.WriteLine("ExecuteAsyncInternal");
             var method = FindMethod();
 
             try

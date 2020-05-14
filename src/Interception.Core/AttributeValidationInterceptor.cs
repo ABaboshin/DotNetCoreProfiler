@@ -1,7 +1,7 @@
 ﻿using Interception.Attributes;
 using System;
 
-namespace Interception.Base
+namespace Interception.Core
 {
     [MethodInterceptorImplementation(typeof(ParameterValidationAttribute))]
     public class AttributeValidationInterceptor : BaseInterceptor

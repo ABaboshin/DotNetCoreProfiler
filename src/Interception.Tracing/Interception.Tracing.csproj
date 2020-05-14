@@ -8,4 +8,8 @@
     <PackageReference Include="OpenTracing" Version="0.12.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\Interception.Core\Interception.Core.csproj" />
+  </ItemGroup>
+
 </Project>
