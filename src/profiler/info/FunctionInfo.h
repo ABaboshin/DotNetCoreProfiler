@@ -11,13 +11,13 @@ namespace info
     struct FunctionInfo {
         mdToken id;
         wstring name;
-        TypeInfo type;
+        TypeInfo type{};
         MethodSignature signature{};
         GenericMethodSignature functionSpecSignature{};
         mdToken methodDefId;
 
         FunctionInfo()
-            : id(0), name(""_W), type({}), methodDefId(0) {}
+            : id(0), name(""_W), methodDefId(0) {}
 
         FunctionInfo(mdToken id, wstring name, TypeInfo type,
             MethodSignature signature,

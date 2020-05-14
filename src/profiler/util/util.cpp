@@ -62,4 +62,26 @@ namespace util
     {
         return ToWSTRING(std::string(str));
     }
+
+    wstring Trim(const wstring& str) {
+        if (str.length() == 0) {
+            return ""_W;
+        }
+
+        wstring trimmed = str;
+
+        auto trimSymbols = " \t\r\n"_W;
+
+        auto lpos = trimmed.find_first_not_of(trimSymbols);
+        if (lpos != std::string::npos && lpos > 0) {
+            trimmed = trimmed.substr(lpos);
+        }
+
+        auto rpos = trimmed.find_last_not_of(trimSymbols);
+        if (rpos != std::string::npos) {
+            trimmed = trimmed.substr(0, rpos + 1);
+        }
+
+        return trimmed;
+    }
 }

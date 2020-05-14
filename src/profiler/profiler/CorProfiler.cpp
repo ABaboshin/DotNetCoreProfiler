@@ -700,8 +700,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     target.signature.ParseArguments();
 
-    auto xxx = info::FunctionInfo::GetFunctionInfo(metadataImport, targetMdToken);
-
     // insert existing arguments
     for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
     {
@@ -895,9 +893,9 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     //execute
     std::vector<BYTE> executeSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            0,
-            ELEMENT_TYPE_OBJECT,
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        0,
+        ELEMENT_TYPE_OBJECT,
     };
 
     mdMemberRef executeRef;
