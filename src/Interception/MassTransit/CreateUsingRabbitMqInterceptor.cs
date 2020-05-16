@@ -13,11 +13,9 @@ namespace Interception.MassTransit
     [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "MassTransit.RabbitMqTransport", TargetMethodName = "CreateUsingRabbitMq", TargetTypeName = "MassTransit.BusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
     public class CreateUsingRabbitMqInterceptor : BaseInterceptor
     {
-        protected override void ExecuteAfter(object result, Exception exception)
-        {
-        }
+        public override int Priority => 0;
 
-        protected override void ExecuteBefore()
+        public override void ExecuteBefore()
         {
             //Console.WriteLine("Masstransit configuration Intercepted");
             var configuration = new ConfigurationBuilder()

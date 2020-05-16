@@ -43,10 +43,17 @@ namespace SampleApp.MessageBus
             Console.WriteLine("Done consuming");
         }
 
-        [Monitor(Name = "Fibonacci call")]
+        
         void FibonacciCall()
         {
-            Fibonacci(100);
+            Fibonacci30();
+        }
+
+        [Cache(DurationSeconds = 6000, Parameters = new[] { "n" })]
+        [Monitor(Name = "Fibonacci call")]
+        int Fibonacci30()
+        {
+            return Fibonacci(30);
         }
 
         [Monitor(Name = "A long time action", Parameters = new[] { "o1" }, ReturnValue = true)]
@@ -55,8 +62,7 @@ namespace SampleApp.MessageBus
             await Task.Delay(3000);
             return 27;
         }
-
-        [Cache(DurationSeconds = 60, Parameters = new[] { "n" })]
+        
         int Fibonacci(int n)
         {
             if (n < 0)

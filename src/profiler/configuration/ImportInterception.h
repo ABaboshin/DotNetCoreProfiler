@@ -13,5 +13,7 @@ namespace configuration
 		int TargetMethodParametersCount;
 		char* InterceptorTypeName;
 		char* InterceptorAssemblyName;
+		bool IsComposed;
+		char* Key;
 	} ImportInterception;
 }

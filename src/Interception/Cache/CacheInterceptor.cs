@@ -14,6 +14,8 @@ namespace Interception.Cache
     [MethodInterceptorImplementation(typeof(CacheAttribute))]
     public class CacheInterceptor : BaseAttributedInterceptor
     {
+        public override int Priority => 10000;
+
         IDistributedCache DistributedCache => DependencyInjection.ServiceProvider.GetRequiredService<IDistributedCache>();
 
         string GetCacheKey()
@@ -40,7 +42,7 @@ namespace Interception.Cache
             return key;
         }
 
-        protected override void ExecuteAfter(object result, Exception exception)
+        public override void ExecuteAfter(object result, Exception exception)
         {
             //Console.WriteLine($"Cache.ExecuteAfter {DateTime.UtcNow}");
 
@@ -48,10 +50,6 @@ namespace Interception.Cache
             var attribute = (CacheAttribute)method.GetCustomAttributes(typeof(CacheAttribute), false).First();
 
             DistributedCache.Set(GetCacheKey(), Serialization.ToByteArray(result), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(attribute.DurationSeconds) });
-        }
-
-        protected override void ExecuteBefore()
-        {
         }
 
         public override object Execute()

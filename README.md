@@ -21,10 +21,10 @@ This project has a goal to demonstrate injection of the following devops-related
     - jaeger
  - Intercept creation of `IServiceProvider` and provide full access to the DI for the injected code
  - Validate method parameters, see i.e. https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/src/Interception.Attributes/Validation/NotNullAttribute.cs
+ - Interceptors can be combined. See https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L54
 
 ***Limitations***
  - Dynamic methods are not supported
- - Only one interceptor per method is supported
 
 ## Project structure
 
@@ -44,9 +44,9 @@ See [src/Interception](src/Interception):
       - Customited metric name
       - Passed parameters
       - Return value
-      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L53
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L54
   - `CacheInterceptor` find the usage of `CacheAttribute` and cache the results for the given amount of seconds, the parameters which have to be taken into accout can be configured:
-      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L60
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L54
 
 ### Observers
 

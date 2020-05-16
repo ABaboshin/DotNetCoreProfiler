@@ -1,8 +1,8 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Interception
+namespace Interception.Core.Interop
 {
-    [StructLayout(LayoutKind.Sequential)]
+    [StructLayout(LayoutKind.Sequential/*, CharSet = CharSet.Ansi*/)]
     public struct ImportInterception
     {
         public string CallerAssembly;
@@ -12,5 +12,7 @@ namespace Interception
         public int TargetMethodParametersCount;
         public string InterceptorTypeName;
         public string InterceptorAssemblyName;
+        public bool IsComposed;
+        public string Key;
     }
 }

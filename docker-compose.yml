@@ -57,7 +57,7 @@ services:
       CORECLR_ENABLE_PROFILING: "1"
       CORECLR_PROFILER: "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
       CORECLR_PROFILER_PATH: "/profiler/DotNetCoreProfiler.so"
-      PROFILER_INTERCEPTION_DLLS: "/profiler/Interception.dll"
+      PROFILER_INTERCEPTION_DLLS: "/profiler/Interception.dll,/profiler/Interception.Core.dll"
       cache__type: "redis"
       cache__configuration: "redis:6379"
     ports:

@@ -15,6 +15,8 @@ namespace Interception.Quartz
     [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "Quartz", TargetMethodName = "Execute", TargetTypeName = "Quartz.IJob", TargetMethodParametersCount = 1)]
     public class QuartzJobExecuteInterceptor : BaseMetricsInterceptor
     {
+        public override int Priority => 0;
+
         public QuartzJobExecuteInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Enabled)
         {
         }
