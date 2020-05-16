@@ -11,6 +11,7 @@
 #include "info/ModuleInfo.h"
 #include "configuration/Configuration.h"
 #include "configuration/ImportInterception.h"
+#include "configuration/InterceptionInfo.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -39,7 +40,9 @@ private:
 
     wstring GetInterceptionLoaderClassName();
 
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef& retMethodToken);
+    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef& retMethodToken, const wstring& key);
+
+    bool FindInterception(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount, configuration::Interception& interception, wstring& key);
 
 public:
     CorProfiler();
@@ -178,6 +181,8 @@ public:
     void AddInterception(configuration::ImportInterception interception);
 
     void GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize);
+
+    void GetInterceptions(configuration::InterceptionInfo** interceptions, const wstring& key, int* count);
 };
 
 extern CorProfiler* profilerInstance;

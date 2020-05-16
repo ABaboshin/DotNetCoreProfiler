@@ -32,11 +32,9 @@ namespace Interception.AspNetCore
     [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
     public class ConfigureServicesBuilderInterceptor : BaseInterceptor
     {
-        protected override void ExecuteAfter(object result, Exception exception)
-        {
-        }
+        public override int Priority => 0;
 
-        protected override void ExecuteBefore()
+        public override void ExecuteBefore()
         {
             DiagnosticsObserver.ConfigureAndStart();
 

@@ -1,7 +1,6 @@
 ﻿using Interception.Attributes;
 using Interception.Tracing;
 using OpenTracing.Util;
-using System;
 using System.Linq;
 
 namespace Interception
@@ -12,6 +11,8 @@ namespace Interception
     [MethodInterceptorImplementation(typeof(MonitorAttribute))]
     public class MonitoringInterceptor : BaseMetricsInterceptor
     {
+        public override int Priority => 0;
+
         public MonitoringInterceptor() : base(true)
         {
         }

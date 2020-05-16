@@ -19,4 +19,6 @@ namespace util
 	wstring ToString(const std::vector<WCHAR>& data, size_t length);
 	std::vector<WCHAR> ToRaw(const wstring& str);
 	std::vector<BYTE> ToRaw(PCCOR_SIGNATURE signature, ULONG length);
+
+	char* wchar_to_char(const WCHAR* pwchar);
 }

@@ -21,6 +21,8 @@ namespace Interception.MassTransit
     [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
     public class MassTransitConsumerInterceptor : BaseMetricsInterceptor
     {
+        public override int Priority => 0;
+
         public MassTransitConsumerInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)
         {
         }

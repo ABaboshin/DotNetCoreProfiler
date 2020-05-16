@@ -19,7 +19,7 @@ namespace Interception.Tracing
             Enabled = enabled;
         }
 
-        protected override void ExecuteBefore()
+        public override void ExecuteBefore()
         {
             if (Enabled)
             {
@@ -27,7 +27,7 @@ namespace Interception.Tracing
             }
         }
 
-        protected override void ExecuteAfter(object result, Exception exception)
+        public override void ExecuteAfter(object result, Exception exception)
         {
             if (_scope != null)
             {

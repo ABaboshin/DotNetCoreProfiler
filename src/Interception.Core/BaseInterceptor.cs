@@ -23,6 +23,8 @@ namespace Interception.Core
 
         private long _moduleVersionPtr;
 
+        private string _key;
+
         public void SetThis(object _this)
         {
             //Console.WriteLine($"SetThis {_this}");
@@ -46,10 +48,20 @@ namespace Interception.Core
             _mdToken = mdToken;
         }
 
+        public int GetMdToken()
+        {
+            return _mdToken;
+        }
+
         public void SetModuleVersionPtr(long moduleVersionPtr)
         {
             //Console.WriteLine($"SetModuleVersionPtr {moduleVersionPtr}");
             _moduleVersionPtr = moduleVersionPtr;
+        }
+
+        public long GetModuleVersionPtr()
+        {
+            return _moduleVersionPtr;
         }
 
         public object GetParameter(int num)
@@ -67,6 +79,29 @@ namespace Interception.Core
             //Console.WriteLine($"SetArgumentNumber {number}");
             _parameters = new object[number];
         }
+
+        public void SetParameters(object[] parameters)
+        {
+            _parameters = parameters;
+        }
+
+        public object[] GetParameters()
+        {
+            return _parameters;
+        }
+
+        public void SetKey(string key)
+        {
+            //Console.WriteLine($"SetKey {key}");
+            _key = key;
+        }
+
+        public string GetKey()
+        {
+            return _key;
+        }
+
+        public abstract int Priority { get; }
 
         public virtual object Execute()
         {
@@ -88,15 +123,20 @@ namespace Interception.Core
             }
         }
 
-        protected abstract void ExecuteBefore();
+        public virtual void ExecuteBefore()
+        { 
+        }
 
-        protected abstract void ExecuteAfter(object result, Exception exception);
+        public virtual void ExecuteAfter(object result, Exception exception)
+        { 
+        }
 
         protected virtual MethodInfo FindMethod()
         {
             return (MethodInfo)_methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
         }
 
+        #region internal
         protected object ExecuteSyncInternal()
         {
             var method = FindMethod();
@@ -202,5 +242,6 @@ namespace Interception.Core
                 }
             }
         }
+        #endregion
     }
 }

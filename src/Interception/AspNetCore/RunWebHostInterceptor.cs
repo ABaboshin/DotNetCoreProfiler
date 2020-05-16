@@ -1,7 +1,6 @@
 ﻿using Interception.Attributes;
 using Interception.Core;
 using Microsoft.AspNetCore.Hosting;
-using System;
 using System.Threading;
 
 namespace Interception.AspNetCore
@@ -13,11 +12,9 @@ namespace Interception.AspNetCore
     [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "RunAsync", TargetTypeName = "Microsoft.AspNetCore.Hosting.WebHostExtensions", TargetMethodParametersCount = 3)]
     public class RunWebHostInterceptor : BaseInterceptor
     {
-        protected override void ExecuteAfter(object result, Exception exception)
-        {
-        }
+        public override int Priority => 0;
 
-        protected override void ExecuteBefore()
+        public override void ExecuteBefore()
         {
             DependencyInjection.ServiceProvider = ((IWebHost)GetParameter(0)).Services;
 

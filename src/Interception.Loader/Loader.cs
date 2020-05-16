@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Core.Interop;
 using Interception.Extensions;
 using System;
 using System.Collections.Generic;
@@ -26,6 +27,8 @@ namespace Interception
                 assemblies.Add(assembly);
 
                 attributedInterceptors.AddRange(FindAttributedInterceptors(assembly));
+
+                FindComposeInterceptor(assembly);
             }
 
             foreach (var attributedInterceptor in attributedInterceptors)
@@ -86,7 +89,7 @@ namespace Interception
                     TargetTypeName = attributedMethod.DeclaringType.FullName,
                     TargetMethodName = attributedMethod.Name,
                     TargetMethodParametersCount = attributedMethod.GetParameters().Length
-                });
+                }, false);
             }
         }
 
@@ -139,17 +142,41 @@ namespace Interception
             }
         }
 
-        private List<ImportInterception> _interceptors = new List<ImportInterception>();
-        private void AddInterceptor(ImportInterception interceptor)
+        private void FindComposeInterceptor(Assembly assembly)
         {
-            if (!_interceptors.Any(i => i.TargetAssemblyName == interceptor.TargetAssemblyName && i.TargetMethodName == interceptor.TargetMethodName && i.TargetTypeName == interceptor.TargetTypeName && i.TargetMethodParametersCount == interceptor.TargetMethodParametersCount))
+            if (_composedInterceptor is null)
+            {
+                _composedInterceptor = assembly
+                    .GetTypes()
+                    .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(ComposeInterceptorAttribute).FullName).Any())
+                    .FirstOrDefault();
+
+                if (_composedInterceptor != null)
+                {
+                    NativeMethods.AddInterceptor(new ImportInterception
+                    {
+                        CallerAssembly = "",
+                        TargetAssemblyName = "",
+                        TargetMethodName = "",
+                        TargetTypeName = "",
+                        TargetMethodParametersCount = 0,
+                        InterceptorTypeName = _composedInterceptor.FullName,
+                        InterceptorAssemblyName = _composedInterceptor.Assembly.GetName().Name,
+                        IsComposed = true
+                    });
+                }
+            }
+        }
+
+        private Type _composedInterceptor = null;
+        private List<ImportInterception> _interceptors = new List<ImportInterception>();
+        
+        private void AddInterceptor(ImportInterception interceptor, bool addIfAny = true)
+        {
+            if (!_interceptors.Any(i => i.TargetAssemblyName == interceptor.TargetAssemblyName && i.TargetMethodName == interceptor.TargetMethodName && i.TargetTypeName == interceptor.TargetTypeName && i.TargetMethodParametersCount == interceptor.TargetMethodParametersCount) || addIfAny)
             {
                 _interceptors.Add(interceptor);
                 NativeMethods.AddInterceptor(interceptor);
-            }
-            else
-            {
-                Console.WriteLine($"Skip {interceptor.InterceptorTypeName}");
             }
         }
     }

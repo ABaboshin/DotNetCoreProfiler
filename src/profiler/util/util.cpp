@@ -84,4 +84,38 @@ namespace util
 
         return trimmed;
     }
+
+    char* wchar_to_char(const WCHAR* pwchar)
+    {
+        // get the number of characters in the string.
+        int currentCharIndex = 0;
+        char currentChar = pwchar[currentCharIndex];
+
+        while (currentChar != '\0')
+        {
+            currentCharIndex++;
+            currentChar = pwchar[currentCharIndex];
+        }
+
+        const auto charCount = currentCharIndex + 1;
+
+        // allocate a new block of memory size char (1 byte) instead of wide char (2 bytes)
+        auto filePathC = new char[charCount];
+
+        for (int i = 0; i < charCount; i++)
+        {
+            // convert to char (1 byte)
+            char character = pwchar[i];
+
+            *filePathC = character;
+
+            filePathC += sizeof(char);
+
+        }
+        filePathC += '\0';
+
+        filePathC -= (sizeof(char) * charCount);
+
+        return filePathC;
+    }
 }

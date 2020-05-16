@@ -456,8 +456,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMetho
     // loader class param
     auto profilerInterceptionDlls = GetEnvironmentValue("PROFILER_INTERCEPTION_DLLS"_W);
     mdString paramToken;
-    hr = metadataEmit->DefineUserString(profilerInterceptionDlls.c_str(), (ULONG)profilerInterceptionDlls.length(),
-        &paramToken);
+    hr = metadataEmit->DefineUserString(profilerInterceptionDlls.c_str(), (ULONG)profilerInterceptionDlls.length(), &paramToken);
 
     // local sig
     mdSignature localSigToken;
@@ -591,6 +590,7 @@ bool CorProfiler::SkipAssembly(const wstring& name)
 HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 {
     HRESULT hr;
+    configuration::Interception interception;
 
     rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
     IfFailRet(rewriter.Import());
@@ -604,7 +604,9 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 
     auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
 
-    if (!SkipAssembly(moduleInfo.assembly.name)) for (rewriter::ILInstr* pInstr = rewriter.GetILList()->m_pNext;
+    wstring key;
+
+    for (rewriter::ILInstr* pInstr = rewriter.GetILList()->m_pNext;
         pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext) {
         if (pInstr->m_opcode != rewriter::CEE_CALL && pInstr->m_opcode != rewriter::CEE_CALLVIRT) {
             continue;
@@ -622,38 +624,32 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
             << std::endl << std::flush;
         }
 
-        for (const auto& interception : configuration.interceptions)
+        if (FindInterception(moduleInfo.assembly.name, target.type.name, target.name, target.signature.NumberOfArguments(), interception, key))
         {
-            if (
-                (moduleInfo.assembly.name == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
-                && target.type.name == interception.Target.TypeName
-                && target.name == interception.Target.MethodName && interception.Target.MethodParametersCount == target.signature.NumberOfArguments()
-                )
-            {
-                std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
-                    << " num args " << target.signature.NumberOfArguments()
-                    << " from assembly " << ToString(moduleInfo.assembly.name)
-                    << std::endl << std::flush;
+            std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
+                << " num args " << target.signature.NumberOfArguments()
+                << " from assembly " << ToString(moduleInfo.assembly.name)
+                << " use interceptor " << ToString(interception.Interceptor.TypeName)
+                << std::endl << std::flush;
 
-                rewriter::ILRewriterHelper helper(&rewriter);
-                helper.SetILPosition(pInstr);
+            rewriter::ILRewriterHelper helper(&rewriter);
+            helper.SetILPosition(pInstr);
 
-                mdMethodDef interceptorRef;
-                GenerateInterceptMethod(moduleId, target, interception, targetMdToken, interceptorRef);
+            mdMethodDef interceptorRef;
+            GenerateInterceptMethod(moduleId, target, interception, targetMdToken, interceptorRef, key);
 
-                helper.CallMember(interceptorRef, false);
+            helper.CallMember(interceptorRef, false);
 
-                pInstr->m_opcode = rewriter::CEE_NOP;
-                            
-                IfFailRet(rewriter.Export());
-            }
+            pInstr->m_opcode = rewriter::CEE_NOP;
+
+            IfFailRet(rewriter.Export());
         }
     }
 
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef& retMethodToken)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef& retMethodToken, const wstring& key)
 {
     HRESULT hr;
 
@@ -807,7 +803,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         &setMdTokenRef);
 
     helper.LoadLocal(wrapperIndex);
-    //helper.LoadInt32(target.signature.IsGeneric() ? target.methodDefId : targetMdToken);
     helper.LoadInt32(targetMdToken);
     helper.CallMember(setMdTokenRef, false);
 
@@ -831,6 +826,30 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     const void* module_version_id_ptr = &modules[moduleId];
     helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
     helper.CallMember(setModuleVersionPtrRef, false);
+
+    //SetKey
+    std::vector<BYTE> setKeySignature = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_VOID,
+        ELEMENT_TYPE_STRING
+    };
+
+    mdMemberRef setKeyRef;
+    hr = metadataEmit->DefineMemberRef(
+        wrapperTypeRef,
+        "SetKey"_W.data(),
+        setKeySignature.data(),
+        setKeySignature.size(),
+        &setKeyRef);
+
+    // loader class param
+    mdString keyToken;
+    hr = metadataEmit->DefineUserString(key.c_str(), (ULONG)key.length(), &keyToken);
+
+    helper.LoadLocal(wrapperIndex);
+    helper.LoadStr(keyToken);
+    helper.CallMember(setKeyRef, false);
 
     //SetArgumentNumber
     std::vector<BYTE> setArgumentNumberSignature = {
@@ -1325,8 +1344,82 @@ void CorProfiler::AddInterception(configuration::ImportInterception interception
             ToWSTRING(interception.TargetMethodName),
             interception.TargetMethodParametersCount),
         configuration::Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
-            ToWSTRING(interception.InterceptorTypeName))
+            ToWSTRING(interception.InterceptorTypeName)),
+        interception.IsComposed,
+        ToWSTRING(interception.Key)
     ));
+}
+
+bool CorProfiler::FindInterception(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount, configuration::Interception& interception, wstring& key)
+{
+    key = ""_W;
+    std::vector<configuration::Interception> result{};
+    std::copy_if(
+        configuration.interceptions.begin(),
+        configuration.interceptions.end(),
+        std::back_inserter(result),
+        [&callerAssemblyName, &targetTypeName, &targetMethodName, &methodParametersCount](configuration::Interception interception) {
+        return (callerAssemblyName == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
+            && targetTypeName == interception.Target.TypeName
+            && targetMethodName == interception.Target.MethodName && methodParametersCount == interception.Target.MethodParametersCount;
+        }
+    );
+
+    if (result.size() == 0)
+    {
+        return false;
+    }
+
+    std::cout << ToString(targetTypeName) << "." << ToString(targetMethodName) << " " << result.size() << std::endl;
+
+    key = result[0].Key;
+
+    if (result.size() == 1)
+    {
+        interception = result[0];
+        return true;
+    }
+
+    std::vector<configuration::Interception> composed = {};
+    std::copy_if(
+        configuration.interceptions.begin(),
+        configuration.interceptions.end(),
+        std::back_inserter(composed),
+        [](configuration::Interception interception) {
+            return interception.IsComposed;
+        }
+    );
+
+    if (composed.size() == 1)
+    {
+        interception = composed[0];
+        return true;
+    }
+
+    interception = result[0];
+    return true;
+}
+
+void CorProfiler::GetInterceptions(configuration::InterceptionInfo** interceptions, const wstring& key, int* count)
+{
+    std::vector<configuration::Interception> result{};
+    std::copy_if(
+        configuration.interceptions.begin(),
+        configuration.interceptions.end(),
+        std::back_inserter(result),
+        [&key](configuration::Interception interception) {
+            return key == interception.Key;
+        }
+    );
+
+    *count = result.size();
+    *interceptions = new configuration::InterceptionInfo[*count];
+
+    for (size_t i = 0; i < result.size(); i++)
+    {
+        (*interceptions)[i].AssemblyName = util::wchar_to_char(result[i].Interceptor.AssemblyName.c_str());
+        (*interceptions)[i].TypeName = util::wchar_to_char(result[i].Interceptor.TypeName.c_str());
+    }
 }
 
 #ifndef _WIN32
