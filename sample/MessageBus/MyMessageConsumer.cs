@@ -36,22 +36,32 @@ namespace SampleApp.MessageBus
 
             var response = await client.SendAsync(request);
 
-            FibonacciCall();
+            Fibonacci30(1);
 
-            FibonacciCall();
+            Fibonacci30(2);
+
+            DummyCache();
+
+            InvalidateCache();
 
             Console.WriteLine("Done consuming");
         }
 
-        
-        void FibonacciCall()
+
+        [InvalidateCache(Name =nameof(DummyCache))]
+        void InvalidateCache()
         {
-            Fibonacci30();
+        }
+
+        [Cache(DurationSeconds = 6000)]
+        int DummyCache()
+        {
+            return 3;
         }
 
         [Cache(DurationSeconds = 6000, Parameters = new[] { "n" })]
         [Monitor(Name = "Fibonacci call")]
-        int Fibonacci30()
+        int Fibonacci30(int n)
         {
             return Fibonacci(30);
         }
