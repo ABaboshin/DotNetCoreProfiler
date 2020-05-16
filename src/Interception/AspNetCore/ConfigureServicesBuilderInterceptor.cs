@@ -1,5 +1,6 @@
 ﻿using Interception.Attributes;
 using Interception.Cache;
+using Interception.Cache.Redis;
 using Interception.Core;
 using Interception.MassTransit;
 using Interception.Observers;
@@ -66,6 +67,15 @@ namespace Interception.AspNetCore
                 if (ccOptions.Value.Type == "redis")
                 {
                     return new RedisCache(Options.Create(new RedisCacheOptions { Configuration = ccOptions.Value.Configuration }));
+                }
+
+                return null;
+            });
+            serviceCollection.AddSingleton<IDistributedCacheInvalidator>(sp => {
+                var ccOptions = sp.GetRequiredService<IOptions<CacheConfiguration>>();
+                if (ccOptions.Value.Type == "redis")
+                {
+                    return new RedisCacheInvalidator(Options.Create(new RedisCacheOptions { Configuration = ccOptions.Value.Configuration }));
                 }
 
                 return null;

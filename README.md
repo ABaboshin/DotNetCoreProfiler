@@ -44,9 +44,11 @@ See [src/Interception](src/Interception):
       - Customited metric name
       - Passed parameters
       - Return value
-      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L54
-  - `CacheInterceptor` find the usage of `CacheAttribute` and cache the results for the given amount of seconds, the parameters which have to be taken into accout can be configured:
-      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L54
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L64
+  - `CacheInterceptor` finsd the usage of `CacheAttribute` and cache the results for the given amount of seconds, the parameters which have to be taken into accout can be configured:
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L64
+  - `InvalidateCacheInterceptor` finds the usage  of `InvalidateCacheAttribute` and invalidates the cache:
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L51
 
 ### Observers
 
