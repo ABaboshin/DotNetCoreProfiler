@@ -26,8 +26,6 @@ namespace _const
 	const auto SystemType = "System.Type"_W;
 	const auto SystemException = "System.Exception"_W;
 	const auto SystemReflectionAssembly = "System.Reflection.Assembly"_W;
-	const auto SystemIOFile = "System.IO.File"_W;
-	const auto ReadAllBytes = "ReadAllBytes"_W;
 	const auto mscorlib = "mscorlib"_W;
 	const auto LoadFrom = "LoadFrom"_W;
 	const auto CreateInstance = "CreateInstance"_W;
@@ -36,7 +34,6 @@ namespace _const
 	const auto SystemAppDomain = "System.AppDomain"_W;
 	const auto get_CurrentDomain = "get_CurrentDomain"_W;
 	const auto Load = "Load"_W;
-	const auto LoadFile = "LoadFile"_W;
 	const auto GetType = "GetType"_W;
 	const auto ctor = ".ctor"_W;
 

@@ -99,7 +99,6 @@
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="configuration\AssemblyInizializer.h" />
     <ClInclude Include="info\GenericMethodSignature.h" />
     <ClInclude Include="info\AssemblyInfo.h" />
     <ClInclude Include="ClassFactory.h" />

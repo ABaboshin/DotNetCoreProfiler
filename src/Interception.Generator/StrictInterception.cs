@@ -27,11 +27,4 @@
         public Interceptor Interceptor { get; set; }
         public bool ParameterLevel { get; set; }
     }
-
-    public class Initializer
-    {
-        public string AssemblyName { get; set; }
-        public string AssemblyPath { get; set; }
-        public string InitializerType { get; set; }
-    }
 }

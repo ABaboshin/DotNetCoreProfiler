@@ -11,7 +11,6 @@ namespace configuration
 	std::pair<Interceptor, bool> LoadInterceptorFromJson(const nlohmann::json::value_type& src);
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src);
 	std::pair<AttributedInterceptor, bool> LoadAttributedInterceptorFromJson(const nlohmann::json::value_type& src);
-	std::pair<AssemblyInitializer, bool> LoadAssemblyInitializerFromJson(const nlohmann::json::value_type& src);
 
 	Configuration Configuration::LoadConfiguration(const wstring& path)
 	{
@@ -40,7 +39,7 @@ namespace configuration
 	Configuration LoadFromStream(std::ifstream& stream)
 	{
 		std::vector<StrictInterception> interceptions{};
-		std::vector<AssemblyInitializer> assemblies{};
+		std::vector<wstring> assemblies{};
 		std::vector<AttributedInterceptor> attributedInterceptors{};
 
 		nlohmann::json j;
@@ -53,11 +52,8 @@ namespace configuration
 			}
 		}
 
-		for (auto& el : j["initializers"]) {
-			auto i = LoadAssemblyInitializerFromJson(el);
-			if (std::get<1>(i)) {
-				assemblies.push_back(std::get<0>(i));
-			}
+		for (auto& el : j["assemblies"]) {
+			assemblies.push_back(ToWSTRING(el));
 		}
 
 		for (auto& el : j["attributed"]) {
@@ -68,19 +64,6 @@ namespace configuration
 		}
 
 		return { interceptions, assemblies, attributedInterceptors };
-	}
-
-	std::pair<AssemblyInitializer, bool> LoadAssemblyInitializerFromJson(const nlohmann::json::value_type& src)
-	{
-		if (!src.is_object()) {
-			return std::make_pair<AssemblyInitializer, bool>({}, false);
-		}
-
-		auto assemblyName = ToWSTRING(src.value("AssemblyName", ""));
-		auto assemblyPath = ToWSTRING(src.value("AssemblyPath", ""));
-		auto initializerType = src["InitializerType"].is_null() ? ""_W : ToWSTRING(src.value("InitializerType", ""));
-
-		return std::make_pair<AssemblyInitializer, bool>({ assemblyName, assemblyPath, initializerType }, true);
 	}
 
 	std::pair<AttributedInterceptor, bool> LoadAttributedInterceptorFromJson(const nlohmann::json::value_type& src)
