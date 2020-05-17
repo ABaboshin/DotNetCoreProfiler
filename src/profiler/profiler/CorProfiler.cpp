@@ -262,6 +262,9 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMetho
     // Define System.Activator
     mdTypeRef activatorTypeRef;
     metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemActivator.data(), &activatorTypeRef);
+    // Define System.IO.File
+    mdTypeRef fileTypeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemIOFile.data(), &fileTypeRef);
 
     // Define an anonymous type
     mdTypeDef newTypeDef;
@@ -358,6 +361,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMetho
         _const::SystemAppDomain.data(),
         &appdomainTypeRef);
 
+    // getCurrentDomain
     BYTE compressedToken[10];
     ULONG tokenLength = CorSigCompressToken(appdomainTypeRef, compressedToken);
 
@@ -415,19 +419,76 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMetho
         appdomainLoadSignature.size(),
         &appdomainLoadMemberRef);
 
+    // Assembly.Load
+    tokenLength = CorSigCompressToken(assemblyTypeRef, compressedToken);
+
+    std::vector<BYTE> assemblyLoadSignature = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        1,
+        ELEMENT_TYPE_CLASS
+    };
+    assemblyLoadSignature.insert(assemblyLoadSignature.end(), compressedToken, compressedToken + tokenLength);
+    assemblyLoadSignature.push_back(ELEMENT_TYPE_STRING);
+
+    mdMemberRef assemblyLoadMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        assemblyTypeRef, _const::LoadFile.data(),
+        assemblyLoadSignature.data(),
+        assemblyLoadSignature.size(),
+        &assemblyLoadMemberRef);
+
+    //fileTypeRef
+    COR_SIGNATURE readAllBytesSignature[] = {
+        IMAGE_CEE_CS_CALLCONV_DEFAULT,
+        1,
+        ELEMENT_TYPE_SZARRAY,
+        ELEMENT_TYPE_U1,
+        ELEMENT_TYPE_STRING
+    };
+
+    mdMemberRef readAllBytesRef;
+    hr = metadataEmit->DefineMemberRef(
+        fileTypeRef, _const::ReadAllBytes.data(),
+        readAllBytesSignature,
+        sizeof(readAllBytesSignature),
+        &readAllBytesRef);
+
+    // Create method signature for Assembly.CreateInstance(string)
+    COR_SIGNATURE createInstanceSignature[] = {
+        IMAGE_CEE_CS_CALLCONV_HASTHIS,
+        1,
+        ELEMENT_TYPE_OBJECT,
+        ELEMENT_TYPE_STRING
+    };
+    mdMemberRef createInstanceMemberRef;
+    hr = metadataEmit->DefineMemberRef(
+        assemblyTypeRef, _const::CreateInstance.c_str(),
+        createInstanceSignature,
+        sizeof(createInstanceSignature),
+        &createInstanceMemberRef);
+
+    // local sig
+    mdSignature localSigToken;
+    std::vector<BYTE> localSig = {
+        IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
+        1,
+        ELEMENT_TYPE_SZARRAY, // assemblyBytes
+        ELEMENT_TYPE_U1,
+    };
+
     // Activator.CreateInstance
     tokenLength = CorSigCompressToken(typeRef, compressedToken);
 
     std::vector<BYTE> activatorCreateInstanceSignature = {
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
-        2,
+        1,
         ELEMENT_TYPE_OBJECT,
         ELEMENT_TYPE_CLASS
     };
 
     activatorCreateInstanceSignature.insert(activatorCreateInstanceSignature.end(), compressedToken, compressedToken + tokenLength);
-    activatorCreateInstanceSignature.push_back(ELEMENT_TYPE_SZARRAY);
-    activatorCreateInstanceSignature.push_back(ELEMENT_TYPE_OBJECT);
+    /*activatorCreateInstanceSignature.push_back(ELEMENT_TYPE_SZARRAY);
+    activatorCreateInstanceSignature.push_back(ELEMENT_TYPE_OBJECT);*/
 
     mdMemberRef activatorCreateInstanceMemberRef;
     hr = metadataEmit->DefineMemberRef(
@@ -436,46 +497,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMetho
         activatorCreateInstanceSignature.size(),
         &activatorCreateInstanceMemberRef);
 
-    // Assembly.CreateInstance
-    COR_SIGNATURE assemblyCreateInstanceSignature[] = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_OBJECT,
-        ELEMENT_TYPE_STRING
-    };
-
-    mdMemberRef assemblyCreateInstanceMemberRef;
-    hr = metadataEmit->DefineMemberRef(
-        assemblyTypeRef, _const::CreateInstance.data(),
-        assemblyCreateInstanceSignature,
-        sizeof(assemblyCreateInstanceSignature),
-        &assemblyCreateInstanceMemberRef);
-
-    // loader class
-    mdString loaderClassToken;
-    hr = metadataEmit->DefineUserString(loaderClass.c_str(), (ULONG)loaderClass.length(),
-        &loaderClassToken);
-
-    // loader class param
-    auto profilerInterceptionDlls = GetEnvironmentValue("PROFILER_INTERCEPTION_DLLS"_W);
-    mdString paramToken;
-    hr = metadataEmit->DefineUserString(profilerInterceptionDlls.c_str(), (ULONG)profilerInterceptionDlls.length(), &paramToken);
-
-    // local sig
-    mdSignature localSigToken;
-    std::vector<BYTE> localSig = {
-        IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
-        4,
-        ELEMENT_TYPE_I, // assemblyPtr
-        ELEMENT_TYPE_I4, // assemblySize
-        ELEMENT_TYPE_SZARRAY, // assemblyBytes
-        ELEMENT_TYPE_U1,
-        ELEMENT_TYPE_SZARRAY, // ctor params
-        ELEMENT_TYPE_OBJECT
-    };
-
-    hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(),
-        &localSigToken);
+    hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(), &localSigToken);
 
     rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, *retMethodToken);
     rewriter.InitializeTiny();
@@ -483,68 +505,44 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMetho
     rewriter::ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
-    // load addr of assemblyPtr
-    helper.LoadLocalAddress(0);
-    // load addr of assemblySize
-    helper.LoadLocalAddress(1);
-    // call GetAssemblyBytes
-    helper.CallMember(getAssemblyMethodDef, false);
+    for (const auto& assembly: configuration.Assemblies)
+    {
+        mdString assemblyPathToken;
+        hr = metadataEmit->DefineUserString(assembly.AssemblyPath.c_str(), (ULONG)assembly.AssemblyPath.length(), &assemblyPathToken);
 
-    // load assemblySize
-    helper.LoadLocal(1);
+        // call System.IO.File.ReadAllBytes
+        helper.LoadStr(assemblyPathToken);
+        helper.CallMember(readAllBytesRef, false);
+        helper.StLocal(0);
 
-    // create newarr of bytes
-    helper.CreateArray(byteTypeRef, 0);
+        // call System.AppDomain.CurrentDomain
+        helper.CallMember(getCurrentDomainMethodRef, false);
 
-    // set assemblyBytes to newarr
-    helper.StLocal(2);
+        // load assemblyBytes
+        helper.LoadLocal(0);
 
-    // fillout params
-    helper.CreateArray(objectTypeRef, 1);
-    helper.BeginLoadValueIntoArray(0);
-    helper.LoadStr(paramToken);
-    helper.EndLoadValueIntoArray();
+        // call System.AppDomain.Load
+        helper.CallMember(appdomainLoadMemberRef, true);
 
-    // set params to newarr
-    helper.StLocal(3);
+        if (!assembly.InitializerType.empty())
+        {
+            mdString initializerTypeToken;
+            hr = metadataEmit->DefineUserString(assembly.InitializerType.c_str(), (ULONG)assembly.InitializerType.length(), &initializerTypeToken);
+            helper.LoadStr(initializerTypeToken);
 
-    // load assemblyPtr
-    helper.LoadLocal(0);
-    // load assemblyBytes
-    helper.LoadLocal(2);
+            // call Assembly.GetType
+            helper.CallMember(assemblyGetTypeMemberRef, true);
 
-    // load 0
-    helper.LoadInt32(0);
+            //helper.CreateArray(objectTypeRef, 0);
 
-    // load assemblySize
-    helper.LoadLocal(1);
+            // call Activator.CreateInstance
+            helper.CallMember(activatorCreateInstanceMemberRef, false);
 
-    // call Marshal.Copy
-    helper.CallMember(marshalCopyMemberRef, false);
+            //helper.CallMember(createInstanceMemberRef, true);
+        }
 
-    // call System.AppDomain.CurrentDomain
-    helper.CallMember(getCurrentDomainMethodRef, false);
-
-    // load assemblyBytes
-    helper.LoadLocal(2);
-
-    // call System.AppDomain.Load
-    helper.CallMember(appdomainLoadMemberRef, true);
-
-    // load loaderClassToken
-    helper.LoadStr(loaderClassToken);
-
-    // call Assembly.GetType
-    helper.CallMember(assemblyGetTypeMemberRef, true);
-
-    // load ctor params
-    helper.LoadLocal(3);
-
-    // call Activator.CreateInstance
-    helper.CallMember(activatorCreateInstanceMemberRef, false);
-
-    // pop the object
-    helper.Pop();
+        helper.Pop();
+    }
 
     // ret
     helper.Ret();

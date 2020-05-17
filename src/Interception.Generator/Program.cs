@@ -17,22 +17,46 @@ namespace Interception.Generator
 
                     var strict = new List<StrictInterception>();
                     var attributed = new List<AttributedInterceptor>();
+                    var initializers = new List<Initializer>();
 
                     foreach (var assemblyPath in opts.Assemblies)
                     {
                         var assembly = Assembly.LoadFrom(assemblyPath);
                         strict.AddRange(ProcessStrictInterceptors(assembly));
                         attributed.AddRange(ProcessAttributedInterceptors(assembly));
+
+                        var initializer = ProcessInizializers(assembly);
+                        if (initializer is null)
+                        {
+                            initializer = new Initializer { AssemblyName = assembly.GetName().Name };
+                        }
+
+                        initializer.AssemblyPath = Path.Combine(opts.Path, new FileInfo(assemblyPath).Name);
+                        initializers.Add(initializer);
                     }
 
                     var result = new {
                         strict,
                         attributed,
-                        assemblies = opts.Assemblies.Select(a => Path.Combine(opts.Path, new FileInfo(a).Name)).ToList()
+                        initializers
                     };
 
                     File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));
                 });
+        }
+
+        private static Initializer ProcessInizializers(Assembly assembly)
+        {
+            var result = assembly
+                .GetTypes()
+                .Where(type => type.GetCustomAttributes<InitializeAttribute>().Any())
+                .Select(type => new Initializer
+                {
+                    AssemblyName = assembly.GetName().Name,
+                    InitializerType = type.FullName
+                })
+                .FirstOrDefault();
+            return result;
         }
 
         private static IEnumerable<AttributedInterceptor> ProcessAttributedInterceptors(Assembly assembly)
@@ -58,7 +82,7 @@ namespace Interception.Generator
             return result;
         }
 
-        private static List<StrictInterception> ProcessStrictInterceptors(Assembly assembly)
+        private static IEnumerable<StrictInterception> ProcessStrictInterceptors(Assembly assembly)
         {
             var interceptors = assembly
                 .GetTypes()
