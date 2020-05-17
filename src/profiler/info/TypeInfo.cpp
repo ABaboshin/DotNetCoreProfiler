@@ -134,10 +134,10 @@ namespace info
                 &typeNameLength);
             break;
         case mdtMemberRef:
-            return FunctionInfo::GetFunctionInfo(metadataImport, token).type;
+            return FunctionInfo::GetFunctionInfo(metadataImport, token).Type;
             break;
         case mdtMethodDef:
-            return FunctionInfo::GetFunctionInfo(metadataImport, token).type;
+            return FunctionInfo::GetFunctionInfo(metadataImport, token).Type;
             break;
         }
         if (FAILED(hr) || typeNameLength == 0) {
