@@ -21,21 +21,19 @@ namespace Interception.MassTransit
     [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
     public class MassTransitConsumerInterceptor : BaseMetricsInterceptor
     {
-        public override int Priority => 0;
-
         public MassTransitConsumerInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)
         {
         }
 
         protected override MethodInfo FindMethod()
         {
-            return GetThis().GetType().GetMethod("Consume");
+            return This.GetType().GetMethod("Consume");
         }
 
         protected override void CreateScope()
         {
             var context = (ConsumeContext)GetParameter(0);
-            var consumerName = GetThis().GetType().FullName;
+            var consumerName = This.GetType().FullName;
 
             ISpanBuilder spanBuilder;
 

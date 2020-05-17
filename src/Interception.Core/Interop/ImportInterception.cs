@@ -2,7 +2,7 @@
 
 namespace Interception.Core.Interop
 {
-    [StructLayout(LayoutKind.Sequential/*, CharSet = CharSet.Ansi*/)]
+    [StructLayout(LayoutKind.Sequential)]
     public struct ImportInterception
     {
         public string CallerAssembly;
@@ -13,6 +13,5 @@ namespace Interception.Core.Interop
         public string InterceptorTypeName;
         public string InterceptorAssemblyName;
         public bool IsComposed;
-        public string Key;
     }
 }

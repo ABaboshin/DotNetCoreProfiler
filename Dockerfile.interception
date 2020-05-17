@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:2.1.805 as build
+FROM mcr.microsoft.com/dotnet/core/sdk:2.1.806 as build
 
 COPY src src
 

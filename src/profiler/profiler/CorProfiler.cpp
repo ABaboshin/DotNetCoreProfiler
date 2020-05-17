@@ -5,6 +5,7 @@
 #include "corhdr.h"
 #include "configuration/Configuration.h"
 #include "const/const.h"
+#include "info/InterceptionVarInfo.h"
 #include "info/parser.h"
 #include "rewriter/ILRewriter.h"
 #include "rewriter/ILRewriterHelper.h"
@@ -590,7 +591,6 @@ bool CorProfiler::SkipAssembly(const wstring& name)
 HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 {
     HRESULT hr;
-    configuration::Interception interception;
 
     rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
     IfFailRet(rewriter.Import());
@@ -603,8 +603,6 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
     auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
-
-    wstring key;
 
     for (rewriter::ILInstr* pInstr = rewriter.GetILList()->m_pNext;
         pInstr != rewriter.GetILList(); pInstr = pInstr->m_pNext) {
@@ -624,19 +622,20 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
             << std::endl << std::flush;
         }
 
-        if (FindInterception(moduleInfo.assembly.name, target.type.name, target.name, target.signature.NumberOfArguments(), interception, key))
+        auto interceptions = FindInterceptions(moduleInfo.assembly.name, target.type.name, target.name, target.signature.NumberOfArguments());
+
+        if (!interceptions.empty())
         {
             std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
                 << " num args " << target.signature.NumberOfArguments()
                 << " from assembly " << ToString(moduleInfo.assembly.name)
-                << " use interceptor " << ToString(interception.Interceptor.TypeName)
                 << std::endl << std::flush;
 
             rewriter::ILRewriterHelper helper(&rewriter);
             helper.SetILPosition(pInstr);
 
             mdMethodDef interceptorRef;
-            GenerateInterceptMethod(moduleId, target, interception, targetMdToken, interceptorRef, key);
+            GenerateInterceptMethod(moduleId, target, interceptions, targetMdToken, interceptorRef);
 
             helper.CallMember(interceptorRef, false);
 
@@ -649,7 +648,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef& retMethodToken, const wstring& key)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const std::vector<configuration::Interception>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken)
 {
     HRESULT hr;
 
@@ -670,9 +669,13 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     mdTypeRef objectTypeRef;
     metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemObject.data(), &objectTypeRef);
 
+    // Define System.Exception
+    mdTypeRef exceptionTypeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemException.data(), &exceptionTypeRef);
+
     // Define a static type
     mdTypeDef newTypeDef;
-    auto className = interception.Target.TypeName + interception.Target.MethodName + "Interception"_W;
+    auto className = interceptions[0].Target.TypeName + interceptions[0].Target.MethodName + "Interception"_W;
     std::replace(className.begin(), className.end(), '.'_W, '_'_W);
     hr = metadataEmit->DefineTypeDef(className.c_str(), tdAbstract | tdSealed,
         objectTypeRef, NULL, &newTypeDef);
@@ -718,217 +721,390 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         0,
         &retMethodToken);
 
-    // define wrapper.dll
-    mdModuleRef wrapperRef;
-    GetWrapperRef(hr, metadataAssemblyEmit, wrapperRef, interception.Interceptor.AssemblyName);
-    IfFailRet(hr);
-
-    // define wrappedType
-    mdTypeRef wrapperTypeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        wrapperRef,
-        interception.Interceptor.TypeName.data(),
-        &wrapperTypeRef);
-    IfFailRet(hr);
-
     rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, retMethodToken);
     rewriter::ILRewriterHelper helper(&rewriter);
+
+    mdSignature localSigToken;
+    std::vector<BYTE> localSig = {
+        IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
+        3,
+        ELEMENT_TYPE_BOOLEAN,
+        ELEMENT_TYPE_BOOLEAN,
+        ELEMENT_TYPE_OBJECT,
+    };
+
+    int skipIndex = 0;
+    int skipCurrentIndex = 1;
+    int resultIndex = 2;
+
+    hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(), &localSigToken);
+
     rewriter.InitializeTiny();
+    rewriter.SetTkLocalVarSig(localSigToken);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
     // local sig
-    int wrapperIndex = 0;
-    helper.AddLocalVariable(wrapperTypeRef, wrapperIndex);
+    std::vector<info::InterceptionVarInfo> inteceptionRefs{};
+    for (const auto& interception : interceptions)
+    {
+        // define interception.dll
+        mdModuleRef interceptorDllRef;
+        GetWrapperRef(hr, metadataAssemblyEmit, interceptorDllRef, interception.Interceptor.AssemblyName);
+        IfFailRet(hr);
 
-    int returnIndex = 0;
-    helper.AddLocalVariable(objectTypeRef, returnIndex);
+        // define wrappedType
+        mdTypeRef interceptorTypeRef;
+        hr = metadataEmit->DefineTypeRefByName(
+            interceptorDllRef,
+            interception.Interceptor.TypeName.data(),
+            &interceptorTypeRef);
+        IfFailRet(hr);
+
+        int locaVarIndex = 0;
+        helper.AddLocalVariable(interceptorTypeRef, locaVarIndex);
+
+        inteceptionRefs.push_back(info::InterceptionVarInfo(interceptorTypeRef, locaVarIndex));
+    }
+
+    int exceptionIndex = 0;
+    helper.AddLocalVariable(exceptionTypeRef, exceptionIndex);
+
+    helper.LoadInt32(0);
+    helper.StLocal(skipIndex);
 
     // ctor
-    std::vector<BYTE> ctorSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        0,
-        ELEMENT_TYPE_VOID
-    };
+    for (const auto& interceptor : inteceptionRefs)
+    {
+        std::vector<BYTE> ctorSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_VOID
+        };
 
-    mdMemberRef ctorRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        _const::ctor.data(),
-        ctorSignature.data(),
-        ctorSignature.size(),
-        &ctorRef);
+        mdMemberRef ctorRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            _const::ctor.data(),
+            ctorSignature.data(),
+            ctorSignature.size(),
+            &ctorRef);
 
-    helper.NewObject(ctorRef);
-    helper.StLocal(wrapperIndex);
-
-    //SetThis
-    std::vector<BYTE> setThisSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_OBJECT
-    };
-
-    mdMemberRef setThisRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        "SetThis"_W.data(),
-        setThisSignature.data(),
-        setThisSignature.size(),
-        &setThisRef);
+        helper.NewObject(ctorRef);
+        helper.StLocal(interceptor.LocalVarIndex);
+    }
 
     auto shift = 0;
-    if (target.signature.IsInstanceMethod())
+
+    //SetThis
+    if (target.signature.IsInstanceMethod()) for (const auto& interceptor : inteceptionRefs)
     {
-        shift += 1;
-        helper.LoadLocal(wrapperIndex);
+        std::vector<BYTE> setThisSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_OBJECT
+        };
+
+        mdMemberRef setThisRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "set_This"_W.data(),
+            setThisSignature.data(),
+            setThisSignature.size(),
+            &setThisRef);
+
+        shift = 1;
+        helper.LoadLocal(interceptor.LocalVarIndex);
         helper.LoadArgument(0);
         helper.CallMember(setThisRef, false);
     }
 
     //SetMdToken
-    std::vector<BYTE> setMdTokenSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_I4
-    };
+    for (const auto& interceptor : inteceptionRefs)
+    {
+        std::vector<BYTE> setMdTokenSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_I4
+        };
 
-    mdMemberRef setMdTokenRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        "SetMdToken"_W.data(),
-        setMdTokenSignature.data(),
-        setMdTokenSignature.size(),
-        &setMdTokenRef);
+        mdMemberRef setMdTokenRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "set_MdToken"_W.data(),
+            setMdTokenSignature.data(),
+            setMdTokenSignature.size(),
+            &setMdTokenRef);
 
-    helper.LoadLocal(wrapperIndex);
-    helper.LoadInt32(targetMdToken);
-    helper.CallMember(setMdTokenRef, false);
+        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.LoadInt32(targetMdToken);
+        helper.CallMember(setMdTokenRef, false);
+    }
 
     //SetModuleVersionPtr
-    std::vector<BYTE> setModuleVersionPtrSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_I8
-    };
+    for (const auto& interceptor : inteceptionRefs)
+    {
+        std::vector<BYTE> setModuleVersionPtrSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_I8
+        };
 
-    mdMemberRef setModuleVersionPtrRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        "SetModuleVersionPtr"_W.data(),
-        setModuleVersionPtrSignature.data(),
-        setModuleVersionPtrSignature.size(),
-        &setModuleVersionPtrRef);
+        mdMemberRef setModuleVersionPtrRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "set_ModuleVersionPtr"_W.data(),
+            setModuleVersionPtrSignature.data(),
+            setModuleVersionPtrSignature.size(),
+            &setModuleVersionPtrRef);
 
-    helper.LoadLocal(wrapperIndex);
-    const void* module_version_id_ptr = &modules[moduleId];
-    helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
-    helper.CallMember(setModuleVersionPtrRef, false);
+        helper.LoadLocal(interceptor.LocalVarIndex);
+        const void* module_version_id_ptr = &modules[moduleId];
+        helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
+        helper.CallMember(setModuleVersionPtrRef, false);
+    }
 
-    //SetKey
-    std::vector<BYTE> setKeySignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_STRING
-    };
+    //SetArgumentCount
+    for (const auto& interceptor : inteceptionRefs)
+    {
+        std::vector<BYTE> setArgumentCountSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_I4
+        };
 
-    mdMemberRef setKeyRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        "SetKey"_W.data(),
-        setKeySignature.data(),
-        setKeySignature.size(),
-        &setKeyRef);
+        mdMemberRef setArgumentCountRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "SetArgumentCount"_W.data(),
+            setArgumentCountSignature.data(),
+            setArgumentCountSignature.size(),
+            &setArgumentCountRef);
 
-    // loader class param
-    mdString keyToken;
-    hr = metadataEmit->DefineUserString(key.c_str(), (ULONG)key.length(), &keyToken);
-
-    helper.LoadLocal(wrapperIndex);
-    helper.LoadStr(keyToken);
-    helper.CallMember(setKeyRef, false);
-
-    //SetArgumentNumber
-    std::vector<BYTE> setArgumentNumberSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_I4
-    };
-
-    mdMemberRef setArgumentNumberRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        "SetArgumentNumber"_W.data(),
-        setArgumentNumberSignature.data(),
-        setArgumentNumberSignature.size(),
-        &setArgumentNumberRef);
-
-    helper.LoadLocal(wrapperIndex);
-    helper.LoadInt32(target.signature.NumberOfArguments());
-    helper.CallMember(setArgumentNumberRef, false);
+        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.LoadInt32(target.signature.NumberOfArguments());
+        helper.CallMember(setArgumentCountRef, false);
+    }
 
     // AddParameter
-    std::vector<BYTE> addParameterSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        2,
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_I4,
-        ELEMENT_TYPE_OBJECT
-    };
-
-    mdMemberRef addParameterRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        "AddParameter"_W.data(),
-        addParameterSignature.data(),
-        addParameterSignature.size(),
-        &addParameterRef);
-
-    for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
+    for (const auto& interceptor : inteceptionRefs)
     {
-        helper.LoadLocal(wrapperIndex);
-        helper.LoadInt32(i);
-        helper.LoadArgument(shift + i);
+        std::vector<BYTE> addParameterSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            2,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_I4,
+            ELEMENT_TYPE_OBJECT
+        };
 
-        auto argument = target.ResolveParameterType(target.signature.arguments[i]);
+        mdMemberRef addParameterRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "AddParameter"_W.data(),
+            addParameterSignature.data(),
+            addParameterSignature.size(),
+            &addParameterRef);
 
-        if (argument.isRefType)
+        for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
         {
-            helper.LoadInd(argument.typeDef);
-        }
+            helper.LoadLocal(interceptor.LocalVarIndex);
+            helper.LoadInt32(i);
+            helper.LoadArgument(shift + i);
 
-        if (argument.isBoxed)
-        {
-            auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.raw);
-            helper.Box(token);
-        }
+            auto argument = target.ResolveParameterType(target.signature.arguments[i]);
 
-        helper.CallMember(addParameterRef, false);
+            if (argument.isRefType)
+            {
+                helper.LoadInd(argument.typeDef);
+            }
+
+            if (argument.isBoxed)
+            {
+                auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.raw);
+                helper.Box(token);
+            }
+
+            helper.CallMember(addParameterRef, false);
+        }
+    }
+
+    //ExecuteBefore
+    for (const auto& interceptor : inteceptionRefs)
+    {
+        std::vector<BYTE> executeBeforeSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_VOID
+        };
+
+        mdMemberRef executeBeforeRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "ExecuteBefore"_W.data(),
+            executeBeforeSignature.data(),
+            executeBeforeSignature.size(),
+            &executeBeforeRef);
+
+        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.CallMember(executeBeforeRef, false);
+    }
+
+    // skip execution
+    for (const auto& interceptor : inteceptionRefs)
+    {
+        std::vector<BYTE> skipExecutionSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_BOOLEAN
+        };
+
+        mdMemberRef skipExecutionRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "SkipExecution"_W.data(),
+            skipExecutionSignature.data(),
+            skipExecutionSignature.size(),
+            &skipExecutionRef);
+
+        std::vector<BYTE> getResultSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_OBJECT,
+        };
+
+        mdMemberRef getResultRef;
+        hr = metadataEmit->DefineMemberRef(
+            inteceptionRefs[0].TypeRef,
+            "get_Result"_W.data(),
+            getResultSignature.data(),
+            getResultSignature.size(),
+            &getResultRef);
+
+        // currentSkip = interceptor.SkipExecution();
+        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.CallMember(skipExecutionRef, false);
+        helper.StLocal(skipCurrentIndex);
+
+        // if (skip)
+        helper.LoadLocal(skipIndex);
+        auto brfalses = helper.BrFalseS();
+
+        helper.Nop();
+
+        // Result = interceptor.Result
+        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.CallMember(getResultRef, false);
+        helper.StLocal(resultIndex);
+        helper.Nop();
+        auto brs = helper.BrS();
+
+        auto elseBlock = helper.Nop();
+        brfalses->m_pTarget = elseBlock;
+
+        // else {}
+        auto finish = helper.Nop();
+        brs->m_pTarget = finish;
     }
 
     //execute
-    std::vector<BYTE> executeSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        0,
-        ELEMENT_TYPE_OBJECT,
-    };
+    {
+        std::vector<BYTE> executeSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_OBJECT,
+        };
 
-    mdMemberRef executeRef;
-    hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
-        "Execute"_W.data(),
-        executeSignature.data(),
-        executeSignature.size(),
-        &executeRef);
+        mdMemberRef executeRef;
+        hr = metadataEmit->DefineMemberRef(
+            inteceptionRefs[0].TypeRef,
+            "Execute"_W.data(),
+            executeSignature.data(),
+            executeSignature.size(),
+            &executeRef);
 
-    helper.LoadLocal(wrapperIndex);
-    helper.CallMember(executeRef, false);
+        std::vector<BYTE> getResultSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_OBJECT,
+        };
 
-    helper.StLocal(returnIndex);
+        mdMemberRef getResultRef;
+        hr = metadataEmit->DefineMemberRef(
+            inteceptionRefs[0].TypeRef,
+            "get_Result"_W.data(),
+            getResultSignature.data(),
+            getResultSignature.size(),
+            &getResultRef);
+
+        // if (skip)
+        helper.LoadLocal(skipIndex);
+        auto brfalses = helper.BrFalseS();
+
+        helper.Nop();
+
+        // {}
+        helper.Nop();
+        auto brs = helper.BrS();
+
+        auto elseBlock = helper.Nop();
+        brfalses->m_pTarget = elseBlock;
+
+        // else Result = interceptor.Execute()
+        helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
+        helper.CallMember(executeRef, false);
+
+        helper.StLocal(resultIndex);
+
+        auto finish = helper.Nop();
+        brs->m_pTarget = finish;
+    }
+
+    // propagate Result
+    if (inteceptionRefs.size() > 1) for (const auto& interceptor : inteceptionRefs)
+    {
+        std::vector<BYTE> setResultSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_OBJECT
+        };
+
+        mdMemberRef setResultRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "set_Result"_W.data(),
+            setResultSignature.data(),
+            setResultSignature.size(),
+            &setResultRef);
+
+        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.LoadLocal(resultIndex);
+        helper.CallMember(setResultRef, false);
+    }
+
+    //ExecuteAfter
+    for (const auto& interceptor : inteceptionRefs)
+    {
+        std::vector<BYTE> executeAfterSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_VOID
+        };
+
+        mdMemberRef executeAfterRef;
+        hr = metadataEmit->DefineMemberRef(
+            interceptor.TypeRef,
+            "ExecuteAfter"_W.data(),
+            executeAfterSignature.data(),
+            executeAfterSignature.size(),
+            &executeAfterRef);
+
+        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.CallMember(executeAfterRef, false);
+    }
 
     // GetParameter
     std::vector<BYTE> getParameterSignature = {
@@ -940,7 +1116,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     mdMemberRef getParameterRef;
     hr = metadataEmit->DefineMemberRef(
-        wrapperTypeRef,
+        inteceptionRefs[0].TypeRef,
         "GetParameter"_W.data(),
         getParameterSignature.data(),
         getParameterSignature.size(),
@@ -957,7 +1133,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         helper.LoadArgument(shift + i);
 
-        helper.LoadLocal(wrapperIndex);
+        helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
         helper.LoadInt32(i);
         helper.CallMember(getParameterRef, false);
 
@@ -971,9 +1147,49 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.StInd(argument.typeDef);
     }
 
+    // throw exception if any
+    {
+        std::vector<BYTE> getExceptionSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_CLASS
+        };
+
+        BYTE compressedToken[10];
+        ULONG tokenLength = CorSigCompressToken(exceptionTypeRef, compressedToken);
+
+        getExceptionSignature.insert(getExceptionSignature.end(), compressedToken, compressedToken + tokenLength);
+
+        mdMemberRef getExceptionRef;
+        hr = metadataEmit->DefineMemberRef(
+            inteceptionRefs[0].TypeRef,
+            "get_Exception"_W.data(),
+            getExceptionSignature.data(),
+            getExceptionSignature.size(),
+            &getExceptionRef);
+
+        // ex = interceptor[0].Exception
+        helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
+        helper.CallMember(getExceptionRef, false);
+        helper.StLocal(exceptionIndex);
+
+        // if (ex != null)
+        helper.LoadLocal(exceptionIndex);
+        helper.LoadNull();
+        helper.CgtUn();
+        auto brfalses = helper.BrFalseS();
+        helper.Nop();
+
+        // throw ex
+        helper.LoadLocal(exceptionIndex);
+        helper.Throw();
+        auto finish = helper.Nop();
+        brfalses->m_pTarget = finish;
+    }
+
     if (!retType.isVoid)
     {
-        helper.LoadLocal(returnIndex);
+        helper.LoadLocal(resultIndex);
     }
 
     // ret
@@ -1345,14 +1561,12 @@ void CorProfiler::AddInterception(configuration::ImportInterception interception
             interception.TargetMethodParametersCount),
         configuration::Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
             ToWSTRING(interception.InterceptorTypeName)),
-        interception.IsComposed,
-        ToWSTRING(interception.Key)
-    ));
+        interception.IsComposed)
+    );
 }
 
-bool CorProfiler::FindInterception(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount, configuration::Interception& interception, wstring& key)
+std::vector<configuration::Interception> CorProfiler::FindInterceptions(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount)
 {
-    key = ""_W;
     std::vector<configuration::Interception> result{};
     std::copy_if(
         configuration.interceptions.begin(),
@@ -1365,61 +1579,7 @@ bool CorProfiler::FindInterception(wstring callerAssemblyName, wstring targetTyp
         }
     );
 
-    if (result.size() == 0)
-    {
-        return false;
-    }
-
-    std::cout << ToString(targetTypeName) << "." << ToString(targetMethodName) << " " << result.size() << std::endl;
-
-    key = result[0].Key;
-
-    if (result.size() == 1)
-    {
-        interception = result[0];
-        return true;
-    }
-
-    std::vector<configuration::Interception> composed = {};
-    std::copy_if(
-        configuration.interceptions.begin(),
-        configuration.interceptions.end(),
-        std::back_inserter(composed),
-        [](configuration::Interception interception) {
-            return interception.IsComposed;
-        }
-    );
-
-    if (composed.size() == 1)
-    {
-        interception = composed[0];
-        return true;
-    }
-
-    interception = result[0];
-    return true;
-}
-
-void CorProfiler::GetInterceptions(configuration::InterceptionInfo** interceptions, const wstring& key, int* count)
-{
-    std::vector<configuration::Interception> result{};
-    std::copy_if(
-        configuration.interceptions.begin(),
-        configuration.interceptions.end(),
-        std::back_inserter(result),
-        [&key](configuration::Interception interception) {
-            return key == interception.Key;
-        }
-    );
-
-    *count = result.size();
-    *interceptions = new configuration::InterceptionInfo[*count];
-
-    for (size_t i = 0; i < result.size(); i++)
-    {
-        (*interceptions)[i].AssemblyName = util::wchar_to_char(result[i].Interceptor.AssemblyName.c_str());
-        (*interceptions)[i].TypeName = util::wchar_to_char(result[i].Interceptor.TypeName.c_str());
-    }
+    return result;
 }
 
 #ifndef _WIN32

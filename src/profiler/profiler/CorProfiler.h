@@ -40,9 +40,9 @@ private:
 
     wstring GetInterceptionLoaderClassName();
 
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const configuration::Interception& interception, INT32 targetMdToken, mdMethodDef& retMethodToken, const wstring& key);
+    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const std::vector<configuration::Interception>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken);
 
-    bool FindInterception(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount, configuration::Interception& interception, wstring& key);
+    std::vector<configuration::Interception> FindInterceptions(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount);
 
 public:
     CorProfiler();
@@ -181,8 +181,6 @@ public:
     void AddInterception(configuration::ImportInterception interception);
 
     void GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize);
-
-    void GetInterceptions(configuration::InterceptionInfo** interceptions, const wstring& key, int* count);
 };
 
 extern CorProfiler* profilerInstance;

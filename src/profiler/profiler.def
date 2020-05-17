@@ -5,5 +5,3 @@ EXPORTS
     DllGetClassObject PRIVATE
     AddInterceptor
     GetAssemblyBytes
-    GetInterceptions
-    FreeGetInterceptionsMemory

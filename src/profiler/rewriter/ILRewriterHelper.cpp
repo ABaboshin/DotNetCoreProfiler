@@ -11,7 +11,7 @@ namespace rewriter
         _instr = instr;
     }
 
-    void ILRewriterHelper::StLocal(unsigned index)
+    ILInstr* ILRewriterHelper::StLocal(unsigned index)
     {
         static const std::vector<OPCODE> opcodes = {
                CEE_STLOC_0,
@@ -33,6 +33,7 @@ namespace rewriter
             pNewInstr->m_Arg16 = index;
         }
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::CreateArray(const mdTypeRef typeRef, INT32 size)
@@ -51,7 +52,7 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
-    void ILRewriterHelper::LoadInt32(INT32 value)
+    ILInstr* ILRewriterHelper::LoadInt32(INT32 value)
     {
         static const std::vector<OPCODE> opcodes = {
             CEE_LDC_I4_0, CEE_LDC_I4_1, CEE_LDC_I4_2, CEE_LDC_I4_3, CEE_LDC_I4_4,
@@ -76,6 +77,7 @@ namespace rewriter
         }
 
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::LoadInt64(INT64 value)
@@ -142,7 +144,7 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
-    void ILRewriterHelper::LoadLocal(unsigned index)
+    ILInstr* ILRewriterHelper::LoadLocal(unsigned index)
     {
         static const std::vector<OPCODE> opcodes = {
                 CEE_LDLOC_0,
@@ -164,6 +166,7 @@ namespace rewriter
             pNewInstr->m_Arg16 = index;
         }
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::LoadLocalAddress(unsigned index)
@@ -333,6 +336,62 @@ namespace rewriter
             pNewInstr->m_opcode = opCode;
             _rewriter->InsertBefore(_instr, pNewInstr);
         }
+    }
+
+    ILInstr* ILRewriterHelper::BrTrueS()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_BRTRUE_S;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::BrFalseS()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_BRFALSE_S;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::BrS()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_BR_S;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::Nop()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_NOP;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::LoadNull()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_LDNULL;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::CgtUn()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_CGT_UN;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::Throw()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_THROW;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     HRESULT ILRewriterHelper::AddLocalVariable(mdTypeRef typeRef, int& newIndex)
