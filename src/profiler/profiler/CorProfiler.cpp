@@ -49,6 +49,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
     loaderClass = GetInterceptionLoaderClassName();
 
+    configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
+
     profilerInstance = this;
 
     return S_OK;
@@ -648,7 +650,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const std::vector<configuration::Interception>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const std::vector<configuration::StrictInterception>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken)
 {
     HRESULT hr;
 
@@ -1550,29 +1552,14 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
     return S_OK;
 }
 
-void CorProfiler::AddInterception(configuration::ImportInterception interception)
+std::vector<configuration::StrictInterception> CorProfiler::FindInterceptions(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount)
 {
-    configuration.interceptions.push_back(configuration::Interception(
-        ToWSTRING(interception.CallerAssembly),
-        configuration::TargetMethod(
-            ToWSTRING(interception.TargetAssemblyName),
-            ToWSTRING(interception.TargetTypeName),
-            ToWSTRING(interception.TargetMethodName),
-            interception.TargetMethodParametersCount),
-        configuration::Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
-            ToWSTRING(interception.InterceptorTypeName)),
-        interception.IsComposed)
-    );
-}
-
-std::vector<configuration::Interception> CorProfiler::FindInterceptions(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount)
-{
-    std::vector<configuration::Interception> result{};
+    std::vector<configuration::StrictInterception> result{};
     std::copy_if(
-        configuration.interceptions.begin(),
-        configuration.interceptions.end(),
+        configuration.StrictInterceptions.begin(),
+        configuration.StrictInterceptions.end(),
         std::back_inserter(result),
-        [&callerAssemblyName, &targetTypeName, &targetMethodName, &methodParametersCount](configuration::Interception interception) {
+        [&callerAssemblyName, &targetTypeName, &targetMethodName, &methodParametersCount](configuration::StrictInterception interception) {
         return (callerAssemblyName == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
             && targetTypeName == interception.Target.TypeName
             && targetMethodName == interception.Target.MethodName && methodParametersCount == interception.Target.MethodParametersCount;

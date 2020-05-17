@@ -3,5 +3,4 @@ LIBRARY "DotNetCoreProfiler.dll"
 EXPORTS
     DllCanUnloadNow PRIVATE
     DllGetClassObject PRIVATE
-    AddInterceptor
     GetAssemblyBytes

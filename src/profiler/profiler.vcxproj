@@ -99,7 +99,6 @@
     <Text Include="CMakeLists.txt" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="configuration\InterceptionInfo.h" />
     <ClInclude Include="info\GenericMethodSignature.h" />
     <ClInclude Include="info\AssemblyInfo.h" />
     <ClInclude Include="ClassFactory.h" />
@@ -114,8 +113,7 @@
     <ClInclude Include="util\helpers.h" />
     <ClInclude Include="rewriter\ILRewriter.h" />
     <ClInclude Include="rewriter\ILRewriterHelper.h" />
-    <ClInclude Include="configuration\ImportInterception.h" />
-    <ClInclude Include="configuration\Interception.h" />
+    <ClInclude Include="configuration\StrictInterception.h" />
     <ClInclude Include="configuration\Interceptor.h" />
     <ClInclude Include="info\MethodSignature.h" />
     <ClInclude Include="miniutf\miniutf.hpp" />
@@ -129,6 +127,8 @@
     <ClInclude Include="util\util.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="configuration\Configuration.cpp" />
+    <ClCompile Include="configuration\AttributedInterceptor.h" />
     <ClCompile Include="info\GenericMethodSignature.cpp" />
     <ClCompile Include="info\AssemblyInfo.cpp" />
     <ClCompile Include="ClassFactory.cpp" />

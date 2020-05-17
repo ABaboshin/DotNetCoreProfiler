@@ -14,6 +14,7 @@ COPY --from=build /app /app
 RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
 COPY --from=interception /interception/*.dll /profiler/
+COPY --from=interception /interception/profiler.json /profiler/
 
 EXPOSE 80
 

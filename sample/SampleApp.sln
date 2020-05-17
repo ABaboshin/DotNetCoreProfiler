@@ -28,7 +28,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Loader", "..\s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Attributes", "..\src\Interception.Attributes\Interception.Attributes.csproj", "{8804504F-9CD2-45B4-9AE6-8A814CCCC459}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Core", "..\src\Interception.Core\Interception.Core.csproj", "{EF52A3C7-F35A-4EBB-81FD-6C93230B881E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Core", "..\src\Interception.Core\Interception.Core.csproj", "{EF52A3C7-F35A-4EBB-81FD-6C93230B881E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Generator", "..\src\Interception.Generator\Interception.Generator.csproj", "{45791EAF-BEA4-4064-BBD8-7D30442BD34F}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -117,6 +119,14 @@ Global
 		{EF52A3C7-F35A-4EBB-81FD-6C93230B881E}.Release|Any CPU.Build.0 = Release|Any CPU
 		{EF52A3C7-F35A-4EBB-81FD-6C93230B881E}.Release|x64.ActiveCfg = Release|Any CPU
 		{EF52A3C7-F35A-4EBB-81FD-6C93230B881E}.Release|x64.Build.0 = Release|Any CPU
+		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Debug|x64.Build.0 = Debug|Any CPU
+		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Release|x64.ActiveCfg = Release|Any CPU
+		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

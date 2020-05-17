@@ -10,8 +10,6 @@
 #include "info/FunctionInfo.h"
 #include "info/ModuleInfo.h"
 #include "configuration/Configuration.h"
-#include "configuration/ImportInterception.h"
-#include "configuration/InterceptionInfo.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -40,9 +38,9 @@ private:
 
     wstring GetInterceptionLoaderClassName();
 
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const std::vector<configuration::Interception>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken);
+    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const std::vector<configuration::StrictInterception>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken);
 
-    std::vector<configuration::Interception> FindInterceptions(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount);
+    std::vector<configuration::StrictInterception> FindInterceptions(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount);
 
 public:
     CorProfiler();
@@ -177,8 +175,6 @@ public:
 
         return count;
     }
-
-    void AddInterception(configuration::ImportInterception interception);
 
     void GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize);
 };

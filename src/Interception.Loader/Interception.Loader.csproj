@@ -12,8 +12,6 @@
     <Compile Include="..\Interception.Attributes\ParameterValidationAttribute.cs" Link="ParameterValidationAttribute.cs" />
     <Compile Include="..\Interception.Attributes\StrictInterceptAttribute.cs" Link="StrictInterceptAttribute.cs" />
     <Compile Include="..\Interception.Core\Interop\ImportInterception.cs" Link="Interop\ImportInterception.cs" />
-    <Compile Include="..\Interception.Core\Interop\InterceptionInfo.cs" Link="Interop\InterceptionInfo.cs" />
-    <Compile Include="..\Interception.Core\Interop\InterceptionInfoInterop.cs" Link="Interop\InterceptionInfoInterop.cs" />
     <Compile Include="..\Interception.Core\Interop\NativeMethods.cs" Link="Interop\NativeMethods.cs" />
   </ItemGroup>
 

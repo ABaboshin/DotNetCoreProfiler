@@ -103,15 +103,15 @@ namespace Interception
 
         private void ProcessInitializer(Assembly assembly)
         {
-            var initializers = assembly
-                .GetTypes()
-                .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(InitializeAttribute).FullName).Any())
-                .ToList();
+            //var initializers = assembly
+            //    .GetTypes()
+            //    .Where(type => type.GetCustomAttributes().Where(a => a.GetType().FullName == typeof(InitializeAttribute).FullName).Any())
+            //    .ToList();
 
-            foreach (var initializer in initializers)
-            {
-                Activator.CreateInstance(initializer);
-            }
+            //foreach (var initializer in initializers)
+            //{
+            //    Activator.CreateInstance(initializer);
+            //}
         }
 
         private void PorcessStrictInterceptors(Assembly assembly)

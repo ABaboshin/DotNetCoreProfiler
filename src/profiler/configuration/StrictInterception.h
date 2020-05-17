@@ -8,19 +8,17 @@ using namespace util;
 
 namespace configuration
 {
-	struct Interception {
+	struct StrictInterception {
 		wstring CallerAssemblyName;
 		TargetMethod Target{};
 		Interceptor Interceptor{};
-		bool IsComposed = false;
 
-		Interception(const wstring& callerAssemblyName, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor, bool isComposed) :
+		StrictInterception(const wstring& callerAssemblyName, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor) :
 			CallerAssemblyName(callerAssemblyName),
 			Target(targetMethod),
-			Interceptor(interceptor),
-			IsComposed(isComposed) {}
+			Interceptor(interceptor) {}
 
-		Interception() :
+		StrictInterception() :
 			CallerAssemblyName(""_W) {}
 	};
 }

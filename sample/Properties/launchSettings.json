@@ -43,6 +43,7 @@
         "CORECLR_PROFILER": "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}",
         "CORECLR_PROFILER_PATH": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin\\DotNetCoreProfiler.dll",
         "CORECLR_PROFILER_HOME": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\bin",
+        "PROFILER_CONFIGURATION": "D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\profiler.json",
         "PROFILER_INTERCEPTION_DLLS": "D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.dll"
       },
       "nativeDebugging": true,
