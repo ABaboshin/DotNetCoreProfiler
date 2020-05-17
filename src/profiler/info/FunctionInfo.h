@@ -16,6 +16,7 @@ namespace info
         GenericMethodSignature FunctionSpecSignature{};
         mdToken MethodDefId;
         std::vector<wstring> Attributes{};
+        std::vector<wstring> ParameterAttributes{};
 
         FunctionInfo()
             : Id(0), Name(""_W), MethodDefId(0) {}
@@ -23,26 +24,28 @@ namespace info
         FunctionInfo(mdToken id, wstring name, TypeInfo type,
             MethodSignature signature,
             GenericMethodSignature functionSpecSignature, mdToken methodDefId,
-            std::vector<wstring> attributes)
+            const std::vector<wstring>& attributes, const std::vector<wstring>& parameterAttributes)
             : Id(id),
             Name(name),
             Type(type),
             Signature(signature),
             FunctionSpecSignature(functionSpecSignature),
             MethodDefId(methodDefId),
-            Attributes(attributes) {}
+            Attributes(attributes),
+            ParameterAttributes(parameterAttributes) {}
 
         FunctionInfo(mdToken id, wstring name, TypeInfo type,
-            MethodSignature signature, std::vector<wstring> attributes)
+            MethodSignature signature,
+            const std::vector<wstring>& attributes, const std::vector<wstring>& parameterAttributes)
             : Id(id),
             Name(name),
             Type(type),
             Signature(signature),
             MethodDefId(0),
-            Attributes(attributes) {}
+            Attributes(attributes),
+            ParameterAttributes(parameterAttributes) {}
 
-        static FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport,
-            const mdToken& token);
+        static FunctionInfo GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token);
 
         TypeInfo ResolveParameterType(const TypeInfo& typeInfo);
     };

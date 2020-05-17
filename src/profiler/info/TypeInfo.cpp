@@ -89,8 +89,7 @@ namespace info
         }
     }
 
-    TypeInfo TypeInfo::GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport,
-        const mdToken& token) {
+    TypeInfo TypeInfo::GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token) {
         mdToken parent_token = mdTokenNil;
 
         std::vector<WCHAR> typeName(_const::NameMaxSize, (WCHAR)0);

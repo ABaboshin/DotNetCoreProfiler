@@ -30,7 +30,6 @@ namespace info
 
         void TryParseGeneric();
 
-        static TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport,
-            const mdToken& token);
+        static TypeInfo GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token);
     };
 }

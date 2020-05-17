@@ -4,8 +4,9 @@
 
 namespace info
 {
-    FunctionInfo FunctionInfo::GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport,
-        const mdToken& token) {
+    std::vector<wstring> ExtractAttributes(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token);
+
+    FunctionInfo FunctionInfo::GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token) {
 
         mdToken parentToken = mdTokenNil;
         mdToken methodSpecToken = mdTokenNil;
@@ -59,8 +60,70 @@ namespace info
         }
 
         std::vector<wstring> attributes{};
+        std::vector<wstring> parameterAttributes{};
 
-        #define NumItems(s) (sizeof(s) / sizeof(s[0]))
+        std::cout << "Method " << util::ToString(util::ToString(functionName, functionNameLength)) << std::endl;
+        {
+            auto res = ExtractAttributes(metadataImport, token);
+            attributes.insert(attributes.end(), res.begin(), res.end());
+        }
+
+        {
+            HCORENUM paramEnum = NULL;
+            mdParamDef params[10];
+            ULONG count, paramCount;
+            bool first = true;
+            HRESULT hr;
+
+#define NumItems(s) (sizeof(s) / sizeof(s[0]))
+            while (SUCCEEDED(hr = metadataImport->EnumParams(&paramEnum, token,
+                params, NumItems(params), &count)) &&
+                count > 0)
+            {
+                if (first)
+                {
+                    metadataImport->CountEnum(paramEnum, &paramCount);
+                }
+                for (ULONG i = 0; i < count; i++)
+                {
+                    mdMethodDef md;
+                    ULONG num;
+                    WCHAR paramName[_const::NameMaxSize];
+                    ULONG nameLen;
+                    DWORD flags;
+                    VARIANT defValue;
+                    DWORD dwCPlusFlags;
+                    void const* pValue;
+                    ULONG cbValue;
+
+                    hr = metadataImport->GetParamProps(params[i], &md, &num, paramName, NumItems(paramName),
+                        &nameLen, &flags, &dwCPlusFlags, &pValue, &cbValue);
+
+                    auto res = ExtractAttributes(metadataImport, params[i]);
+                    parameterAttributes.insert(parameterAttributes.end(), res.begin(), res.end());
+                }
+                first = false;
+            }
+            metadataImport->CloseEnum(paramEnum);
+        }
+
+        const auto typeInfo = TypeInfo::GetTypeInfo(metadataImport, parentToken);
+
+        if (isGeneric)
+        {
+            return {methodSpecToken, util::ToString(functionName, functionNameLength), typeInfo, MethodSignature(finalSignature), GenericMethodSignature(methodSpecSignature), methodDefToken, attributes, parameterAttributes };
+        }
+
+        return { token, util::ToString(functionName, functionNameLength), typeInfo,
+                MethodSignature(util::ToRaw(rawSignature,rawSignatureLength)), attributes, parameterAttributes };
+    }
+
+    std::vector<wstring> ExtractAttributes(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token)
+    {
+        std::vector<wstring> attributes{};
+        HRESULT hr;
+
+#define NumItems(s) (sizeof(s) / sizeof(s[0]))
 
         HCORENUM customAttributeEnum = NULL;
         mdTypeRef customAttributes[10];
@@ -69,8 +132,6 @@ namespace info
             customAttributes, NumItems(customAttributes), &count)) &&
             count > 0)
         {
-            std::cout << "Method " << util::ToString(util::ToString(functionName, functionNameLength)) << std::endl;
-
             for (ULONG i = 0; i < count; i++, totalCount++)
             {
                 mdToken     tkObj;                  // Attributed object.
@@ -97,12 +158,10 @@ namespace info
                 case mdtMemberRef:
                     hr = metadataImport->GetNameFromToken(tkType, &pMethName);
                     hr = metadataImport->GetMemberRefProps(tkType, &tkType, 0, 0, 0, &pSig, &cbSig);
-                    std::cout << "Attr mdtMemberRef " << pMethName << std::endl;
                     break;
                 case mdtMethodDef:
                     hr = metadataImport->GetNameFromToken(tkType, &pMethName);
                     hr = metadataImport->GetMethodProps(tkType, &tkType, 0, 0, 0, 0, &pSig, &cbSig, 0, 0);
-                    std::cout << "Attr mdtMethodDef " << pMethName << std::endl;
                     break;
                 } // switch
 
@@ -111,6 +170,7 @@ namespace info
                 {
                 case mdtTypeDef:
                     hr = metadataImport->GetTypeDefProps(tkType, &className[0], MAX_CLASS_NAME, &classNameLength, 0, 0);
+
                     attributes.push_back(util::ToString(className, classNameLength));
                     std::cout << "Attr mdtTypeDef " << util::ToString(util::ToString(className, classNameLength)) << std::endl;
                     break;
@@ -124,15 +184,7 @@ namespace info
         }
         metadataImport->CloseEnum(customAttributeEnum);
 
-        const auto typeInfo = TypeInfo::GetTypeInfo(metadataImport, parentToken);
-
-        if (isGeneric)
-        {
-            return {methodSpecToken, util::ToString(functionName, functionNameLength), typeInfo, MethodSignature(finalSignature), GenericMethodSignature(methodSpecSignature), methodDefToken, attributes};
-        }
-
-        return { token, util::ToString(functionName, functionNameLength), typeInfo,
-                MethodSignature(util::ToRaw(rawSignature,rawSignatureLength)), attributes };
+        return attributes;
     }
 
     TypeInfo FunctionInfo::ResolveParameterType(const TypeInfo& typeInfo)
