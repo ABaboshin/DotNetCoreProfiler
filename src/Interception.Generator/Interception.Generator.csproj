@@ -12,7 +12,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Interception.Common\Interception.Common.csproj" />
     <ProjectReference Include="..\Interception.Core\Interception.Core.csproj" />
   </ItemGroup>
 

@@ -5,18 +5,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="..\Interception.Attributes\ComposeInterceptorAttribute.cs" Link="ComposeInterceptorAttribute.cs" />
     <Compile Include="..\Interception.Attributes\InitializeAttribute.cs" Link="InitializeAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\MethodInterceptorAttribute.cs" Link="MethodInterceptorAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\MethodInterceptorImplementationAttribute.cs" Link="MethodInterceptorImplementationAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\ParameterValidationAttribute.cs" Link="ParameterValidationAttribute.cs" />
-    <Compile Include="..\Interception.Attributes\StrictInterceptAttribute.cs" Link="StrictInterceptAttribute.cs" />
-    <Compile Include="..\Interception.Core\Interop\ImportInterception.cs" Link="Interop\ImportInterception.cs" />
-    <Compile Include="..\Interception.Core\Interop\NativeMethods.cs" Link="Interop\NativeMethods.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Interop\" />
   </ItemGroup>
 
 </Project>

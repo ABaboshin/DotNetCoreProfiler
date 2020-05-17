@@ -1,15 +1,15 @@
-﻿//using Interception.Attributes;
-//using System;
+﻿using Interception.Attributes;
+using System;
 
-//namespace Interception
-//{
-//    [Initialize]
-//    public class ConfigureMetrics
-//    {
-//        public ConfigureMetrics()
-//        {
-//            //Console.WriteLine("ConfigureMetrics");
-//        }
-//    }
+namespace Interception
+{
+    [Initialize]
+    public class ConfigureMetrics
+    {
+        public ConfigureMetrics()
+        {
+            //Console.WriteLine("ConfigureMetrics");
+        }
+    }
 
-//}
+}

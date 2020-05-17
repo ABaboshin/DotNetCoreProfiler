@@ -14,8 +14,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "profiler", "..\src\profiler
 		{41054159-1F62-45C1-839F-281E6EFDD24E} = {41054159-1F62-45C1-839F-281E6EFDD24E}
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Common", "..\src\Interception.Common\Interception.Common.csproj", "{306264A1-2256-4864-8CF2-A9C1A955C8F0}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception", "..\src\Interception\Interception.csproj", "{6983D015-A5C0-435D-A80C-030E331EDD67}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Observers", "..\src\Interception.Observers\Interception.Observers.csproj", "{678A3CFA-8E38-41EC-9CAA-40FB69E78124}"
@@ -55,14 +53,6 @@ Global
 		{91B6272F-5780-4C94-8071-DBBA7B4F67F3}.Release|Any CPU.ActiveCfg = Release|x64
 		{91B6272F-5780-4C94-8071-DBBA7B4F67F3}.Release|x64.ActiveCfg = Release|x64
 		{91B6272F-5780-4C94-8071-DBBA7B4F67F3}.Release|x64.Build.0 = Release|x64
-		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Debug|x64.ActiveCfg = Debug|Any CPU
-		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Debug|x64.Build.0 = Debug|Any CPU
-		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Release|Any CPU.Build.0 = Release|Any CPU
-		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Release|x64.ActiveCfg = Release|Any CPU
-		{306264A1-2256-4864-8CF2-A9C1A955C8F0}.Release|x64.Build.0 = Release|Any CPU
 		{6983D015-A5C0-435D-A80C-030E331EDD67}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{6983D015-A5C0-435D-A80C-030E331EDD67}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6983D015-A5C0-435D-A80C-030E331EDD67}.Debug|x64.ActiveCfg = Debug|Any CPU

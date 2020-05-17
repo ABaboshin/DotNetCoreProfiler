@@ -457,7 +457,12 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMetho
         &loaderClassToken);
 
     // loader class param
-    auto profilerInterceptionDlls = GetEnvironmentValue("PROFILER_INTERCEPTION_DLLS"_W);
+    wstring profilerInterceptionDlls = ""_W;
+    for (const auto& a : configuration.Assemblies)
+    {
+        profilerInterceptionDlls += a + ","_W;
+    }
+
     mdString paramToken;
     hr = metadataEmit->DefineUserString(profilerInterceptionDlls.c_str(), (ULONG)profilerInterceptionDlls.length(), &paramToken);
 

@@ -12,7 +12,6 @@
   <ItemGroup>
     <ProjectReference Include="..\Interception.Core\Interception.Core.csproj" />
     <ProjectReference Include="..\Interception.OpenTracing.Prometheus\Interception.OpenTracing.Prometheus.csproj" />
-    <ProjectReference Include="..\Interception.Common\Interception.Common.csproj" />
     <ProjectReference Include="..\Interception.Observers\Interception.Observers.csproj" />
   </ItemGroup>
 
