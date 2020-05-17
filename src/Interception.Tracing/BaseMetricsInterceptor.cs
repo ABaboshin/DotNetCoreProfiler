@@ -27,16 +27,16 @@ namespace Interception.Tracing
             }
         }
 
-        public override void ExecuteAfter(object result, Exception exception)
+        public override void ExecuteAfter()
         {
             if (_scope != null)
             {
-                if (exception != null)
+                if (Exception != null)
                 {
-                    _scope.Span.SetException(exception);
+                    _scope.Span.SetException(Exception);
                 }
 
-                _scope.Span.SetTag("result", result?.ToString());
+                _scope.Span.SetTag("result", Result?.ToString());
 
                 _scope.Dispose();
                 _scope = null;

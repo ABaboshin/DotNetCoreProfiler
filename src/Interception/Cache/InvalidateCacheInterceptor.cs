@@ -8,8 +8,6 @@ namespace Interception.Cache
     [MethodInterceptorImplementation(typeof(InvalidateCacheAttribute))]
     public class InvalidateCacheInterceptor : BaseAttributedInterceptor
     {
-        public override int Priority => 0;
-
         public override void ExecuteBefore()
         {
             var attribute = GetCustomAttribute<InvalidateCacheAttribute>();

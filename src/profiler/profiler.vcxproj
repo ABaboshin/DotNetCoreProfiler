@@ -104,6 +104,7 @@
     <ClInclude Include="info\AssemblyInfo.h" />
     <ClInclude Include="ClassFactory.h" />
     <ClInclude Include="const\const.h" />
+    <ClInclude Include="info\InterceptionVarInfo.h" />
     <ClInclude Include="info\parser.h" />
     <ClInclude Include="util\ComPtr.h" />
     <ClInclude Include="configuration\Configuration.h" />

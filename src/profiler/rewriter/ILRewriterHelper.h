@@ -16,13 +16,13 @@ namespace rewriter
 
         void SetILPosition(ILInstr* instr);
 
-        void StLocal(unsigned index);
+        ILInstr* StLocal(unsigned index);
 
         void CreateArray(const mdTypeRef typeRef, INT32 size);
 
         void Duplicate();
 
-        void LoadInt32(INT32 value);
+        ILInstr* LoadInt32(INT32 value);
 
         void LoadInt64(INT64 value);
 
@@ -36,7 +36,7 @@ namespace rewriter
 
         void Cast(mdTypeRef typeRef);
 
-        void LoadLocal(unsigned index);
+        ILInstr* LoadLocal(unsigned index);
 
         void LoadLocalAddress(unsigned index);
 
@@ -56,8 +56,20 @@ namespace rewriter
 
         void StInd(BYTE typeDef);
 
-        HRESULT AddLocalVariable(mdTypeRef typeRef, int& newIndex);
+        ILInstr* BrTrueS();
 
-        
+        ILInstr* BrFalseS();
+
+        ILInstr* BrS();
+
+        ILInstr* Nop();
+
+        ILInstr* LoadNull();
+
+        ILInstr* CgtUn();
+
+        ILInstr* Throw();
+
+        HRESULT AddLocalVariable(mdTypeRef typeRef, int& newIndex);
     };
 }

@@ -25,6 +25,7 @@ This project has a goal to demonstrate injection of the following devops-related
 
 ***Limitations***
  - Dynamic methods are not supported
+ - Interceptors can be combined, but the order of execution is not defined.
 
 ## Project structure
 

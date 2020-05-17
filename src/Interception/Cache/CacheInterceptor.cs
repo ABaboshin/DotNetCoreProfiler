@@ -14,8 +14,6 @@ namespace Interception.Cache
     [MethodInterceptorImplementation(typeof(CacheAttribute))]
     public class CacheInterceptor : BaseAttributedInterceptor
     {
-        public override int Priority => 10000;
-
         IDistributedCache DistributedCache => DependencyInjection.ServiceProvider.GetRequiredService<IDistributedCache>();
 
         string GetCacheKey()
@@ -42,33 +40,30 @@ namespace Interception.Cache
             return key;
         }
 
-        public override void ExecuteAfter(object result, Exception exception)
+        public override void ExecuteAfter()
         {
-            //Console.WriteLine($"Cache.ExecuteAfter {DateTime.UtcNow}");
+            Console.WriteLine($"Cache.ExecuteAfter {DateTime.UtcNow} {GetCacheKey()}");
 
             var method = FindMethod();
             var attribute = (CacheAttribute)method.GetCustomAttributes(typeof(CacheAttribute), false).First();
 
-            DistributedCache.Set(GetCacheKey(), Serialization.ToByteArray(result), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(attribute.DurationSeconds) });
+            DistributedCache.Set(GetCacheKey(), Serialization.ToByteArray(Result), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(attribute.DurationSeconds) });
         }
 
-        public override object Execute()
+        public override bool SkipExecution()
         {
-            //Console.WriteLine($"Cache.Execute {DateTime.UtcNow} {GetCacheKey()}");
             var cached = DistributedCache.Get(GetCacheKey());
-
-            //Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cache {cached != null} {GetCacheKey()}");
-
-            if (cached is null)
+            if (cached != null)
             {
-                return base.Execute();
+                DistributedCache.Refresh(GetCacheKey());
+                Result = Serialization.FromByteArray(cached);
+                Console.WriteLine($"Cache.SkipExecution {GetCacheKey()}");
+                return true;
             }
+            
+            Console.WriteLine($"Cache.SkipExecution {GetCacheKey()} no");
 
-            //Console.WriteLine($"Cache.Execute {DateTime.UtcNow} cached result {GetCacheKey()}");
-
-            DistributedCache.Refresh(GetCacheKey());
-
-            return Serialization.FromByteArray(cached);
+            return false;
         }
     }
 }

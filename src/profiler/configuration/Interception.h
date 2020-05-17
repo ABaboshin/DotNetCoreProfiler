@@ -13,14 +13,12 @@ namespace configuration
 		TargetMethod Target{};
 		Interceptor Interceptor{};
 		bool IsComposed = false;
-		wstring Key;
 
-		Interception(const wstring& callerAssemblyName, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor, bool isComposed, wstring key) :
+		Interception(const wstring& callerAssemblyName, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor, bool isComposed) :
 			CallerAssemblyName(callerAssemblyName),
 			Target(targetMethod),
 			Interceptor(interceptor),
-			IsComposed(isComposed),
-			Key(key) {}
+			IsComposed(isComposed) {}
 
 		Interception() :
 			CallerAssemblyName(""_W) {}

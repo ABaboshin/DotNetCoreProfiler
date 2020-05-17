@@ -14,6 +14,5 @@ namespace configuration
 		char* InterceptorTypeName;
 		char* InterceptorAssemblyName;
 		bool IsComposed;
-		char* Key;
 	} ImportInterception;
 }

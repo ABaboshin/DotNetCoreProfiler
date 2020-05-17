@@ -17,51 +17,16 @@ namespace Interception.Core
 
         private object[] _parameters;
 
-        private object _this;
-
-        private int _mdToken;
-
-        private long _moduleVersionPtr;
-
-        private string _key;
-
-        public void SetThis(object _this)
-        {
-            //Console.WriteLine($"SetThis {_this}");
-            this._this = _this;
-        }
-
-        public object GetThis()
-        {
-            return _this;
-        }
+        public object This { get; set; }
+        public int MdToken { get; set; }
+        public long ModuleVersionPtr { get; set; }
+        public object Result { get; set; } = null;
+        public Exception Exception { get; set; } = null;
 
         public void AddParameter(int num, object value)
         {
             //Console.WriteLine($"AddParameter {num} {value}");
             _parameters[num] = value;
-        }
-
-        public void SetMdToken(int mdToken)
-        {
-            //Console.WriteLine($"SetMdToken {mdToken}");
-            _mdToken = mdToken;
-        }
-
-        public int GetMdToken()
-        {
-            return _mdToken;
-        }
-
-        public void SetModuleVersionPtr(long moduleVersionPtr)
-        {
-            //Console.WriteLine($"SetModuleVersionPtr {moduleVersionPtr}");
-            _moduleVersionPtr = moduleVersionPtr;
-        }
-
-        public long GetModuleVersionPtr()
-        {
-            return _moduleVersionPtr;
         }
 
         public object GetParameter(int num)
@@ -74,52 +39,43 @@ namespace Interception.Core
             _parameters[num] = value;
         }
 
-        public void SetArgumentNumber(int number)
+        public void SetArgumentCount(int number)
         {
             //Console.WriteLine($"SetArgumentNumber {number}");
             _parameters = new object[number];
         }
 
-        public void SetParameters(object[] parameters)
-        {
-            _parameters = parameters;
-        }
-
-        public object[] GetParameters()
-        {
-            return _parameters;
-        }
-
-        public void SetKey(string key)
-        {
-            //Console.WriteLine($"SetKey {key}");
-            _key = key;
-        }
-
-        public string GetKey()
-        {
-            return _key;
-        }
-
-        public abstract int Priority { get; }
-
-        public virtual object Execute()
+        public object Execute()
         {
             Validate();
             var method = FindMethod();
             var isAsync = method.IsReturnTypeTask();
 
-            if (!isAsync)
+            Console.WriteLine($"Execute {method.Name}");
+
+            try
             {
-                return ExecuteSyncInternal();
+                if (!isAsync)
+                {
+                    Result = ExecuteSyncInternal();
+                    Console.WriteLine($"ExecuteSyncInternal with result {Result}");
+                    return Result;
+                }
+                else if (!method.IsReturnTypeTaskWithResult())
+                {
+                    Result = ExecuteAsyncInternal();
+                    return Result;
+                }
+                else
+                {
+                    Result = ExecuteAsyncWithResultInternal();
+                    return Result;
+                }
             }
-            else if (!method.IsReturnTypeTaskWithResult())
+            catch (Exception)
             {
-                return ExecuteAsyncInternal();
-            }
-            else
-            {
-                return ExecuteAsyncWithResultInternal();
+                Result = null;
+                return Result;
             }
         }
 
@@ -127,49 +83,47 @@ namespace Interception.Core
         { 
         }
 
-        public virtual void ExecuteAfter(object result, Exception exception)
+        public virtual void ExecuteAfter()
         { 
+        }
+
+        public virtual bool SkipExecution()
+        {
+            return false;
         }
 
         protected virtual MethodInfo FindMethod()
         {
-            return (MethodInfo)_methodFinder.FindMethod(_mdToken, _moduleVersionPtr);
+            return (MethodInfo)_methodFinder.FindMethod(MdToken, ModuleVersionPtr);
         }
 
         #region internal
-        protected object ExecuteSyncInternal()
+        private object ExecuteSyncInternal()
         {
             var method = FindMethod();
 
             try
             {
-                ExecuteBefore();
-                var result = method.Invoke(_this, _parameters);
-                ExecuteAfter(result, null);
-                return result;
+                return method.Invoke(This, _parameters);
             }
             catch (Exception ex)
             {
-                ExecuteAfter(null, ex);
+                Exception = ex;
                 throw;
             }
         }
 
-        protected async Task ExecuteAsyncInternal()
+        private async Task ExecuteAsyncInternal()
         {
-            //Console.WriteLine("ExecuteAsyncInternal");
             var method = FindMethod();
 
             try
             {
-                ExecuteBefore();
-                var result = (Task)method.Invoke(_this, _parameters);
-                await result;
-                ExecuteAfter(result, null);
+                await (Task)method.Invoke(This, _parameters);
             }
             catch (Exception ex)
             {
-                ExecuteAfter(null, ex);
+                Exception = ex;
                 throw;
             }
         }
@@ -182,7 +136,7 @@ namespace Interception.Core
             Module = asm.DefineDynamicModule("DynamicModule");
         }
 
-        protected object ExecuteAsyncWithResultInternal()
+        private object ExecuteAsyncWithResultInternal()
         {
             var method = FindMethod();
 
@@ -202,18 +156,12 @@ namespace Interception.Core
         {
             try
             {
-                ExecuteBefore();
-
                 var func = (Func<Task<T>>)funcDelegate;
-                var result = await func.Invoke();
-
-                ExecuteAfter(result, null);
-
-                return result;
+                return await func.Invoke();
             }
             catch (Exception ex)
             {
-                ExecuteAfter(null, ex);
+                Exception = ex;
                 throw;
             }
         }
@@ -223,7 +171,7 @@ namespace Interception.Core
             var method = FindMethod();
 
             Func<Task<T>> func = () => {
-                return (Task<T>)method.Invoke(_this, _parameters);
+                return (Task<T>)method.Invoke(This, _parameters);
             };
 
             return func;

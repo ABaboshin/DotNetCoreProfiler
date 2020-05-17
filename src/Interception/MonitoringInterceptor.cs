@@ -11,8 +11,6 @@ namespace Interception
     [MethodInterceptorImplementation(typeof(MonitorAttribute))]
     public class MonitoringInterceptor : BaseMetricsInterceptor
     {
-        public override int Priority => 0;
-
         public MonitoringInterceptor() : base(true)
         {
         }
