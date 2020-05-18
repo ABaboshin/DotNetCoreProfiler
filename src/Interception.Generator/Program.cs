@@ -49,8 +49,7 @@ namespace Interception.Generator
                         {
                             AssemblyName = assembly.GetName().Name,
                             TypeName = info.type.FullName
-                        },
-                        ParameterLevel = info.attribute.MethodInterceptorAttribute == typeof(ParameterValidationAttribute)
+                        }
                     };
                 })
                 .ToList();

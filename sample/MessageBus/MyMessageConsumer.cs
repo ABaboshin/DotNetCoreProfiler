@@ -49,7 +49,8 @@ namespace SampleApp.MessageBus
         }
 
 
-        [InvalidateCache(Name =nameof(DummyCache))]
+        [Monitor(Name = "InvalidateCache")]
+        [InvalidateCache(Name = nameof(DummyCache))]
         void InvalidateCache()
         {
         }

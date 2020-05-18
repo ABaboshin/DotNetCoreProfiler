@@ -30,17 +30,15 @@ private:
 
     HRESULT Rewrite(ModuleID moduleId, mdToken callerToken);
 
-    HRESULT InjectLoadMethod(
-        ModuleID moduleId,
-        mdMethodDef methodDef);
+    HRESULT InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef);
 
     HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMethodToken);
 
     wstring GetInterceptionLoaderClassName();
 
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const std::vector<configuration::StrictInterception>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken);
+    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken);
 
-    std::vector<configuration::StrictInterception> FindInterceptions(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount);
+    std::vector<configuration::Interceptor> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
 
 public:
     CorProfiler();

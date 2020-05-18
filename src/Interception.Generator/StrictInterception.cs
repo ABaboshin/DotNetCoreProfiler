@@ -25,6 +25,5 @@
     {
         public string AttributeType { get; set; }
         public Interceptor Interceptor { get; set; }
-        public bool ParameterLevel { get; set; }
     }
 }

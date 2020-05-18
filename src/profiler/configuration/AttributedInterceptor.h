@@ -7,12 +7,10 @@ namespace configuration
 	{
 		Interceptor Interceptor{};
 		wstring AttributeType;
-		bool ParameterLevel;
 
-		AttributedInterceptor(const ::configuration::Interceptor& interceptor, const wstring& attributeType, bool parameterLevel) :
+		AttributedInterceptor(const ::configuration::Interceptor& interceptor, const wstring& attributeType) :
 			Interceptor(interceptor),
-			AttributeType(attributeType),
-			ParameterLevel(parameterLevel) {}
+			AttributeType(attributeType) {}
 
 		AttributedInterceptor() {}
 	};

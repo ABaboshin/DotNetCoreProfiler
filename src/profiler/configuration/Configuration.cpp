@@ -74,9 +74,8 @@ namespace configuration
 
 		auto attributeType = ToWSTRING(src.value("AttributeType", ""));
 		auto interceptor = std::get<0>(LoadInterceptorFromJson(src["Interceptor"]));
-		auto parameterLevel = src.value<bool>("ParameterLevel", "false");
 
-		return std::make_pair<AttributedInterceptor, bool>({ interceptor, attributeType, parameterLevel }, true);
+		return std::make_pair<AttributedInterceptor, bool>({ interceptor, attributeType }, true);
 	}
 
 	std::pair<StrictInterception, bool> LoadInterceptionFromJson(const nlohmann::json::value_type& src)

@@ -9,23 +9,23 @@ namespace info
     using namespace util;
 
     struct TypeInfo {
-        mdToken id;
-        wstring name;
-        std::vector<BYTE> raw{};
+        mdToken Id;
+        wstring Name;
+        std::vector<BYTE> Raw{};
 
-        std::vector<TypeInfo> generics{};
+        std::vector<TypeInfo> Generics{};
 
-        bool isRefType = false;
-        BYTE typeDef = 0;
-        bool isBoxed = false;
-        bool isVoid = false;
+        bool IsRefType = false;
+        BYTE TypeDef = 0;
+        bool IsBoxed = false;
+        bool IsVoid = false;
 
-        bool isGenericClassRef = false;
-        bool isGenericMethodRef = false;
-        ULONG genericRefNumber = 0;
+        bool IsGenericClassRef = false;
+        bool IsGenericMethodRef = false;
+        ULONG GenericRefNumber = 0;
 
-        TypeInfo() : id(0), name(""_W) {}
-        TypeInfo(mdToken id, wstring name, const std::vector<BYTE>& raw) : id(id), name(name), raw(raw) {}
+        TypeInfo() : Id(0), Name(""_W) {}
+        TypeInfo(mdToken id, wstring name, const std::vector<BYTE>& raw) : Id(id), Name(name), Raw(raw) {}
         TypeInfo(const std::vector<BYTE>& raw);
 
         void TryParseGeneric();
