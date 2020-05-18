@@ -92,19 +92,19 @@ namespace info
     TypeInfo TypeInfo::GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token) {
         mdToken parent_token = mdTokenNil;
 
-        std::vector<WCHAR> typeName(_const::NameMaxSize, (WCHAR)0);
+        std::vector<WCHAR> typeName(MAX_CLASS_NAME, (WCHAR)0);
         DWORD typeNameLength = 0;
 
         HRESULT hr = E_FAIL;
         const auto token_type = TypeFromToken(token);
         switch (token_type) {
         case mdtTypeDef:
-            hr = metadataImport->GetTypeDefProps(token, &typeName[0], _const::NameMaxSize,
+            hr = metadataImport->GetTypeDefProps(token, &typeName[0], MAX_CLASS_NAME,
                 &typeNameLength, nullptr, nullptr);
             break;
         case mdtTypeRef:
             hr = metadataImport->GetTypeRefProps(token, &parent_token, &typeName[0],
-                _const::NameMaxSize, &typeNameLength);
+                MAX_CLASS_NAME, &typeNameLength);
             break;
         case mdtTypeSpec:
         {
@@ -129,8 +129,7 @@ namespace info
         }
         break;
         case mdtModuleRef:
-            metadataImport->GetModuleRefProps(token, &typeName[0], _const::NameMaxSize,
-                &typeNameLength);
+            metadataImport->GetModuleRefProps(token, &typeName[0], MAX_CLASS_NAME, &typeNameLength);
             break;
         case mdtMemberRef:
             return FunctionInfo::GetFunctionInfo(metadataImport, token).Type;

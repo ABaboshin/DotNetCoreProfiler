@@ -92,7 +92,6 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <None Include="..\Interception.Loader\bin\Debug\netcoreapp2.1\Interception.Loader.dll" />
     <None Include="profiler.def" />
   </ItemGroup>
   <ItemGroup>
@@ -159,7 +158,6 @@
     <ClInclude Include="miniutf\miniutfdata.h" />
     <ClInclude Include="info\ModuleInfo.h" />
     <ClInclude Include="nlohmann\json.hpp" />
-    <ClInclude Include="resource.h" />
     <ClInclude Include="configuration\TargetMethod.h" />
     <ClInclude Include="info\TypeInfo.h" />
     <ClInclude Include="util\types.h" />
@@ -179,14 +177,10 @@
     <ClCompile Include="rewriter\ILRewriterHelper.cpp" />
     <ClCompile Include="info\TypeInfo.cpp" />
     <ClCompile Include="util\helpers.cpp" />
-    <ClCompile Include="interop.cpp" />
     <ClCompile Include="info\MethodSignature.cpp" />
     <ClCompile Include="miniutf\miniutf.cpp" />
     <ClCompile Include="info\ModuleInfo.cpp" />
     <ClCompile Include="util\util.cpp" />
-  </ItemGroup>
-  <ItemGroup>
-    <ResourceCompile Include="Resource.rc" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

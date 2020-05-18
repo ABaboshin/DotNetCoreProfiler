@@ -1,5 +1,3 @@
-FROM profiler:interception as interception
-
 FROM ubuntu:20.04
 
 RUN apt-get update && \
@@ -21,7 +19,5 @@ COPY lib /profiler/lib
 COPY src/profiler /profiler/src/profiler
 
 WORKDIR /profiler/src/profiler
-
-COPY --from=interception /interception/Interception.Loader.dll /profiler/src/profiler
 
 RUN cmake . && make && cp DotNetCoreProfiler.so /

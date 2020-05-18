@@ -3,6 +3,5 @@ FROM mcr.microsoft.com/dotnet/core/sdk:2.1.806 as build
 COPY src src
 
 RUN dotnet publish -c Debug -o /interception src/Interception/Interception.csproj
-RUN dotnet publish -c Debug -o /interception src/Interception.Loader/Interception.Loader.csproj
 RUN dotnet publish -c Debug -o /interception src/Interception.Generator/Interception.Generator.csproj
 RUN cd /interception && dotnet Interception.Generator.dll -a Interception.dll,Interception.Core.dll -p /profiler -o /interception/profiler.json && cat /interception/profiler.json
