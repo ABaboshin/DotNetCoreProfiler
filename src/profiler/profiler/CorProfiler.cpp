@@ -49,6 +49,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
     loaderClass = GetInterceptionLoaderClassName();
 
+    configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
+
     profilerInstance = this;
 
     return S_OK;
@@ -204,8 +206,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         IfFailRet(hr);
 
         std::cout << "Load into app_domain_id " << moduleInfo.assembly.appDomainId
-            << "Before call to " << ToString(functionInfo.type.name) << "." << ToString(functionInfo.name)
-            << " num args " << functionInfo.signature.NumberOfArguments()
+            << "Before call to " << ToString(functionInfo.Type.Name) << "." << ToString(functionInfo.Name)
+            << " num args " << functionInfo.Signature.NumberOfArguments()
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
@@ -455,7 +457,12 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMetho
         &loaderClassToken);
 
     // loader class param
-    auto profilerInterceptionDlls = GetEnvironmentValue("PROFILER_INTERCEPTION_DLLS"_W);
+    wstring profilerInterceptionDlls = ""_W;
+    for (const auto& a : configuration.Assemblies)
+    {
+        profilerInterceptionDlls += a + ","_W;
+    }
+
     mdString paramToken;
     hr = metadataEmit->DefineUserString(profilerInterceptionDlls.c_str(), (ULONG)profilerInterceptionDlls.length(), &paramToken);
 
@@ -616,18 +623,18 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 
         if (printEveryCall)
         {
-            std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
-            << " num args " << target.signature.NumberOfArguments()
+            std::cout << "Found call to " << ToString(target.Type.Name) << "." << ToString(target.Name)
+            << " num args " << target.Signature.NumberOfArguments()
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
         }
 
-        auto interceptions = FindInterceptions(moduleInfo.assembly.name, target.type.name, target.name, target.signature.NumberOfArguments());
+        auto interceptions = FindInterceptions(moduleInfo.assembly.name, target);
 
         if (!interceptions.empty())
         {
-            std::cout << "Found call to " << ToString(target.type.name) << "." << ToString(target.name)
-                << " num args " << target.signature.NumberOfArguments()
+            std::cout << "Found call to " << ToString(target.Type.Name) << "." << ToString(target.Name)
+                << " num args " << target.Signature.NumberOfArguments()
                 << " from assembly " << ToString(moduleInfo.assembly.name)
                 << std::endl << std::flush;
 
@@ -648,7 +655,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo target, const std::vector<configuration::Interception>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken)
 {
     HRESULT hr;
 
@@ -675,7 +682,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     // Define a static type
     mdTypeDef newTypeDef;
-    auto className = interceptions[0].Target.TypeName + interceptions[0].Target.MethodName + "Interception"_W;
+    auto className = target.Type.Name + target.Name + "Interception"_W;
     std::replace(className.begin(), className.end(), '.'_W, '_'_W);
     hr = metadataEmit->DefineTypeDef(className.c_str(), tdAbstract | tdSealed,
         objectTypeRef, NULL, &newTypeDef);
@@ -685,30 +692,30 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         // call convention for static method
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
         // number of arguments: original count + this if instance method
-        (BYTE)(target.signature.NumberOfArguments() + (target.signature.IsInstanceMethod() ? 1 : 0))
+        (BYTE)(target.Signature.NumberOfArguments() + (target.Signature.IsInstanceMethod() ? 1 : 0))
     };
     // return type
-    auto retType = target.ResolveParameterType(target.signature.ret);
-    signature.insert(signature.end(), retType.raw.begin(), retType.raw.end());
+    auto retType = target.ResolveParameterType(target.Signature.ReturnType);
+    signature.insert(signature.end(), retType.Raw.begin(), retType.Raw.end());
     
     // insert this
-    if (target.signature.IsInstanceMethod())
+    if (target.Signature.IsInstanceMethod())
     {
         signature.push_back(ELEMENT_TYPE_OBJECT);
     }
 
-    target.signature.ParseArguments();
+    target.Signature.ParseArguments();
 
     // insert existing arguments
-    for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
+    for (size_t i = 0; i < target.Signature.NumberOfArguments(); i++)
     {
-        auto argument = target.ResolveParameterType(target.signature.arguments[i]);
-        if (argument.isRefType)
+        auto argument = target.ResolveParameterType(target.Signature.Arguments[i]);
+        if (argument.IsRefType)
         {
             signature.push_back(ELEMENT_TYPE_BYREF);
         }
 
-        signature.push_back(argument.typeDef);
+        signature.push_back(argument.TypeDef);
     }
     
     // define a method
@@ -749,14 +756,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     {
         // define interception.dll
         mdModuleRef interceptorDllRef;
-        GetWrapperRef(hr, metadataAssemblyEmit, interceptorDllRef, interception.Interceptor.AssemblyName);
+        GetWrapperRef(hr, metadataAssemblyEmit, interceptorDllRef, interception.AssemblyName);
         IfFailRet(hr);
 
         // define wrappedType
         mdTypeRef interceptorTypeRef;
         hr = metadataEmit->DefineTypeRefByName(
             interceptorDllRef,
-            interception.Interceptor.TypeName.data(),
+            interception.TypeName.data(),
             &interceptorTypeRef);
         IfFailRet(hr);
 
@@ -796,7 +803,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     auto shift = 0;
 
     //SetThis
-    if (target.signature.IsInstanceMethod()) for (const auto& interceptor : inteceptionRefs)
+    if (target.Signature.IsInstanceMethod()) for (const auto& interceptor : inteceptionRefs)
     {
         std::vector<BYTE> setThisSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -885,7 +892,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
             &setArgumentCountRef);
 
         helper.LoadLocal(interceptor.LocalVarIndex);
-        helper.LoadInt32(target.signature.NumberOfArguments());
+        helper.LoadInt32(target.Signature.NumberOfArguments());
         helper.CallMember(setArgumentCountRef, false);
     }
 
@@ -908,22 +915,22 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
             addParameterSignature.size(),
             &addParameterRef);
 
-        for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
+        for (size_t i = 0; i < target.Signature.NumberOfArguments(); i++)
         {
             helper.LoadLocal(interceptor.LocalVarIndex);
             helper.LoadInt32(i);
             helper.LoadArgument(shift + i);
 
-            auto argument = target.ResolveParameterType(target.signature.arguments[i]);
+            auto argument = target.ResolveParameterType(target.Signature.Arguments[i]);
 
-            if (argument.isRefType)
+            if (argument.IsRefType)
             {
-                helper.LoadInd(argument.typeDef);
+                helper.LoadInd(argument.TypeDef);
             }
 
-            if (argument.isBoxed)
+            if (argument.IsBoxed)
             {
-                auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.raw);
+                auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.Raw);
                 helper.Box(token);
             }
 
@@ -1122,11 +1129,11 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         getParameterSignature.size(),
         &getParameterRef);
 
-    for (size_t i = 0; i < target.signature.NumberOfArguments(); i++)
+    for (size_t i = 0; i < target.Signature.NumberOfArguments(); i++)
     {
-        auto argument = target.ResolveParameterType(target.signature.arguments[i]);
+        auto argument = target.ResolveParameterType(target.Signature.Arguments[i]);
 
-        if (!argument.isRefType)
+        if (!argument.IsRefType)
         {
             continue;
         }
@@ -1137,14 +1144,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.LoadInt32(i);
         helper.CallMember(getParameterRef, false);
 
-        auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.raw);
+        auto token = util::GetTypeToken(metadataEmit, mscorlibRef, argument.Raw);
 
-        if (argument.isBoxed)
+        if (argument.IsBoxed)
         {
             helper.UnboxAny(token);
         }
 
-        helper.StInd(argument.typeDef);
+        helper.StInd(argument.TypeDef);
     }
 
     // throw exception if any
@@ -1187,7 +1194,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         brfalses->m_pTarget = finish;
     }
 
-    if (!retType.isVoid)
+    if (!retType.IsVoid)
     {
         helper.LoadLocal(resultIndex);
     }
@@ -1550,34 +1557,41 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
     return S_OK;
 }
 
-void CorProfiler::AddInterception(configuration::ImportInterception interception)
+std::vector<configuration::Interceptor> CorProfiler::FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target)
 {
-    configuration.interceptions.push_back(configuration::Interception(
-        ToWSTRING(interception.CallerAssembly),
-        configuration::TargetMethod(
-            ToWSTRING(interception.TargetAssemblyName),
-            ToWSTRING(interception.TargetTypeName),
-            ToWSTRING(interception.TargetMethodName),
-            interception.TargetMethodParametersCount),
-        configuration::Interceptor(ToWSTRING(interception.InterceptorAssemblyName),
-            ToWSTRING(interception.InterceptorTypeName)),
-        interception.IsComposed)
-    );
-}
-
-std::vector<configuration::Interception> CorProfiler::FindInterceptions(wstring callerAssemblyName, wstring targetTypeName, wstring targetMethodName, int methodParametersCount)
-{
-    std::vector<configuration::Interception> result{};
+    std::vector<configuration::StrictInterception> strict{};
     std::copy_if(
-        configuration.interceptions.begin(),
-        configuration.interceptions.end(),
-        std::back_inserter(result),
-        [&callerAssemblyName, &targetTypeName, &targetMethodName, &methodParametersCount](configuration::Interception interception) {
-        return (callerAssemblyName == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
-            && targetTypeName == interception.Target.TypeName
-            && targetMethodName == interception.Target.MethodName && methodParametersCount == interception.Target.MethodParametersCount;
+        configuration.StrictInterceptions.begin(),
+        configuration.StrictInterceptions.end(),
+        std::back_inserter(strict),
+        [&callerAssemblyName,&target](const configuration::StrictInterception& interception) {
+            return (callerAssemblyName == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
+                && target.Type.Name == interception.Target.TypeName
+                && target.Name == interception.Target.MethodName && target.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
         }
     );
+
+    std::vector<configuration::AttributedInterceptor> attributed{};
+    std::copy_if(
+        configuration.AttributedInterceptors.begin(),
+        configuration.AttributedInterceptors.end(),
+        std::back_inserter(attributed),
+        [&target](const configuration::AttributedInterceptor& interception) {
+            return std::find_if(target.Attributes.begin(), target.Attributes.end(), [&interception](const wstring& info) { return info == interception.AttributeType; }) != target.Attributes.end();
+        }
+    );
+
+    std::vector<configuration::Interceptor> result{};
+
+    for (const auto& el : strict)
+    {
+        result.push_back(el.Interceptor);
+    }
+
+    for (const auto& el : attributed)
+    {
+        result.push_back(el.Interceptor);
+    }
 
     return result;
 }

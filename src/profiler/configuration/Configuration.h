@@ -1,18 +1,22 @@
 #pragma once
 
 #include <vector>
-#include "Interception.h"
+#include "configuration/StrictInterception.h"
+#include "configuration/AttributedInterceptor.h"
 
 namespace configuration
 {
-	class Configuration
+	struct Configuration
 	{
-	public:
-		std::vector<Interception> interceptions{};
+		std::vector<StrictInterception> StrictInterceptions{};
+		std::vector<wstring> Assemblies;
+		std::vector<AttributedInterceptor> AttributedInterceptors;
 
-		Configuration(std::vector<Interception> interceptions) :
-			interceptions(interceptions) {}
+		Configuration(std::vector<StrictInterception> strictInterceptions, std::vector<wstring> assemblies, const std::vector<AttributedInterceptor>& attributedInterceptors) :
+			StrictInterceptions(strictInterceptions), Assemblies(assemblies), AttributedInterceptors(attributedInterceptors) {}
 
 		Configuration() {}
+
+		static Configuration LoadConfiguration(const wstring& path);
 	};
 }

@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Attributes.Validation;
 using MassTransit;
 using Microsoft.Extensions.Logging;
 using System;
@@ -48,7 +49,8 @@ namespace SampleApp.MessageBus
         }
 
 
-        [InvalidateCache(Name =nameof(DummyCache))]
+        [Monitor(Name = "InvalidateCache")]
+        [InvalidateCache(Name = nameof(DummyCache))]
         void InvalidateCache()
         {
         }
@@ -61,7 +63,7 @@ namespace SampleApp.MessageBus
 
         [Cache(DurationSeconds = 6000, Parameters = new[] { "n" })]
         [Monitor(Name = "Fibonacci call")]
-        int Fibonacci30(int n)
+        int Fibonacci30([GreatThenZero]int n)
         {
             return Fibonacci(30);
         }

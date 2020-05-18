@@ -2,7 +2,6 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.1</TargetFramework>
-    <!--<RestoreProjectStyle>PackageReference</RestoreProjectStyle>-->
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
   </PropertyGroup>
 
@@ -13,21 +12,15 @@
   <ItemGroup>
     <ProjectReference Include="..\Interception.Core\Interception.Core.csproj" />
     <ProjectReference Include="..\Interception.OpenTracing.Prometheus\Interception.OpenTracing.Prometheus.csproj" />
-    <ProjectReference Include="..\Interception.Common\Interception.Common.csproj" />
     <ProjectReference Include="..\Interception.Observers\Interception.Observers.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.1.18" />
-    <!--<PackageReference Include="Microsoft.AspNetCore.Routing.Abstractions" Version="2.1.0" />-->
-    <!--<PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="2.1.1" />
-    <PackageReference Include="Microsoft.Extensions.Logging" Version="2.1.1" />-->
     <PackageReference Include="MassTransit.RabbitMQ" Version="5.5.6" />
     <PackageReference Include="Jaeger" Version="0.2.2" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
-    <!--<PackageReference Include="StackExchange.Redis" Version="2.0.593" />-->
-    <!--<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.7.1" />-->
   </ItemGroup>
 
 </Project>

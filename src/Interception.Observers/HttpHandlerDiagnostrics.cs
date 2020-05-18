@@ -1,4 +1,4 @@
-﻿using Interception.Common.Extensions;
+﻿using Interception.Core.Extensions;
 using Interception.Observers.Configuration;
 using Interception.Tracing.Extensions;
 using OpenTracing;

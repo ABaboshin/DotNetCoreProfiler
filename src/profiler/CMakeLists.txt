@@ -34,6 +34,7 @@ add_library("DotNetCoreProfiler.static" STATIC
     ClassFactory.cpp
     profiler/CorProfiler.cpp
     miniutf/miniutf.cpp
+    configuration/Configuration.cpp
     util/util.cpp
     util/helpers.cpp
     info/GenericMethodSignature.cpp
