@@ -82,5 +82,7 @@ namespace Interception.Core
         /// </summary>
         /// <returns></returns>
         bool SkipExecution();
+
+        void AddChild(IInterceptor interceptor);
     }
 }

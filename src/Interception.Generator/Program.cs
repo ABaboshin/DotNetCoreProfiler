@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using Interception.Attributes;
+using Interception.Core;
 using Newtonsoft.Json;
 using System.Collections.Generic;
 using System.IO;
@@ -28,7 +29,11 @@ namespace Interception.Generator
                     var result = new {
                         strict,
                         attributed,
-                        assemblies = opts.Assemblies.Select(a => Path.Combine(opts.Path, new FileInfo(a).Name)).ToList()
+                        assemblies = opts.Assemblies.Select(a => Path.Combine(opts.Path, new FileInfo(a).Name)).ToList(),
+                        baseClass = new { 
+                            TypeName = typeof(IInterceptor).FullName,
+                            AssemblyName = typeof(IInterceptor).Assembly.GetName().Name
+                        }
                     };
 
                     File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));

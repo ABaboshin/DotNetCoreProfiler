@@ -670,7 +670,10 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
     GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
-    IfFailRet(hr);
+
+    // define interception.core.dll
+    mdModuleRef baseDllRef;
+    GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, configuration.Base.AssemblyName);
 
     // Define System.Object
     mdTypeRef objectTypeRef;
@@ -750,6 +753,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     rewriter.SetTkLocalVarSig(localSigToken);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
+    // define baseType = IInterceptor
+    mdTypeRef baseTypeRef;
+    hr = metadataEmit->DefineTypeRefByName(
+        baseDllRef,
+        configuration.Base.TypeName.data(),
+        &baseTypeRef);
+    IfFailRet(hr);
+
     // local sig
     std::vector<info::InterceptionVarInfo> inteceptionRefs{};
     for (const auto& interception : interceptions)
@@ -757,7 +768,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         // define interception.dll
         mdModuleRef interceptorDllRef;
         GetWrapperRef(hr, metadataAssemblyEmit, interceptorDllRef, interception.AssemblyName);
-        IfFailRet(hr);
 
         // define wrappedType
         mdTypeRef interceptorTypeRef;
@@ -938,180 +948,54 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         }
     }
 
-    //ExecuteBefore
-    for (const auto& interceptor : inteceptionRefs)
-    {
-        std::vector<BYTE> executeBeforeSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            0,
-            ELEMENT_TYPE_VOID
-        };
+    // AddChild
+    BYTE compressedToken[10];
+    ULONG tokenLength = CorSigCompressToken(baseTypeRef, compressedToken);
 
-        mdMemberRef executeBeforeRef;
-        hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
-            "ExecuteBefore"_W.data(),
-            executeBeforeSignature.data(),
-            executeBeforeSignature.size(),
-            &executeBeforeRef);
-
-        helper.LoadLocal(interceptor.LocalVarIndex);
-        helper.CallMember(executeBeforeRef, false);
-    }
-
-    // skip execution
-    for (const auto& interceptor : inteceptionRefs)
-    {
-        std::vector<BYTE> skipExecutionSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            0,
-            ELEMENT_TYPE_BOOLEAN
-        };
-
-        mdMemberRef skipExecutionRef;
-        hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
-            "SkipExecution"_W.data(),
-            skipExecutionSignature.data(),
-            skipExecutionSignature.size(),
-            &skipExecutionRef);
-
-        std::vector<BYTE> getResultSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            0,
-            ELEMENT_TYPE_OBJECT,
-        };
-
-        mdMemberRef getResultRef;
-        hr = metadataEmit->DefineMemberRef(
-            inteceptionRefs[0].TypeRef,
-            "get_Result"_W.data(),
-            getResultSignature.data(),
-            getResultSignature.size(),
-            &getResultRef);
-
-        // currentSkip = interceptor.SkipExecution();
-        helper.LoadLocal(interceptor.LocalVarIndex);
-        helper.CallMember(skipExecutionRef, false);
-        helper.StLocal(skipCurrentIndex);
-
-        // if (skip)
-        helper.LoadLocal(skipIndex);
-        auto brfalses = helper.BrFalseS();
-
-        helper.Nop();
-
-        // Result = interceptor.Result
-        helper.LoadLocal(interceptor.LocalVarIndex);
-        helper.CallMember(getResultRef, false);
-        helper.StLocal(resultIndex);
-        helper.Nop();
-        auto brs = helper.BrS();
-
-        auto elseBlock = helper.Nop();
-        brfalses->m_pTarget = elseBlock;
-
-        // else {}
-        auto finish = helper.Nop();
-        brs->m_pTarget = finish;
-    }
-
-    //execute
-    {
-        std::vector<BYTE> executeSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            0,
-            ELEMENT_TYPE_OBJECT,
-        };
-
-        mdMemberRef executeRef;
-        hr = metadataEmit->DefineMemberRef(
-            inteceptionRefs[0].TypeRef,
-            "Execute"_W.data(),
-            executeSignature.data(),
-            executeSignature.size(),
-            &executeRef);
-
-        std::vector<BYTE> getResultSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            0,
-            ELEMENT_TYPE_OBJECT,
-        };
-
-        mdMemberRef getResultRef;
-        hr = metadataEmit->DefineMemberRef(
-            inteceptionRefs[0].TypeRef,
-            "get_Result"_W.data(),
-            getResultSignature.data(),
-            getResultSignature.size(),
-            &getResultRef);
-
-        // if (skip)
-        helper.LoadLocal(skipIndex);
-        auto brfalses = helper.BrFalseS();
-
-        helper.Nop();
-
-        // {}
-        helper.Nop();
-        auto brs = helper.BrS();
-
-        auto elseBlock = helper.Nop();
-        brfalses->m_pTarget = elseBlock;
-
-        // else Result = interceptor.Execute()
-        helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
-        helper.CallMember(executeRef, false);
-
-        helper.StLocal(resultIndex);
-
-        auto finish = helper.Nop();
-        brs->m_pTarget = finish;
-    }
-
-    // propagate Result
-    if (inteceptionRefs.size() > 1) for (const auto& interceptor : inteceptionRefs)
-    {
-        std::vector<BYTE> setResultSignature = {
+    std::vector<BYTE> addChildSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
             1,
             ELEMENT_TYPE_VOID,
-            ELEMENT_TYPE_OBJECT
-        };
+            ELEMENT_TYPE_CLASS
+    };
 
-        mdMemberRef setResultRef;
-        hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
-            "set_Result"_W.data(),
-            setResultSignature.data(),
-            setResultSignature.size(),
-            &setResultRef);
+    addChildSignature.insert(addChildSignature.end(), compressedToken, compressedToken + tokenLength);
 
-        helper.LoadLocal(interceptor.LocalVarIndex);
-        helper.LoadLocal(resultIndex);
-        helper.CallMember(setResultRef, false);
+    mdMemberRef addChildRef;
+    hr = metadataEmit->DefineMemberRef(
+        inteceptionRefs[0].TypeRef,
+        "AddChild"_W.data(),
+        addChildSignature.data(),
+        addChildSignature.size(),
+        &addChildRef);
+
+    for (size_t i = 1; i < inteceptionRefs.size(); i++)
+    {
+        helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
+        helper.LoadLocal(inteceptionRefs[i].LocalVarIndex);
+        helper.Cast(baseTypeRef);
+        helper.CallMember(addChildRef, false);
     }
 
-    //ExecuteAfter
-    for (const auto& interceptor : inteceptionRefs)
-    {
-        std::vector<BYTE> executeAfterSignature = {
+    //execute
+    std::vector<BYTE> executeSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
             0,
-            ELEMENT_TYPE_VOID
-        };
+            ELEMENT_TYPE_OBJECT,
+    };
 
-        mdMemberRef executeAfterRef;
-        hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
-            "ExecuteAfter"_W.data(),
-            executeAfterSignature.data(),
-            executeAfterSignature.size(),
-            &executeAfterRef);
+    mdMemberRef executeRef;
+    hr = metadataEmit->DefineMemberRef(
+        inteceptionRefs[0].TypeRef,
+        "Execute"_W.data(),
+        executeSignature.data(),
+        executeSignature.size(),
+        &executeRef);
 
-        helper.LoadLocal(interceptor.LocalVarIndex);
-        helper.CallMember(executeAfterRef, false);
-    }
+    helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
+    helper.CallMember(executeRef, false);
+
+    helper.StLocal(resultIndex);
 
     // GetParameter
     std::vector<BYTE> getParameterSignature = {
@@ -1152,46 +1036,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         }
 
         helper.StInd(argument.TypeDef);
-    }
-
-    // throw exception if any
-    {
-        std::vector<BYTE> getExceptionSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            0,
-            ELEMENT_TYPE_CLASS
-        };
-
-        BYTE compressedToken[10];
-        ULONG tokenLength = CorSigCompressToken(exceptionTypeRef, compressedToken);
-
-        getExceptionSignature.insert(getExceptionSignature.end(), compressedToken, compressedToken + tokenLength);
-
-        mdMemberRef getExceptionRef;
-        hr = metadataEmit->DefineMemberRef(
-            inteceptionRefs[0].TypeRef,
-            "get_Exception"_W.data(),
-            getExceptionSignature.data(),
-            getExceptionSignature.size(),
-            &getExceptionRef);
-
-        // ex = interceptor[0].Exception
-        helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
-        helper.CallMember(getExceptionRef, false);
-        helper.StLocal(exceptionIndex);
-
-        // if (ex != null)
-        helper.LoadLocal(exceptionIndex);
-        helper.LoadNull();
-        helper.CgtUn();
-        auto brfalses = helper.BrFalseS();
-        helper.Nop();
-
-        // throw ex
-        helper.LoadLocal(exceptionIndex);
-        helper.Throw();
-        auto finish = helper.Nop();
-        brfalses->m_pTarget = finish;
     }
 
     if (!retType.IsVoid)
