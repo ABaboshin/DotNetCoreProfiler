@@ -12,7 +12,7 @@ namespace info
         mdToken methodSpecToken = mdTokenNil;
         mdToken methodDefToken = mdTokenNil;
 
-        std::vector<WCHAR> functionName(_const::NameMaxSize, (WCHAR)0);
+        std::vector<WCHAR> functionName(MAX_CLASS_NAME, (WCHAR)0);
         DWORD functionNameLength = 0;
 
         PCCOR_SIGNATURE rawSignature;
@@ -28,12 +28,12 @@ namespace info
         switch (token_type) {
         case mdtMemberRef:
             hr = metadataImport->GetMemberRefProps(
-                token, &parentToken, &functionName[0], _const::NameMaxSize, &functionNameLength,
+                token, &parentToken, &functionName[0], MAX_CLASS_NAME, &functionNameLength,
                 &rawSignature, &rawSignatureLength);
             break;
         case mdtMethodDef:
             hr = metadataImport->GetMemberProps(
-                token, &parentToken, &functionName[0], _const::NameMaxSize, &functionNameLength,
+                token, &parentToken, &functionName[0], MAX_CLASS_NAME, &functionNameLength,
                 nullptr, &rawSignature, &rawSignatureLength, nullptr, nullptr,
                 nullptr, nullptr, nullptr);
             break;
@@ -96,7 +96,7 @@ namespace info
                 PCCOR_SIGNATURE pSig = 0;             // Signature of ctor.
                 ULONG       cbSig;                  // Size of the signature.
 
-                std::vector<WCHAR> className(_const::NameMaxSize, (WCHAR)0);
+                std::vector<WCHAR> className(MAX_CLASS_NAME, (WCHAR)0);
                 DWORD classNameLength = 0;
 
                 hr = metadataImport->GetCustomAttributeProps( // S_OK or error.

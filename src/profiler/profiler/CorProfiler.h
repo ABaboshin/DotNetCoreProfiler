@@ -24,7 +24,6 @@ private:
     ICorProfilerInfo8* corProfilerInfo;
 
     bool printEveryCall = false;
-    wstring loaderClass;
 
     bool SkipAssembly(const wstring& name);
 
@@ -32,9 +31,7 @@ private:
 
     HRESULT InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef);
 
-    HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef* retMethodToken);
-
-    wstring GetInterceptionLoaderClassName();
+    HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken);
 
     HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken);
 
@@ -173,8 +170,4 @@ public:
 
         return count;
     }
-
-    void GetAssemblyBytes(BYTE** assemblyArray, int* assemblySize);
 };
-
-extern CorProfiler* profilerInstance;
