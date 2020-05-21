@@ -4,9 +4,9 @@
 
 namespace info
 {
-	GenericMethodSignature::GenericMethodSignature(std::vector<BYTE> raw) : raw(raw)
+	GenericMethodSignature::GenericMethodSignature(std::vector<BYTE> raw) : Raw(raw)
 	{
-		auto iter = this->raw.begin();
+		auto iter = this->Raw.begin();
 		ULONG skip = 0;
 		ParseNumber(iter, skip);
 
@@ -21,7 +21,7 @@ namespace info
 				break;
 			}
 
-			generics.push_back(TypeInfo(std::vector<BYTE>(begin, iter)));
+			Generics.push_back(TypeInfo(std::vector<BYTE>(begin, iter)));
 		}
 	}
 }

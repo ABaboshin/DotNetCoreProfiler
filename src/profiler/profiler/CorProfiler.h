@@ -33,7 +33,7 @@ private:
 
     HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken);
 
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken);
+    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
 
     std::vector<configuration::Interceptor> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
 

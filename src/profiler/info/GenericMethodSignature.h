@@ -7,8 +7,8 @@
 namespace info {
 	struct GenericMethodSignature
 	{
-		std::vector<BYTE> raw{};
-		std::vector<TypeInfo> generics{};
+		std::vector<BYTE> Raw{};
+		std::vector<TypeInfo> Generics{};
 		GenericMethodSignature(std::vector<BYTE> raw);
 		GenericMethodSignature() {}
 	};

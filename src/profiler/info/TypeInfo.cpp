@@ -73,6 +73,8 @@ namespace info
 
         ParseNumber(iter, elemenType); // => token
 
+        instanceTypeToken = elemenType;
+
         ULONG number = 0;
 
         ParseNumber(iter, number); // => number of generic arguments
@@ -90,8 +92,6 @@ namespace info
     }
 
     TypeInfo TypeInfo::GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token) {
-        mdToken parent_token = mdTokenNil;
-
         std::vector<WCHAR> typeName(MAX_CLASS_NAME, (WCHAR)0);
         DWORD typeNameLength = 0;
 
@@ -103,7 +103,7 @@ namespace info
                 &typeNameLength, nullptr, nullptr);
             break;
         case mdtTypeRef:
-            hr = metadataImport->GetTypeRefProps(token, &parent_token, &typeName[0],
+            hr = metadataImport->GetTypeRefProps(token, nullptr, &typeName[0],
                 MAX_CLASS_NAME, &typeNameLength);
             break;
         case mdtTypeSpec:

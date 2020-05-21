@@ -17,6 +17,8 @@ namespace Interception.Core
 
         public object This { get; set; }
         public int MdToken { get; set; }
+        public int TypeMdToken { get; set; }
+        public int GenericTypeMdToken { get; set; }
         public long ModuleVersionPtr { get; set; }
 
         public void AddChild(IInterceptor interceptor)
@@ -42,10 +44,71 @@ namespace Interception.Core
             return _parameters[num];
         }
 
+        //private List<int> _genericTypeParameters = new List<int>();
+        //public void AddGenericTypeParameter(int mdToken)
+        //{
+        //    Console.WriteLine($"AddGenericTypeParameter {mdToken}");
+        //    _genericTypeParameters.Add(mdToken);
+        //}
+
+        private List<int> _genericMethodParameters = new List<int>();
+        public void AddGenericMethodParameter(int mdToken)
+        {
+            Console.WriteLine($"AddGenericMethodParameter {mdToken}");
+            _genericMethodParameters.Add(mdToken);
+        }
+
         private MethodInfo FindMethod()
         {
+            //if (ThisType is null)
+            //{
+            //    throw new Exception();
+            //}
+
+            //Console.WriteLine($"Thistype {ThisType != null}");
+
+            //var mi = ThisType.Module.ResolveMethod(MdToken);
+            //Console.WriteLine($"FindMethod {mi != null} {mi?.Name}");
+
+            Type thisType = new TypeFinder().FindType(TypeMdToken, ModuleVersionPtr);
+            Console.WriteLine($"TypeMdToken resolve {TypeMdToken} {thisType} x {This?.GetType()} x {thisType?.IsGenericType} {thisType?.GetGenericArguments().Length}");
+
+            //if (thisType != null)
+            //{
+            //    foreach (var item in thisType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic))
+            //    {
+            //        Console.WriteLine($"FindMethod thistype MdToken {MdToken} item {item.MetadataToken} {item.Name}");
+            //    }
+
+
+
+            //    //try
+            //    //{
+            //    //    foreach (var item in thisType.GetRuntimeMethods().Select(m => m.MetadataToken))
+            //    //    {
+            //    //        Console.WriteLine($"FindMethod MdToken {MdToken} item {item}");
+            //    //    }
+            //    //    var mi = thisType.Module.ResolveMethod(MdToken);
+            //    //    Console.WriteLine($"method resolve {MdToken} {mi != null}");
+            //    //}
+            //    //catch (Exception ex)
+            //    //{
+            //    //    Console.WriteLine($"method resolve {ex}");
+            //    //}
+            //}
+
+            //if (This != null) foreach (var item in This.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic))
+            //    {
+            //        Console.WriteLine($"FindMethod This.GetType() MdToken {MdToken} item {item.MetadataToken} {item.Name}");
+            //    }
+
+            //foreach (var item in _genericTypeParameters)
+            //{
+            //    Console.WriteLine($"generic {item} {new TypeFinder().FindType(item, ModuleVersionPtr)} x");
+            //}
+
             Console.WriteLine($"FindMethod {This} {MdToken} {ModuleVersionPtr} {_parameters.Length}");
-            return (MethodInfo)_methodFinder.FindMethod(MdToken, ModuleVersionPtr);
+            return (MethodInfo)_methodFinder.FindMethod(MdToken, ModuleVersionPtr, thisType?.GetGenericArguments());
         }
 
         public object Execute()
@@ -104,6 +167,7 @@ namespace Interception.Core
 
         private object _result = null;
         private Exception _exception = null;
+        //private Type thisType;
 
         private bool SkipExecution()
         {
