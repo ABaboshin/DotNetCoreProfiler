@@ -7,15 +7,15 @@ namespace configuration
 {
 	using namespace util;
 
-	struct BaseClass {
+	struct TypeInfo {
 		wstring AssemblyName;
 		wstring TypeName;
 
-		BaseClass(const wstring& assemblyName, const wstring& typeName) :
+		TypeInfo(const wstring& assemblyName, const wstring& typeName) :
 			AssemblyName(assemblyName),
 			TypeName(typeName) {}
 
-		BaseClass() :
+		TypeInfo() :
 			AssemblyName(""_W),
 			TypeName(""_W) {}
 	};

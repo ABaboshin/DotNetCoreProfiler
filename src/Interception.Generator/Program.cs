@@ -33,7 +33,12 @@ namespace Interception.Generator
                         baseClass = new { 
                             TypeName = typeof(IInterceptor).FullName,
                             AssemblyName = typeof(IInterceptor).Assembly.GetName().Name
-                        }
+                        },
+                        composed = new
+                        {
+                            TypeName = typeof(ComposedInterceptor).FullName,
+                            AssemblyName = typeof(ComposedInterceptor).Assembly.GetName().Name
+                        },
                     };
 
                     File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));

@@ -38,7 +38,7 @@ namespace Interception.MassTransit
                 typedConfigure(cfg);
             };
 
-            UpdateParameter(1, configure);
+            ModifyParameter(1, configure);
         }
     }
 }

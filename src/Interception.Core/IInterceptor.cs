@@ -33,21 +33,6 @@ namespace Interception.Core
         Exception Exception { get; set; }
 
         /// <summary>
-        /// set argument number
-        /// </summary>
-        /// <param name="number"></param>
-        /// <returns></returns>
-        void SetArgumentCount(int number);
-
-        /// <summary>
-        /// add parameter of intercepted method
-        /// </summary>
-        /// <param name="num"></param>
-        /// <param name="value"></param>
-        /// <returns></returns>
-        void AddParameter(int num, object value);
-
-        /// <summary>
         /// get paraemeter value
         /// </summary>
         /// <param name="num"></param>
@@ -59,13 +44,15 @@ namespace Interception.Core
         /// </summary>
         /// <param name="num"></param>
         /// <param name="value"></param>
-        void UpdateParameter(int num, object value);
+        void ModifyParameter(int num, object value);
+
+        bool IsParameterModified(int num);
 
         /// <summary>
-        /// execute interceptor
+        /// set method parameters
         /// </summary>
-        /// <returns></returns>
-        object Execute();
+        /// <param name="parameters"></param>
+        void SetParameters(object[] parameters);
 
         /// <summary>
         /// execute before
@@ -82,7 +69,5 @@ namespace Interception.Core
         /// </summary>
         /// <returns></returns>
         bool SkipExecution();
-
-        void AddChild(IInterceptor interceptor);
     }
 }

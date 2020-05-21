@@ -8,6 +8,7 @@ namespace Interception.Core
     {
         public MethodBase FindMethod(int mdToken, long moduleVersionPtr, Type[] genericTypeArguments = null)
         {
+            Console.WriteLine($"{mdToken} {moduleVersionPtr}");
             var ptr = new IntPtr(moduleVersionPtr);
             var moduleVersionId = Marshal.PtrToStructure<Guid>(ptr);
 
