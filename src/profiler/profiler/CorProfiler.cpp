@@ -628,55 +628,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     //SetThisType
     {
-        /*BYTE compressedTokenRuntimeTypeHandleRef[10];
-        ULONG runtimeTypeHandleLength = CorSigCompressToken(runtimeTypeHandleRef, compressedTokenRuntimeTypeHandleRef);
-
-        BYTE compressedTokenTypeRef[10];
-        ULONG runtimeTypeHandleToken = CorSigCompressToken(typeRef, compressedTokenTypeRef);
-
-        std::vector<BYTE> getTypeFromSignature = {
-            IMAGE_CEE_CS_CALLCONV_DEFAULT,
-            1,
-            ELEMENT_TYPE_CLASS
-        };
-
-        getTypeFromSignature.insert(getTypeFromSignature.end(), compressedTokenTypeRef, compressedTokenTypeRef + runtimeTypeHandleToken);
-        getTypeFromSignature.push_back(ELEMENT_TYPE_VALUETYPE);
-        getTypeFromSignature.insert(getTypeFromSignature.end(), compressedTokenRuntimeTypeHandleRef, compressedTokenRuntimeTypeHandleRef + runtimeTypeHandleLength);
-
-        mdMemberRef getTypeFromHandleRef;
-        hr = metadataEmit->DefineMemberRef(
-            typeRef,
-            _const::GetTypeFromHandle.data(),
-            getTypeFromSignature.data(),
-            getTypeFromSignature.size(),
-            &getTypeFromHandleRef);
-
-        helper.LoadInt32(target.Type.Id);
-        helper.CallMember(getTypeFromHandleRef, false);
-        helper.StLocal(typeIndex);
-
-        std::vector<BYTE> setThisTypeSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            1,
-            ELEMENT_TYPE_VOID,
-            ELEMENT_TYPE_CLASS
-        };
-
-        setThisTypeSignature.insert(setThisTypeSignature.end(), compressedTokenTypeRef, compressedTokenTypeRef + runtimeTypeHandleToken);
-
-        mdMemberRef setThisTypeRef;
-        hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
-            "set_ThisType"_W.data(),
-            setThisTypeSignature.data(),
-            setThisTypeSignature.size(),
-            &setThisTypeRef);
-
-        helper.LoadLocal(composedIndex);
-        helper.LoadLocal(typeIndex);
-        helper.CallMember(setThisTypeRef, false);*/
-
         std::vector<BYTE> setThisTypeSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
             1,
@@ -693,30 +644,9 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
             &setThisTypeRef);
 
         helper.LoadLocal(composedIndex);
-        helper.LoadInt32(target.Type.instanceTypeToken > 0 ? target.Type.instanceTypeToken : target.Type.Id);
-        helper.CallMember(setThisTypeRef, false);
-    }
-
-    /*{
-        std::vector<BYTE> setThisTypeSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            1,
-            ELEMENT_TYPE_VOID,
-            ELEMENT_TYPE_I4
-        };
-
-        mdMemberRef setThisTypeRef;
-        hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
-            "set_GenericTypeMdToken"_W.data(),
-            setThisTypeSignature.data(),
-            setThisTypeSignature.size(),
-            &setThisTypeRef);
-
-        helper.LoadLocal(composedIndex);
         helper.LoadInt32(target.Type.Id);
         helper.CallMember(setThisTypeRef, false);
-    }*/
+    }
 
     //SetMdToken
     {
@@ -870,25 +800,38 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.CallMember(addChildRef, false);
     }
 
-    //// AddGenericTypeParameter
-    //std::vector<BYTE> addGenericTypeParameterSignature = {
-    //    IMAGE_CEE_CS_CALLCONV_HASTHIS,
-    //    1,
-    //    ELEMENT_TYPE_VOID,
-    //    ELEMENT_TYPE_I4
-    //};
+    //TypeSpecToken
+    {
+        std::vector<BYTE> setMdTokenSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_I4
+        };
 
-    //mdMemberRef addGenericTypeParameterRef;
-    //hr = metadataEmit->DefineMemberRef(
-    //    composedTypeRef,
-    //    "AddGenericTypeParameter"_W.data(),
-    //    addGenericTypeParameterSignature.data(),
-    //    addGenericTypeParameterSignature.size(),
-    //    &addGenericTypeParameterRef);
+        mdMemberRef setMdTokenRef;
+        hr = metadataEmit->DefineMemberRef(
+            composedTypeRef,
+            "set_TypeSpecToken"_W.data(),
+            setMdTokenSignature.data(),
+            setMdTokenSignature.size(),
+            &setMdTokenRef);
 
+        helper.LoadLocal(composedIndex);
+        helper.LoadInt32(target.Type.TypeSpecToken);
+        helper.CallMember(setMdTokenRef, false);
+    }
+
+    // generic
     for (auto& p : target.Type.Generics)
     {
         auto test = info::FunctionInfo::GetFunctionInfo(metadataImport, targetMdToken);
+
+        std::cout << "Signature" << std::endl;
+        for (size_t i = 0; i < target.Signature.Raw.size(); i++)
+        {
+            std::cout << (int)target.Signature.Raw[i] << std::endl;
+        }
 
     //    auto token = util::GetTypeToken(metadataEmit, mscorlibRef, p.Raw);
 

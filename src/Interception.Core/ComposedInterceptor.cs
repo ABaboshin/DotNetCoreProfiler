@@ -17,6 +17,7 @@ namespace Interception.Core
 
         public object This { get; set; }
         public int MdToken { get; set; }
+        public int TypeSpecToken { get; set; }
         public int TypeMdToken { get; set; }
         public int GenericTypeMdToken { get; set; }
         public long ModuleVersionPtr { get; set; }
@@ -60,51 +61,41 @@ namespace Interception.Core
 
         private MethodInfo FindMethod()
         {
-            //if (ThisType is null)
-            //{
-            //    throw new Exception();
-            //}
-
-            //Console.WriteLine($"Thistype {ThisType != null}");
-
-            //var mi = ThisType.Module.ResolveMethod(MdToken);
-            //Console.WriteLine($"FindMethod {mi != null} {mi?.Name}");
-
             Type thisType = new TypeFinder().FindType(TypeMdToken, ModuleVersionPtr);
-            Console.WriteLine($"TypeMdToken resolve {TypeMdToken} {thisType} x {This?.GetType()} x {thisType?.IsGenericType} {thisType?.GetGenericArguments().Length}");
+            Console.WriteLine($"TypeMdToken resolve {TypeMdToken} {TypeSpecToken}");
 
-            //if (thisType != null)
+            if (TypeSpecToken > 0)
+            {
+                var test = new TypeFinder().FindType(TypeSpecToken, ModuleVersionPtr);
+                Console.WriteLine($"TypeSpecToken {TypeSpecToken} {test != null} {test}");
+            }
+
+            //var mi = This?.GetType().GetMethods().Where(m => m.Name == "Consume").FirstOrDefault();
+            //if (mi != null)
             //{
-            //    foreach (var item in thisType.GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic))
+            //    var info = new { method = mi };
+            //    var parameters = info.method.GetParameters().Select(p => p.ParameterType).ToArray();
+            //    var returnType = info.method.ReturnType;
+            //    var signatureHelper = SignatureHelper.GetMethodSigHelper(info.method.CallingConvention, returnType);
+            //    signatureHelper.AddArguments(parameters, requiredCustomModifiers: null, optionalCustomModifiers: null);
+            //    var signatureBytes = signatureHelper.GetSignature();
+            //    if (info.method.IsGenericMethod)
             //    {
-            //        Console.WriteLine($"FindMethod thistype MdToken {MdToken} item {item.MetadataToken} {item.Name}");
+            //        byte IMAGE_CEE_CS_CALLCONV_GENERIC = 0x10;
+            //        var genericArguments = info.method.GetGenericArguments();
+
+            //        var newSignatureBytes = new byte[signatureBytes.Length + 1];
+            //        newSignatureBytes[0] = (byte)(signatureBytes[0] | IMAGE_CEE_CS_CALLCONV_GENERIC);
+            //        newSignatureBytes[1] = (byte)genericArguments.Length;
+            //        Array.Copy(signatureBytes, 1, newSignatureBytes, 2, signatureBytes.Length - 1);
+
+            //        signatureBytes = newSignatureBytes;
+            //        Console.WriteLine("Signature");
+            //        for (int i = 0; i < signatureBytes.Length; i++)
+            //        {
+            //            Console.WriteLine((int)signatureBytes[i]);
+            //        }
             //    }
-
-
-
-            //    //try
-            //    //{
-            //    //    foreach (var item in thisType.GetRuntimeMethods().Select(m => m.MetadataToken))
-            //    //    {
-            //    //        Console.WriteLine($"FindMethod MdToken {MdToken} item {item}");
-            //    //    }
-            //    //    var mi = thisType.Module.ResolveMethod(MdToken);
-            //    //    Console.WriteLine($"method resolve {MdToken} {mi != null}");
-            //    //}
-            //    //catch (Exception ex)
-            //    //{
-            //    //    Console.WriteLine($"method resolve {ex}");
-            //    //}
-            //}
-
-            //if (This != null) foreach (var item in This.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic))
-            //    {
-            //        Console.WriteLine($"FindMethod This.GetType() MdToken {MdToken} item {item.MetadataToken} {item.Name}");
-            //    }
-
-            //foreach (var item in _genericTypeParameters)
-            //{
-            //    Console.WriteLine($"generic {item} {new TypeFinder().FindType(item, ModuleVersionPtr)} x");
             //}
 
             Console.WriteLine($"FindMethod {This} {MdToken} {ModuleVersionPtr} {_parameters.Length}");

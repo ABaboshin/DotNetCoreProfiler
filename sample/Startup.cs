@@ -91,7 +91,7 @@ namespace SampleApp
             //}
 
             app.UseMvc();
-            MigrateDatabase(app);
+            //MigrateDatabase(app);
         }
 
         private static void MigrateDatabase(IApplicationBuilder app)
