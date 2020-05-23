@@ -100,11 +100,15 @@ namespace configuration
 			return std::make_pair<StrictInterception, bool>({}, false);
 		}
 
-		auto callerAssemblyName = ToWSTRING(src.value("CallerAssemblyName", ""));
 		auto interceptor = std::get<0>(LoadInterceptorFromJson(src["Interceptor"]));
 		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
+		std::vector<wstring> ignoreCallerAssemblies{};
 
-		return std::make_pair<StrictInterception, bool>({ callerAssemblyName, target, interceptor }, true);
+		for (auto& el : src["IgnoreCallerAssemblies"]) {
+			ignoreCallerAssemblies.push_back(ToWSTRING(el));
+		}
+
+		return std::make_pair<StrictInterception, bool>({ ignoreCallerAssemblies, target, interceptor }, true);
 	}
 
 	std::pair<Interceptor, bool> LoadInterceptorFromJson(const nlohmann::json::value_type& src)

@@ -17,7 +17,7 @@ namespace Interception.MassTransit
     /// intercept masstransit consumer
     /// and inject tracing
     /// </summary>
-    [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
+    [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
     public class MassTransitConsumerInterceptor : BaseMetricsInterceptor
     {
         public MassTransitConsumerInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)

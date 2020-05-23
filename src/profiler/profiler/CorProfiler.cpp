@@ -1221,7 +1221,8 @@ std::vector<configuration::Interceptor> CorProfiler::FindInterceptions(const wst
         configuration.StrictInterceptions.end(),
         std::back_inserter(strict),
         [&callerAssemblyName,&target](const configuration::StrictInterception& interception) {
-            return (callerAssemblyName == interception.CallerAssemblyName || interception.CallerAssemblyName.empty())
+            return 
+                std::find(interception.IgnoreCallerAssemblies.begin(), interception.IgnoreCallerAssemblies.end(), callerAssemblyName) == interception.IgnoreCallerAssemblies.end()
                 && target.Type.Name == interception.Target.TypeName
                 && target.Name == interception.Target.MethodName && target.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
         }
