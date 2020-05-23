@@ -12,6 +12,8 @@ namespace Interception.AspNetCore
     [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "RunAsync", TargetTypeName = "Microsoft.AspNetCore.Hosting.WebHostExtensions", TargetMethodParametersCount = 3)]
     public class RunWebHostInterceptor : BaseInterceptor
     {
+        public override int Priority => 0;
+
         public override void ExecuteBefore()
         {
             DependencyInjection.ServiceProvider = ((IWebHost)GetParameter(0)).Services;

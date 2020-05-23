@@ -10,7 +10,6 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Interception.Tracing;
-using System.Reflection;
 
 namespace Interception.MassTransit
 {
@@ -21,9 +20,11 @@ namespace Interception.MassTransit
     [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
     public class MassTransitConsumerInterceptor : BaseMetricsInterceptor
     {
-        public MassTransitConsumerInterceptor() : base(/*DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled*/false)
+        public MassTransitConsumerInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)
         {
         }
+
+        public override int Priority => 0;
 
         protected override void CreateScope()
         {

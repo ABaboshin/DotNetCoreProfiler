@@ -19,6 +19,7 @@ namespace Interception.Core
         public object Result { get; set; } = null;
         public Exception Exception { get; set; } = null;
         public MethodInfo Method { get; set; }
+        public abstract int Priority { get; }
 
         public object GetParameter(int num)
         {

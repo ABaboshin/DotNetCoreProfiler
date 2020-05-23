@@ -16,6 +16,8 @@ namespace Interception.Cache
     {
         IDistributedCache DistributedCache => DependencyInjection.ServiceProvider.GetRequiredService<IDistributedCache>();
 
+        public override int Priority => 100;
+
         string GetCacheKey()
         {
             var attribute = GetCustomAttribute<CacheAttribute>();
