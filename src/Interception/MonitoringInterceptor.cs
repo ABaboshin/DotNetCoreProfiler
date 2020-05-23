@@ -15,6 +15,8 @@ namespace Interception
         {
         }
 
+        public override int Priority => 0;
+
         protected override void CreateScope()
         {
             var attribute = GetCustomAttribute<MonitorAttribute>();

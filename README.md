@@ -22,10 +22,10 @@ This project has a goal to demonstrate injection of the following devops-related
  - Intercept creation of `IServiceProvider` and provide full access to the DI for the injected code
  - Validate method parameters, see i.e. https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/src/Interception.Attributes/Validation/NotNullAttribute.cs
  - Interceptors can be combined. See https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L54
+ - The order of interecepted is configuratble via `Priority` property.
 
 ***Limitations***
  - Dynamic methods are not supported.
- - Interceptors can be combined, but the order of execution is not defined.
  - If you want to use parameter validator, use the `ValidationAttribute` on the method.
  - Generic are only partially supported.
 

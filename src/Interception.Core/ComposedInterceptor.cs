@@ -81,7 +81,7 @@ namespace Interception.Core
 
         private void ExecuteBefore()
         {
-            foreach (var item in _childs)
+            foreach (var item in _childs.OrderBy(c => c.Priority))
             {
                 item.This = This;
                 item.Method = FindMethod();
@@ -99,7 +99,7 @@ namespace Interception.Core
 
         private void ExecuteAfter()
         {
-            foreach (var item in _childs)
+            foreach (var item in _childs.OrderByDescending(c => c.Priority))
             {
                 item.SetParameters(_parameters);
                 item.Exception = _exception;
@@ -110,7 +110,6 @@ namespace Interception.Core
 
         private object _result = null;
         private Exception _exception = null;
-        //private Type thisType;
 
         private bool SkipExecution()
         {

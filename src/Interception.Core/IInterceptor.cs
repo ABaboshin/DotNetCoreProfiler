@@ -9,6 +9,11 @@ namespace Interception.Core
     public interface IInterceptor
     {
         /// <summary>
+        /// interception priority
+        /// </summary>
+        int Priority { get; }
+
+        /// <summary>
         /// this of intercepted class
         /// </summary>
         object This { get; set; }

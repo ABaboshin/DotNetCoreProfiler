@@ -19,6 +19,8 @@ namespace Interception.Quartz
         {
         }
 
+        public override int Priority => 0;
+
         protected override void CreateScope()
         {
             var consumerName = This.GetType().FullName;
