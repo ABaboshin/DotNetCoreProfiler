@@ -73,8 +73,6 @@ namespace info
 
         ParseNumber(iter, elemenType); // => token
 
-        //instanceTypeToken = elemenType;
-
         ULONG number = 0;
 
         ParseNumber(iter, number); // => number of generic arguments
@@ -99,15 +97,8 @@ namespace info
         const auto token_type = TypeFromToken(token);
         switch (token_type) {
         case mdtTypeDef:
-            mdToken extend;
             hr = metadataImport->GetTypeDefProps(token, &typeName[0], MAX_CLASS_NAME,
-                &typeNameLength, nullptr, &extend);
-
-            if (false)
-            {
-                auto test = GetTypeInfo(metadataImport, extend);
-            }
-
+                &typeNameLength, nullptr, nullptr);
             break;
         case mdtTypeRef:
             hr = metadataImport->GetTypeRefProps(token, nullptr, &typeName[0],
@@ -131,38 +122,6 @@ namespace info
                 auto ti = GetTypeInfo(metadataImport, typeToken);
                 ti.Raw = util::ToRaw(signature, signature_length);
                 ti.TryParseGeneric();
-                ti.TypeSpecToken = token;
-
-                if (false)
-                {
-                    HCORENUM typeSpecEnum = NULL;
-                    mdTypeSpec typeSpec = mdTypeSpecNil;
-                    ULONG outNum = -1;
-
-                    // Loop through enum
-                    while (true)
-                    {
-                        // Get next enum
-                        HRESULT hr = metadataImport->EnumTypeSpecs(&typeSpecEnum, &typeSpec, 1, &outNum);
-                        if (hr == S_FALSE && outNum == 0) // According to doc, this means no more. End loop
-                            break;
-
-                        // Get the signature of this typespec
-                        PCCOR_SIGNATURE curSpecSig = NULL;
-                        ULONG curSpecSigLen = -1;
-                        metadataImport->GetTypeSpecFromToken(typeSpec, &curSpecSig, &curSpecSigLen);
-
-                        if (curSpecSigLen == 3)
-                        {
-                            std::cout << "found" << std::endl;
-                            auto test = GetTypeInfo(metadataImport, typeSpec);
-                        }
-                        else
-                            typeSpec = mdTypeSpecNil; // Reset and goto next token
-                    }
-
-                    metadataImport->CloseEnum(typeSpecEnum); // Don't forget to close enum
-                }
 
                 return ti;
             }

@@ -17,11 +17,9 @@ namespace Interception.Core
 
         public object This { get; set; }
         public int MdToken { get; set; }
-        public int TypeSpecToken { get; set; }
-        public int TypeMdToken { get; set; }
-        public int GenericTypeMdToken { get; set; }
         public long ModuleVersionPtr { get; set; }
-
+        public string MethodName { get; set; }
+        
         public void AddChild(IInterceptor interceptor)
         {
             //Console.WriteLine($"AddChild {interceptor.GetType().FullName} {_childs != null} this: {this != null}");
@@ -45,61 +43,16 @@ namespace Interception.Core
             return _parameters[num];
         }
 
-        //private List<int> _genericTypeParameters = new List<int>();
-        //public void AddGenericTypeParameter(int mdToken)
-        //{
-        //    Console.WriteLine($"AddGenericTypeParameter {mdToken}");
-        //    _genericTypeParameters.Add(mdToken);
-        //}
-
-        private List<int> _genericMethodParameters = new List<int>();
-        public void AddGenericMethodParameter(int mdToken)
-        {
-            Console.WriteLine($"AddGenericMethodParameter {mdToken}");
-            _genericMethodParameters.Add(mdToken);
-        }
-
         private MethodInfo FindMethod()
         {
-            Type thisType = new TypeFinder().FindType(TypeMdToken, ModuleVersionPtr);
-            Console.WriteLine($"TypeMdToken resolve {TypeMdToken} {TypeSpecToken}");
-
-            if (TypeSpecToken > 0)
+            var findMethod = _methodFinder.FindMethod(MdToken, ModuleVersionPtr);
+            if (findMethod is null && This != null)
             {
-                var test = new TypeFinder().FindType(TypeSpecToken, ModuleVersionPtr);
-                Console.WriteLine($"TypeSpecToken {TypeSpecToken} {test != null} {test}");
+                var method = This.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == MethodName).FirstOrDefault();
+                return method;
             }
 
-            //var mi = This?.GetType().GetMethods().Where(m => m.Name == "Consume").FirstOrDefault();
-            //if (mi != null)
-            //{
-            //    var info = new { method = mi };
-            //    var parameters = info.method.GetParameters().Select(p => p.ParameterType).ToArray();
-            //    var returnType = info.method.ReturnType;
-            //    var signatureHelper = SignatureHelper.GetMethodSigHelper(info.method.CallingConvention, returnType);
-            //    signatureHelper.AddArguments(parameters, requiredCustomModifiers: null, optionalCustomModifiers: null);
-            //    var signatureBytes = signatureHelper.GetSignature();
-            //    if (info.method.IsGenericMethod)
-            //    {
-            //        byte IMAGE_CEE_CS_CALLCONV_GENERIC = 0x10;
-            //        var genericArguments = info.method.GetGenericArguments();
-
-            //        var newSignatureBytes = new byte[signatureBytes.Length + 1];
-            //        newSignatureBytes[0] = (byte)(signatureBytes[0] | IMAGE_CEE_CS_CALLCONV_GENERIC);
-            //        newSignatureBytes[1] = (byte)genericArguments.Length;
-            //        Array.Copy(signatureBytes, 1, newSignatureBytes, 2, signatureBytes.Length - 1);
-
-            //        signatureBytes = newSignatureBytes;
-            //        Console.WriteLine("Signature");
-            //        for (int i = 0; i < signatureBytes.Length; i++)
-            //        {
-            //            Console.WriteLine((int)signatureBytes[i]);
-            //        }
-            //    }
-            //}
-
-            Console.WriteLine($"FindMethod {This} {MdToken} {ModuleVersionPtr} {_parameters.Length}");
-            return (MethodInfo)_methodFinder.FindMethod(MdToken, ModuleVersionPtr, thisType?.GetGenericArguments());
+            return (MethodInfo)findMethod;
         }
 
         public object Execute()
@@ -131,8 +84,7 @@ namespace Interception.Core
             foreach (var item in _childs)
             {
                 item.This = This;
-                item.MdToken = MdToken;
-                item.ModuleVersionPtr = ModuleVersionPtr;
+                item.Method = FindMethod();
                 item.SetParameters(_parameters);
                 item.ExecuteBefore();
                 for (int i = 0; i < _parameters.Length; i++)
@@ -258,11 +210,11 @@ namespace Interception.Core
 
             var underilyingType = ((TypeInfo)method.ReturnType).GenericTypeArguments[0];
 
-            var createExecutionDelegateGeneric = typeof(IComposedInterceptor).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Where(m => m.Name == nameof(CreateExecutionDelegate)).First();
+            var createExecutionDelegateGeneric = typeof(ComposedInterceptor).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Where(m => m.Name == nameof(CreateExecutionDelegate)).First();
             var createExecutionDelegate = createExecutionDelegateGeneric.MakeGenericMethod(underilyingType);
             var executionDelegate = createExecutionDelegate.Invoke(this, new object[] { });
 
-            var executeWithMetricsGeneric = typeof(IComposedInterceptor).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Where(m => m.Name == nameof(ExecuteWithMetrics)).First();
+            var executeWithMetricsGeneric = typeof(ComposedInterceptor).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Where(m => m.Name == nameof(ExecuteWithMetrics)).First();
             var executeWithMetrics = executeWithMetricsGeneric.MakeGenericMethod(underilyingType);
 
             return executeWithMetrics.Invoke(this, new object[] { executionDelegate });

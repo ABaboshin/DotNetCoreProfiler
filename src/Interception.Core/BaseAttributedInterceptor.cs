@@ -11,8 +11,7 @@ namespace Interception.Core
     {
         protected T GetCustomAttribute<T>() where T : MethodInterceptorAttribute
         {
-            var method = FindMethod();
-            var attribute = (T)method.GetCustomAttributes(typeof(T), false).First();
+            var attribute = (T)Method.GetCustomAttributes(typeof(T), false).First();
 
             return attribute;
         }

@@ -25,11 +25,6 @@ namespace Interception.MassTransit
         {
         }
 
-        protected override MethodInfo FindMethod()
-        {
-            return This.GetType().GetMethod("Consume");
-        }
-
         protected override void CreateScope()
         {
             var context = (ConsumeContext)GetParameter(0);

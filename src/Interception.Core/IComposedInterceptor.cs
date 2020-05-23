@@ -18,6 +18,11 @@
         long ModuleVersionPtr { get; set; }
 
         /// <summary>
+        /// method name
+        /// </summary>
+        string MethodName { get; set; }
+
+        /// <summary>
         /// set argument number
         /// </summary>
         /// <param name="number"></param>

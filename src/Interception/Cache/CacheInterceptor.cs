@@ -18,14 +18,13 @@ namespace Interception.Cache
 
         string GetCacheKey()
         {
-            var method = FindMethod();
             var attribute = GetCustomAttribute<CacheAttribute>();
 
-            var key = method.Name;
+            var key = Method.Name;
 
             if (attribute.Parameters != null && attribute.Parameters.Any())
             {
-                var methodParameters = method.GetParameters().ToList();
+                var methodParameters = Method.GetParameters().ToList();
 
                 foreach (var p in attribute.Parameters)
                 {
@@ -44,8 +43,7 @@ namespace Interception.Cache
         {
             Console.WriteLine($"Cache.ExecuteAfter {DateTime.UtcNow} {GetCacheKey()}");
 
-            var method = FindMethod();
-            var attribute = (CacheAttribute)method.GetCustomAttributes(typeof(CacheAttribute), false).First();
+            var attribute = (CacheAttribute)Method.GetCustomAttributes(typeof(CacheAttribute), false).First();
 
             DistributedCache.Set(GetCacheKey(), Serialization.ToByteArray(Result), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(attribute.DurationSeconds) });
         }

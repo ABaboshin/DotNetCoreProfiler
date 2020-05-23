@@ -626,28 +626,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.CallMember(setThisRef, false);
     }
 
-    //SetThisType
-    {
-        std::vector<BYTE> setThisTypeSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            1,
-            ELEMENT_TYPE_VOID,
-            ELEMENT_TYPE_I4
-        };
-
-        mdMemberRef setThisTypeRef;
-        hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
-            "set_TypeMdToken"_W.data(),
-            setThisTypeSignature.data(),
-            setThisTypeSignature.size(),
-            &setThisTypeRef);
-
-        helper.LoadLocal(composedIndex);
-        helper.LoadInt32(target.Type.Id);
-        helper.CallMember(setThisTypeRef, false);
-    }
-
     //SetMdToken
     {
         std::vector<BYTE> setMdTokenSignature = {
@@ -665,24 +643,35 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
             setMdTokenSignature.size(),
             &setMdTokenRef);
 
-        auto token = targetMdToken;
-        if (target.Signature.IsGeneric())
-        {
-            std::cout << "normal token " << token << std::endl;
+        helper.LoadLocal(composedIndex);
+        helper.LoadInt32(targetMdToken);
+        helper.CallMember(setMdTokenRef, false);
+    }
 
-            hr = metadataEmit->DefineMethodSpec(
-                token,
-                target.FunctionSpecSignature.Raw.data(),
-                target.FunctionSpecSignature.Raw.size(),
-                &token
-            );
+    //MethodName
+    {
+        std::vector<BYTE> setMethodNameSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_STRING
+        };
 
-            std::cout << "generic token " << token << std::endl;
-        }
+        mdMemberRef setMethodNameRef;
+        hr = metadataEmit->DefineMemberRef(
+            composedTypeRef,
+            "set_MethodName"_W.data(),
+            setMethodNameSignature.data(),
+            setMethodNameSignature.size(),
+            &setMethodNameRef);
+
+        // assembly path
+        mdString methodNameToken;
+        hr = metadataEmit->DefineUserString(target.Name.c_str(), (ULONG)target.Name.length(), &methodNameToken);
 
         helper.LoadLocal(composedIndex);
-        helper.LoadInt32(token);
-        helper.CallMember(setMdTokenRef, false);
+        helper.LoadStr(methodNameToken);
+        helper.CallMember(setMethodNameRef, false);
     }
 
     //SetModuleVersionPtr
@@ -798,74 +787,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.LoadLocal(inteceptionRefs[i].LocalVarIndex);
         helper.Cast(baseTypeRef);
         helper.CallMember(addChildRef, false);
-    }
-
-    //TypeSpecToken
-    {
-        std::vector<BYTE> setMdTokenSignature = {
-            IMAGE_CEE_CS_CALLCONV_HASTHIS,
-            1,
-            ELEMENT_TYPE_VOID,
-            ELEMENT_TYPE_I4
-        };
-
-        mdMemberRef setMdTokenRef;
-        hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
-            "set_TypeSpecToken"_W.data(),
-            setMdTokenSignature.data(),
-            setMdTokenSignature.size(),
-            &setMdTokenRef);
-
-        helper.LoadLocal(composedIndex);
-        helper.LoadInt32(target.Type.TypeSpecToken);
-        helper.CallMember(setMdTokenRef, false);
-    }
-
-    // generic
-    for (auto& p : target.Type.Generics)
-    {
-        auto test = info::FunctionInfo::GetFunctionInfo(metadataImport, targetMdToken);
-
-        std::cout << "Signature" << std::endl;
-        for (size_t i = 0; i < target.Signature.Raw.size(); i++)
-        {
-            std::cout << (int)target.Signature.Raw[i] << std::endl;
-        }
-
-    //    auto token = util::GetTypeToken(metadataEmit, mscorlibRef, p.Raw);
-
-    //    auto ti = info::TypeInfo::GetTypeInfo(metadataImport, token);
-
-    //    std::cout << "generic " << ToString(ti.Name) << std::endl;
-
-    //    helper.LoadLocal(composedIndex);
-    //    helper.LoadInt32(token);
-    //    helper.CallMember(addGenericTypeParameterRef, false);
-    }
-
-    // AddGenericMethodParameter
-    std::vector<BYTE> addGenericMethodParameterSignature = {
-        IMAGE_CEE_CS_CALLCONV_HASTHIS,
-        1,
-        ELEMENT_TYPE_VOID,
-        ELEMENT_TYPE_I4
-    };
-
-    mdMemberRef addGenericMethodParameterRef;
-    hr = metadataEmit->DefineMemberRef(
-        composedTypeRef,
-        "AddGenericMethodParameter"_W.data(),
-        addGenericMethodParameterSignature.data(),
-        addGenericMethodParameterSignature.size(),
-        &addGenericMethodParameterRef);
-
-    for (auto& p : target.FunctionSpecSignature.Generics)
-    {
-        auto token = util::GetTypeToken(metadataEmit, mscorlibRef, p.Raw);
-        helper.LoadLocal(composedIndex);
-        helper.LoadInt32(token);
-        helper.CallMember(addGenericMethodParameterRef, false);
     }
 
     //execute

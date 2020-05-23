@@ -17,7 +17,6 @@ namespace Interception
 
         protected override void CreateScope()
         {
-            var method = FindMethod();
             var attribute = GetCustomAttribute<MonitorAttribute>();
 
             var spanBuilder = GlobalTracer.Instance.BuildSpan(attribute.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
@@ -26,7 +25,7 @@ namespace Interception
 
             if (attribute.Parameters != null && attribute.Parameters.Any())
             {
-                var methodParameters = method.GetParameters().ToList();
+                var methodParameters = Method.GetParameters().ToList();
 
                 foreach (var p in attribute.Parameters)
                 {

@@ -24,10 +24,10 @@ This project has a goal to demonstrate injection of the following devops-related
  - Interceptors can be combined. See https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L54
 
 ***Limitations***
- - Dynamic methods are not supported
+ - Dynamic methods are not supported.
  - Interceptors can be combined, but the order of execution is not defined.
  - If you want to use parameter validator, use the `ValidationAttribute` on the method.
- - ref/out parameters for the async methods are not supported
+ - Generic are only partially supported.
 
 ## Project structure
 

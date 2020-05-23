@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Reflection;
 
 namespace Interception.Core
 {
@@ -12,15 +13,7 @@ namespace Interception.Core
         /// </summary>
         object This { get; set; }
 
-        /// <summary>
-        /// metadata token of intercepted method
-        /// </summary>
-        int MdToken { get; set; }
-
-        /// <summary>
-        /// pointer to module version of intercepted method
-        /// </summary>
-        long ModuleVersionPtr { get; set; }
+        MethodInfo Method { get; set; }
 
         /// <summary>
         /// result of execution

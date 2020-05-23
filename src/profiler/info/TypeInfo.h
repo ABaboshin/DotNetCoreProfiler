@@ -24,9 +24,6 @@ namespace info
         bool IsGenericMethodRef = false;
         ULONG GenericRefNumber = 0;
 
-        //ULONG instanceTypeToken = 0;
-        mdTypeSpec TypeSpecToken = 0;
-
         TypeInfo() : Id(0), Name(""_W) {}
         TypeInfo(mdToken id, wstring name, const std::vector<BYTE>& raw) : Id(id), Name(name), Raw(raw) {}
         TypeInfo(const std::vector<BYTE>& raw);

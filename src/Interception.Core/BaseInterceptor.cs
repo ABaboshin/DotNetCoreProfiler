@@ -10,8 +10,6 @@ namespace Interception.Core
     /// </summary>
     public abstract class BaseInterceptor : IInterceptor
     {
-        private IMethodFinder _methodFinder = new MethodFinder();
-
         private object[] _parameters;
         private List<int> _modifiedParameter = new List<int>();
 
@@ -20,6 +18,7 @@ namespace Interception.Core
         public long ModuleVersionPtr { get; set; }
         public object Result { get; set; } = null;
         public Exception Exception { get; set; } = null;
+        public MethodInfo Method { get; set; }
 
         public object GetParameter(int num)
         {
@@ -48,11 +47,6 @@ namespace Interception.Core
         public virtual bool SkipExecution()
         {
             return false;
-        }
-
-        protected virtual MethodInfo FindMethod()
-        {
-            return (MethodInfo)_methodFinder.FindMethod(MdToken, ModuleVersionPtr);
         }
 
         public void SetParameters(object[] parameters)
