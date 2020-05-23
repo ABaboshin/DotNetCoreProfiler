@@ -77,7 +77,7 @@ namespace Interception.Generator
                 {
                     return new StrictInterception
                     {
-                        CallerAssembly = info.attribute.CallerAssembly,
+                        IgnoreCallerAssemblies = info.attribute.IgnoreCallerAssemblies,
                         Target = new TargetMethod
                         {
                             AssemblyName = info.attribute.TargetAssemblyName,

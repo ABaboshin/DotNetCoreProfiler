@@ -9,16 +9,15 @@ using namespace util;
 namespace configuration
 {
 	struct StrictInterception {
-		wstring CallerAssemblyName;
+		std::vector<wstring> IgnoreCallerAssemblies{};
 		TargetMethod Target{};
 		Interceptor Interceptor{};
 
-		StrictInterception(const wstring& callerAssemblyName, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor) :
-			CallerAssemblyName(callerAssemblyName),
+		StrictInterception(const std::vector<wstring>& ignoreCallerAssemblies, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor) :
+			IgnoreCallerAssemblies(ignoreCallerAssemblies),
 			Target(targetMethod),
 			Interceptor(interceptor) {}
 
-		StrictInterception() :
-			CallerAssemblyName(""_W) {}
+		StrictInterception() {}
 	};
 }

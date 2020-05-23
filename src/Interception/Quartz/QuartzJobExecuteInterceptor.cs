@@ -12,7 +12,7 @@ namespace Interception.Quartz
     /// intercept quartz job running
     /// and inject tracing
     /// </summary>
-    [StrictIntercept(CallerAssembly = "", TargetAssemblyName = "Quartz", TargetMethodName = "Execute", TargetTypeName = "Quartz.IJob", TargetMethodParametersCount = 1)]
+    [StrictIntercept(TargetAssemblyName = "Quartz", TargetMethodName = "Execute", TargetTypeName = "Quartz.IJob", TargetMethodParametersCount = 1)]
     public class QuartzJobExecuteInterceptor : BaseMetricsInterceptor
     {
         public QuartzJobExecuteInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Enabled)
