@@ -149,7 +149,7 @@ namespace info
 
         if (typeInfo.IsGenericMethodRef)
         {
-            auto parameterType = FunctionSpecSignature.generics[typeInfo.GenericRefNumber];
+            auto parameterType = FunctionSpecSignature.Generics[typeInfo.GenericRefNumber];
             parameterType.IsRefType = typeInfo.IsRefType;
             return parameterType;
         }

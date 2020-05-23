@@ -11,7 +11,7 @@ namespace configuration
 	std::pair<Interceptor, bool> LoadInterceptorFromJson(const nlohmann::json::value_type& src);
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src);
 	std::pair<AttributedInterceptor, bool> LoadAttributedInterceptorFromJson(const nlohmann::json::value_type& src);
-	std::pair<BaseClass, bool> LoadBaseClassFromJson(const nlohmann::json::value_type& src);
+	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src);
 
 	Configuration Configuration::LoadConfiguration(const wstring& path)
 	{
@@ -64,21 +64,22 @@ namespace configuration
 			}
 		}
 
-		auto base = LoadBaseClassFromJson(j["baseClass"]);
+		auto base = LoadTypeInfoFromJson(j["baseClass"]);
+		auto composed = LoadTypeInfoFromJson(j["composed"]);
 
-		return { interceptions, assemblies, attributedInterceptors, std::get<0>(base) };
+		return { interceptions, assemblies, attributedInterceptors, std::get<0>(base), std::get<0>(composed) };
 	}
 
-	std::pair<BaseClass, bool> LoadBaseClassFromJson(const nlohmann::json::value_type& src)
+	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src)
 	{
 		if (!src.is_object()) {
-			return std::make_pair<BaseClass, bool>({}, false);
+			return std::make_pair<TypeInfo, bool>({}, false);
 		}
 
 		auto assemblyName = ToWSTRING(src.value("AssemblyName", ""));
 		auto typeName = ToWSTRING(src.value("TypeName", ""));
 
-		return std::make_pair<BaseClass, bool>({ assemblyName , typeName }, true);
+		return std::make_pair<TypeInfo, bool>({ assemblyName , typeName }, true);
 	}
 
 	std::pair<AttributedInterceptor, bool> LoadAttributedInterceptorFromJson(const nlohmann::json::value_type& src)

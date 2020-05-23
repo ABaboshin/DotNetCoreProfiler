@@ -2,7 +2,7 @@
 
 #include <vector>
 #include "configuration/AttributedInterceptor.h"
-#include "configuration/BaseClass.h"
+#include "configuration/TypeInfo.h"
 #include "configuration/StrictInterception.h"
 
 
@@ -13,10 +13,19 @@ namespace configuration
 		std::vector<StrictInterception> StrictInterceptions{};
 		std::vector<wstring> Assemblies;
 		std::vector<AttributedInterceptor> AttributedInterceptors;
-		BaseClass Base{};
+		TypeInfo Base{};
+		TypeInfo Composed{};
 
-		Configuration(std::vector<StrictInterception> strictInterceptions, std::vector<wstring> assemblies, const std::vector<AttributedInterceptor>& attributedInterceptors, const BaseClass& base) :
-			StrictInterceptions(strictInterceptions), Assemblies(assemblies), AttributedInterceptors(attributedInterceptors), Base(base) {}
+		Configuration(std::vector<StrictInterception> strictInterceptions,
+			std::vector<wstring> assemblies,
+			const std::vector<AttributedInterceptor>& attributedInterceptors,
+			const TypeInfo& base,
+			const TypeInfo& composed) :
+			StrictInterceptions(strictInterceptions),
+			Assemblies(assemblies),
+			AttributedInterceptors(attributedInterceptors),
+			Base(base),
+			Composed(composed) {}
 
 		Configuration() {}
 

@@ -415,7 +415,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, INT32 targetMdToken, mdMethodDef& retMethodToken)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken)
 {
     HRESULT hr;
 
@@ -442,6 +442,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     // Define System.Exception
     mdTypeRef exceptionTypeRef;
     metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemException.data(), &exceptionTypeRef);
+
+    // Define System.Type
+    mdTypeRef typeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemType.data(), &typeRef);
+
+    // Define System.Type
+    mdTypeRef runtimeTypeHandleRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemRuntimeTypeHandle.data(), &runtimeTypeHandleRef);
 
     // Define a static type
     mdTypeDef newTypeDef;
@@ -497,15 +505,11 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     mdSignature localSigToken;
     std::vector<BYTE> localSig = {
         IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
-        3,
-        ELEMENT_TYPE_BOOLEAN,
-        ELEMENT_TYPE_BOOLEAN,
+        1,
         ELEMENT_TYPE_OBJECT,
     };
 
-    int skipIndex = 0;
-    int skipCurrentIndex = 1;
-    int resultIndex = 2;
+    int resultIndex = 0;
 
     hr = metadataEmit->GetTokenFromSig(localSig.data(), localSig.size(), &localSigToken);
 
@@ -519,6 +523,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         baseDllRef,
         configuration.Base.TypeName.data(),
         &baseTypeRef);
+    IfFailRet(hr);
+
+    // define composedType = ComposedInterceptor
+    mdTypeRef composedTypeRef;
+    hr = metadataEmit->DefineTypeRefByName(
+        baseDllRef,
+        configuration.Composed.TypeName.data(),
+        &composedTypeRef);
     IfFailRet(hr);
 
     // local sig
@@ -539,15 +551,14 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         int locaVarIndex = 0;
         helper.AddLocalVariable(interceptorTypeRef, locaVarIndex);
-
         inteceptionRefs.push_back(info::InterceptionVarInfo(interceptorTypeRef, locaVarIndex));
     }
 
-    int exceptionIndex = 0;
-    helper.AddLocalVariable(exceptionTypeRef, exceptionIndex);
+    int composedIndex = 0;
+    helper.AddLocalVariable(composedTypeRef, composedIndex);
 
-    helper.LoadInt32(0);
-    helper.StLocal(skipIndex);
+    int typeIndex = 0;
+    helper.AddLocalVariable(typeRef, typeIndex);
 
     // ctor
     for (const auto& interceptor : inteceptionRefs)
@@ -570,10 +581,29 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.StLocal(interceptor.LocalVarIndex);
     }
 
+    {
+        std::vector<BYTE> ctorSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_VOID
+        };
+
+        mdMemberRef ctorRef;
+        hr = metadataEmit->DefineMemberRef(
+            composedTypeRef,
+            _const::ctor.data(),
+            ctorSignature.data(),
+            ctorSignature.size(),
+            &ctorRef);
+
+        helper.NewObject(ctorRef);
+        helper.StLocal(composedIndex);
+    }
+
     auto shift = 0;
 
     //SetThis
-    if (target.Signature.IsInstanceMethod()) for (const auto& interceptor : inteceptionRefs)
+    if (target.Signature.IsInstanceMethod())
     {
         std::vector<BYTE> setThisSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -584,20 +614,19 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setThisRef;
         hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
+            composedTypeRef,
             "set_This"_W.data(),
             setThisSignature.data(),
             setThisSignature.size(),
             &setThisRef);
 
         shift = 1;
-        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.LoadLocal(composedIndex);
         helper.LoadArgument(0);
         helper.CallMember(setThisRef, false);
     }
 
     //SetMdToken
-    for (const auto& interceptor : inteceptionRefs)
     {
         std::vector<BYTE> setMdTokenSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -608,19 +637,44 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setMdTokenRef;
         hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
+            composedTypeRef,
             "set_MdToken"_W.data(),
             setMdTokenSignature.data(),
             setMdTokenSignature.size(),
             &setMdTokenRef);
 
-        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.LoadLocal(composedIndex);
         helper.LoadInt32(targetMdToken);
         helper.CallMember(setMdTokenRef, false);
     }
 
+    //MethodName
+    {
+        std::vector<BYTE> setMethodNameSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            1,
+            ELEMENT_TYPE_VOID,
+            ELEMENT_TYPE_STRING
+        };
+
+        mdMemberRef setMethodNameRef;
+        hr = metadataEmit->DefineMemberRef(
+            composedTypeRef,
+            "set_MethodName"_W.data(),
+            setMethodNameSignature.data(),
+            setMethodNameSignature.size(),
+            &setMethodNameRef);
+
+        // assembly path
+        mdString methodNameToken;
+        hr = metadataEmit->DefineUserString(target.Name.c_str(), (ULONG)target.Name.length(), &methodNameToken);
+
+        helper.LoadLocal(composedIndex);
+        helper.LoadStr(methodNameToken);
+        helper.CallMember(setMethodNameRef, false);
+    }
+
     //SetModuleVersionPtr
-    for (const auto& interceptor : inteceptionRefs)
     {
         std::vector<BYTE> setModuleVersionPtrSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -631,20 +685,19 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setModuleVersionPtrRef;
         hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
+            composedTypeRef,
             "set_ModuleVersionPtr"_W.data(),
             setModuleVersionPtrSignature.data(),
             setModuleVersionPtrSignature.size(),
             &setModuleVersionPtrRef);
 
-        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.LoadLocal(composedIndex);
         const void* module_version_id_ptr = &modules[moduleId];
         helper.LoadInt64(reinterpret_cast<INT64>(module_version_id_ptr));
         helper.CallMember(setModuleVersionPtrRef, false);
     }
 
     //SetArgumentCount
-    for (const auto& interceptor : inteceptionRefs)
     {
         std::vector<BYTE> setArgumentCountSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -655,19 +708,18 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setArgumentCountRef;
         hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
+            composedTypeRef,
             "SetArgumentCount"_W.data(),
             setArgumentCountSignature.data(),
             setArgumentCountSignature.size(),
             &setArgumentCountRef);
 
-        helper.LoadLocal(interceptor.LocalVarIndex);
+        helper.LoadLocal(composedIndex);
         helper.LoadInt32(target.Signature.NumberOfArguments());
         helper.CallMember(setArgumentCountRef, false);
     }
 
     // AddParameter
-    for (const auto& interceptor : inteceptionRefs)
     {
         std::vector<BYTE> addParameterSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -679,7 +731,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef addParameterRef;
         hr = metadataEmit->DefineMemberRef(
-            interceptor.TypeRef,
+            composedTypeRef,
             "AddParameter"_W.data(),
             addParameterSignature.data(),
             addParameterSignature.size(),
@@ -687,7 +739,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         for (size_t i = 0; i < target.Signature.NumberOfArguments(); i++)
         {
-            helper.LoadLocal(interceptor.LocalVarIndex);
+            helper.LoadLocal(composedIndex);
             helper.LoadInt32(i);
             helper.LoadArgument(shift + i);
 
@@ -723,15 +775,15 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     mdMemberRef addChildRef;
     hr = metadataEmit->DefineMemberRef(
-        inteceptionRefs[0].TypeRef,
+        composedTypeRef,
         "AddChild"_W.data(),
         addChildSignature.data(),
         addChildSignature.size(),
         &addChildRef);
 
-    for (size_t i = 1; i < inteceptionRefs.size(); i++)
+    for (size_t i = 0; i < inteceptionRefs.size(); i++)
     {
-        helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
+        helper.LoadLocal(composedIndex);
         helper.LoadLocal(inteceptionRefs[i].LocalVarIndex);
         helper.Cast(baseTypeRef);
         helper.CallMember(addChildRef, false);
@@ -746,13 +798,13 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     mdMemberRef executeRef;
     hr = metadataEmit->DefineMemberRef(
-        inteceptionRefs[0].TypeRef,
+        composedTypeRef,
         "Execute"_W.data(),
         executeSignature.data(),
         executeSignature.size(),
         &executeRef);
 
-    helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
+    helper.LoadLocal(composedIndex);
     helper.CallMember(executeRef, false);
 
     helper.StLocal(resultIndex);
@@ -767,7 +819,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     mdMemberRef getParameterRef;
     hr = metadataEmit->DefineMemberRef(
-        inteceptionRefs[0].TypeRef,
+        composedTypeRef,
         "GetParameter"_W.data(),
         getParameterSignature.data(),
         getParameterSignature.size(),
@@ -784,7 +836,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         helper.LoadArgument(shift + i);
 
-        helper.LoadLocal(inteceptionRefs[0].LocalVarIndex);
+        helper.LoadLocal(composedIndex);
         helper.LoadInt32(i);
         helper.CallMember(getParameterRef, false);
 

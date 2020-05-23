@@ -19,7 +19,7 @@ namespace Interception.AspNetCore
             var cts = (CancellationTokenSource)GetParameter(1);
             if (cts != null)
             {
-                UpdateParameter(1, cts.Token);
+                ModifyParameter(1, cts.Token);
             }
         }
     }

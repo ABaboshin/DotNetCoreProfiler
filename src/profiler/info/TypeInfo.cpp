@@ -90,8 +90,6 @@ namespace info
     }
 
     TypeInfo TypeInfo::GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token) {
-        mdToken parent_token = mdTokenNil;
-
         std::vector<WCHAR> typeName(MAX_CLASS_NAME, (WCHAR)0);
         DWORD typeNameLength = 0;
 
@@ -103,7 +101,7 @@ namespace info
                 &typeNameLength, nullptr, nullptr);
             break;
         case mdtTypeRef:
-            hr = metadataImport->GetTypeRefProps(token, &parent_token, &typeName[0],
+            hr = metadataImport->GetTypeRefProps(token, nullptr, &typeName[0],
                 MAX_CLASS_NAME, &typeNameLength);
             break;
         case mdtTypeSpec:
@@ -120,10 +118,11 @@ namespace info
 
             if (signature[0] & ELEMENT_TYPE_GENERICINST) {
                 mdToken typeToken;
-                CorSigUncompressToken(&signature[2], &typeToken);
+                auto length = CorSigUncompressToken(&signature[2], &typeToken);
                 auto ti = GetTypeInfo(metadataImport, typeToken);
                 ti.Raw = util::ToRaw(signature, signature_length);
                 ti.TryParseGeneric();
+
                 return ti;
             }
         }

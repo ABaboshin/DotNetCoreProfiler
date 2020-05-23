@@ -23,7 +23,10 @@ namespace _const
 	const auto SystemString = "System.String"_W;
 	const auto SystemObject = "System.Object"_W;
 	const auto SystemException = "System.Exception"_W;
+	const auto SystemType = "System.Type"_W;
+	const auto SystemRuntimeTypeHandle = "System.RuntimeTypeHandle"_W;
 	const auto SystemReflectionAssembly = "System.Reflection.Assembly"_W;
+	const auto GetTypeFromHandle = "GetTypeFromHandle"_W;
 	const auto mscorlib = "mscorlib"_W;
 	const auto LoadFrom = "LoadFrom"_W;
 	const auto ctor = ".ctor"_W;
