@@ -40,6 +40,7 @@ namespace SampleApp
         private static void ConfigureQuartz(IServiceCollection serviceCollection)
         {
             serviceCollection.AddSingleton<SampleJob>();
+            serviceCollection.AddSingleton<DeadlockJob>();
             serviceCollection.AddSingleton<IJobFactory, JobFactory>();
             serviceCollection.AddSingleton<ISchedulerFactory, StdSchedulerFactory>();
             serviceCollection.AddHostedService<SchedulerService>();

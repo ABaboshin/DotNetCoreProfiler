@@ -2,7 +2,7 @@
   "profiles": {
     "Interception.Generator": {
       "commandName": "Project",
-      "commandLineArgs": "-a D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.dll,D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.Core.dll -p D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\ -o D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\profiler.json"
+      "commandLineArgs": "-a D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.dll,D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.Core.dll,D:\\playground\\DotNetCoreProfiler\\src\\Interception.DeadlockDetection\\bin\\Debug\\netcoreapp2.1\\Interception.DeadlockDetection.dll -p D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\ -o D:\\playground\\DotNetCoreProfiler\\src\\Interception\\bin\\Debug\\netcoreapp2.1\\profiler.json"
     }
   }
 }
