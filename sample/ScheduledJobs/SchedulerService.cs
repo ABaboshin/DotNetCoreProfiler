@@ -24,19 +24,20 @@ namespace SampleApp.ScheduledJobs
             Scheduler = await _schedulerFactory.GetScheduler(cancellationToken);
             Scheduler.JobFactory = _jobFactory;
 
-            await ScheduledJobs();
+            //await ScheduledJob<SampleJob>();
+            await ScheduledJob<DeadlockJob>();
 
             await Scheduler.Start(cancellationToken);
         }
 
-        private async Task ScheduledJobs()
+        private async Task ScheduledJob<T>() where T : IJob
         {
-            var jobDetail = JobBuilder.Create(typeof(SampleJob))
-                            .WithIdentity(nameof(SampleJob))
+            var jobDetail = JobBuilder.Create<T>()
+                            .WithIdentity(nameof(T))
                             .Build();
 
             var trigger = TriggerBuilder.Create()
-                    .WithIdentity(nameof(SampleJob))
+                    .WithIdentity(nameof(T))
                     .StartNow()
                     .WithSimpleSchedule(x => x.WithIntervalInMinutes(1).RepeatForever())
                     .Build()

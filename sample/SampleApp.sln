@@ -25,6 +25,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Core", "..\src
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Generator", "..\src\Interception.Generator\Interception.Generator.csproj", "{45791EAF-BEA4-4064-BBD8-7D30442BD34F}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.DeadlockDetection", "..\src\Interception.DeadlockDetection\Interception.DeadlockDetection.csproj", "{524A4966-B25C-4190-860F-08B17CF689CD}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.DeadlockDetection.UnitTests", "..\tests\Interception.DeadlockDetection.UnitTests\Interception.DeadlockDetection.UnitTests.csproj", "{3E38AC02-12F8-443A-B071-785907E8F751}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -104,6 +108,22 @@ Global
 		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Release|Any CPU.Build.0 = Release|Any CPU
 		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Release|x64.ActiveCfg = Release|Any CPU
 		{45791EAF-BEA4-4064-BBD8-7D30442BD34F}.Release|x64.Build.0 = Release|Any CPU
+		{524A4966-B25C-4190-860F-08B17CF689CD}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{524A4966-B25C-4190-860F-08B17CF689CD}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{524A4966-B25C-4190-860F-08B17CF689CD}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{524A4966-B25C-4190-860F-08B17CF689CD}.Debug|x64.Build.0 = Debug|Any CPU
+		{524A4966-B25C-4190-860F-08B17CF689CD}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{524A4966-B25C-4190-860F-08B17CF689CD}.Release|Any CPU.Build.0 = Release|Any CPU
+		{524A4966-B25C-4190-860F-08B17CF689CD}.Release|x64.ActiveCfg = Release|Any CPU
+		{524A4966-B25C-4190-860F-08B17CF689CD}.Release|x64.Build.0 = Release|Any CPU
+		{3E38AC02-12F8-443A-B071-785907E8F751}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3E38AC02-12F8-443A-B071-785907E8F751}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3E38AC02-12F8-443A-B071-785907E8F751}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3E38AC02-12F8-443A-B071-785907E8F751}.Debug|x64.Build.0 = Debug|Any CPU
+		{3E38AC02-12F8-443A-B071-785907E8F751}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3E38AC02-12F8-443A-B071-785907E8F751}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3E38AC02-12F8-443A-B071-785907E8F751}.Release|x64.ActiveCfg = Release|Any CPU
+		{3E38AC02-12F8-443A-B071-785907E8F751}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
