@@ -16,6 +16,7 @@ namespace Interception.DeadlockDetection.DataStructures
         public bool Equals(Node other)
         {
             return Equals(MonitorObject, other.MonitorObject) && LockType == other.LockType;
+            //return GetHashCode() == other.GetHashCode();
         }
 
         public override bool Equals(object obj)

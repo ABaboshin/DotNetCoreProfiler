@@ -6,7 +6,7 @@ namespace Interception.DeadlockDetection
     {
         public DeadlockInfo DeadlockInfo { get; set; }
 
-        public DeadlockException(DeadlockInfo deadlockInfo)
+        public DeadlockException(DeadlockInfo deadlockInfo) : base(deadlockInfo.Message)
         {
             DeadlockInfo = deadlockInfo;
         }

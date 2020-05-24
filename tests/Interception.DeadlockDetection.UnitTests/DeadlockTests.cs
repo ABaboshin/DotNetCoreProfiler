@@ -1,4 +1,5 @@
 ﻿using NUnit.Framework;
+using System;
 using System.Threading;
 
 namespace Interception.DeadlockDetection.UnitTests
@@ -35,8 +36,28 @@ namespace Interception.DeadlockDetection.UnitTests
         [Test]
         public void MonitorTest()
         {
-            var t1 = new Thread(T1);
-            var t2 = new Thread(T2);
+            var t1 = new Thread(() => {
+                try
+                {
+                    T1();
+                    Assert.Fail();
+                }
+                catch (Exception)
+                {
+                    Assert.AreEqual(1, 1);
+                }
+            });
+            var t2 = new Thread(() => {
+                try
+                {
+                    T2();
+                    Assert.Fail();
+                }
+                catch (Exception)
+                {
+                    Assert.AreEqual(1, 1);
+                }
+            });
 
             t1.Start();
             t2.Start();

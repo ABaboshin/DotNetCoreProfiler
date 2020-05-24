@@ -10,8 +10,8 @@ namespace Interception.DeadlockDetection
     internal class DeadlockMonitor
     {
         private readonly ConditionalWeakTable<Thread, ConcurrentBag<DeadlockException>> _pendingDeadlockExceptions = new ConditionalWeakTable<Thread, ConcurrentBag<DeadlockException>>();
-        private volatile int _detectionPending;
         private readonly Graph _graph = new Graph();
+        private readonly object _deadlockDetectionLock = new object();
 
         #region current
         private static volatile DeadlockMonitor _current;
@@ -31,7 +31,7 @@ namespace Interception.DeadlockDetection
 
         public void Acquire(Action enterWaiting, Func<int, bool> tryAcquire, Action convertWaitingToAcquired, Action exitWaiting)
         {
-            var entered = false;
+            var inWaiting = false;
             try
             {
                 // try to lock the resource without timeout
@@ -44,7 +44,7 @@ namespace Interception.DeadlockDetection
 
                 // set as waiting
                 enterWaiting();
-                entered = true;
+                inWaiting = true;
 
                 // check for deadlock exceptions
                 // they can come from another threads
@@ -62,27 +62,31 @@ namespace Interception.DeadlockDetection
 
                 if (pendingException == null)
                 {
+                    Console.WriteLine("pendingException == null");
                     if (!acquired)
                     {
+                        Console.WriteLine("!acquired");
                         // if acquiring failed and no exception was collected
                         // do it now
                         DetectDeadlocks(Thread.CurrentThread);
                     }
                     else
                     {
+                        Console.WriteLine("acquired");
                         // set as acquired
                         convertWaitingToAcquired();
-                        entered = false;
+                        inWaiting = false;
                     }
                 }
                 else
                 {
+                    Console.WriteLine("throw pendingException;");
                     throw pendingException;
                 }
             }
             finally
             {
-                if (entered)
+                if (inWaiting)
                 {
                     // remove waiting edge
                     exitWaiting();
@@ -92,27 +96,32 @@ namespace Interception.DeadlockDetection
 
         public void EnterWaiting(object monitorObject, LockType lockType)
         {
+            Console.WriteLine($"EnterWaiting {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             AddEdge(Thread.CurrentThread, LockType.Thread, monitorObject, lockType);
         }
 
         public void ConvertWaitingToAcquired(object monitorObject, LockType lockType)
         {
+            Console.WriteLine($"ConvertWaitingToAcquired {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             RemoveEdge(Thread.CurrentThread, LockType.Thread, monitorObject, lockType);
             AddEdge(monitorObject, lockType, Thread.CurrentThread, LockType.Thread);
         }
 
         public void ExitWaiting(object monitorObject, LockType lockType)
         {
+            Console.WriteLine($"ExitWaiting {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             RemoveEdge(Thread.CurrentThread, LockType.Thread, monitorObject, lockType);
         }
 
         public void EnterAcquired(object monitorObject, LockType lockType)
         {
+            Console.WriteLine($"EnterAcquired {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             AddEdge(monitorObject, lockType, Thread.CurrentThread, LockType.Thread);
         }
 
         public void ExitAcquired(object monitorObject, LockType lockType)
         {
+            Console.WriteLine($"ExitAcquired {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             RemoveEdge(monitorObject, lockType, Thread.CurrentThread, LockType.Thread);
         }
 
@@ -136,35 +145,41 @@ namespace Interception.DeadlockDetection
 
         internal void DetectDeadlocks(Thread startThread)
         {
-            if (Interlocked.CompareExchange(ref _detectionPending, 1, 0) == 1)
+            lock (_deadlockDetectionLock)
             {
-                return;
+                _graph.FindCycles(new Node(startThread, LockType.Thread), out var cycles);
+
+                if (!cycles.Any())
+                {
+                    return;
+                }
+
+                var info = new DeadlockInfo
+                {
+                    Threads = cycles
+                    .Where(e => e.Prev.LockType == LockType.Thread)
+                    .Select(e => e.Prev.MonitorObject)
+                    .OfType<Thread>()
+                    .Union(
+                    cycles
+                    .Where(e => e.Next.LockType == LockType.Thread)
+                    .Select(e => e.Next.MonitorObject)
+                    .OfType<Thread>()
+                    ).ToList(),
+                    Message = string.Join(Environment.NewLine, cycles.Select(c => c.ToString()))
+                };
+
+                Console.WriteLine($"Deadlock: {info.Message}");
+
+                foreach (var thread in info.Threads.Where(t => t != Thread.CurrentThread))
+                {
+                    _pendingDeadlockExceptions
+                        .GetValue(thread, t => new ConcurrentBag<DeadlockException>())
+                        .Add(new DeadlockException(info));
+                }
+
+                throw new DeadlockException(info);
             }
-
-            _graph.FindCycles(new Node(startThread, LockType.Thread), out var cycles);
-            var info = new DeadlockInfo
-            {
-                Threads = cycles
-                .Where(e => e.Prev.LockType == LockType.Thread)
-                .Select(e => e.Prev.MonitorObject)
-                .OfType<Thread>()
-                .Union(
-                cycles
-                .Where(e => e.Next.LockType == LockType.Thread)
-                .Select(e => e.Next.MonitorObject)
-                .OfType<Thread>()
-                ).ToList(),
-                Message = string.Join(Environment.NewLine, cycles.Select(c => c.ToString()))
-            };
-
-            foreach (var thread in info.Threads.Where(t => t != Thread.CurrentThread))
-            {
-                _pendingDeadlockExceptions
-                    .GetValue(thread, t => new ConcurrentBag<DeadlockException>())
-                    .Add(new DeadlockException(info));
-            }
-
-            throw new DeadlockException(info);
         }
     }
 }
