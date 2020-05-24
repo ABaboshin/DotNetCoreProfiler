@@ -43,7 +43,6 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
-        "System.Text.Encoding.CodePages",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "Enter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 1)]
     public class MonitorEnterObjectInterceptor : DeadlockInterceptor
@@ -95,7 +94,6 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Private.Xml.Linq",
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
-        "System.Text.Encoding.CodePages",
         "System.Text.Encoding.CodePages",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "Enter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 2)]
@@ -150,7 +148,6 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
-        "System.Text.Encoding.CodePages",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "TryEnter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 1)]
     public class MonitorTryEnter1Interceptor : DeadlockInterceptor
@@ -203,7 +200,6 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Private.Xml.Linq",
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
-        "System.Text.Encoding.CodePages",
         "System.Text.Encoding.CodePages",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "TryEnter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 2)]
@@ -277,7 +273,6 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
-        "System.Text.Encoding.CodePages",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "TryEnter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 3)]
     public class MonitorTryEnter3Interceptor : DeadlockInterceptor
@@ -344,7 +339,6 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Private.Xml.Linq",
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
-        "System.Text.Encoding.CodePages",
         "System.Text.Encoding.CodePages",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "Enter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 1)]

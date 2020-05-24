@@ -13,9 +13,7 @@ namespace Interception.DeadlockDetection.Enhancements
                 () => DeadlockMonitor.Current.EnterWaiting(obj, LockType.Monitor),
                 timeout =>
                 {
-                    Console.WriteLine($"try lock {obj} with timeout {timeout}");
                     Monitor.TryEnter(obj, timeout, ref copy);
-                    Console.WriteLine($"result {copy} lock {obj} with timeout {timeout}");
                     return copy;
                 },
                 () => DeadlockMonitor.Current.ConvertWaitingToAcquired(obj, LockType.Monitor),

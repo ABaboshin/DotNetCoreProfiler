@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading;
 
 namespace Interception.DeadlockDetection.DataStructures
 {
@@ -16,7 +17,6 @@ namespace Interception.DeadlockDetection.DataStructures
         public bool Equals(Node other)
         {
             return Equals(MonitorObject, other.MonitorObject) && LockType == other.LockType;
-            //return GetHashCode() == other.GetHashCode();
         }
 
         public override bool Equals(object obj)
@@ -31,7 +31,7 @@ namespace Interception.DeadlockDetection.DataStructures
 
         public override string ToString()
         {
-            return $"{MonitorObject} of type {LockType}";
+            return (MonitorObject is Thread thread) ? $"Thread {thread.Name} {thread.ManagedThreadId}" : $"{LockType} {MonitorObject}";
         }
     }
 }

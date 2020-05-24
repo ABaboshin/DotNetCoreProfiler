@@ -62,17 +62,14 @@ namespace Interception.DeadlockDetection
 
                 if (pendingException == null)
                 {
-                    Console.WriteLine("pendingException == null");
                     if (!acquired)
                     {
-                        Console.WriteLine("!acquired");
                         // if acquiring failed and no exception was collected
                         // do it now
                         DetectDeadlocks(Thread.CurrentThread);
                     }
                     else
                     {
-                        Console.WriteLine("acquired");
                         // set as acquired
                         convertWaitingToAcquired();
                         inWaiting = false;
@@ -80,7 +77,6 @@ namespace Interception.DeadlockDetection
                 }
                 else
                 {
-                    Console.WriteLine("throw pendingException;");
                     throw pendingException;
                 }
             }
@@ -96,32 +92,27 @@ namespace Interception.DeadlockDetection
 
         public void EnterWaiting(object monitorObject, LockType lockType)
         {
-            Console.WriteLine($"EnterWaiting {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             AddEdge(Thread.CurrentThread, LockType.Thread, monitorObject, lockType);
         }
 
         public void ConvertWaitingToAcquired(object monitorObject, LockType lockType)
         {
-            Console.WriteLine($"ConvertWaitingToAcquired {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             RemoveEdge(Thread.CurrentThread, LockType.Thread, monitorObject, lockType);
             AddEdge(monitorObject, lockType, Thread.CurrentThread, LockType.Thread);
         }
 
         public void ExitWaiting(object monitorObject, LockType lockType)
         {
-            Console.WriteLine($"ExitWaiting {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             RemoveEdge(Thread.CurrentThread, LockType.Thread, monitorObject, lockType);
         }
 
         public void EnterAcquired(object monitorObject, LockType lockType)
         {
-            Console.WriteLine($"EnterAcquired {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             AddEdge(monitorObject, lockType, Thread.CurrentThread, LockType.Thread);
         }
 
         public void ExitAcquired(object monitorObject, LockType lockType)
         {
-            Console.WriteLine($"ExitAcquired {Thread.CurrentThread} {LockType.Thread} {monitorObject} {lockType}");
             RemoveEdge(monitorObject, lockType, Thread.CurrentThread, LockType.Thread);
         }
 
@@ -166,10 +157,8 @@ namespace Interception.DeadlockDetection
                     .Select(e => e.Next.MonitorObject)
                     .OfType<Thread>()
                     ).ToList(),
-                    Message = string.Join(Environment.NewLine, cycles.Select(c => c.ToString()))
+                    Message = string.Join("; ", cycles.Select(c => c.ToString()))
                 };
-
-                Console.WriteLine($"Deadlock: {info.Message}");
 
                 foreach (var thread in info.Threads.Where(t => t != Thread.CurrentThread))
                 {

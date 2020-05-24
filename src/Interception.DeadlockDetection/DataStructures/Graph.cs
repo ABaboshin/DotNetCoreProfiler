@@ -92,12 +92,6 @@ namespace Interception.DeadlockDetection.DataStructures
             stack.Push(v);
             onStack[v] = true;
 
-            var keys = _info.Keys;
-            foreach (var item in keys)
-            {
-                Console.WriteLine($"k: {item} v: {v} equal: {item == v} equal2: {item.GetHashCode() == v.GetHashCode()}");
-            }
-
             if (_info.TryGetValue(v, out var data)) foreach (var item in data)
             {
                 if (!vindex.ContainsKey(item.Key))
