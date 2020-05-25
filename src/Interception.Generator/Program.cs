@@ -39,6 +39,36 @@ namespace Interception.Generator
                             TypeName = typeof(ComposedInterceptor).FullName,
                             AssemblyName = typeof(ComposedInterceptor).Assembly.GetName().Name
                         },
+                        skipAssemblies = new[] {
+                            "Anonymously Hosted DynamicMethods Assembly",
+                            "Interception",
+                            "Interception.Common",
+                            "Interception.Observers",
+                            "ISymWrapper",
+                            "Microsoft.AspNetCore.Mvc.RazorPages",
+                            "Microsoft.AspNetCore.Razor.Language",
+                            "Microsoft.CSharp",
+                            "Microsoft.Extensions.ObjectPool",
+                            "Microsoft.Extensions.Options",
+                            "mscorlib",
+                            "netstandard",
+                            "Newtonsoft.Json",
+                            "StatsdClient",
+                            "System.Collections",
+                            "System.ComponentModel",
+                            "System.Configuration",
+                            "System.Console",
+                            "System.Core",
+                            "System.Diagnostics.DiagnosticSource",
+                            "System.IO.FileSystem",
+                            "System.Private.CoreLib",
+                            "System.Runtime",
+                            "System.Runtime.Extensions",
+                            "System.Runtime.InteropServices",
+                            "System.Runtime.InteropServices.RuntimeInformation",
+                            "System.Threading.Tasks",
+                            "System.Xml.Linq"
+                        }.OrderBy(s => s)
                     };
 
                     File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));
@@ -71,8 +101,8 @@ namespace Interception.Generator
         {
             var interceptors = assembly
                 .GetTypes()
-                .Where(type => type.GetCustomAttributes<StrictInterceptAttribute>().Any())
-                .SelectMany(type => type.GetCustomAttributes<StrictInterceptAttribute>().Select(attribute => new { type, attribute }))
+                .Where(type => type.GetCustomAttributes().Where(c => typeof(StrictInterceptAttribute).IsAssignableFrom(c.GetType())).Any())
+                .SelectMany(type => type.GetCustomAttributes().Where(c => typeof(StrictInterceptAttribute).IsAssignableFrom(c.GetType())).Select(attribute => new { type, attribute = (StrictInterceptAttribute)attribute }))
                 .Select(info =>
                 {
                     return new StrictInterception

@@ -15,17 +15,20 @@ namespace configuration
 		std::vector<AttributedInterceptor> AttributedInterceptors;
 		TypeInfo Base{};
 		TypeInfo Composed{};
+		std::vector<wstring> SkipAssemblies;
 
 		Configuration(std::vector<StrictInterception> strictInterceptions,
-			std::vector<wstring> assemblies,
+			std::vector<wstring>& assemblies,
 			const std::vector<AttributedInterceptor>& attributedInterceptors,
 			const TypeInfo& base,
-			const TypeInfo& composed) :
+			const TypeInfo& composed,
+			std::vector<wstring>& skipAssemblies) :
 			StrictInterceptions(strictInterceptions),
 			Assemblies(assemblies),
 			AttributedInterceptors(attributedInterceptors),
 			Base(base),
-			Composed(composed) {}
+			Composed(composed),
+			SkipAssemblies(skipAssemblies) {}
 
 		Configuration() {}
 
