@@ -41,6 +41,7 @@ namespace configuration
 	{
 		std::vector<StrictInterception> interceptions{};
 		std::vector<wstring> assemblies{};
+		std::vector<wstring> skipAssemblies{};
 		std::vector<AttributedInterceptor> attributedInterceptors{};
 
 		nlohmann::json j;
@@ -57,6 +58,10 @@ namespace configuration
 			assemblies.push_back(ToWSTRING(el));
 		}
 
+		for (auto& el : j["skipAssemblies"]) {
+			skipAssemblies.push_back(ToWSTRING(el));
+		}
+
 		for (auto& el : j["attributed"]) {
 			auto i = LoadAttributedInterceptorFromJson(el);
 			if (std::get<1>(i)) {
@@ -67,7 +72,7 @@ namespace configuration
 		auto base = LoadTypeInfoFromJson(j["baseClass"]);
 		auto composed = LoadTypeInfoFromJson(j["composed"]);
 
-		return { interceptions, assemblies, attributedInterceptors, std::get<0>(base), std::get<0>(composed) };
+		return { interceptions, assemblies, attributedInterceptors, std::get<0>(base), std::get<0>(composed), skipAssemblies };
 	}
 
 	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src)
