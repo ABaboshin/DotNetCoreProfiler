@@ -321,38 +321,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
 bool CorProfiler::SkipAssembly(const wstring& name)
 {
-    std::vector<wstring> skipAssemblies{
-      "mscorlib"_W,
-      "netstandard"_W,
-      "System.Core"_W,
-      "System.Runtime"_W,
-      "System.IO.FileSystem"_W,
-      "System.Collections"_W,
-      "System.Runtime.Extensions"_W,
-      "System.Threading.Tasks"_W,
-      "System.Runtime.InteropServices"_W,
-      "System.Runtime.InteropServices.RuntimeInformation"_W,
-      "System.ComponentModel"_W,
-      "System.Console"_W,
-      "System.Diagnostics.DiagnosticSource"_W,
-      "System.Private.CoreLib"_W,
-      "Microsoft.Extensions.Options"_W,
-      "Microsoft.Extensions.ObjectPool"_W,
-      "System.Configuration"_W,
-      "System.Xml.Linq"_W,
-      "Microsoft.AspNetCore.Razor.Language"_W,
-      "Microsoft.AspNetCore.Mvc.RazorPages"_W,
-      "Microsoft.CSharp"_W,
-      "Anonymously Hosted DynamicMethods Assembly"_W,
-      "ISymWrapper"_W,
-      "Interception"_W,
-      "Interception.Common"_W,
-      "Interception.Observers"_W,
-      "StatsdClient"_W,
-      "Newtonsoft.Json"_W
-    };
-
-    return std::find(skipAssemblies.begin(), skipAssemblies.end(), name) != skipAssemblies.end();
+    return std::find(configuration.SkipAssemblies.begin(), configuration.SkipAssemblies.end(), name) != configuration.SkipAssemblies.end();
 }
 
 HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
@@ -785,7 +754,6 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     {
         helper.LoadLocal(composedIndex);
         helper.LoadLocal(inteceptionRefs[i].LocalVarIndex);
-        helper.Cast(baseTypeRef);
         helper.CallMember(addChildRef, false);
     }
 
