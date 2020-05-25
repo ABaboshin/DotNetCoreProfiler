@@ -43,6 +43,14 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
+        "System.IO.Compression",
+        "Serilog.Sinks.Console",
+        "Pipelines.Sockets.Unofficial",
+        "StackExchange.Redis",
+        "Microsoft.AspNetCore.Authentication.Core",
+        "Microsoft.AspNetCore.Hosting",
+        "Microsoft.Extensions.Http",
+        "System.Threading.Channels",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "Enter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 1)]
     public class MonitorEnterObjectInterceptor : DeadlockInterceptor
@@ -95,6 +103,14 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
+        "System.IO.Compression",
+        "Serilog.Sinks.Console",
+        "Pipelines.Sockets.Unofficial",
+        "StackExchange.Redis",
+        "Microsoft.AspNetCore.Authentication.Core",
+        "Microsoft.AspNetCore.Hosting",
+        "Microsoft.Extensions.Http",
+        "System.Threading.Channels",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "Enter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 2)]
     public class MonitorEnterObjectBoolInterceptor : DeadlockInterceptor
@@ -148,6 +164,14 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
+        "System.IO.Compression",
+        "Serilog.Sinks.Console",
+        "Pipelines.Sockets.Unofficial",
+        "StackExchange.Redis",
+        "Microsoft.AspNetCore.Authentication.Core",
+        "Microsoft.AspNetCore.Hosting",
+        "Microsoft.Extensions.Http",
+        "System.Threading.Channels",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "TryEnter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 1)]
     public class MonitorTryEnter1Interceptor : DeadlockInterceptor
@@ -201,6 +225,14 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
+        "System.IO.Compression",
+        "Serilog.Sinks.Console",
+        "Pipelines.Sockets.Unofficial",
+        "StackExchange.Redis",
+        "Microsoft.AspNetCore.Authentication.Core",
+        "Microsoft.AspNetCore.Hosting",
+        "Microsoft.Extensions.Http",
+        "System.Threading.Channels",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "TryEnter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 2)]
     public class MonitorTryEnter2Interceptor : DeadlockInterceptor
@@ -273,6 +305,14 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
+        "System.IO.Compression",
+        "Serilog.Sinks.Console",
+        "Pipelines.Sockets.Unofficial",
+        "StackExchange.Redis",
+        "Microsoft.AspNetCore.Authentication.Core",
+        "Microsoft.AspNetCore.Hosting",
+        "Microsoft.Extensions.Http",
+        "System.Threading.Channels",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "TryEnter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 3)]
     public class MonitorTryEnter3Interceptor : DeadlockInterceptor
@@ -340,6 +380,14 @@ namespace Interception.DeadlockDetection.Interceptors
         "System.Reflection.Metadata",
         "System.Security.Cryptography.X509Certificates",
         "System.Text.Encoding.CodePages",
+        "System.IO.Compression",
+        "Serilog.Sinks.Console",
+        "Pipelines.Sockets.Unofficial",
+        "StackExchange.Redis",
+        "Microsoft.AspNetCore.Authentication.Core",
+        "Microsoft.AspNetCore.Hosting",
+        "Microsoft.Extensions.Http",
+        "System.Threading.Channels",
         "System.Text.RegularExpressions" },
         TargetAssemblyName = "System.Threading", TargetMethodName = "Enter", TargetTypeName = "System.Threading.Monitor", TargetMethodParametersCount = 1)]
     public class MonitorExitObjectInterceptor : DeadlockInterceptor
