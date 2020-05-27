@@ -40,7 +40,7 @@ namespace Interception.Generator
                             AssemblyName = typeof(ComposedInterceptor).Assembly.GetName().Name
                         },
                         skipAssemblies = new[] {
-                            "Anonymously Hosted DynamicMethods Assembly",
+                            //"Anonymously Hosted DynamicMethods Assembly",
                             "Interception",
                             "Interception.Common",
                             "Interception.Observers",
