@@ -3,7 +3,7 @@ FROM mcr.microsoft.com/dotnet/core/sdk:2.1.806 as build
 COPY src/Interception.Attributes sample/src/Interception.Attributes
 COPY sample/ sample/SampleApp/
 
-RUN dotnet publish -c Debug -o /app sample/SampleApp/SampleApp.csproj
+RUN dotnet publish -c Release -o /app sample/SampleApp/SampleApp.csproj
 
 FROM profiler:native as profiler
 
@@ -15,6 +15,7 @@ RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
 COPY --from=interception /interception/*.dll /profiler/
 COPY --from=interception /interception/profiler.json /profiler/
+RUN cd /profiler && tar zcf /profiler.tar.gz *
 
 EXPOSE 80
 
