@@ -1,5 +1,6 @@
 #pragma once
 
+#include <unordered_set>
 #include "MethodSignature.h"
 #include "TypeInfo.h"
 #include "info/GenericMethodSignature.h"
@@ -15,7 +16,7 @@ namespace info
         MethodSignature Signature{};
         GenericMethodSignature FunctionSpecSignature{};
         mdToken MethodDefId;
-        std::vector<wstring> Attributes{};
+        std::unordered_set<wstring> Attributes{};
 
         FunctionInfo()
             : Id(0), Name(""_W), MethodDefId(0) {}
@@ -23,7 +24,7 @@ namespace info
         FunctionInfo(mdToken id, wstring name, TypeInfo type,
             MethodSignature signature,
             GenericMethodSignature functionSpecSignature, mdToken methodDefId,
-            const std::vector<wstring>& attributes)
+            const std::unordered_set<wstring>& attributes)
             : Id(id),
             Name(name),
             Type(type),
@@ -34,7 +35,7 @@ namespace info
 
         FunctionInfo(mdToken id, wstring name, TypeInfo type,
             MethodSignature signature,
-            const std::vector<wstring>& attributes)
+            const std::unordered_set<wstring>& attributes)
             : Id(id),
             Name(name),
             Type(type),
@@ -46,4 +47,6 @@ namespace info
 
         TypeInfo ResolveParameterType(const TypeInfo& typeInfo) const;
     };
+
+    std::unordered_set<wstring> ExtractAttributes(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token);
 }

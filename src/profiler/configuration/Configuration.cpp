@@ -41,8 +41,8 @@ namespace configuration
 	{
 		std::vector<StrictInterception> interceptions{};
 		std::vector<wstring> assemblies{};
-		std::vector<wstring> skipAssemblies{};
-		std::vector<AttributedInterceptor> attributedInterceptors{};
+		std::unordered_set<wstring> skipAssemblies{};
+		std::unordered_map<wstring, AttributedInterceptor> attributedInterceptors{};
 
 		nlohmann::json j;
 		stream >> j;
@@ -59,13 +59,13 @@ namespace configuration
 		}
 
 		for (auto& el : j["skipAssemblies"]) {
-			skipAssemblies.push_back(ToWSTRING(el));
+			skipAssemblies.insert(ToWSTRING(el));
 		}
 
 		for (auto& el : j["attributed"]) {
 			auto i = LoadAttributedInterceptorFromJson(el);
 			if (std::get<1>(i)) {
-				attributedInterceptors.push_back(std::get<0>(i));
+				attributedInterceptors.insert(std::make_pair(std::get<0>(i).AttributeType, std::get<0>(i)));
 			}
 		}
 
@@ -107,10 +107,10 @@ namespace configuration
 
 		auto interceptor = std::get<0>(LoadInterceptorFromJson(src["Interceptor"]));
 		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
-		std::vector<wstring> ignoreCallerAssemblies{};
+		std::unordered_set<wstring> ignoreCallerAssemblies{};
 
 		for (auto& el : src["IgnoreCallerAssemblies"]) {
-			ignoreCallerAssemblies.push_back(ToWSTRING(el));
+			ignoreCallerAssemblies.insert(ToWSTRING(el));
 		}
 
 		return std::make_pair<StrictInterception, bool>({ ignoreCallerAssemblies, target, interceptor }, true);
