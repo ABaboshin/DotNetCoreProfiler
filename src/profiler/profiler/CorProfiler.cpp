@@ -3,6 +3,7 @@
 #include <string>
 #include "corhlpr.h"
 #include "corhdr.h"
+#include "configuration/back_inserter.h"
 #include "configuration/Configuration.h"
 #include "const/const.h"
 #include "info/InterceptionVarInfo.h"
@@ -201,7 +202,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         IfFailRet(hr);
 
         std::cout << "Load into app_domain_id " << moduleInfo.assembly.appDomainId
-            << "Before call to " << ToString(functionInfo.Type.Name) << "." << ToString(functionInfo.Name)
+            << " Before call to " << ToString(functionInfo.Type.Name) << "." << ToString(functionInfo.Name)
             << " num args " << functionInfo.Signature.NumberOfArguments()
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
@@ -321,7 +322,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
 bool CorProfiler::SkipAssembly(const wstring& name)
 {
-    return std::find(configuration.SkipAssemblies.begin(), configuration.SkipAssemblies.end(), name) != configuration.SkipAssemblies.end();
+    return configuration.SkipAssemblies.find(name) != configuration.SkipAssemblies.end();
 }
 
 HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
@@ -1183,39 +1184,27 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
 
 std::vector<configuration::Interceptor> CorProfiler::FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target)
 {
-    std::vector<configuration::StrictInterception> strict{};
+    std::vector<configuration::Interceptor> result{};
+
     std::copy_if(
         configuration.StrictInterceptions.begin(),
         configuration.StrictInterceptions.end(),
-        std::back_inserter(strict),
+        configuration::back_inserter<configuration::StrictInterception>(result),
         [&callerAssemblyName,&target](const configuration::StrictInterception& interception) {
             return 
-                std::find(interception.IgnoreCallerAssemblies.begin(), interception.IgnoreCallerAssemblies.end(), callerAssemblyName) == interception.IgnoreCallerAssemblies.end()
+                interception.IgnoreCallerAssemblies.find(callerAssemblyName) == interception.IgnoreCallerAssemblies.end()
                 && target.Type.Name == interception.Target.TypeName
                 && target.Name == interception.Target.MethodName && target.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
         }
     );
 
-    std::vector<configuration::AttributedInterceptor> attributed{};
-    std::copy_if(
-        configuration.AttributedInterceptors.begin(),
-        configuration.AttributedInterceptors.end(),
-        std::back_inserter(attributed),
-        [&target](const configuration::AttributedInterceptor& interception) {
-            return std::find_if(target.Attributes.begin(), target.Attributes.end(), [&interception](const wstring& info) { return info == interception.AttributeType; }) != target.Attributes.end();
+    for (const auto& a : target.Attributes)
+    {
+        auto existing = configuration.AttributedInterceptors.find(a);
+        if (existing != configuration.AttributedInterceptors.end())
+        {
+            result.push_back(existing->second.Interceptor);
         }
-    );
-
-    std::vector<configuration::Interceptor> result{};
-
-    for (const auto& el : strict)
-    {
-        result.push_back(el.Interceptor);
-    }
-
-    for (const auto& el : attributed)
-    {
-        result.push_back(el.Interceptor);
     }
 
     return result;

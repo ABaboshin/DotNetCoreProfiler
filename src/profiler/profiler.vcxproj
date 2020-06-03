@@ -136,6 +136,7 @@
     <ClInclude Include="boost\pending\iterator_tests.hpp" />
     <ClInclude Include="boost\pointee.hpp" />
     <ClInclude Include="boost\shared_container_iterator.hpp" />
+    <ClInclude Include="configuration\back_inserter.h" />
     <ClInclude Include="configuration\TypeInfo.h" />
     <ClInclude Include="info\GenericMethodSignature.h" />
     <ClInclude Include="info\AssemblyInfo.h" />
