@@ -8,7 +8,6 @@
 #include "const/const.h"
 #include "info/InterceptionVarInfo.h"
 #include "info/parser.h"
-#include "rewriter/ILRewriter.h"
 #include "rewriter/ILRewriterHelper.h"
 #include "util/helpers.h"
 #include "util/util.h"
@@ -187,6 +186,11 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         return S_OK;
     }
 
+    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
+    IfFailRet(rewriter.Import());
+
+    auto alreadyChanged = false;
+
     // load once into appdomain
     if (loadedIntoAppDomains.find(moduleInfo.assembly.appDomainId) == loadedIntoAppDomains.end())
     {
@@ -207,27 +211,23 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
-        return InjectLoadMethod(
-            moduleId,
-            functionToken);
+        IfFailRet(InjectLoadMethod(moduleId, rewriter));
+
+        alreadyChanged = true;
     }
 
-    return Rewrite(moduleId, functionToken);
+    return Rewrite(moduleId, rewriter, alreadyChanged);
 }
 
-HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef)
+HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter)
 {
     mdMethodDef retMethodToken;
 
     auto hr = GenerateLoadMethod(moduleId, retMethodToken);
 
-    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, methodDef);
-    IfFailRet(rewriter.Import());
-
     rewriter::ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
     helper.CallMember(retMethodToken, false);
-    hr = rewriter.Export();
 
     return S_OK;
 }
@@ -325,12 +325,9 @@ bool CorProfiler::SkipAssembly(const wstring& name)
     return configuration.SkipAssemblies.find(name) != configuration.SkipAssemblies.end();
 }
 
-HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
+HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged)
 {
     HRESULT hr;
-
-    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
-    IfFailRet(rewriter.Import());
 
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
@@ -363,6 +360,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 
         if (!interceptions.empty())
         {
+            alreadyChanged = true;
             std::cout << "Found call to " << ToString(target.Type.Name) << "." << ToString(target.Name)
                 << " num args " << target.Signature.NumberOfArguments()
                 << " from assembly " << ToString(moduleInfo.assembly.name)
@@ -377,9 +375,12 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
             helper.CallMember(interceptorRef, false);
 
             pInstr->m_opcode = rewriter::CEE_NOP;
-
-            IfFailRet(rewriter.Export());
         }
+    }
+
+    if (alreadyChanged)
+    {
+        IfFailRet(rewriter.Export());
     }
 
     return S_OK;

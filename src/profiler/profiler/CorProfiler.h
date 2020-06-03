@@ -10,6 +10,7 @@
 #include "info/FunctionInfo.h"
 #include "info/ModuleInfo.h"
 #include "configuration/Configuration.h"
+#include "rewriter/ILRewriter.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -27,9 +28,9 @@ private:
 
     bool SkipAssembly(const wstring& name);
 
-    HRESULT Rewrite(ModuleID moduleId, mdToken callerToken);
+    HRESULT Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged);
 
-    HRESULT InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef);
+    HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter);
 
     HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken);
 
