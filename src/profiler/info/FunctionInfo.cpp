@@ -4,8 +4,6 @@
 
 namespace info
 {
-    std::vector<wstring> ExtractAttributes(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token);
-
     FunctionInfo FunctionInfo::GetFunctionInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token) {
 
         mdToken parentToken = mdTokenNil;
@@ -72,9 +70,9 @@ namespace info
                 MethodSignature(util::ToRaw(rawSignature,rawSignatureLength)), attributes };
     }
 
-    std::vector<wstring> ExtractAttributes(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token)
+    std::unordered_set<wstring> ExtractAttributes(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token)
     {
-        std::vector<wstring> attributes{};
+        std::unordered_set<wstring> attributes{};
         HRESULT hr;
 
 #define NumItems(s) (sizeof(s) / sizeof(s[0]))
@@ -124,11 +122,11 @@ namespace info
                 {
                 case mdtTypeDef:
                     hr = metadataImport->GetTypeDefProps(tkType, &className[0], MAX_CLASS_NAME, &classNameLength, 0, 0);
-                    attributes.push_back(util::ToString(className, classNameLength));
+                    attributes.insert(util::ToString(className, classNameLength));
                     break;
                 case mdtTypeRef:
                     hr = metadataImport->GetTypeRefProps(tkType, 0, &className[0], MAX_CLASS_NAME, &classNameLength);
-                    attributes.push_back(util::ToString(className, classNameLength));
+                    attributes.insert(util::ToString(className, classNameLength));
                     break;
                 } // switch
             }

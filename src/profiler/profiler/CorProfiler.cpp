@@ -3,11 +3,11 @@
 #include <string>
 #include "corhlpr.h"
 #include "corhdr.h"
+#include "configuration/back_inserter.h"
 #include "configuration/Configuration.h"
 #include "const/const.h"
 #include "info/InterceptionVarInfo.h"
 #include "info/parser.h"
-#include "rewriter/ILRewriter.h"
 #include "rewriter/ILRewriterHelper.h"
 #include "util/helpers.h"
 #include "util/util.h"
@@ -186,6 +186,11 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         return S_OK;
     }
 
+    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
+    IfFailRet(rewriter.Import());
+
+    auto alreadyChanged = false;
+
     // load once into appdomain
     if (loadedIntoAppDomains.find(moduleInfo.assembly.appDomainId) == loadedIntoAppDomains.end())
     {
@@ -201,32 +206,28 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         IfFailRet(hr);
 
         std::cout << "Load into app_domain_id " << moduleInfo.assembly.appDomainId
-            << "Before call to " << ToString(functionInfo.Type.Name) << "." << ToString(functionInfo.Name)
+            << " Before call to " << ToString(functionInfo.Type.Name) << "." << ToString(functionInfo.Name)
             << " num args " << functionInfo.Signature.NumberOfArguments()
             << " from assembly " << ToString(moduleInfo.assembly.name)
             << std::endl << std::flush;
 
-        return InjectLoadMethod(
-            moduleId,
-            functionToken);
+        IfFailRet(InjectLoadMethod(moduleId, rewriter));
+
+        alreadyChanged = true;
     }
 
-    return Rewrite(moduleId, functionToken);
+    return Rewrite(moduleId, rewriter, alreadyChanged);
 }
 
-HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, mdMethodDef methodDef)
+HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter)
 {
     mdMethodDef retMethodToken;
 
     auto hr = GenerateLoadMethod(moduleId, retMethodToken);
 
-    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, methodDef);
-    IfFailRet(rewriter.Import());
-
     rewriter::ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
     helper.CallMember(retMethodToken, false);
-    hr = rewriter.Export();
 
     return S_OK;
 }
@@ -321,15 +322,12 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
 bool CorProfiler::SkipAssembly(const wstring& name)
 {
-    return std::find(configuration.SkipAssemblies.begin(), configuration.SkipAssemblies.end(), name) != configuration.SkipAssemblies.end();
+    return configuration.SkipAssemblies.find(name) != configuration.SkipAssemblies.end();
 }
 
-HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
+HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged)
 {
     HRESULT hr;
-
-    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, callerToken);
-    IfFailRet(rewriter.Import());
 
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
@@ -362,6 +360,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
 
         if (!interceptions.empty())
         {
+            alreadyChanged = true;
             std::cout << "Found call to " << ToString(target.Type.Name) << "." << ToString(target.Name)
                 << " num args " << target.Signature.NumberOfArguments()
                 << " from assembly " << ToString(moduleInfo.assembly.name)
@@ -376,9 +375,12 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, mdToken callerToken)
             helper.CallMember(interceptorRef, false);
 
             pInstr->m_opcode = rewriter::CEE_NOP;
-
-            IfFailRet(rewriter.Export());
         }
+    }
+
+    if (alreadyChanged)
+    {
+        IfFailRet(rewriter.Export());
     }
 
     return S_OK;
@@ -1183,39 +1185,27 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
 
 std::vector<configuration::Interceptor> CorProfiler::FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target)
 {
-    std::vector<configuration::StrictInterception> strict{};
+    std::vector<configuration::Interceptor> result{};
+
     std::copy_if(
         configuration.StrictInterceptions.begin(),
         configuration.StrictInterceptions.end(),
-        std::back_inserter(strict),
+        configuration::back_inserter<configuration::StrictInterception>(result),
         [&callerAssemblyName,&target](const configuration::StrictInterception& interception) {
             return 
-                std::find(interception.IgnoreCallerAssemblies.begin(), interception.IgnoreCallerAssemblies.end(), callerAssemblyName) == interception.IgnoreCallerAssemblies.end()
+                interception.IgnoreCallerAssemblies.find(callerAssemblyName) == interception.IgnoreCallerAssemblies.end()
                 && target.Type.Name == interception.Target.TypeName
                 && target.Name == interception.Target.MethodName && target.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
         }
     );
 
-    std::vector<configuration::AttributedInterceptor> attributed{};
-    std::copy_if(
-        configuration.AttributedInterceptors.begin(),
-        configuration.AttributedInterceptors.end(),
-        std::back_inserter(attributed),
-        [&target](const configuration::AttributedInterceptor& interception) {
-            return std::find_if(target.Attributes.begin(), target.Attributes.end(), [&interception](const wstring& info) { return info == interception.AttributeType; }) != target.Attributes.end();
+    for (const auto& a : target.Attributes)
+    {
+        auto existing = configuration.AttributedInterceptors.find(a);
+        if (existing != configuration.AttributedInterceptors.end())
+        {
+            result.push_back(existing->second.Interceptor);
         }
-    );
-
-    std::vector<configuration::Interceptor> result{};
-
-    for (const auto& el : strict)
-    {
-        result.push_back(el.Interceptor);
-    }
-
-    for (const auto& el : attributed)
-    {
-        result.push_back(el.Interceptor);
     }
 
     return result;
