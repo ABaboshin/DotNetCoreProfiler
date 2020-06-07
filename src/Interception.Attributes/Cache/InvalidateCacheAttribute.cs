@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Interception.Attributes
+namespace Interception.Attributes.Cache
 {
     /// <summary>
     /// invalicate cache

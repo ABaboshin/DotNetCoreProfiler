@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Attributes.Cache;
 using Interception.Attributes.Validation;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -21,11 +22,10 @@ namespace SampleApp.MessageBus
         public async Task Consume(ConsumeContext<MyMessage> context)
         {
             _logger.LogInformation("MyMessageConsumer.Consume");
-            Console.WriteLine("Start consuming");
 
             var test = await LongAction(new { x = 1 }, "test");
 
-            Console.WriteLine($"test {test}");
+            _logger.LogInformation("test {@test}", test);
 
             var client = new HttpClient();
 
@@ -45,7 +45,7 @@ namespace SampleApp.MessageBus
 
             InvalidateCache();
 
-            Console.WriteLine("Done consuming");
+            _logger.LogInformation("MyMessageConsumer.Consume.Done");
         }
 
 

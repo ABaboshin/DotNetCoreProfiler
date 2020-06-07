@@ -18,9 +18,12 @@ namespace Interception.MassTransit
     /// and inject tracing
     /// </summary>
     [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.IConsumer`1", TargetMethodParametersCount = 1)]
-    public class MassTransitConsumerInterceptor : BaseMetricsInterceptor
+    [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.Saga.InitiatedBy`1", TargetMethodParametersCount = 1)]
+    [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.Saga.Observes`2", TargetMethodParametersCount = 1)]
+    [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.Saga.Orchestrates`2", TargetMethodParametersCount = 1)]
+    public class ConsumeInterceptor : BaseMetricsInterceptor
     {
-        public MassTransitConsumerInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)
+        public ConsumeInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)
         {
         }
 

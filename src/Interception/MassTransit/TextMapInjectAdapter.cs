@@ -7,10 +7,10 @@ using System.Collections.Generic;
 
 namespace Interception.MassTransit
 {
-    public class MassTransitTextMapInjectAdapter : ITextMap
+    public class TextMapInjectAdapter : ITextMap
     {
         private readonly PublishContext _context;
-        public MassTransitTextMapInjectAdapter(PublishContext context)
+        public TextMapInjectAdapter(PublishContext context)
         {
             _context = context;
         }

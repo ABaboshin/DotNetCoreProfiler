@@ -1,5 +1,6 @@
 ﻿using Interception.AspNetCore;
 using Interception.Attributes;
+using Interception.Attributes.Cache;
 using Interception.Core;
 using Microsoft.Extensions.DependencyInjection;
 

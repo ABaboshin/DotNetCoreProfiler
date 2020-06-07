@@ -1,16 +1,15 @@
 ﻿using System;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace Interception.Core
 {
-    public class TypeFinder : ITypeFinder
+    public class DefaultMethodFinder : IMethodFinder
     {
-        public Type FindType(int mdToken, long moduleVersionPtr)
+        public MethodInfo FindMethod(int mdToken, long moduleVersionPtr, object obj, object[] parameters)
         {
             var ptr = new IntPtr(moduleVersionPtr);
             var moduleVersionId = Marshal.PtrToStructure<Guid>(ptr);
-
-            //var type = System.Type.GetTypeFromHandle(mdToken);
 
             var assemblies = AppDomain.CurrentDomain.GetAssemblies();
             foreach (var assembly in assemblies)
@@ -21,17 +20,14 @@ namespace Interception.Core
                     {
                         try
                         {
-                            return module.ResolveType(mdToken);
+                            return (MethodInfo)module.ResolveMethod(mdToken);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
-                            Console.WriteLine($"Exception {ex}");
                         }
                     }
                 }
             }
-
-            Console.WriteLine($"Type not found");
 
             return null;
         }

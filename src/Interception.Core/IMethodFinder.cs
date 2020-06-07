@@ -5,6 +5,6 @@ namespace Interception.Core
 {
     public interface IMethodFinder
     {
-        MethodBase FindMethod(int mdToken, long moduleVersionPtr, Type[] genericTypeArguments = null);
+        MethodInfo FindMethod(int mdToken, long moduleVersionPtr, object obj, object[] parameters);
     }
 }

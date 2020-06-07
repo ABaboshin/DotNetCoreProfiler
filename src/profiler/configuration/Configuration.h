@@ -3,9 +3,10 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include "configuration/AttributedInterceptor.h"
-#include "configuration/TypeInfo.h"
-#include "configuration/StrictInterception.h"
+#include "AttributedInterceptor.h"
+#include "TypeInfo.h"
+#include "StrictInterception.h"
+#include "MethodFinder.h"
 
 
 namespace configuration
@@ -15,8 +16,10 @@ namespace configuration
 		std::vector<StrictInterception> StrictInterceptions{};
 		std::vector<wstring> Assemblies;
 		std::unordered_map<wstring, AttributedInterceptor> AttributedInterceptors;
-		TypeInfo Base{};
-		TypeInfo Composed{};
+		TypeInfo InterceptorInterface{};
+		TypeInfo ComposedInterceptor{};
+		TypeInfo MethodFinderInterface{};
+		std::vector<MethodFinder> MethodFinders{};
 		std::unordered_set<wstring> SkipAssemblies;
 
 		Configuration(std::vector<StrictInterception> strictInterceptions,
@@ -24,12 +27,16 @@ namespace configuration
 			const std::unordered_map<wstring, AttributedInterceptor>& attributedInterceptors,
 			const TypeInfo& base,
 			const TypeInfo& composed,
+			const TypeInfo& methodFinderInterface,
+			std::vector<MethodFinder> methodFinders,
 			std::unordered_set<wstring>& skipAssemblies) :
 			StrictInterceptions(strictInterceptions),
 			Assemblies(assemblies),
 			AttributedInterceptors(attributedInterceptors),
-			Base(base),
-			Composed(composed),
+			InterceptorInterface(base),
+			ComposedInterceptor(composed),
+			MethodFinderInterface(methodFinderInterface),
+			MethodFinders(methodFinders),
 			SkipAssemblies(skipAssemblies) {}
 
 		Configuration() {}
