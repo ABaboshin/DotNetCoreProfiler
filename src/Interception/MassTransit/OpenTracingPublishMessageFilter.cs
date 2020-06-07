@@ -32,7 +32,7 @@ namespace Interception.MassTransit
                     .SetTag("MessageId", context.MessageId?.ToString())
                     .SetTag("MessageType", context.Message.GetType().FullName);
 
-                GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new MassTransitTextMapInjectAdapter(context));
+                GlobalTracer.Instance.Inject(span.Context, BuiltinFormats.TextMap, new TextMapInjectAdapter(context));
 
                 await next.Send(context);
             }

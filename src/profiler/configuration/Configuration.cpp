@@ -8,10 +8,11 @@ namespace configuration
 {
 	Configuration LoadFromStream(std::ifstream& stream);
 	std::pair<StrictInterception, bool> LoadInterceptionFromJson(const nlohmann::json::value_type& src);
-	std::pair<Interceptor, bool> LoadInterceptorFromJson(const nlohmann::json::value_type& src);
+	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src);
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src);
 	std::pair<AttributedInterceptor, bool> LoadAttributedInterceptorFromJson(const nlohmann::json::value_type& src);
 	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src);
+	std::pair<MethodFinder, bool> LoadMethodFinder(const nlohmann::json::value_type& src);
 
 	Configuration Configuration::LoadConfiguration(const wstring& path)
 	{
@@ -43,6 +44,7 @@ namespace configuration
 		std::vector<wstring> assemblies{};
 		std::unordered_set<wstring> skipAssemblies{};
 		std::unordered_map<wstring, AttributedInterceptor> attributedInterceptors{};
+		std::vector<MethodFinder> methodFinders{};
 
 		nlohmann::json j;
 		stream >> j;
@@ -51,6 +53,13 @@ namespace configuration
 			auto i = LoadInterceptionFromJson(el);
 			if (std::get<1>(i)) {
 				interceptions.push_back(std::get<0>(i));
+			}
+		}
+
+		for (auto& el : j["methodFinders"]) {
+			auto i = LoadMethodFinder(el);
+			if (std::get<1>(i)) {
+				methodFinders.push_back(std::get<0>(i));
 			}
 		}
 
@@ -69,10 +78,20 @@ namespace configuration
 			}
 		}
 
-		auto base = LoadTypeInfoFromJson(j["baseClass"]);
-		auto composed = LoadTypeInfoFromJson(j["composed"]);
+		auto interceptorInterface = LoadTypeInfoFromJson(j["interceptorInterface"]);
+		auto composedInterceptor = LoadTypeInfoFromJson(j["composedInterceptor"]);
+		auto methodFinderInterface = LoadTypeInfoFromJson(j["methodFinderInterface"]);
 
-		return { interceptions, assemblies, attributedInterceptors, std::get<0>(base), std::get<0>(composed), skipAssemblies };
+		return {
+			interceptions,
+			assemblies,
+			attributedInterceptors,
+			std::get<0>(interceptorInterface),
+			std::get<0>(composedInterceptor),
+			std::get<0>(methodFinderInterface),
+			methodFinders,
+			skipAssemblies
+		};
 	}
 
 	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src)
@@ -94,9 +113,21 @@ namespace configuration
 		}
 
 		auto attributeType = ToWSTRING(src.value("AttributeType", ""));
-		auto interceptor = std::get<0>(LoadInterceptorFromJson(src["Interceptor"]));
+		auto interceptor = std::get<0>(LoadTypeInfoFromJson(src["Interceptor"]));
 
 		return std::make_pair<AttributedInterceptor, bool>({ interceptor, attributeType }, true);
+	}
+
+	std::pair<MethodFinder, bool> LoadMethodFinder(const nlohmann::json::value_type& src)
+	{
+		if (!src.is_object()) {
+			return std::make_pair<MethodFinder, bool>({}, false);
+		}
+
+		auto typeInfo = std::get<0>(LoadTypeInfoFromJson(src["MethodFinder"]));
+		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
+
+		return std::make_pair<MethodFinder, bool>({ target, typeInfo }, true);
 	}
 
 	std::pair<StrictInterception, bool> LoadInterceptionFromJson(const nlohmann::json::value_type& src)
@@ -105,7 +136,7 @@ namespace configuration
 			return std::make_pair<StrictInterception, bool>({}, false);
 		}
 
-		auto interceptor = std::get<0>(LoadInterceptorFromJson(src["Interceptor"]));
+		auto interceptor = std::get<0>(LoadTypeInfoFromJson(src["Interceptor"]));
 		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
 		std::unordered_set<wstring> ignoreCallerAssemblies{};
 
@@ -114,18 +145,6 @@ namespace configuration
 		}
 
 		return std::make_pair<StrictInterception, bool>({ ignoreCallerAssemblies, target, interceptor }, true);
-	}
-
-	std::pair<Interceptor, bool> LoadInterceptorFromJson(const nlohmann::json::value_type& src)
-	{
-		if (!src.is_object()) {
-			return std::make_pair<Interceptor, bool>({}, false);
-		}
-
-		auto assemblyName = ToWSTRING(src.value("AssemblyName", ""));
-		auto typeName = ToWSTRING(src.value("TypeName", ""));
-
-		return std::make_pair<Interceptor, bool>({ assemblyName , typeName }, true);
 	}
 
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src)

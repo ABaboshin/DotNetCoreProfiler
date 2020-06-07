@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Interceptor.h"
+#include "TypeInfo.h"
 
 namespace configuration
 {
@@ -13,11 +13,11 @@ namespace configuration
         using pointer = void;
         using reference = void;
 
-        using container_type = std::vector<configuration::Interceptor>;
+        using container_type = std::vector<configuration::TypeInfo>;
 
         using difference_type = void;
 
-        explicit back_insert_iterator_interceptor(std::vector<configuration::Interceptor>& _Cont) noexcept : container(&_Cont) {}
+        explicit back_insert_iterator_interceptor(std::vector<configuration::TypeInfo>& _Cont) noexcept : container(&_Cont) {}
 
         back_insert_iterator_interceptor& operator=(const T& _Val) {
             container->push_back(_Val.Interceptor);
@@ -42,11 +42,11 @@ namespace configuration
         }
 
     protected:
-        std::vector<configuration::Interceptor>* container = nullptr;
+        std::vector<configuration::TypeInfo>* container = nullptr;
     };
 
     template<class T>
-    back_insert_iterator_interceptor<T> back_inserter(std::vector<configuration::Interceptor>& _Cont) noexcept {
+    back_insert_iterator_interceptor<T> back_inserter(std::vector<configuration::TypeInfo>& _Cont) noexcept {
         return back_insert_iterator_interceptor<T>(_Cont);
     }
 }

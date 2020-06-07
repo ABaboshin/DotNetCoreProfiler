@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Interception.Attributes
+namespace Interception.Attributes.Validation
 {
     /// <summary>
     /// parameter validation attribute

@@ -34,7 +34,10 @@ namespace SampleApp
             serviceCollection.AddMvc();
             ConfigureMessageBus(serviceCollection);
 
-            ConfigureQuartz(serviceCollection);
+            if (Environment.GetEnvironmentVariable("ENABLE_QUARTZ") == "true")
+            {
+                ConfigureQuartz(serviceCollection);
+            }
         }
 
         private static void ConfigureQuartz(IServiceCollection serviceCollection)
@@ -86,11 +89,6 @@ namespace SampleApp
 
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
-            //if (env.IsDevelopment())
-            //{
-            //    app.UseDeveloperExceptionPage();
-            //}
-
             app.UseMvc();
             MigrateDatabase(app);
         }

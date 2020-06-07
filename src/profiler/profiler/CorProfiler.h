@@ -34,9 +34,10 @@ private:
 
     HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken);
 
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
+    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::TypeInfo>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
 
-    std::vector<configuration::Interceptor> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
+    std::vector<configuration::TypeInfo> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
+    std::pair<configuration::TypeInfo, bool> FindMethodFinder(const info::FunctionInfo& target);
 
 public:
     CorProfiler();

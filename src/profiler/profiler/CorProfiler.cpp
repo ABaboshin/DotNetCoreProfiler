@@ -386,7 +386,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, 
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::Interceptor>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken)
+HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::TypeInfo>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken)
 {
     HRESULT hr;
 
@@ -404,7 +404,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     // define interception.core.dll
     mdModuleRef baseDllRef;
-    GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, configuration.Base.AssemblyName);
+    GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, configuration.InterceptorInterface.AssemblyName);
 
     // Define System.Object
     mdTypeRef objectTypeRef;
@@ -429,7 +429,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     hr = metadataEmit->DefineTypeDef(className.c_str(), tdAbstract | tdSealed,
         objectTypeRef, NULL, &newTypeDef);
 
-    // create method sugnature
+    // create method signature
     std::vector<BYTE> signature = {
         // call convention for static method
         IMAGE_CEE_CS_CALLCONV_DEFAULT,
@@ -488,20 +488,28 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     rewriter.SetTkLocalVarSig(localSigToken);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
 
-    // define baseType = IInterceptor
-    mdTypeRef baseTypeRef;
+    // define interceptorInterfaceRef = IInterceptor
+    mdTypeRef interceptorInterfaceRef;
     hr = metadataEmit->DefineTypeRefByName(
         baseDllRef,
-        configuration.Base.TypeName.data(),
-        &baseTypeRef);
+        configuration.InterceptorInterface.TypeName.data(),
+        &interceptorInterfaceRef);
     IfFailRet(hr);
 
-    // define composedType = ComposedInterceptor
-    mdTypeRef composedTypeRef;
+    // define composedInterceptorTypeRef = ComposedInterceptor
+    mdTypeRef composedInterceptorTypeRef;
     hr = metadataEmit->DefineTypeRefByName(
         baseDllRef,
-        configuration.Composed.TypeName.data(),
-        &composedTypeRef);
+        configuration.ComposedInterceptor.TypeName.data(),
+        &composedInterceptorTypeRef);
+    IfFailRet(hr);
+
+    // define MethodFinderInterfaceRef = IMethodFinder
+    mdTypeRef methodFinderInterfaceRef;
+    hr = metadataEmit->DefineTypeRefByName(
+        baseDllRef,
+        configuration.MethodFinderInterface.TypeName.data(),
+        &methodFinderInterfaceRef);
     IfFailRet(hr);
 
     // local sig
@@ -526,10 +534,29 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     }
 
     int composedIndex = 0;
-    helper.AddLocalVariable(composedTypeRef, composedIndex);
+    helper.AddLocalVariable(composedInterceptorTypeRef, composedIndex);
 
     int typeIndex = 0;
     helper.AddLocalVariable(typeRef, typeIndex);
+
+    int methodFinderIndex = 0;
+    auto methodFinder = FindMethodFinder(target);
+    mdTypeRef methodFinderTypeRef;
+    if (std::get<1>(methodFinder))
+    {
+        // define interception.dll
+        mdModuleRef methodFinderDllRef;
+        std::cout << "MethodFinder " << ToString(std::get<0>(methodFinder).AssemblyName) << std::endl;
+        GetWrapperRef(hr, metadataAssemblyEmit, methodFinderDllRef, std::get<0>(methodFinder).AssemblyName);
+
+        hr = metadataEmit->DefineTypeRefByName(
+            methodFinderDllRef,
+            std::get<0>(methodFinder).TypeName.data(),
+            &methodFinderTypeRef);
+        IfFailRet(hr);
+
+        helper.AddLocalVariable(methodFinderTypeRef, methodFinderIndex);
+    }
 
     // ctor
     for (const auto& interceptor : inteceptionRefs)
@@ -552,6 +579,28 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.StLocal(interceptor.LocalVarIndex);
     }
 
+    if (std::get<1>(methodFinder))
+    {
+        std::cout << "create MethodFinder " << ToString(std::get<0>(methodFinder).TypeName) << std::endl;
+
+        std::vector<BYTE> ctorSignature = {
+            IMAGE_CEE_CS_CALLCONV_HASTHIS,
+            0,
+            ELEMENT_TYPE_VOID
+        };
+
+        mdMemberRef ctorRef;
+        hr = metadataEmit->DefineMemberRef(
+            methodFinderTypeRef,
+            _const::ctor.data(),
+            ctorSignature.data(),
+            ctorSignature.size(),
+            &ctorRef);
+
+        helper.NewObject(ctorRef);
+        helper.StLocal(methodFinderIndex);
+    }
+
     {
         std::vector<BYTE> ctorSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -561,7 +610,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef ctorRef;
         hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
+            composedInterceptorTypeRef,
             _const::ctor.data(),
             ctorSignature.data(),
             ctorSignature.size(),
@@ -585,7 +634,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setThisRef;
         hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
+            composedInterceptorTypeRef,
             "set_This"_W.data(),
             setThisSignature.data(),
             setThisSignature.size(),
@@ -608,7 +657,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setMdTokenRef;
         hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
+            composedInterceptorTypeRef,
             "set_MdToken"_W.data(),
             setMdTokenSignature.data(),
             setMdTokenSignature.size(),
@@ -630,7 +679,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setMethodNameRef;
         hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
+            composedInterceptorTypeRef,
             "set_MethodName"_W.data(),
             setMethodNameSignature.data(),
             setMethodNameSignature.size(),
@@ -656,7 +705,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setModuleVersionPtrRef;
         hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
+            composedInterceptorTypeRef,
             "set_ModuleVersionPtr"_W.data(),
             setModuleVersionPtrSignature.data(),
             setModuleVersionPtrSignature.size(),
@@ -679,7 +728,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef setArgumentCountRef;
         hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
+            composedInterceptorTypeRef,
             "SetArgumentCount"_W.data(),
             setArgumentCountSignature.data(),
             setArgumentCountSignature.size(),
@@ -702,7 +751,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         mdMemberRef addParameterRef;
         hr = metadataEmit->DefineMemberRef(
-            composedTypeRef,
+            composedInterceptorTypeRef,
             "AddParameter"_W.data(),
             addParameterSignature.data(),
             addParameterSignature.size(),
@@ -733,7 +782,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     // AddChild
     BYTE compressedToken[10];
-    ULONG tokenLength = CorSigCompressToken(baseTypeRef, compressedToken);
+    ULONG tokenLength = CorSigCompressToken(interceptorInterfaceRef, compressedToken);
 
     std::vector<BYTE> addChildSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -746,7 +795,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     mdMemberRef addChildRef;
     hr = metadataEmit->DefineMemberRef(
-        composedTypeRef,
+        composedInterceptorTypeRef,
         "AddChild"_W.data(),
         addChildSignature.data(),
         addChildSignature.size(),
@@ -759,6 +808,33 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
         helper.CallMember(addChildRef, false);
     }
 
+    // set MethodFinder
+    if (std::get<1>(methodFinder))
+    {
+        tokenLength = CorSigCompressToken(methodFinderInterfaceRef, compressedToken);
+
+        std::vector<BYTE> setMethodFinderSignature = {
+                IMAGE_CEE_CS_CALLCONV_HASTHIS,
+                1,
+                ELEMENT_TYPE_VOID,
+                ELEMENT_TYPE_CLASS
+        };
+
+        setMethodFinderSignature.insert(setMethodFinderSignature.end(), compressedToken, compressedToken + tokenLength);
+
+        mdMemberRef setMethodFinderRef;
+        hr = metadataEmit->DefineMemberRef(
+            composedInterceptorTypeRef,
+            "set_MethodFinder"_W.data(),
+            setMethodFinderSignature.data(),
+            setMethodFinderSignature.size(),
+            &setMethodFinderRef);
+
+        helper.LoadLocal(composedIndex);
+        helper.LoadLocal(methodFinderIndex);
+        helper.CallMember(setMethodFinderRef, false);
+    }
+
     //execute
     std::vector<BYTE> executeSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
@@ -768,7 +844,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     mdMemberRef executeRef;
     hr = metadataEmit->DefineMemberRef(
-        composedTypeRef,
+        composedInterceptorTypeRef,
         "Execute"_W.data(),
         executeSignature.data(),
         executeSignature.size(),
@@ -789,7 +865,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     mdMemberRef getParameterRef;
     hr = metadataEmit->DefineMemberRef(
-        composedTypeRef,
+        composedInterceptorTypeRef,
         "GetParameter"_W.data(),
         getParameterSignature.data(),
         getParameterSignature.size(),
@@ -1183,9 +1259,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
     return S_OK;
 }
 
-std::vector<configuration::Interceptor> CorProfiler::FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target)
+std::vector<configuration::TypeInfo> CorProfiler::FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target)
 {
-    std::vector<configuration::Interceptor> result{};
+    std::vector<configuration::TypeInfo> result{};
 
     std::copy_if(
         configuration.StrictInterceptions.begin(),
@@ -1209,4 +1285,18 @@ std::vector<configuration::Interceptor> CorProfiler::FindInterceptions(const wst
     }
 
     return result;
+}
+
+std::pair<configuration::TypeInfo, bool> CorProfiler::FindMethodFinder(const info::FunctionInfo& target)
+{
+    for (auto methodFinder : configuration.MethodFinders)
+    {
+        if (target.Type.Name == methodFinder.Target.TypeName
+            && target.Name == methodFinder.Target.MethodName && target.Signature.NumberOfArguments() == methodFinder.Target.MethodParametersCount)
+        {
+            return std::make_pair<configuration::TypeInfo, bool>({ methodFinder.Finder.AssemblyName, methodFinder.Finder.TypeName}, true);
+        }
+    }
+
+    return std::make_pair<configuration::TypeInfo, bool>({}, false);
 }
