@@ -137,6 +137,7 @@
     <ClInclude Include="boost\pointee.hpp" />
     <ClInclude Include="boost\shared_container_iterator.hpp" />
     <ClInclude Include="configuration\back_inserter.h" />
+    <ClInclude Include="configuration\MethodFinder.h" />
     <ClInclude Include="configuration\TypeInfo.h" />
     <ClInclude Include="info\GenericMethodSignature.h" />
     <ClInclude Include="info\AssemblyInfo.h" />
@@ -153,7 +154,6 @@
     <ClInclude Include="rewriter\ILRewriter.h" />
     <ClInclude Include="rewriter\ILRewriterHelper.h" />
     <ClInclude Include="configuration\StrictInterception.h" />
-    <ClInclude Include="configuration\Interceptor.h" />
     <ClInclude Include="info\MethodSignature.h" />
     <ClInclude Include="miniutf\miniutf.hpp" />
     <ClInclude Include="miniutf\miniutfdata.h" />

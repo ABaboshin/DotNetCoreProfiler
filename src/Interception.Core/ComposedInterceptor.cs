@@ -1,5 +1,4 @@
-﻿using Interception.Attributes;
-using Interception.Core.Extensions;
+﻿using Interception.Core.Extensions;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,7 +10,6 @@ namespace Interception.Core
 {
     public class ComposedInterceptor : IComposedInterceptor
     {
-        private IMethodFinder _methodFinder = new MethodFinder();
         private List<IInterceptor> _childs = new List<IInterceptor>();
         private object[] _parameters;
 
@@ -19,22 +17,20 @@ namespace Interception.Core
         public int MdToken { get; set; }
         public long ModuleVersionPtr { get; set; }
         public string MethodName { get; set; }
-        
+        public IMethodFinder MethodFinder { get; set; }
+
         public void AddChild(IInterceptor interceptor)
         {
-            //Console.WriteLine($"AddChild {interceptor.GetType().FullName} {_childs != null} this: {this != null}");
             _childs.Add(interceptor);
         }
 
         public void AddParameter(int num, object value)
         {
-            //Console.WriteLine($"AddParameter {num} {value}");
             _parameters[num] = value;
         }
 
         public void SetArgumentCount(int number)
         {
-            //Console.WriteLine($"SetArgumentNumber {number}");
             _parameters = new object[number];
         }
 
@@ -45,19 +41,21 @@ namespace Interception.Core
 
         private MethodInfo FindMethod()
         {
-            var findMethod = _methodFinder.FindMethod(MdToken, ModuleVersionPtr);
-            if (findMethod is null && This != null)
+            if (MethodFinder is null)
             {
-                var method = This.GetType().GetMethods(BindingFlags.Public | BindingFlags.Instance | BindingFlags.Static | BindingFlags.NonPublic).Where(m => m.Name == MethodName).FirstOrDefault();
-                return method;
+                MethodFinder = new DefaultMethodFinder();
             }
 
-            return (MethodInfo)findMethod;
+            return MethodFinder.FindMethod(MdToken, ModuleVersionPtr, This, _parameters);
         }
 
         public object Execute()
         {
-            Validate();
+            if (!_childs.Any(c => c.GetType() == typeof(ValidationInterceptor)))
+            {
+                _childs.Add(new ValidationInterceptor());
+            }
+
             var method = FindMethod();
             var isAsync = method.IsReturnTypeTask();
 
@@ -229,20 +227,6 @@ namespace Interception.Core
             };
 
             return func;
-        }
-
-        protected void Validate()
-        {
-            var method = FindMethod();
-            foreach (var p in method.GetParameters())
-            {
-                var validationAttributes = p.GetCustomAttributes<ParameterValidationAttribute>();
-
-                foreach (var validationAttribute in validationAttributes)
-                {
-                    validationAttribute.Validate(_parameters[p.Position]);
-                }
-            }
         }
         #endregion
     }

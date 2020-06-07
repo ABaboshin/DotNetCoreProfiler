@@ -23,6 +23,11 @@
         string MethodName { get; set; }
 
         /// <summary>
+        /// method finder
+        /// </summary>
+        IMethodFinder MethodFinder { get; set; }
+
+        /// <summary>
         /// set argument number
         /// </summary>
         /// <param name="number"></param>

@@ -57,9 +57,9 @@ namespace SampleApp.Controllers
         /// <param name="id"></param>
         /// <returns></returns>
         [HttpGet("publish")]
-        public async Task<ActionResult<string>> Publish(int id)
+        public async Task<ActionResult<string>> Publish()
         {
-            await _busControl.Publish(new MyMessage { Id = id });
+            await _busControl.Publish(new MyBadMessage());
             return Ok();
         }
 

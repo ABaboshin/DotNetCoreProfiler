@@ -1,7 +1,7 @@
 #pragma once
 
 #include <unordered_set>
-#include "Interceptor.h"
+#include "TypeInfo.h"
 #include "TargetMethod.h"
 #include "util/util.h"
 
@@ -12,9 +12,9 @@ namespace configuration
 	struct StrictInterception {
 		std::unordered_set<wstring> IgnoreCallerAssemblies{};
 		TargetMethod Target{};
-		Interceptor Interceptor{};
+		TypeInfo Interceptor{};
 
-		StrictInterception(const std::unordered_set<wstring>& ignoreCallerAssemblies, const TargetMethod& targetMethod, const ::configuration::Interceptor& interceptor) :
+		StrictInterception(const std::unordered_set<wstring>& ignoreCallerAssemblies, const TargetMethod& targetMethod, const ::configuration::TypeInfo& interceptor) :
 			IgnoreCallerAssemblies(ignoreCallerAssemblies),
 			Target(targetMethod),
 			Interceptor(interceptor) {}

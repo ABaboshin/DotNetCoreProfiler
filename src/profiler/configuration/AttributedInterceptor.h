@@ -1,14 +1,14 @@
 #pragma once
-#include "configuration/Interceptor.h"
+#include "configuration/TypeInfo.h"
 
 namespace configuration
 {
 	struct AttributedInterceptor
 	{
-		Interceptor Interceptor{};
+		TypeInfo Interceptor{};
 		wstring AttributeType;
 
-		AttributedInterceptor(const ::configuration::Interceptor& interceptor, const wstring& attributeType) :
+		AttributedInterceptor(const ::configuration::TypeInfo& interceptor, const wstring& attributeType) :
 			Interceptor(interceptor),
 			AttributeType(attributeType) {}
 

@@ -27,7 +27,7 @@ This project has a goal to demonstrate injection of the following devops-related
 ***Limitations***
  - Dynamic methods are not supported.
  - If you want to use parameter validator, use the `ValidationAttribute` on the method.
- - Generic are only partially supported.
+ - In some cases to intercept the generic method you have to implement `IMethodFinder` (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/cire-2.1/src/Interception/MassTransit/ConsumeMethodFinder.cs#L13)
 
 ## Project structure
 

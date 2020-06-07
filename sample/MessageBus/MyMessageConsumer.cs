@@ -1,4 +1,5 @@
 ﻿using Interception.Attributes;
+using Interception.Attributes.Cache;
 using Interception.Attributes.Validation;
 using MassTransit;
 using Microsoft.Extensions.Logging;
@@ -9,7 +10,8 @@ using System.Threading.Tasks;
 namespace SampleApp.MessageBus
 {
     public class MyMessageConsumer :
-        IConsumer<MyMessage>
+        IConsumer<MyMessage>,
+        IConsumer<MyBadMessage>
     {
         private readonly ILogger<MyMessageConsumer> _logger;
 
@@ -21,18 +23,18 @@ namespace SampleApp.MessageBus
         public async Task Consume(ConsumeContext<MyMessage> context)
         {
             _logger.LogInformation("MyMessageConsumer.Consume");
-            Console.WriteLine("Start consuming");
 
             var test = await LongAction(new { x = 1 }, "test");
 
-            Console.WriteLine($"test {test}");
+            _logger.LogInformation("test {@test}", test);
 
             var client = new HttpClient();
 
+            Console.WriteLine($"{Environment.GetEnvironmentVariable("SERVICE_URL")}/api/values/publish/1");
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri("http://localhost:5000/api/values")
+                RequestUri = new Uri($"{Environment.GetEnvironmentVariable("SERVICE_URL")}/api/values/publish")
             };
 
             var response = await client.SendAsync(request);
@@ -45,7 +47,7 @@ namespace SampleApp.MessageBus
 
             InvalidateCache();
 
-            Console.WriteLine("Done consuming");
+            _logger.LogInformation("MyMessageConsumer.Consume.Done");
         }
 
 
@@ -93,6 +95,12 @@ namespace SampleApp.MessageBus
             }
 
             return Fibonacci(n - 1) + Fibonacci(n - 2);
+        }
+
+        public async Task Consume(ConsumeContext<MyBadMessage> context)
+        {
+            await Task.Delay(1000);
+            throw new NotImplementedException("Oops");
         }
     }
 }

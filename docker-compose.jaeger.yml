@@ -47,13 +47,15 @@ services:
       entityframeworkcore_metrics__name: "db_call"
       quartz_metrics__name: "schdeduled_job"
       quartz_metrics__enabled: "true"
-      cache__type: "redis"
-      cache__configuration: "redis:6379"
       PROFILER_PRINT_EVERY_CALL: "false"
       CORECLR_ENABLE_PROFILING: "1"
       CORECLR_PROFILER: "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
       CORECLR_PROFILER_PATH: "/profiler/DotNetCoreProfiler.so"
       PROFILER_CONFIGURATION: "/profiler/profiler.json"
+      cache__type: "redis"
+      cache__configuration: "redis:6379"
+      ENABLE_QUARTZ: "true"
+      SERVICE_URL: "http://sampleapp2:5000"
     ports:
       - "5000:5000"
     logging:
@@ -61,6 +63,51 @@ services:
       options:
         gelf-address: tcp://localhost:12201
         tag: sampleapp
+  sampleapp2:
+    image: sampleapp:21
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ASPNETCORE_ENVIRONMENT: Development
+      LOG_LEVEL: Error
+      STATSD__PORT: "9125"
+      STATSD__SERVER: "statsd"
+      STATSD__Protobuf: "false"
+      aspnetcore_metrics__enabled: "true"
+      aspnetcore_metrics__name: "incoming"
+      httphandler_metrics__enabled: "true"
+      httphandler_metrics__name: "outgoing"
+      service__name: "sampleapp2"
+      DATABASE__CONNECTIONSTRING: "Server=sqlserver;Database=mydb;User Id=sa;Password=passwoyourStrong(!)Passwordrd;"
+      RABBITMQ__HOST: "rabbitmq"
+      RABBITMQ__USER: "admin"
+      RABBITMQ__PASSWORD: "password"
+      JAEGER_SERVICE_NAME: "sampleapp2"
+      JAEGER_AGENT_HOST: "jaeger"
+      JAEGER_AGENT_PORT: "6831"
+      JAEGER_SAMPLER_TYPE: "const"
+      tracing__collector: "jaeger"
+      masstransit_metrics__PublisherEnabled: "true"
+      masstransit_metrics__PublisherName: "masstransit_publish"
+      masstransit_metrics__ConsumerEnabled: "true"
+      masstransit_metrics__ConsumerName: "masstransit_consume"
+      entityframeworkcore_metrics__enabled: "true"
+      entityframeworkcore_metrics__name: "db_call"
+      quartz_metrics__name: "schdeduled_job"
+      quartz_metrics__enabled: "true"
+      PROFILER_PRINT_EVERY_CALL: "false"
+      CORECLR_ENABLE_PROFILING: "1"
+      CORECLR_PROFILER: "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
+      CORECLR_PROFILER_PATH: "/profiler/DotNetCoreProfiler.so"
+      PROFILER_CONFIGURATION: "/profiler/profiler.json"
+      cache__type: "redis"
+      cache__configuration: "redis:6379"
+      ENABLE_QUARTZ: "false"
+      SERVICE_URL: "http://sampleapp:5000"
+    logging:
+      driver: gelf
+      options:
+        gelf-address: tcp://localhost:12201
+        tag: sampleapp2
 
   kibana:
     image: kibana:7.5.2

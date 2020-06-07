@@ -56,7 +56,7 @@ namespace Interception.Observers
             {
                 if (request.Properties.TryGetValue(PropertiesKey, out object obj) && obj is ISpan span)
                 {
-                    if (value.TryGetPropertyValue("Response", out HttpResponseMessage response))
+                    if (value.TryGetPropertyValue("Response", out HttpResponseMessage response) && response != null)
                     {
                         span.SetTag(Tags.HttpStatus, (int)response.StatusCode);
                     }
