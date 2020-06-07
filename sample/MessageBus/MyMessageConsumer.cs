@@ -10,7 +10,8 @@ using System.Threading.Tasks;
 namespace SampleApp.MessageBus
 {
     public class MyMessageConsumer :
-        IConsumer<MyMessage>
+        IConsumer<MyMessage>,
+        IConsumer<MyBadMessage>
     {
         private readonly ILogger<MyMessageConsumer> _logger;
 
@@ -29,10 +30,11 @@ namespace SampleApp.MessageBus
 
             var client = new HttpClient();
 
+            Console.WriteLine($"{Environment.GetEnvironmentVariable("SERVICE_URL")}/api/values/publish/1");
             var request = new HttpRequestMessage
             {
                 Method = HttpMethod.Get,
-                RequestUri = new Uri("http://localhost:5000/api/values")
+                RequestUri = new Uri($"{Environment.GetEnvironmentVariable("SERVICE_URL")}/api/values/publish")
             };
 
             var response = await client.SendAsync(request);
@@ -93,6 +95,12 @@ namespace SampleApp.MessageBus
             }
 
             return Fibonacci(n - 1) + Fibonacci(n - 2);
+        }
+
+        public async Task Consume(ConsumeContext<MyBadMessage> context)
+        {
+            await Task.Delay(1000);
+            throw new NotImplementedException("Oops");
         }
     }
 }
