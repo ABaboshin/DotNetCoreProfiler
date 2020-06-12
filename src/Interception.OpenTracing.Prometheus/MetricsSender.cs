@@ -71,7 +71,7 @@ namespace Interception.OpenTracing.Prometheus
             metric.Tags.Add(new TraceMetric.Types.Tag { Name = "FinishDate", Value = span.FinishTimestampUtc?.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString() });
 
             metric.Tags.AddRange(span.Context.GetBaggageItems().Select(item => new TraceMetric.Types.Tag { Name = item.Key.EscapeTagName(), Value = item.Value }));
-            metric.Tags.Add(span.GetTags().Select(item => new TraceMetric.Types.Tag { Name = item.Key.EscapeTagName(), Value = item.Value.ToString() }));
+            metric.Tags.Add(span.GetTags().Select(item => new TraceMetric.Types.Tag { Name = item.Key.EscapeTagName(), Value = item.Value?.ToString() }));
 
             _protobufClient.Send(metric);
         }
@@ -80,9 +80,12 @@ namespace Interception.OpenTracing.Prometheus
         {
             var duration = span.Duration.TotalMilliseconds;
             var metricName = span.OperationName;
-            var tags = new Dictionary<string, string>(span.GetTags().ToDictionary(t => t.Key, t => t.Value.ToString()));
-            tags.Add("TraceId", span.Context.TraceId);
-            tags.Add("SpanId", span.Context.SpanId);
+            var tags = new Dictionary<string, string>(span.GetTags()?.ToDictionary(t => t.Key, t => t.Value?.ToString()))
+            {
+                { "TraceId", span.Context.TraceId },
+                { "SpanId", span.Context.SpanId }
+            };
+
             if (!string.IsNullOrEmpty(span.Context.ParentSpanId))
             {
                 tags.Add("ParentSpanId", span.Context.ParentSpanId);
@@ -95,7 +98,7 @@ namespace Interception.OpenTracing.Prometheus
                 var key = item.Key.EscapeTagName();
                 if (!tags.ContainsKey(key))
                 {
-                    tags.Add(item.Key, item.Value);
+                    tags.Add(key, item.Value);
                 }
             }
 
@@ -104,7 +107,7 @@ namespace Interception.OpenTracing.Prometheus
                 var key = item.Key.EscapeTagName();
                 if (!tags.ContainsKey(key))
                 {
-                    tags.Add(item.Key, item.Value.ToString());
+                    tags.Add(key, item.Value.ToString());
                 }
             }
 
@@ -115,7 +118,7 @@ namespace Interception.OpenTracing.Prometheus
             loggerFactory.CreateLogger<MetricsSender>()
                 .LogDebug("Histogram {name} {duration} {tags}", metricName, duration, string.Join(", ", tags.Select(t => $"{t.Key}={t.Value}")));
 
-            DogStatsd.Histogram("interception", duration, tags: tags.Select(t => $"{t.Key}:{t.Value.ToString().EscapeTagValue()}").ToArray());
+            DogStatsd.Histogram("interception", duration, tags: tags.Where(t => t.Value != null).Select(t => $"{t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
         }
     }
 }
