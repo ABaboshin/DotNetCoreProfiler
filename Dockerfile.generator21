@@ -1,0 +1,6 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:2.1.806 as build
+
+COPY src src
+
+RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator21.csproj
+
