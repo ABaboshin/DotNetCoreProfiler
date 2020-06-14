@@ -7,6 +7,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/ABaboshin/DotNetCoreProfiler</RepositoryUrl>
+    <Version>1.2020.0614</Version>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
