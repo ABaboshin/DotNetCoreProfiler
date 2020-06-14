@@ -1,15 +1,13 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:2.1.806 as build
 
+RUN dotnet tool install -g Interception.Generator --version 1.2020.6144
+
 COPY samples samples
 
 RUN dotnet publish -c Release -o /interception samples/Interception/Interception21.csproj
 
-FROM profiler:generator21 as generator
-
-COPY --from=build /interception/*.dll /interception/
-
-RUN cd /interception && dotnet /generator/Interception.Generator21.dll -a Interception21.dll,Interception.Core.dll,Interception.DeadlockDetection.dll -p /profiler -o /interception/profiler.json && cat /interception/profiler.json
+RUN cd /interception && /root/.dotnet/tools/interception-generator -a Interception21.dll,Interception.Core.dll,Interception.DeadlockDetection.dll -p /profiler -o /interception/profiler.json && cat /interception/profiler.json
 
 FROM scratch
 
-COPY --from=generator /interception/*.* /interception/
+COPY --from=build /interception/*.* /interception/

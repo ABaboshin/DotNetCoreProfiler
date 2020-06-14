@@ -6,11 +6,9 @@
   "license": "MIT",
   "scripts": {
     "build:native": "docker build -t profiler:native -f Dockerfile.native .",
-    "build:generator:21": "docker build -t profiler:generator21 -f Dockerfile.generator21 .",
     "build:interception:21": "docker build -t profiler:interception21 -f Dockerfile.interception21 .",
-
     "build:sampleapp:21": "docker build -t sampleapp:21 -f Dockerfile.sampleapp21 .",
-    "build:all:21": "yarn build:generator:21 && yarn build:interception:21 && yarn build:native && yarn build:sampleapp:21 && yarn build:logstash && yarn build:prometheus && yarn build:grafana",
+    "build:all:21": "yarn build:interception:21 && yarn build:native && yarn build:sampleapp:21 && yarn build:logstash && yarn build:prometheus && yarn build:grafana",
     "build:logstash": "docker build -t logstash:local -f logstash/Dockerfile logstash",
     "build:prometheus": "docker build -t prometheus:local -f prometheus/Dockerfile prometheus",
     "build:grafana": "docker build -t grafana:local -f grafana/Dockerfile grafana",
