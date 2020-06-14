@@ -9,6 +9,10 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <DefineConstants>NETCORE21</DefineConstants>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="Interception.Attributes" Version="1.2020.614" />
     <PackageReference Include="Microsoft.AspNetCore.All" />

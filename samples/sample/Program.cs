@@ -1,6 +1,6 @@
-﻿using Microsoft.AspNetCore;
+﻿#if NETCORE21
+using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
-using System;
 
 namespace SampleApp
 {
@@ -8,18 +8,41 @@ namespace SampleApp
     {
         public static void Main(string[] args)
         {
-            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
             CreateWebHostBuilder(args).Build().Run();
         }
 
-        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args)
         {
-            Console.WriteLine($"Unhandled Exception: {e.ExceptionObject}");
-        }
-
-        public static IWebHostBuilder CreateWebHostBuilder(string[] args) { 
             return WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>();
         }
     }
 }
+#endif
+
+#if NETCORE31
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
+using System.IO;
+
+namespace SampleApp
+{
+    public class Program
+    {
+        public static void Main(string[] args)
+        {
+            var host = new WebHostBuilder()
+                .UseContentRoot(Directory.GetCurrentDirectory())
+                .UseKestrel()
+                .UseStartup<Startup>()
+                .ConfigureAppConfiguration(cb =>
+                {
+                    cb.AddEnvironmentVariables();
+                })
+                .Build();
+
+            host.Run();
+        }
+    }
+}
+#endif
