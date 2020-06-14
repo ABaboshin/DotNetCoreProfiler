@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <PackageReference Include="Interception.DeadlockDetection" Version="1.2020.614" />
-    <PackageReference Include="Interception.Observers" Version="1.2020.614" />
+    <PackageReference Include="Interception.Observers" Version="1.2020.6141" />
     <PackageReference Include="Interception.OpenTracing.Prometheus" Version="1.2020.614" />
   </ItemGroup>
 
