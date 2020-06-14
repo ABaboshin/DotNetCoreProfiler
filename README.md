@@ -1,6 +1,8 @@
 # Inject DevOps-things using ICorProfilerCallback
 
-This project has a goal to demonstrate injection of the following devops-related things into .net core 2.1 apps:
+[![Build Status](https://travis-ci.org/ABaboshin/DotNetCoreProfiler.svg?branch=master)](https://travis-ci.org/ABaboshin/DotNetCoreProfiler)
+
+This project has a goal to demonstrate injection of the following devops-related things into .net core 2.1/3.1 apps:
  - Logger configuration
  - Distributed tracing for
     - incoming http requests
@@ -14,20 +16,20 @@ This project has a goal to demonstrate injection of the following devops-related
     - masstransit consume
     - EntityFrameworkCore queries
     - Quartz scheduled jobs
-    - User-defined using `MonitorAttribute` (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/src/Interception.Attributes/MonitorAttribute.cs)
+    - User-defined using `MonitorAttribute` (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/master/src/Interception.Attributes/MonitorAttribute.cs)
  - Cache using `CacheAttribute`
  - Store collected metrics in:
     - prometheus
     - jaeger
  - Intercept creation of `IServiceProvider` and provide full access to the DI for the injected code
- - Validate method parameters, see i.e. https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/src/Interception.Attributes/Validation/NotNullAttribute.cs
- - Interceptors can be combined. See https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L54
+ - Validate method parameters, see i.e. https://github.com/ABaboshin/DotNetCoreProfiler/blob/master/src/Interception.Attributes/Validation/NotNullAttribute.cs
+ - Interceptors can be combined. See https://github.com/ABaboshin/DotNetCoreProfiler/blob/master/sample/MessageBus/MyMessageConsumer.cs#L54
  - The order of interecepted is configuratble via `Priority` property.
 
 ***Limitations***
  - Dynamic methods are not supported.
  - If you want to use parameter validator, use the `ValidationAttribute` on the method.
- - In some cases to intercept the generic method you have to implement `IMethodFinder` (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/cire-2.1/src/Interception/MassTransit/ConsumeMethodFinder.cs#L13)
+ - In some cases to intercept the generic method you have to implement `IMethodFinder` (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/cire-2.1/samples/Interception/MassTransit/ConsumeMethodFinder.cs#L13)
 
 ## Project structure
 
@@ -37,7 +39,7 @@ See [src/profiler](src/profiler).
 
 ### Interceptors
 
-See [src/Interception](src/Interception):
+See [samples/Interception](samples/Interception):
   - `ConfigureServicesBuilderInterceptor` intercept the `Startup.ConfigureServices` call and injects i.e. logger configuration, general tracing configuration, observers
   - `ConfigureBuilderInterceptor` intercepts the `Startup.Configure` call and inject tracing middleware
   - `CreateUsingRabbitMqInterceptor` intercepts the rabbitmq masstransit bus configuration and injects tracing into publishing pipeline
@@ -47,11 +49,11 @@ See [src/Interception](src/Interception):
       - Customited metric name
       - Passed parameters
       - Return value
-      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L64
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/master/sample/MessageBus/MyMessageConsumer.cs#L64
   - `CacheInterceptor` finsd the usage of `CacheAttribute` and cache the results for the given amount of seconds, the parameters which have to be taken into accout can be configured:
-      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L64
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/master/sample/MessageBus/MyMessageConsumer.cs#L64
   - `InvalidateCacheInterceptor` finds the usage  of `InvalidateCacheAttribute` and invalidates the cache:
-      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/core-2.1/sample/MessageBus/MyMessageConsumer.cs#L51
+      - For usage see https://github.com/ABaboshin/DotNetCoreProfiler/blob/master/sample/MessageBus/MyMessageConsumer.cs#L51
 
 ### Observers
 
