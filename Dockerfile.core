@@ -10,5 +10,9 @@ RUN dotnet build -c Release src/Interception.Observers/Interception.Observers.cs
 RUN dotnet build -c Release src/Interception.Tracing/Interception.Tracing.csproj
 RUN dotnet build -c Release src/Interception.OpenTracing.Prometheus/Interception.OpenTracing.Prometheus.csproj
 
-RUN find /src -name *.nupkg | xargs dotnet nuget push -k $NUGET_KEY
+RUN mkdir /nuget && find /src -name "*.nupkg" -exec cp -t /nuget/ -- {} +
+
+WORKDIR /nuget
+
+RUN dotnet nuget push *.nupkg -k $NUGET_KEY
 
