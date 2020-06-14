@@ -6,7 +6,11 @@ services:
   - docker
 
 before_install:
-- yarn build:core
+#- yarn build:core
+- yarn build:native
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- docker tag profiler:native ababoshin/dotnetcoreprofiler:20200614
+- docker push ababoshin/dotnetcoreprofiler:20200614
 
 script:
 - echo "done"

@@ -1,4 +1,4 @@
-FROM ubuntu:20.04
+FROM ubuntu:20.04 as build
 
 RUN apt-get update && \
   apt-get install -y curl lsb-release gnupg2 software-properties-common wget make
@@ -21,3 +21,7 @@ COPY src/profiler /profiler/src/profiler
 WORKDIR /profiler/src/profiler
 
 RUN cmake -DCMAKE_BUILD_TYPE=Release . && make && cp DotNetCoreProfiler.so /
+
+FROM scratch
+
+COPY --from=build /DotNetCoreProfiler.so /
