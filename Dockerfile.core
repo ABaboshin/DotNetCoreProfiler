@@ -18,5 +18,5 @@ RUN mkdir /nuget && find /src -name "*.nupkg" -exec cp -t /nuget/ -- {} +
 
 WORKDIR /nuget
 
-RUN dotnet nuget push *.nupkg -k $NUGET_KEY
+RUN find . -name "*.nupkg" | xargs -i dotnet nuget push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json --skip-duplicate {}
 
