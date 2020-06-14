@@ -17,7 +17,12 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTracing.Util;
 using Serilog;
+#if NETCORE21
 using Serilog.AspNetCore;
+#endif
+#if NETCORE31
+using Serilog.Extensions.Logging;
+#endif
 using Serilog.Core;
 using Serilog.Events;
 using Serilog.Formatting.Json;

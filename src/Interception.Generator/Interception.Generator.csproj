@@ -7,22 +7,24 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/ABaboshin/DotNetCoreProfiler</RepositoryUrl>
-    <Version>1.2020.0614</Version>
+    <Version>1.2020.06143</Version>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>interception-generator</ToolCommandName>
   </PropertyGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.1.18" />
-    <PackageReference Include="CommandLineParser" Version="2.8.0" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp3.1' ">
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
-    <PackageReference Include="CommandLineParser" Version="2.8.0" />
+    
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Interception.Core\Interception.Core.csproj" />
+    <PackageReference Include="Interception.Core" Version="1.2020.614" />
+    <PackageReference Include="CommandLineParser" Version="2.8.0" />
   </ItemGroup>
 
 </Project>
