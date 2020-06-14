@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.300 as build
+
+ARG NUGET_KEY
+
+RUN echo $NUGET_KEY
+
+COPY src src
+
+RUN dotnet build -c Release src/Interception.Core/Interception.Core.csproj
+RUN dotnet build -c Release src/Interception.Attributes/Interception.Attributes.csproj
+RUN dotnet build -c Release src/Interception.DeadlockDetection/Interception.DeadlockDetection.csproj
+RUN dotnet build -c Release src/Interception.Generator/Interception.Generator.csproj
+RUN dotnet build -c Release src/Interception.Observers/Interception.Observers.csproj
+RUN dotnet build -c Release src/Interception.Tracing/Interception.Tracing.csproj
+RUN dotnet build -c Release src/Interception.OpenTracing.Prometheus/Interception.OpenTracing.Prometheus.csproj
+
+RUN mkdir /nuget && find /src -name "*.nupkg" -exec cp -t /nuget/ -- {} +
+
+WORKDIR /nuget
+
+RUN find . -name "*.nupkg" | xargs -i dotnet nuget push -k $NUGET_KEY -s https://api.nuget.org/v3/index.json --skip-duplicate {}
+

@@ -18,14 +18,12 @@ namespace Interception.AspNetCore
 
         public TracingMiddleware(RequestDelegate next, IOptions<AspNetCoreConfiguration> options)
         {
-            //Console.WriteLine("TracingMiddleware.ctor");
             _next = next;
             _configuration = options.Value;
         }
 
         public async Task Invoke(HttpContext context)
         {
-            //Console.WriteLine("TracingMiddleware.Invoke");
             var extracted = GlobalTracer.Instance
                     .Extract(BuiltinFormats.HttpHeaders, new RequestHeadersExtractAdapter(context));
 

@@ -1,0 +1,17 @@
+language: node_js
+node_js:
+  - 14
+
+services:
+  - docker
+
+before_install:
+- yarn build:core
+- yarn build:native
+- echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- TAG=linux-x64-20200614
+- docker tag profiler:native ababoshin/dotnetcoreprofiler:$TAG
+- docker push ababoshin/dotnetcoreprofiler:$TAG
+
+script:
+- echo "done"

@@ -1,14 +1,14 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:2.1.806 as build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.300 as build
 
 COPY samples/sample sample/SampleApp/
 
-RUN dotnet publish -c Release -o /app sample/SampleApp/SampleApp21.csproj
+RUN dotnet publish -c Release -o /app sample/SampleApp/SampleApp31.csproj
 
 FROM profiler:native as profiler
 
-FROM profiler:interception21 as interception
+FROM profiler:interception31 as interception
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:2.1.18
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.4
 COPY --from=build /app /app
 RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
