@@ -16,6 +16,6 @@
     "run:all:jaeger:21": "yarn build:all:21 && docker-compose -f docker-compose.jaeger.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
     "run:all:prometheus:21": "yarn build:all:21 && docker-compose -f docker-compose.prometheus.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
     "run:all:prometheus:protobuf:21": "yarn build:all:21 && docker-compose up -f docker-compose.prometheus.protobuf.yml -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
-    "build:core": "docker build -t interception:core -f Dockerfile.core ."
+    "build:core": "docker build -t interception:core -f Dockerfile.core --build-arg NUGET_KEY=$NUGET_KEY ."
   }
 }
