@@ -1,6 +1,6 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:2.1.806 as build
 
-RUN dotnet tool install -g Interception.Generator --version 1.2020.6150
+RUN dotnet tool install -g Interception.Generator --version 1.2020.6151
 
 COPY samples samples
 
