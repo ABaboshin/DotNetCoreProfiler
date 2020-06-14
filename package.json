@@ -7,6 +7,7 @@
   "scripts": {
     "build:native": "docker build -t profiler:native -f Dockerfile.native .",
     "build:interception:21": "docker build -t profiler:interception21 -f Dockerfile.interception21 .",
+    "build:interception:31": "docker build -t profiler:interception31 -f Dockerfile.interception31 .",
     "build:sampleapp:21": "docker build -t sampleapp:21 -f Dockerfile.sampleapp21 .",
     "build:all:21": "yarn build:interception:21 && yarn build:native && yarn build:sampleapp:21 && yarn build:logstash && yarn build:prometheus && yarn build:grafana",
     "build:logstash": "docker build -t logstash:local -f logstash/Dockerfile logstash",
