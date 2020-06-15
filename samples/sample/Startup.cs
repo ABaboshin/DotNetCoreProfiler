@@ -31,7 +31,13 @@ namespace SampleApp
         {
             ConfigureDatabase(serviceCollection);
 
+#if NETCORE21
             serviceCollection.AddMvc();
+#endif
+#if NETCORE31
+serviceCollection
+                .AddMvc(options => { options.EnableEndpointRouting = false; });
+#endif
             ConfigureMessageBus(serviceCollection);
 
             if (Environment.GetEnvironmentVariable("ENABLE_QUARTZ") == "true")
@@ -60,7 +66,12 @@ namespace SampleApp
                     return Bus.Factory.CreateUsingRabbitMq(cfg =>
                     {
                         var loggerFactory = context.GetRequiredService<ILoggerFactory>();
+#if NETCORE21
                         cfg.UseExtensionsLogging(loggerFactory);
+#endif
+#if NETCORE31
+                        cfg.SetLoggerFactory(loggerFactory);
+#endif
 
                         var config = context.GetService<IOptions<RabbitMQConfiguration>>().Value;
 

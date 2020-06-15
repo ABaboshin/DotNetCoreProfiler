@@ -1,5 +1,4 @@
-﻿using Interception.AspNetCore;
-using Interception.Attributes;
+﻿using Interception.Attributes;
 using Interception.Attributes.Cache;
 using Interception.Core;
 using Microsoft.Extensions.Caching.Distributed;
@@ -15,7 +14,7 @@ namespace Interception.Cache
     [MethodInterceptorImplementation(typeof(CacheAttribute))]
     public class CacheInterceptor : BaseAttributedInterceptor
     {
-        IDistributedCache DistributedCache => DependencyInjection.ServiceProvider.GetRequiredService<IDistributedCache>();
+        IDistributedCache DistributedCache => DependencyInjection.Instance.ServiceProvider.GetRequiredService<IDistributedCache>();
 
         public override int Priority => 100;
 

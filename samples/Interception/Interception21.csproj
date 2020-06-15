@@ -11,15 +11,25 @@
 
   <PropertyGroup>
     <DefineConstants>NETCORE21</DefineConstants>
+    <AssemblyName>Interception</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.All" />
+    <PackageReference Include="Interception.AspNetCore.Tracing" Version="1.2020.6150" />
+    <!--<PackageReference Include="Interception.AspNetCore.WebHost" Version="1.2020.6150" />-->
+    <PackageReference Include="Interception.Cache" Version="1.2020.6150" />
     <PackageReference Include="Interception.DeadlockDetection" Version="1.2020.6150" />
+    <!--<PackageReference Include="Interception.DependencyInjection" Version="1.2020.6150" />-->
+    <PackageReference Include="Interception.MassTransit" Version="1.2020.6150" />
     <PackageReference Include="Interception.Observers" Version="1.2020.6150" />
     <PackageReference Include="Interception.OpenTracing.Prometheus" Version="1.2020.6150" />
+    <PackageReference Include="Interception.Quartz" Version="1.2020.6150" />
+    <PackageReference Include="Interception.Tracing.Serilog" Version="1.2020.6150" />
+    <PackageReference Include="Interception.Tracing" Version="1.2020.6151" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="5.5.6" />
     <PackageReference Include="Jaeger" Version="0.2.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.1.1" />
     <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
     <PackageReference Include="System.Collections" Version="4.3.0" />
     <ProjectReference Include="..\Microsoft.Extensions.Caching.StackExchangeRedis\Microsoft.Extensions.Caching.StackExchangeRedis.csproj" />

@@ -1,5 +1,4 @@
-﻿using Interception.AspNetCore;
-using Interception.Attributes;
+﻿using Interception.Attributes;
 using Interception.Attributes.Cache;
 using Interception.Core;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,7 +14,7 @@ namespace Interception.Cache
         {
             var attribute = GetCustomAttribute<InvalidateCacheAttribute>();
 
-            var cacheInvalidator = DependencyInjection.ServiceProvider.GetRequiredService<IDistributedCacheInvalidator>();
+            var cacheInvalidator = DependencyInjection.Instance.ServiceProvider.GetRequiredService<IDistributedCacheInvalidator>();
             cacheInvalidator.Invalidate(attribute.Name);
         }
     }

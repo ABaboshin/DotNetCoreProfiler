@@ -1,8 +1,8 @@
 ﻿using System;
 
-namespace Interception.AspNetCore
+namespace Interception.DependencyInjection
 {
-    public static class DependencyInjection
+    public static class Instance
     {
         public static IServiceProvider ServiceProvider;
     }

@@ -13,5 +13,9 @@ namespace Interception.Generator
 
         [Option('o', "output")]
         public string Output { get; set; }
+
+
+        [Option('s', "skip")]
+        public string Skip { get; set; }
     }
 }

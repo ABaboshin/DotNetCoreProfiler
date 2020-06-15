@@ -1,5 +1,4 @@
-﻿using Interception.AspNetCore;
-using Interception.Attributes;
+﻿using Interception.Attributes;
 using Microsoft.Extensions.Options;
 using OpenTracing.Tag;
 using OpenTracing.Util;
@@ -15,7 +14,7 @@ namespace Interception.Quartz
     [StrictIntercept(TargetAssemblyName = "Quartz", TargetMethodName = "Execute", TargetTypeName = "Quartz.IJob", TargetMethodParametersCount = 1)]
     public class QuartzJobExecuteInterceptor : BaseMetricsInterceptor
     {
-        public QuartzJobExecuteInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Enabled)
+        public QuartzJobExecuteInterceptor() : base(DependencyInjection.Instance.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Enabled)
         {
         }
 
@@ -26,7 +25,7 @@ namespace Interception.Quartz
             var consumerName = This.GetType().FullName;
 
             var spanBuilder = GlobalTracer.Instance
-                    .BuildSpan(DependencyInjection.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Name)
+                    .BuildSpan(DependencyInjection.Instance.ServiceProvider.GetService<IOptions<QuartzConfiguration>>().Value.Name)
                     .WithTag(Tags.SpanKind, Tags.SpanKindServer)
                     .WithTag("task", consumerName);
 

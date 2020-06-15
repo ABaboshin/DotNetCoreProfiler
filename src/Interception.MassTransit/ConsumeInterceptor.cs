@@ -1,5 +1,4 @@
-﻿using Interception.AspNetCore;
-using Interception.Attributes;
+﻿using Interception.Attributes;
 using MassTransit;
 using Microsoft.Extensions.Options;
 using OpenTracing;
@@ -23,7 +22,7 @@ namespace Interception.MassTransit
     [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.Saga.Orchestrates`2", TargetMethodParametersCount = 1)]
     public class ConsumeInterceptor : BaseMetricsInterceptor
     {
-        public ConsumeInterceptor() : base(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)
+        public ConsumeInterceptor() : base(DependencyInjection.Instance.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerEnabled)
         {
         }
 
@@ -42,13 +41,13 @@ namespace Interception.MassTransit
                 var parentSpanContext = GlobalTracer.Instance.Extract(BuiltinFormats.TextMap, new TextMapExtractAdapter(headers));
 
                 spanBuilder = GlobalTracer.Instance
-                    .BuildSpan(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerName)
+                    .BuildSpan(DependencyInjection.Instance.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerName)
                     .WithTag(Tags.SpanKind, Tags.SpanKindConsumer)
                     .AsChildOf(parentSpanContext);
             }
             catch (Exception)
             {
-                spanBuilder = GlobalTracer.Instance.BuildSpan(DependencyInjection.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerName);
+                spanBuilder = GlobalTracer.Instance.BuildSpan(DependencyInjection.Instance.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.ConsumerName);
             }
 
             spanBuilder
