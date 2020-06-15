@@ -26,6 +26,7 @@
     <PackageReference Include="Interception.OpenTracing.Prometheus" Version="1.2020.6150" />
     <PackageReference Include="Interception.Quartz" Version="1.2020.6150" />
     <PackageReference Include="Interception.Tracing.Serilog" Version="1.2020.6150" />
+    <PackageReference Include="Interception.Tracing" Version="1.2020.6151" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="5.5.6" />
     <PackageReference Include="Jaeger" Version="0.2.2" />
     <PackageReference Include="Microsoft.AspNetCore.Hosting.Abstractions" Version="2.1.1" />

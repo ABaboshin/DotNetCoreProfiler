@@ -20,7 +20,6 @@
     <!--<PackageReference Include="Interception.AspNetCore.WebHost" Version="1.2020.6150" />-->
     <PackageReference Include="Interception.Cache" Version="1.2020.6150" />
     <PackageReference Include="Interception.DeadlockDetection" Version="1.2020.6150" />
-    <!--<PackageReference Include="Interception.DependencyInjection" Version="1.2020.6150" />-->
     <PackageReference Include="Interception.MassTransit" Version="1.2020.6150" />
     <PackageReference Include="Interception.Observers" Version="1.2020.6150" />
     <PackageReference Include="Interception.OpenTracing.Prometheus" Version="1.2020.6150" />
