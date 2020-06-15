@@ -19,7 +19,7 @@ namespace Interception.Generator
                     var strict = new List<StrictInterceptionInfo>();
                     var methodFinders = new List<MethodFinderInfo>();
                     var attributed = new List<AttributedInterceptor>();
-                    //var skip = File.ReadAllLines(opts.Skip);
+                    var skipAssemblies = File.ReadAllLines(opts.Skip);
 
                     foreach (var assemblyPath in opts.Assemblies)
                     {
@@ -48,44 +48,7 @@ namespace Interception.Generator
                             AssemblyName = typeof(IMethodFinder).Assembly.GetName().Name
                         },
                         methodFinders,
-                        skipAssemblies = new[] {
-                            //"Anonymously Hosted DynamicMethods Assembly",
-                            "Interception.AspNetCore.Tracing",
-                            "Interception.AspNetCore.WebHost",
-                            "Interception.Cache",
-                            "Interception.Core",
-                            "Interception.DeadlockDetection",
-                            "Interception.DependencyInjection",
-                            "Interception.MassTransit",
-                            "Interception.Observers",
-                            "Interception.OpenTracing.Prometheus",
-                            "Interception.Quartz",
-                            "Interception.Tracing",
-                            "ISymWrapper",
-                            "Microsoft.AspNetCore.Mvc.RazorPages",
-                            "Microsoft.AspNetCore.Razor.Language",
-                            "Microsoft.CSharp",
-                            "Microsoft.Extensions.ObjectPool",
-                            "Microsoft.Extensions.Options",
-                            "mscorlib",
-                            "netstandard",
-                            "Newtonsoft.Json",
-                            "StatsdClient",
-                            "System.Collections",
-                            "System.ComponentModel",
-                            "System.Configuration",
-                            "System.Console",
-                            "System.Core",
-                            "System.Diagnostics.DiagnosticSource",
-                            "System.IO.FileSystem",
-                            "System.Private.CoreLib",
-                            "System.Runtime",
-                            "System.Runtime.Extensions",
-                            "System.Runtime.InteropServices",
-                            "System.Runtime.InteropServices.RuntimeInformation",
-                            "System.Threading.Tasks",
-                            "System.Xml.Linq"
-                        }.OrderBy(s => s),
+                        skipAssemblies = skipAssemblies.OrderBy(s => s),
                         strict,
                     };
 
