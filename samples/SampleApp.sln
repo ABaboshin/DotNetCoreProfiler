@@ -51,6 +51,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.AspNetCore.Tra
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Cache", "..\src\Interception.Cache\Interception.Cache.csproj", "{ED8FD639-D050-450A-932D-7094D4D7E687}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Tracing.Serilog", "..\src\Interception.Tracing.Serilog\Interception.Tracing.Serilog.csproj", "{6E27D5B4-A511-4982-A72F-0E91F584666D}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -218,6 +220,14 @@ Global
 		{ED8FD639-D050-450A-932D-7094D4D7E687}.Release|Any CPU.Build.0 = Release|Any CPU
 		{ED8FD639-D050-450A-932D-7094D4D7E687}.Release|x64.ActiveCfg = Release|Any CPU
 		{ED8FD639-D050-450A-932D-7094D4D7E687}.Release|x64.Build.0 = Release|Any CPU
+		{6E27D5B4-A511-4982-A72F-0E91F584666D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E27D5B4-A511-4982-A72F-0E91F584666D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E27D5B4-A511-4982-A72F-0E91F584666D}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{6E27D5B4-A511-4982-A72F-0E91F584666D}.Debug|x64.Build.0 = Debug|Any CPU
+		{6E27D5B4-A511-4982-A72F-0E91F584666D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E27D5B4-A511-4982-A72F-0E91F584666D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E27D5B4-A511-4982-A72F-0E91F584666D}.Release|x64.ActiveCfg = Release|Any CPU
+		{6E27D5B4-A511-4982-A72F-0E91F584666D}.Release|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -244,6 +254,7 @@ Global
 		{B78B9B31-DF8E-4FB0-85F9-D00497903B8F} = {BB000D0D-B7F1-4BA0-A355-17CB3AF8966A}
 		{8A2EDEED-9B4F-4AA2-A2AD-65213641F51A} = {BB000D0D-B7F1-4BA0-A355-17CB3AF8966A}
 		{ED8FD639-D050-450A-932D-7094D4D7E687} = {BB000D0D-B7F1-4BA0-A355-17CB3AF8966A}
+		{6E27D5B4-A511-4982-A72F-0E91F584666D} = {BB000D0D-B7F1-4BA0-A355-17CB3AF8966A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {5DAEBCCA-FF88-41F6-89EF-16FD1F9EB6B0}
