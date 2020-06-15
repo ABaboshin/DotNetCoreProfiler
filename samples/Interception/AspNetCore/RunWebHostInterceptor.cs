@@ -16,7 +16,7 @@ namespace Interception.AspNetCore
 
         public override void ExecuteBefore()
         {
-            DependencyInjection.ServiceProvider = ((IWebHost)GetParameter(0)).Services;
+            DependencyInjection.Instance.ServiceProvider = ((IWebHost)GetParameter(0)).Services;
 
             var cts = (CancellationTokenSource)GetParameter(1);
             if (cts != null)

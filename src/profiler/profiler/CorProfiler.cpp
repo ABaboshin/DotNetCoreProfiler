@@ -224,6 +224,7 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
     mdMethodDef retMethodToken;
 
     auto hr = GenerateLoadMethod(moduleId, retMethodToken);
+    IfFailRet(hr);
 
     rewriter::ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
@@ -303,6 +304,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
     for(const auto& el: configuration.Assemblies)
     {
+        std::cout << "load " << util::ToString(el) << std::endl;
         // assembly path
         mdString pathToken;
         hr = metadataEmit->DefineUserString(el.c_str(), (ULONG)el.length(), &pathToken);
@@ -317,7 +319,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
     hr = rewriter.Export();
 
-    return S_OK;
+    return hr;
 }
 
 bool CorProfiler::SkipAssembly(const wstring& name)

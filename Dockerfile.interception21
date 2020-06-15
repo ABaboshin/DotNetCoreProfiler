@@ -6,7 +6,9 @@ COPY samples samples
 
 RUN dotnet publish -c Release -o /interception samples/Interception/Interception21.csproj
 
-RUN cd /interception && /root/.dotnet/tools/interception-generator -a Interception21.dll,Interception.Core.dll,Interception.DeadlockDetection.dll -p /profiler -o /interception/profiler.json -s /samples/skip.txt && cat /interception/profiler.json
+# RUN cd /interception && /root/.dotnet/tools/interception-generator -a Interception21.dll,Interception.AspNetCore.Tracing.dll,Interception.Cache.dll,Interception.Observers.dll,Interception.OpenTracing.Prometheus.dll,Interception.Core.dll,Interception.DeadlockDetection.dll,Interception.AspNetCore.WebHost.dll,Interception.DependencyInjection.dll,Interception.MassTransit.dll,Interception.Quartz.dll,Interception.Tracing.Serilog.dll \
+RUN cd /interception && /root/.dotnet/tools/interception-generator -a Interception.dll,Interception.Cache.dll,Interception.DeadlockDetection.dll,Interception.MassTransit.dll,Interception.Quartz.dll \
+-p /profiler -o /interception/profiler.json -s /samples/skip.txt && cat /interception/profiler.json
 
 FROM scratch
 
