@@ -19,6 +19,7 @@ namespace Interception.Generator
                     var strict = new List<StrictInterceptionInfo>();
                     var methodFinders = new List<MethodFinderInfo>();
                     var attributed = new List<AttributedInterceptor>();
+                    //var skip = File.ReadAllLines(opts.Skip);
 
                     foreach (var assemblyPath in opts.Assemblies)
                     {
@@ -49,9 +50,17 @@ namespace Interception.Generator
                         methodFinders,
                         skipAssemblies = new[] {
                             //"Anonymously Hosted DynamicMethods Assembly",
-                            "Interception",
-                            "Interception.Common",
+                            "Interception.AspNetCore.Tracing",
+                            "Interception.AspNetCore.WebHost",
+                            "Interception.Cache",
+                            "Interception.Core",
+                            "Interception.DeadlockDetection",
+                            "Interception.DependencyInjection",
+                            "Interception.MassTransit",
                             "Interception.Observers",
+                            "Interception.OpenTracing.Prometheus",
+                            "Interception.Quartz",
+                            "Interception.Tracing",
                             "ISymWrapper",
                             "Microsoft.AspNetCore.Mvc.RazorPages",
                             "Microsoft.AspNetCore.Razor.Language",
