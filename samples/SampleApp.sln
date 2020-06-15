@@ -39,19 +39,19 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "31", "31", "{2F658793-A03C-
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Generator", "..\src\Interception.Generator\Interception.Generator.csproj", "{9E298B71-A45A-4D49-88FB-7529F839781C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Quartz", "..\src\Interception.Quartz\Interception.Quartz.csproj", "{7ADF5A20-3398-4B30-B496-337AA86AD79B}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Quartz", "..\src\Interception.Quartz\Interception.Quartz.csproj", "{7ADF5A20-3398-4B30-B496-337AA86AD79B}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.DependencyInjection", "..\src\Interception.DependencyInjection\Interception.DependencyInjection.csproj", "{5009C80B-9590-4DAE-BE17-C6F2EA33ADFD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.DependencyInjection", "..\src\Interception.DependencyInjection\Interception.DependencyInjection.csproj", "{5009C80B-9590-4DAE-BE17-C6F2EA33ADFD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.AspNetCore.WebHost", "..\src\Interception.AspNetCore.WebHost\Interception.AspNetCore.WebHost.csproj", "{426A6032-B759-4016-9049-2B30AF0341AD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.AspNetCore.WebHost", "..\src\Interception.AspNetCore.WebHost\Interception.AspNetCore.WebHost.csproj", "{426A6032-B759-4016-9049-2B30AF0341AD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.MassTransit", "..\src\Interception.MassTransit\Interception.MassTransit.csproj", "{B78B9B31-DF8E-4FB0-85F9-D00497903B8F}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.MassTransit", "..\src\Interception.MassTransit\Interception.MassTransit.csproj", "{B78B9B31-DF8E-4FB0-85F9-D00497903B8F}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.AspNetCore.Tracing", "..\src\Interception.AspNetCore.Tracing\Interception.AspNetCore.Tracing.csproj", "{8A2EDEED-9B4F-4AA2-A2AD-65213641F51A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.AspNetCore.Tracing", "..\src\Interception.AspNetCore.Tracing\Interception.AspNetCore.Tracing.csproj", "{8A2EDEED-9B4F-4AA2-A2AD-65213641F51A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Cache", "..\src\Interception.Cache\Interception.Cache.csproj", "{ED8FD639-D050-450A-932D-7094D4D7E687}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Cache", "..\src\Interception.Cache\Interception.Cache.csproj", "{ED8FD639-D050-450A-932D-7094D4D7E687}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Interception.Tracing.Serilog", "..\src\Interception.Tracing.Serilog\Interception.Tracing.Serilog.csproj", "{6E27D5B4-A511-4982-A72F-0E91F584666D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Tracing.Serilog", "..\src\Interception.Tracing.Serilog\Interception.Tracing.Serilog.csproj", "{6E27D5B4-A511-4982-A72F-0E91F584666D}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
