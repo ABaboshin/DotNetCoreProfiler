@@ -14,7 +14,6 @@ RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
 COPY --from=interception /interception/*.dll /profiler/
 COPY --from=interception /interception/profiler.json /profiler/
-RUN cd /profiler && tar zcf /profiler.tar.gz *
 
 EXPOSE 80
 

@@ -35,7 +35,12 @@ namespace Interception.AspNetCore
     /// logging
     /// tracing
     /// </summary>
+#if NETCORE21
     [StrictIntercept(TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Invoke", TargetTypeName = "Microsoft.AspNetCore.Hosting.Internal.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
+#endif
+#if NETCORE31
+    [StrictIntercept(TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "InvokeCore", TargetTypeName = "Microsoft.AspNetCore.Hosting.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
+#endif
     public class ConfigureServicesBuilderInterceptor : BaseInterceptor
     {
         public override int Priority => 0;

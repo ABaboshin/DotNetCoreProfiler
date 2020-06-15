@@ -11,13 +11,21 @@
 
   <PropertyGroup>
     <DefineConstants>NETCORE31</DefineConstants>
+    <AssemblyName>Interception</AssemblyName>
   </PropertyGroup>
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Interception.AspNetCore.Tracing" Version="1.2020.6150" />
+    <!--<PackageReference Include="Interception.AspNetCore.WebHost" Version="1.2020.6150" />-->
+    <PackageReference Include="Interception.Cache" Version="1.2020.6150" />
     <PackageReference Include="Interception.DeadlockDetection" Version="1.2020.6150" />
+    <!--<PackageReference Include="Interception.DependencyInjection" Version="1.2020.6150" />-->
+    <PackageReference Include="Interception.MassTransit" Version="1.2020.6150" />
     <PackageReference Include="Interception.Observers" Version="1.2020.6150" />
     <PackageReference Include="Interception.OpenTracing.Prometheus" Version="1.2020.6150" />
+    <PackageReference Include="Interception.Quartz" Version="1.2020.6150" />
+    <PackageReference Include="Interception.Tracing.Serilog" Version="1.2020.6150" />
     <PackageReference Include="MassTransit.RabbitMQ" Version="6.2.5" />
     <PackageReference Include="Jaeger" Version="0.3.7" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.4" />
