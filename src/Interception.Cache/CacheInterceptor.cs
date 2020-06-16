@@ -43,8 +43,6 @@ namespace Interception.Cache
 
         public override void ExecuteAfter()
         {
-            Console.WriteLine($"Cache.ExecuteAfter {DateTime.UtcNow} {GetCacheKey()}");
-
             var attribute = (CacheAttribute)Method.GetCustomAttributes(typeof(CacheAttribute), false).First();
 
             DistributedCache.Set(GetCacheKey(), Serialization.ToByteArray(Result), new DistributedCacheEntryOptions { AbsoluteExpirationRelativeToNow = TimeSpan.FromSeconds(attribute.DurationSeconds) });
@@ -57,11 +55,8 @@ namespace Interception.Cache
             {
                 DistributedCache.Refresh(GetCacheKey());
                 Result = Serialization.FromByteArray(cached);
-                Console.WriteLine($"Cache.SkipExecution {GetCacheKey()}");
                 return true;
             }
-            
-            Console.WriteLine($"Cache.SkipExecution {GetCacheKey()} no");
 
             return false;
         }

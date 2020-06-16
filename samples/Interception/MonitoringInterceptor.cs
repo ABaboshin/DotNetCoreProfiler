@@ -23,8 +23,6 @@ namespace Interception
 
             var spanBuilder = GlobalTracer.Instance.BuildSpan(attribute.Name).AsChildOf(GlobalTracer.Instance.ActiveSpan);
 
-            //Console.WriteLine($"CreateScope {attribute.Name}");
-
             if (attribute.Parameters != null && attribute.Parameters.Any())
             {
                 var methodParameters = Method.GetParameters().ToList();

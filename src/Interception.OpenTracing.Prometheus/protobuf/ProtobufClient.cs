@@ -32,8 +32,6 @@ namespace Interception.OpenTracing.Prometheus.protobuf
             var ms = new MemoryStream();
             traceMetric.WriteTo(ms);
 
-            //Console.WriteLine($"tracemetric {ms.Position}");
-
             return true;
         }
     }

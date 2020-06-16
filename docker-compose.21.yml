@@ -62,6 +62,7 @@ services:
       cache__configuration: "redis:6379"
       ENABLE_QUARTZ: "true"
       SERVICE_URL: "http://sampleapp2:5000"
+      SPDLOG_LEVEL: trace
     ports:
       - "5000:5000"
     # logging:
