@@ -59,8 +59,6 @@ namespace Interception.Core
             var method = FindMethod();
             var isAsync = method.IsReturnTypeTask();
 
-            Console.WriteLine($"Execute {method.Name}");
-
             if (!isAsync)
             {
                 return ExecuteSyncInternal();

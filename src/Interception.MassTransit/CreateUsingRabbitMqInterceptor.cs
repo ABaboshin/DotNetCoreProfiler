@@ -17,19 +17,14 @@ namespace Interception.MassTransit
 
         public override void ExecuteBefore()
         {
-            //Console.WriteLine("Masstransit configuration Intercepted");
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
 
             var config = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
 
-            //Console.WriteLine(config);
-
             var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)GetParameter(1);
             Action<IRabbitMqBusFactoryConfigurator> configure = (IRabbitMqBusFactoryConfigurator cfg) => {
-                //Console.WriteLine("Masstransit configuration Injected");
-
                 if (config.PublisherEnabled)
                 {
                     cfg.ConfigurePublish(configurator => {

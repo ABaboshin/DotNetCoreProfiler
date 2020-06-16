@@ -70,7 +70,7 @@ namespace util
 
         wstring trimmed = str;
 
-        auto trimSymbols = " \t\r\n"_W;
+        auto trimSymbols = " \t\r\n\0"_W;
 
         auto lpos = trimmed.find_first_not_of(trimSymbols);
         if (lpos != std::string::npos && lpos > 0) {
@@ -85,37 +85,25 @@ namespace util
         return trimmed;
     }
 
-    char* wchar_to_char(const WCHAR* pwchar)
-    {
-        // get the number of characters in the string.
-        int currentCharIndex = 0;
-        char currentChar = pwchar[currentCharIndex];
-
-        while (currentChar != '\0')
-        {
-            currentCharIndex++;
-            currentChar = pwchar[currentCharIndex];
+    std::string Trim(const std::string& str) {
+        if (str.length() == 0) {
+            return "";
         }
 
-        const auto charCount = currentCharIndex + 1;
+        std::string trimmed = str;
 
-        // allocate a new block of memory size char (1 byte) instead of wide char (2 bytes)
-        auto filePathC = new char[charCount];
+        auto trimSymbols = " \t\r\n\0";
 
-        for (int i = 0; i < charCount; i++)
-        {
-            // convert to char (1 byte)
-            char character = pwchar[i];
-
-            *filePathC = character;
-
-            filePathC += sizeof(char);
-
+        auto lpos = trimmed.find_first_not_of(trimSymbols);
+        if (lpos != std::string::npos && lpos > 0) {
+            trimmed = trimmed.substr(lpos);
         }
-        filePathC += '\0';
 
-        filePathC -= (sizeof(char) * charCount);
+        auto rpos = trimmed.find_last_not_of(trimSymbols);
+        if (rpos != std::string::npos) {
+            trimmed = trimmed.substr(0, rpos + 1);
+        }
 
-        return filePathC;
+        return trimmed;
     }
 }

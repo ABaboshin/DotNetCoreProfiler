@@ -9,7 +9,7 @@ before_install:
 - yarn build:core
 - yarn build:native
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-- TAG=linux-x64-20200615
+- TAG=linux-x64-20200616
 - docker tag profiler:native ababoshin/dotnetcoreprofiler:$TAG
 - docker push ababoshin/dotnetcoreprofiler:$TAG
 

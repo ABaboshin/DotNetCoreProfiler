@@ -14,9 +14,17 @@
 #include "util/ComPtr.h"
 #include "CorProfiler.h"
 #include "dllmain.h"
+#ifdef LOGGING
+#include "spdlog/spdlog.h"
+#include "logging/util.h"
+#endif // LOGGING
 
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
 {
+#ifdef LOGGING
+    logging::init();
+#endif // LOGGING
+
 }
 
 CorProfiler::~CorProfiler()
@@ -205,11 +213,15 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
         IfFailRet(hr);
 
-        std::cout << "Load into app_domain_id " << moduleInfo.assembly.appDomainId
-            << " Before call to " << ToString(functionInfo.Type.Name) << "." << ToString(functionInfo.Name)
-            << " num args " << functionInfo.Signature.NumberOfArguments()
-            << " from assembly " << ToString(moduleInfo.assembly.name)
-            << std::endl << std::flush;
+#ifdef LOGGING
+        spdlog::info("Load into app_domain_id {0} Before call to {1}.{2} num args {3} from assembly {4}",
+            moduleInfo.assembly.appDomainId,
+            ToString(functionInfo.Type.Name),
+            ToString(functionInfo.Name),
+            functionInfo.Signature.NumberOfArguments(),
+            ToString(moduleInfo.assembly.name));
+#endif // LOGGING
+
 
         IfFailRet(InjectLoadMethod(moduleId, rewriter));
 
@@ -304,7 +316,11 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
     for(const auto& el: configuration.Assemblies)
     {
-        std::cout << "load " << util::ToString(el) << std::endl;
+#ifdef LOGGING
+        spdlog::info("Load {0}", util::ToString(el));
+#endif // LOGGING
+
+
         // assembly path
         mdString pathToken;
         hr = metadataEmit->DefineUserString(el.c_str(), (ULONG)el.length(), &pathToken);
@@ -352,10 +368,14 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, 
 
         if (printEveryCall)
         {
-            std::cout << "Found call to " << ToString(target.Type.Name) << "." << ToString(target.Name)
-            << " num args " << target.Signature.NumberOfArguments()
-            << " from assembly " << ToString(moduleInfo.assembly.name)
-            << std::endl << std::flush;
+#ifdef LOGGING
+            spdlog::debug("Found call to {0}.{1} num args {2} from assembly {3}",
+                ToString(target.Type.Name),
+                ToString(target.Name),
+                target.Signature.NumberOfArguments(),
+                ToString(moduleInfo.assembly.name));
+#endif // LOGGING
+
         }
 
         auto interceptions = FindInterceptions(moduleInfo.assembly.name, target);
@@ -363,10 +383,14 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, 
         if (!interceptions.empty())
         {
             alreadyChanged = true;
-            std::cout << "Found call to " << ToString(target.Type.Name) << "." << ToString(target.Name)
-                << " num args " << target.Signature.NumberOfArguments()
-                << " from assembly " << ToString(moduleInfo.assembly.name)
-                << std::endl << std::flush;
+#ifdef LOGGING
+            spdlog::debug("Found call to {0}.{1} num args {2} from assembly {3}",
+                ToString(target.Type.Name),
+                ToString(target.Name),
+                target.Signature.NumberOfArguments(),
+                ToString(moduleInfo.assembly.name));
+#endif // LOGGING
+
 
             rewriter::ILRewriterHelper helper(&rewriter);
             helper.SetILPosition(pInstr);
@@ -546,9 +570,13 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     mdTypeRef methodFinderTypeRef;
     if (std::get<1>(methodFinder))
     {
+#ifdef LOGGING
+        spdlog::debug("MethodFinder {0}", ToString(std::get<0>(methodFinder).AssemblyName));
+#endif // LOGGING
+
+
         // define interception.dll
         mdModuleRef methodFinderDllRef;
-        std::cout << "MethodFinder " << ToString(std::get<0>(methodFinder).AssemblyName) << std::endl;
         GetWrapperRef(hr, metadataAssemblyEmit, methodFinderDllRef, std::get<0>(methodFinder).AssemblyName);
 
         hr = metadataEmit->DefineTypeRefByName(
@@ -583,7 +611,10 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     if (std::get<1>(methodFinder))
     {
-        std::cout << "create MethodFinder " << ToString(std::get<0>(methodFinder).TypeName) << std::endl;
+#ifdef LOGGING
+        spdlog::debug("Create MethodFinder {0}", ToString(std::get<0>(methodFinder).TypeName));
+#endif // LOGGING
+
 
         std::vector<BYTE> ctorSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
