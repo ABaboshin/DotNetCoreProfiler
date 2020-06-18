@@ -15,6 +15,7 @@ before_install:
 - yarn build:llvm
 - TAG=llvm-10
 - docker tag profiler:llvm ababoshin/dotnetcoreprofiler:$TAG
+- docker push ababoshin/dotnetcoreprofiler:$TAG
 
 script:
 - echo "done"
