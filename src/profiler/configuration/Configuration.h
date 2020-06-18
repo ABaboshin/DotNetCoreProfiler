@@ -41,6 +41,6 @@ namespace configuration
 
 		Configuration() {}
 
-		static Configuration LoadConfiguration(const wstring& path);
+		static Configuration LoadConfiguration(const std::string& path);
 	};
 }

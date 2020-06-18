@@ -1,18 +1,17 @@
 #include <cstdlib>
 #include <iostream>
-
 #include "miniutf/miniutf.hpp"
 #include "util.h"
 
 namespace util
 {
-    wstring GetEnvironmentValue(const wstring& name) {
-        auto cstr = std::getenv(ToString(name).c_str());
+    std::string GetEnvironmentValue(const std::string& name) {
+        auto cstr = std::getenv(name.c_str());
         if (cstr == nullptr) {
-            return ""_W;
+            return "";
         }
 
-        return ToWSTRING(std::string(cstr));
+        return std::string(cstr);
     }
 
 	wstring ToString(const std::vector<WCHAR>& data, size_t length)

@@ -46,9 +46,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
-    printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
+    printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL") == "true";
 
-    configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
+    configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"));
 
     return S_OK;
 }

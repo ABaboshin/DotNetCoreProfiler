@@ -10,19 +10,19 @@ namespace logging
 	using namespace util;
 	static LogLevel minLogLevel;
 
-	static std::map<LogLevel, wstring> logLevelMap =
+	static std::map<LogLevel, const char*> logLevelMap =
 	{
-		{LogLevel::DEBUG, "DEBUG"_W},
-		{LogLevel::INFO, "INFO"_W}
+		{LogLevel::DEBUG, "DEBUG"},
+		{LogLevel::INFO, "INFO"}
 	};
 
 	void init()
 	{
-		auto logLevelEnv = util::GetEnvironmentValue("PROFILER_LOG_LEVEL"_W);
+		auto logLevelEnv = util::GetEnvironmentValue("PROFILER_LOG_LEVEL");
 		auto result = std::find_if(
 			logLevelMap.begin(),
 			logLevelMap.end(),
-			[logLevelEnv](const std::pair<LogLevel, wstring> &mo) {return mo.second == logLevelEnv; });
+			[logLevelEnv](const std::pair<LogLevel, const char*> &mo) {return mo.second == logLevelEnv; });
 
 		minLogLevel = result != logLevelMap.end() ? result->first : LogLevel::INFO;
 	}
