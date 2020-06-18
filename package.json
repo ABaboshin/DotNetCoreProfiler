@@ -5,6 +5,7 @@
   "author": "Andrey Baboshin <andrey.baboshin@gmail.com>",
   "license": "MIT",
   "scripts": {
+    "build:llvm": "docker build -t profiler:llvm -f Dockerfile.llvm .",
     "build:native": "docker build -t profiler:native -f Dockerfile.native .",
     "build:interception:21": "docker build -t profiler:interception21 -f Dockerfile.interception21 .",
     "build:interception:31": "docker build -t profiler:interception31 -f Dockerfile.interception31 .",

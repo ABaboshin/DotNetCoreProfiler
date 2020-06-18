@@ -1,18 +1,4 @@
-FROM ubuntu:20.04 as build
-
-RUN apt-get update && \
-  apt-get install -y curl lsb-release gnupg2 software-properties-common wget make
-
-RUN curl -o /tmp/llvm.sh https://apt.llvm.org/llvm.sh
-RUN chmod +x /tmp/llvm.sh
-RUN /tmp/llvm.sh 10
-RUN curl -o /tmp/cmake.sh https://cmake.org/files/v3.17/cmake-3.17.1-Linux-x86_64.sh
-RUN sh /tmp/cmake.sh --prefix=/usr/local --exclude-subdir --skip-license
-
-RUN apt install -y libstdc++-10-dev
-
-ENV CXX=clang++-10
-ENV CC=clang-10
+FROM ababoshin/dotnetcoreprofiler:llvm-10 as build
 
 WORKDIR /profiler
 COPY lib /profiler/lib

@@ -12,6 +12,10 @@ before_install:
 - TAG=linux-x64-20200617
 - docker tag profiler:native ababoshin/dotnetcoreprofiler:$TAG
 - docker push ababoshin/dotnetcoreprofiler:$TAG
+- yarn build:llvm
+- TAG=llvm-10
+- docker tag profiler:llvm ababoshin/dotnetcoreprofiler:$TAG
+- docker push ababoshin/dotnetcoreprofiler:$TAG
 
 script:
 - echo "done"
