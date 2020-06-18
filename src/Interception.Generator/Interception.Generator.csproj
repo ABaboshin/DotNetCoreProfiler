@@ -7,7 +7,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/ABaboshin/DotNetCoreProfiler</RepositoryUrl>
-    <Version>1.2020.6170</Version>
+    <Version>1.2020.6180</Version>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>interception-generator</ToolCommandName>
   </PropertyGroup>
@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Interception.Core" Version="1.2020.6150" />
+    <PackageReference Include="Interception.Core" Version="1.2020.6170" />
     <PackageReference Include="CommandLineParser" Version="2.8.0" />
   </ItemGroup>
 
