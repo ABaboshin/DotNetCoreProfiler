@@ -1,6 +1,6 @@
 #pragma once
 
-#include "fmt/format.h"
+#include "fmt/fmt.h"
 #include "util/types.h"
 
 namespace logging

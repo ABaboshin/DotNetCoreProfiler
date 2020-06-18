@@ -16,8 +16,6 @@ SET_SOURCE_FILES_PROPERTIES(
 
 add_library("DotNetCoreProfiler.static" STATIC
     ClassFactory.cpp
-    fmt/format.cc
-    fmt/os.cc
     logging/logging.cpp
     profiler/CorProfiler.cpp
     miniutf/miniutf.cpp

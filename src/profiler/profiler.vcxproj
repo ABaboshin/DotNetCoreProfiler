@@ -139,14 +139,28 @@
     <ClInclude Include="configuration\back_inserter.h" />
     <ClInclude Include="configuration\MethodFinder.h" />
     <ClInclude Include="configuration\TypeInfo.h" />
+    <ClInclude Include="fmt\bin_to_hex.h" />
+    <ClInclude Include="fmt\bundled\chrono.h" />
+    <ClInclude Include="fmt\bundled\color.h" />
+    <ClInclude Include="fmt\bundled\compile.h" />
+    <ClInclude Include="fmt\bundled\core.h" />
+    <ClInclude Include="fmt\bundled\format-inl.h" />
+    <ClInclude Include="fmt\bundled\format.h" />
+    <ClInclude Include="fmt\bundled\locale.h" />
+    <ClInclude Include="fmt\bundled\ostream.h" />
+    <ClInclude Include="fmt\bundled\posix.h" />
+    <ClInclude Include="fmt\bundled\printf.h" />
+    <ClInclude Include="fmt\bundled\ranges.h" />
     <ClInclude Include="fmt\chrono.h" />
     <ClInclude Include="fmt\color.h" />
     <ClInclude Include="fmt\compile.h" />
     <ClInclude Include="fmt\core.h" />
+    <ClInclude Include="fmt\fmt.h" />
     <ClInclude Include="fmt\format-inl.h" />
     <ClInclude Include="fmt\format.h" />
     <ClInclude Include="fmt\locale.h" />
     <ClInclude Include="fmt\os.h" />
+    <ClInclude Include="fmt\ostr.h" />
     <ClInclude Include="fmt\ostream.h" />
     <ClInclude Include="fmt\posix.h" />
     <ClInclude Include="fmt\printf.h" />
@@ -180,8 +194,6 @@
   <ItemGroup>
     <ClCompile Include="configuration\Configuration.cpp" />
     <ClCompile Include="configuration\AttributedInterceptor.h" />
-    <ClCompile Include="fmt\format.cc" />
-    <ClCompile Include="fmt\os.cc" />
     <ClCompile Include="info\GenericMethodSignature.cpp" />
     <ClCompile Include="info\AssemblyInfo.cpp" />
     <ClCompile Include="ClassFactory.cpp" />
