@@ -14,14 +14,14 @@ namespace configuration
 	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src);
 	std::pair<MethodFinder, bool> LoadMethodFinder(const nlohmann::json::value_type& src);
 
-	Configuration Configuration::LoadConfiguration(const wstring& path)
+	Configuration Configuration::LoadConfiguration(const std::string& path)
 	{
 		Configuration configuration;
 
 		try
 		{
 			std::ifstream stream;
-			stream.open(ToString(path));
+			stream.open(path);
 
 			if (static_cast<bool>(stream)) {
 				return LoadFromStream(stream);

@@ -12,7 +12,7 @@ namespace util
 	wstring ToWSTRING(const std::string& str);
 	std::string ToString(const wstring& wstr);
 
-	wstring GetEnvironmentValue(const wstring& name);
+	std::string GetEnvironmentValue(const std::string& name);
 
 	wstring Trim(const wstring& str);
 	std::string Trim(const std::string& str);

@@ -14,17 +14,11 @@
 #include "util/ComPtr.h"
 #include "CorProfiler.h"
 #include "dllmain.h"
-#ifdef LOGGING
-#include "spdlog/spdlog.h"
-#include "logging/util.h"
-#endif // LOGGING
+#include "logging/logging.h"
 
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
 {
-#ifdef LOGGING
     logging::init();
-#endif // LOGGING
-
 }
 
 CorProfiler::~CorProfiler()
@@ -52,9 +46,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
-    printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL"_W) == "true"_W;
+    printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL") == "true";
 
-    configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"_W));
+    configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"));
 
     return S_OK;
 }
@@ -213,15 +207,15 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
         IfFailRet(hr);
 
-#ifdef LOGGING
-        spdlog::info("Load into app_domain_id {0} Before call to {1}.{2} num args {3} from assembly {4}",
+        logging::log(
+            logging::LogLevel::INFO,
+            "Load into app_domain_id {0} Before call to {1}.{2} num args {3} from assembly {4}"_W,
             moduleInfo.assembly.appDomainId,
-            ToString(functionInfo.Type.Name),
-            ToString(functionInfo.Name),
+            functionInfo.Type.Name,
+            functionInfo.Name,
             functionInfo.Signature.NumberOfArguments(),
-            ToString(moduleInfo.assembly.name));
-#endif // LOGGING
-
+            moduleInfo.assembly.name
+        );
 
         IfFailRet(InjectLoadMethod(moduleId, rewriter));
 
@@ -316,10 +310,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
     for(const auto& el: configuration.Assemblies)
     {
-#ifdef LOGGING
-        spdlog::info("Load {0}", util::ToString(el));
-#endif // LOGGING
-
+        logging::log(logging::LogLevel::INFO, "Load {0}"_W, el);
 
         // assembly path
         mdString pathToken;
@@ -368,14 +359,12 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, 
 
         if (printEveryCall)
         {
-#ifdef LOGGING
-            spdlog::debug("Found call to {0}.{1} num args {2} from assembly {3}",
-                ToString(target.Type.Name),
-                ToString(target.Name),
+            logging::log(
+                logging::LogLevel::DEBUG, "Found call to {0}.{1} num args {2} from assembly {3}"_W,
+                target.Type.Name,
+                target.Name,
                 target.Signature.NumberOfArguments(),
-                ToString(moduleInfo.assembly.name));
-#endif // LOGGING
-
+                moduleInfo.assembly.name);
         }
 
         auto interceptions = FindInterceptions(moduleInfo.assembly.name, target);
@@ -383,14 +372,13 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, 
         if (!interceptions.empty())
         {
             alreadyChanged = true;
-#ifdef LOGGING
-            spdlog::debug("Found call to {0}.{1} num args {2} from assembly {3}",
-                ToString(target.Type.Name),
-                ToString(target.Name),
-                target.Signature.NumberOfArguments(),
-                ToString(moduleInfo.assembly.name));
-#endif // LOGGING
 
+            logging::log(
+                logging::LogLevel::DEBUG, "Found call to {0}.{1} num args {2} from assembly {3}"_W,
+                target.Type.Name,
+                target.Name,
+                target.Signature.NumberOfArguments(),
+                moduleInfo.assembly.name);
 
             rewriter::ILRewriterHelper helper(&rewriter);
             helper.SetILPosition(pInstr);
@@ -570,10 +558,8 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     mdTypeRef methodFinderTypeRef;
     if (std::get<1>(methodFinder))
     {
-#ifdef LOGGING
-        spdlog::debug("MethodFinder {0}", ToString(std::get<0>(methodFinder).AssemblyName));
-#endif // LOGGING
-
+        logging::log(
+            logging::LogLevel::DEBUG, "MethodFinder {0}"_W, std::get<0>(methodFinder).AssemblyName);
 
         // define interception.dll
         mdModuleRef methodFinderDllRef;
@@ -611,10 +597,8 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
     if (std::get<1>(methodFinder))
     {
-#ifdef LOGGING
-        spdlog::debug("Create MethodFinder {0}", ToString(std::get<0>(methodFinder).TypeName));
-#endif // LOGGING
-
+        logging::log(
+            logging::LogLevel::DEBUG, "Create MethodFinder {0}"_W, std::get<0>(methodFinder).TypeName);
 
         std::vector<BYTE> ctorSignature = {
             IMAGE_CEE_CS_CALLCONV_HASTHIS,
