@@ -15,8 +15,7 @@
 #include "CorProfiler.h"
 #include "dllmain.h"
 #ifdef LOGGING
-#include "spdlog/spdlog.h"
-#include "logging/util.h"
+#include "logging/logging.h"
 #endif // LOGGING
 
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
@@ -24,7 +23,6 @@ CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
 #ifdef LOGGING
     logging::init();
 #endif // LOGGING
-
 }
 
 CorProfiler::~CorProfiler()
