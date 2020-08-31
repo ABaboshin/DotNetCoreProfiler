@@ -7,8 +7,10 @@ namespace logging
 {
 	enum class LogLevel
 	{
-		DEBUG = 0,
-		INFO = 1
+		VERBOSE = 0,
+		DEBUG = 10,
+		INFO = 20,
+		NONE = 10000
 	};
 
 	void init();

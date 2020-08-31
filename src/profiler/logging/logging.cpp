@@ -12,8 +12,10 @@ namespace logging
 
 	static std::map<LogLevel, const char*> logLevelMap =
 	{
+		{LogLevel::VERBOSE, "VERBOSE"},
 		{LogLevel::DEBUG, "DEBUG"},
-		{LogLevel::INFO, "INFO"}
+		{LogLevel::INFO, "INFO"},
+		{LogLevel::NONE, "NONE"}
 	};
 
 	void init()
