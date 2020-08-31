@@ -2,7 +2,8 @@
   "profiles": {
     "Interception.Generator": {
       "commandName": "Project",
-      "commandLineArgs": "-a D:\\playground\\DotNetCoreProfiler\\samples\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.dll,D:\\playground\\DotNetCoreProfiler\\samples\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.Core.dll,D:\\playground\\DotNetCoreProfiler\\samples\\Interception\\bin\\Debug\\netcoreapp2.1\\Interception.DeadlockDetection.dll -p D:\\playground\\DotNetCoreProfiler\\samples\\Interception\\bin\\Debug\\netcoreapp2.1\\ -o D:\\playground\\DotNetCoreProfiler\\samples\\Interception\\bin\\Debug\\netcoreapp2.1\\profiler.json -s D:\\playground\\DotNetCoreProfiler\\samples\\skip.txt"
+      "commandLineArgs": "-a MPro.Interceptions.dll,Interception.MassTransit.dll,Interception.Quartz.dll -s ../../skip.txt -p /profiler -o profiler.json",
+      "workingDirectory": "C:\\work\\tools\\monitoring\\interception\\MPro.Interceptions\\publish"
     }
   }
 }
