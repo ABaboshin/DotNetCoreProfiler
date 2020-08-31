@@ -23,7 +23,7 @@ services:
       - "15672:15672"
       - "5672:5672"
   sampleapp:
-    image: sampleapp:21
+    image: sampleapp:31
     environment:
       ASPNETCORE_URLS: "http://*:5000"
       ASPNETCORE_ENVIRONMENT: Development
@@ -70,7 +70,7 @@ services:
     #     gelf-address: tcp://localhost:12201
     #     tag: sampleapp
   sampleapp2:
-    image: sampleapp:21
+    image: sampleapp:31
     environment:
       ASPNETCORE_URLS: "http://*:5000"
       ASPNETCORE_ENVIRONMENT: Development

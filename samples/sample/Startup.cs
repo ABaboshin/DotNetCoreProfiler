@@ -31,13 +31,8 @@ namespace SampleApp
         {
             ConfigureDatabase(serviceCollection);
 
-#if NETCORE21
-            serviceCollection.AddMvc();
-#endif
-#if NETCORE31
-serviceCollection
+            serviceCollection
                 .AddMvc(options => { options.EnableEndpointRouting = false; });
-#endif
             ConfigureMessageBus(serviceCollection);
 
             if (Environment.GetEnvironmentVariable("ENABLE_QUARTZ") == "true")
