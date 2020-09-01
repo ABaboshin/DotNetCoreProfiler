@@ -7,7 +7,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/ABaboshin/DotNetCoreProfiler</RepositoryUrl>
-    <Version>1.2020.8313</Version>
+    <Version>1.2020.9010</Version>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>interception-generator</ToolCommandName>
   </PropertyGroup>
