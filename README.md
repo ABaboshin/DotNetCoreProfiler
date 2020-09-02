@@ -79,15 +79,15 @@ In order to run the sample execute
 
 ```
 # Supply metrics to jaeger, see X-Trace-Id header, Jaeger is hosted under http://localhost:16686/
-yarn run:all:jaeger:21
+yarn run:all:jaeger:31
 
 # Supply metrics to prometheus, see X-Trace-Id header, prometheus is hosted under http://localhost:9090/, metric name is interception, trace field is X_Trace_Id
-yarn run:all:prometheus:21
+yarn run:all:prometheus:31
 
 # Supply metrics to prometheus using protobuf, see X-Trace-Id header, prometheus is hosted under http://localhost:9090/, metric name is interception, trace field is X_Trace_Id
 # Pull https://github.com/ABaboshin/statsd_exporter
 # and build an image docker build -t statsd:protobuf .
-yarn run:all:prometheus:protobuf:21
+yarn run:all:prometheus:protobuf:31
 ```
 
 It will create an app running on `http://localhost:5000` with the following endpoints:

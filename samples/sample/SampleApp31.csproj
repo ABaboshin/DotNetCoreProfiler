@@ -9,10 +9,6 @@
     <Optimize>false</Optimize>
   </PropertyGroup>
 
-  <PropertyGroup>
-    <DefineConstants>NETCORE31</DefineConstants>
-  </PropertyGroup>
-
   <ItemGroup>
     <PackageReference Include="Interception.Attributes" Version="1.2020.6150" />
     <PackageReference Include="MassTransit.Extensions.DependencyInjection" Version="6.2.5" />

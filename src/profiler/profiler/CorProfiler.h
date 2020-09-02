@@ -24,8 +24,6 @@ private:
     configuration::Configuration configuration{};
     ICorProfilerInfo8* corProfilerInfo;
 
-    bool printEveryCall = false;
-
     bool SkipAssembly(const wstring& name);
 
     HRESULT Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged);

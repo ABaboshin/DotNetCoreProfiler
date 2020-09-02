@@ -10,7 +10,6 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <DefineConstants>NETCORE31</DefineConstants>
     <AssemblyName>Interception</AssemblyName>
   </PropertyGroup>
 

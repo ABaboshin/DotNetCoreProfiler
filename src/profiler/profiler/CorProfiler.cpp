@@ -46,8 +46,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
 
-    printEveryCall = GetEnvironmentValue("PROFILER_PRINT_EVERY_CALL") == "true";
-
     configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"));
 
     return S_OK;
@@ -357,15 +355,12 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, 
 
         auto targetMdToken = pInstr->m_Arg32;
 
-        if (printEveryCall)
-        {
-            logging::log(
-                logging::LogLevel::DEBUG, "Found call to {0}.{1} num args {2} from assembly {3}"_W,
-                target.Type.Name,
-                target.Name,
-                target.Signature.NumberOfArguments(),
-                moduleInfo.assembly.name);
-        }
+        logging::log(
+            logging::LogLevel::VERBOSE, "Found call to {0}.{1} num args {2} from assembly {3}"_W,
+            target.Type.Name,
+            target.Name,
+            target.Signature.NumberOfArguments(),
+            moduleInfo.assembly.name);
 
         auto interceptions = FindInterceptions(moduleInfo.assembly.name, target);
 
@@ -374,7 +369,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, 
             alreadyChanged = true;
 
             logging::log(
-                logging::LogLevel::DEBUG, "Found call to {0}.{1} num args {2} from assembly {3}"_W,
+                logging::LogLevel::INFO, "Intercept call to {0}.{1} num args {2} from assembly {3}"_W,
                 target.Type.Name,
                 target.Name,
                 target.Signature.NumberOfArguments(),
