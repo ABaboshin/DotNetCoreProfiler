@@ -1,0 +1,10 @@
+FROM profiler:native as build
+
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.300
+
+# RUN apt update
+# RUN apt install -y wget
+# RUN wget -c https://dist.nuget.org/win-x86-commandline/latest/nuget.exe
+
+COPY --from=build /DotNetCoreProfiler.so /
+COPY profiler.nuspec /

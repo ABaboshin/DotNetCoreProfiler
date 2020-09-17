@@ -7,6 +7,7 @@
   "scripts": {
     "build:llvm": "docker build -t profiler:llvm -f Dockerfile.llvm .",
     "build:native": "docker build -t profiler:native -f Dockerfile.native .",
+    "build:native:nuget": "yarn build:native && docker build -t profiler:native.nuget -f Dockerfile.native.nuget .",
     "build:interception:31": "docker build -t profiler:interception31 -f Dockerfile.interception31 .",
     "build:sampleapp:31": "docker build -t sampleapp:31 -f Dockerfile.sampleapp31 .",
     "build:all:31": "yarn build:interception:31 && yarn build:native && yarn build:sampleapp:31 && yarn build:logstash && yarn build:prometheus && yarn build:grafana",
