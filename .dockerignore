@@ -3,6 +3,7 @@
 !src/**
 !sample**
 !interception.json
+!profiler.nuspec
 **/.vs/
 **/bin/
 **/obj/
