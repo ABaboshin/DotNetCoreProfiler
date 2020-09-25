@@ -5,8 +5,10 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PureICorProfilerInfo8Impl.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConfigurationTests.cpp" />
+    <ClCompile Include="AssemblyInfoTests.cpp" />
   </ItemGroup>
 </Project>
