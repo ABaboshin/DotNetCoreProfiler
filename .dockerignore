@@ -1,6 +1,7 @@
 **
 !lib/**
 !src/**
+!tests/**
 !sample**
 !interception.json
 !profiler.nuspec

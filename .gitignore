@@ -3,3 +3,6 @@
 **/obj/
 **/out/
 src/profiler/x64/
+samples/packages/
+*.pdb
+tests/Profiler.Native.Tests/x64/
