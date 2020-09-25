@@ -16,21 +16,21 @@ SET_SOURCE_FILES_PROPERTIES(
 
 add_library("DotNetCoreProfiler.static" STATIC
     ClassFactory.cpp
-    logging/logging.cpp
-    profiler/CorProfiler.cpp
-    miniutf/miniutf.cpp
     configuration/Configuration.cpp
-    util/util.cpp
-    util/helpers.cpp
-    info/GenericMethodSignature.cpp
-    info/MethodSignature.cpp
     info/AssemblyInfo.cpp
     info/FunctionInfo.cpp
+    info/GenericMethodSignature.cpp
+    info/MethodSignature.cpp
     info/ModuleInfo.cpp
     info/TypeInfo.cpp
     info/parser.cpp
+    logging/logging.cpp
+    miniutf/miniutf.cpp
+    profiler/CorProfiler.cpp
     rewriter/ILRewriter.cpp
     rewriter/ILRewriterHelper.cpp
+    util/helpers.cpp
+    util/util.cpp
     ${GENERATED_OBJ_FILES}
 )
 

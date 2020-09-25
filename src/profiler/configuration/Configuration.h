@@ -41,6 +41,7 @@ namespace configuration
 
 		Configuration() {}
 
+		static Configuration LoadFromStream(std::istream& stream);
 		static Configuration LoadConfiguration(const std::string& path);
 	};
 }
