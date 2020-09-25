@@ -1,7 +1,10 @@
 FROM ubuntu:20.04 as build
 
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
 RUN apt-get update && \
-  apt-get install -y curl lsb-release gnupg2 software-properties-common wget make
+  apt-get install -y curl lsb-release gnupg2 software-properties-common wget make git
 
 RUN curl -o /tmp/llvm.sh https://apt.llvm.org/llvm.sh
 RUN chmod +x /tmp/llvm.sh
