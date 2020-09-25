@@ -7,6 +7,6 @@
     <ClInclude Include="pch.h" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="dummy.cpp" />
+    <ClCompile Include="ConfigurationTests.cpp" />
   </ItemGroup>
 </Project>

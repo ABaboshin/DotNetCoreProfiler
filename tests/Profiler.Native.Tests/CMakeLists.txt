@@ -21,12 +21,20 @@ SET_SOURCE_FILES_PROPERTIES(
 )
 
 add_executable(ProfilerTests
-    dummy.cpp
+    ConfigurationTests.cpp
     main.cpp
+    ../../src/profiler/configuration/Configuration.cpp
+    ../../src/profiler/util/util.cpp
+    ../../src/profiler/miniutf/miniutf.cpp
     ${GENERATED_OBJ_FILES}
 )
 
 target_include_directories(ProfilerTests
+    PUBLIC ../../lib/coreclr/src/pal/inc/rt
+    PUBLIC ../../lib/coreclr/src/pal/prebuilt/inc
+    PUBLIC ../../lib/coreclr/src/pal/inc
+    PUBLIC ../../lib/coreclr/src/inc
+    PUBLIC ../../src/profiler
     PUBLIC googletest-src/googletest/include/
     PUBLIC .
 )

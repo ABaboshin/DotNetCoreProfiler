@@ -6,7 +6,6 @@
 
 namespace configuration
 {
-	Configuration LoadFromStream(std::ifstream& stream);
 	std::pair<StrictInterception, bool> LoadInterceptionFromJson(const nlohmann::json::value_type& src);
 	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src);
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src);
@@ -38,7 +37,7 @@ namespace configuration
 		return configuration;
 	}
 
-	Configuration LoadFromStream(std::ifstream& stream)
+	Configuration Configuration::LoadFromStream(std::istream& stream)
 	{
 		std::vector<StrictInterception> interceptions{};
 		std::vector<wstring> assemblies{};
