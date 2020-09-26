@@ -21,11 +21,16 @@ SET_SOURCE_FILES_PROPERTIES(
 )
 
 add_executable(ProfilerTests
+    AssemblyInfoTests.cpp
     ConfigurationTests.cpp
+    ModuleInfoTests.cpp
     main.cpp
+    mocks.cpp
     ../../src/profiler/configuration/Configuration.cpp
     ../../src/profiler/util/util.cpp
     ../../src/profiler/miniutf/miniutf.cpp
+    ../../src/profiler/info/AssemblyInfo.cpp
+    ../../src/profiler/info/ModuleInfo.cpp
     ${GENERATED_OBJ_FILES}
 )
 

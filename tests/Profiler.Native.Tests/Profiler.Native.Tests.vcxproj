@@ -147,9 +147,12 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h" />
+    <ClInclude Include="PureICorProfilerInfo8Impl.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AssemblyInfoTests.cpp" />
     <ClCompile Include="ConfigurationTests.cpp" />
+    <ClCompile Include="ModuleInfoTests.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -4,18 +4,10 @@
 #include "pch.h"
 #include "configuration/Configuration.h"
 
-class ConfigurationTest : public ::testing::Test {
-protected:
-	void SetUp() override {
-
-	}
-
-	void TearDown() override {
-
-	}
+class ConfigurationTests : public ::testing::Test {
 };
 
-TEST_F(ConfigurationTest, ItReads2Assemblies)
+TEST_F(ConfigurationTests, ItReads2Assemblies)
 {
 	std::stringstream s("{\"assemblies\": [\"lib1\", \"lib2\"]}");
 
@@ -26,7 +18,7 @@ TEST_F(ConfigurationTest, ItReads2Assemblies)
 	EXPECT_EQ("lib2"_W, cfg.Assemblies[1]);
 }
 
-TEST_F(ConfigurationTest, ItReadsComposedInterceptor)
+TEST_F(ConfigurationTests, ItReadsComposedInterceptor)
 {
 	std::stringstream s("{\"composedInterceptor\": {\"TypeName\": \"t1\", \"AssemblyName\": \"a1\"}}");
 
@@ -36,7 +28,7 @@ TEST_F(ConfigurationTest, ItReadsComposedInterceptor)
 	EXPECT_EQ("a1"_W, cfg.ComposedInterceptor.AssemblyName);
 }
 
-TEST_F(ConfigurationTest, ItReadsInterceptorInterface)
+TEST_F(ConfigurationTests, ItReadsInterceptorInterface)
 {
 	std::stringstream s("{\"interceptorInterface\": {\"TypeName\": \"t1\", \"AssemblyName\": \"a1\"}}");
 
@@ -46,7 +38,7 @@ TEST_F(ConfigurationTest, ItReadsInterceptorInterface)
 	EXPECT_EQ("a1"_W, cfg.InterceptorInterface.AssemblyName);
 }
 
-TEST_F(ConfigurationTest, ItReadsMethodFinderInterface)
+TEST_F(ConfigurationTests, ItReadsMethodFinderInterface)
 {
 	std::stringstream s("{\"methodFinderInterface\": {\"TypeName\": \"t1\", \"AssemblyName\": \"a1\"}}");
 
@@ -56,7 +48,7 @@ TEST_F(ConfigurationTest, ItReadsMethodFinderInterface)
 	EXPECT_EQ("a1"_W, cfg.MethodFinderInterface.AssemblyName);
 }
 
-TEST_F(ConfigurationTest, ItReads1MethodFinder)
+TEST_F(ConfigurationTests, ItReads1MethodFinder)
 {
 	std::stringstream s("{\"methodFinders\": [{\"MethodFinder\": {\"TypeName\": \"t1\", \"AssemblyName\": \"a1\"}, \"Target\": {\"TypeName\": \"t1\", \"AssemblyName\": \"a1\", \"MethodName\": \"m1\", \"MethodParametersCount\": 1}}]}");
 
@@ -82,7 +74,7 @@ template<typename T>
 	return ::testing::AssertionFailure();
 }
 
-TEST_F(ConfigurationTest, ItReads2SkipAssemblies)
+TEST_F(ConfigurationTests, ItReads2SkipAssemblies)
 {
 	std::stringstream s("{\"skipAssemblies\": [\"lib1\", \"lib2\"]}");
 
@@ -93,7 +85,7 @@ TEST_F(ConfigurationTest, ItReads2SkipAssemblies)
 	EXPECT_TRUE(UnorderedSetContains(cfg.SkipAssemblies, "lib2"_W));
 }
 
-TEST_F(ConfigurationTest, ItReads1StrictInterceptor)
+TEST_F(ConfigurationTests, ItReads1StrictInterceptor)
 {
 	std::stringstream s("{\"strict\": [{\"IgnoreCallerAssemblies\": null, \"Interceptor\": {\"TypeName\": \"t1\", \"AssemblyName\": \"a1\"}, \"Target\": {\"TypeName\": \"t1\", \"AssemblyName\": \"a1\", \"MethodName\": \"m1\", \"MethodParametersCount\": 1}}]}");
 
