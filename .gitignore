@@ -6,3 +6,4 @@ src/profiler/x64/
 samples/packages/
 *.pdb
 tests/Profiler.Native.Tests/x64/
+samples/x64/Debug/
