@@ -6,10 +6,18 @@
   <ItemGroup>
     <ClInclude Include="pch.h" />
     <ClInclude Include="PureICorProfilerInfo8Impl.h" />
+    <ClInclude Include="mocks.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ConfigurationTests.cpp" />
     <ClCompile Include="AssemblyInfoTests.cpp" />
     <ClCompile Include="ModuleInfoTests.cpp" />
+    <ClCompile Include="ParserTests.cpp" />
+    <ClCompile Include="..\..\src\profiler\info\AssemblyInfo.cpp" />
+    <ClCompile Include="..\..\src\profiler\util\util.cpp" />
+    <ClCompile Include="..\..\src\profiler\miniutf\miniutf.cpp" />
+    <ClCompile Include="..\..\src\profiler\configuration\Configuration.cpp" />
+    <ClCompile Include="..\..\src\profiler\info\ModuleInfo.cpp" />
+    <ClCompile Include="..\..\src\profiler\info\parser.cpp" />
   </ItemGroup>
 </Project>

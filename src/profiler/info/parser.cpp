@@ -77,6 +77,10 @@ namespace info {
                 return false;
             }
         }
+        else
+        {
+            std::advance(begin, 1);
+        }
 
         ULONG paramCount = 0;
         if (!ParseNumber(begin, paramCount)) {

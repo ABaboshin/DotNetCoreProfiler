@@ -117,13 +117,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);_CRT_SECURE_NO_WARNINGS </PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreAllDefaultLibraries>false</IgnoreAllDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -146,13 +147,21 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="mocks.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="PureICorProfilerInfo8Impl.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="..\..\src\profiler\configuration\Configuration.cpp" />
+    <ClCompile Include="..\..\src\profiler\info\AssemblyInfo.cpp" />
+    <ClCompile Include="..\..\src\profiler\info\ModuleInfo.cpp" />
+    <ClCompile Include="..\..\src\profiler\info\parser.cpp" />
+    <ClCompile Include="..\..\src\profiler\miniutf\miniutf.cpp" />
+    <ClCompile Include="..\..\src\profiler\util\util.cpp" />
     <ClCompile Include="AssemblyInfoTests.cpp" />
     <ClCompile Include="ConfigurationTests.cpp" />
     <ClCompile Include="ModuleInfoTests.cpp" />
+    <ClCompile Include="ParserTests.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
