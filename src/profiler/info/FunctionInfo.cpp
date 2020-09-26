@@ -13,7 +13,7 @@ namespace info
         std::vector<WCHAR> functionName(MAX_CLASS_NAME, (WCHAR)0);
         DWORD functionNameLength = 0;
 
-        PCCOR_SIGNATURE rawSignature;
+        PCCOR_SIGNATURE rawSignature = NULL;
         ULONG rawSignatureLength;
 
         std::vector<BYTE> finalSignature{};
