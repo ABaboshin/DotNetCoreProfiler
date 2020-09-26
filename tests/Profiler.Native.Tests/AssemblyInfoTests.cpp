@@ -1,15 +1,9 @@
 #include "pch.h"
 #include "info/AssemblyInfo.h"
+#include "mocks.h"
 #include "PureICorProfilerInfo8Impl.h"
 
 using namespace util;
-
-static void RaiseException(DWORD dwExceptionCode,
-	DWORD dwExceptionFlags,
-	DWORD nNumberOfArguments,
-	CONST ULONG_PTR* lpArguments)
-{
-}
 
 class AssemblyICorProfilerInfo8Impl : public ::PureICorProfilerInfo8Impl
 {
@@ -51,7 +45,7 @@ public:
 	}
 };
 
-class AssemblyInfoTest : public ::testing::Test {
+class AssemblyInfoTests : public ::testing::Test {
 protected:
 	void SetUp() override {
 		assemblyId = 1;
@@ -72,7 +66,7 @@ protected:
 	::util::wstring appDomainName;
 };
 
-TEST_F(AssemblyInfoTest, ItGetsAssemblyInfo)
+TEST_F(AssemblyInfoTests, ItGetsAssemblyInfo)
 {
 	auto ai = info::AssemblyInfo::GetAssemblyInfo(info, assemblyId);
 
@@ -82,7 +76,7 @@ TEST_F(AssemblyInfoTest, ItGetsAssemblyInfo)
 	EXPECT_EQ(appDomainName, ai.appDomainName);
 }
 
-TEST_F(AssemblyInfoTest, ItFailedForUnknownAssembly)
+TEST_F(AssemblyInfoTests, ItFailedForUnknownAssembly)
 {
 	auto ai = info::AssemblyInfo::GetAssemblyInfo(info, 300);
 

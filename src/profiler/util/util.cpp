@@ -16,7 +16,7 @@ namespace util
 
 	wstring ToString(const std::vector<WCHAR>& data, size_t length)
 	{
-        if (data.empty())
+        if (data.empty() || length == 0)
         {
             return wstring();
         }

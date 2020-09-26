@@ -10,5 +10,6 @@
   <ItemGroup>
     <ClCompile Include="ConfigurationTests.cpp" />
     <ClCompile Include="AssemblyInfoTests.cpp" />
+    <ClCompile Include="ModuleInfoTests.cpp" />
   </ItemGroup>
 </Project>
