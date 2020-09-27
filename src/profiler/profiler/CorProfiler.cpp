@@ -186,8 +186,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         return S_OK;
     }
 
-    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
-    IfFailRet(rewriter.Import());
+    rewriter::ILRewriter* rewriter = CreateILRewriter(nullptr, moduleId, functionToken);
+    IfFailRet(rewriter->Import());
 
     auto alreadyChanged = false;
 
@@ -215,12 +215,16 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
             moduleInfo.assembly.name
         );
 
-        IfFailRet(InjectLoadMethod(moduleId, rewriter));
+        IfFailRet(InjectLoadMethod(moduleId, *rewriter));
 
         alreadyChanged = true;
     }
 
-    return Rewrite(moduleId, rewriter, alreadyChanged);
+    auto result = Rewrite(moduleId, *rewriter, alreadyChanged);
+
+    delete rewriter;
+
+    return result;
 }
 
 HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter)

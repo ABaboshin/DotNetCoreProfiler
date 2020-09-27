@@ -6,15 +6,15 @@ class CorProfilerTests : public ::testing::Test {};
 class CorProfilerMock : public CorProfiler
 {
 public:
-	HRESULT STDMETHODCALLTYPE Initialize(IUnknown* pICorProfilerInfoUnk) override
+	void SetConfiguration(const configuration::Configuration& configuration)
 	{
-		return E_FAIL;
+		this->configuration = configuration;
 	}
 };
 
 TEST_F(CorProfilerTests, Dummy)
 {
 	auto mock = new CorProfilerMock();
-	mock->Initialize(NULL);
+	//mock->SetConfiguration();
 	EXPECT_TRUE(true);
 }
