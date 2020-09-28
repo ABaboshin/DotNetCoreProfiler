@@ -3,9 +3,13 @@ cmake_policy(SET CMP0015 NEW)
 
 project("DotNetCoreProfiler" VERSION 1.0.0)
 
+IF (WIN32)
+add_compile_options(-DWIN32 -D_WINDOWS -D_USRDLL -D_X86_)
+ELSE()
 add_compile_options(-std=c++11 -fPIC -fms-extensions -stdlib=libstdc++)
 add_compile_options(-DBIT64 -DPAL_STDCPP_COMPAT -DPLATFORM_UNIX -DUNICODE)
 add_compile_options(-Wno-invalid-noreturn -Wno-macro-redefined -Wno-pragma-pack)
+ENDIF()
 
 SET_SOURCE_FILES_PROPERTIES(
   ${GENERATED_OBJ_FILES}
