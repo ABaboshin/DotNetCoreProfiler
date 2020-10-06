@@ -2,7 +2,7 @@
 
 [![Build Status](https://travis-ci.org/ABaboshin/DotNetCoreProfiler.svg?branch=master)](https://travis-ci.org/ABaboshin/DotNetCoreProfiler)
 
-This project has a goal to demonstrate injection of the following devops-related things into .net core 2.1/3.1 apps:
+This project has a goal to demonstrate injection of the following devops-related things into .net core 3.1 apps:
  - Logger configuration
  - Distributed tracing for
     - incoming http requests
