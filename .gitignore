@@ -366,3 +366,5 @@ CMakeFiles/
 cmake_install.cmake
 CMakeCache.txt
 Makefile
+src/profiler/build
+tests/Profiler.Native.Tests/build
