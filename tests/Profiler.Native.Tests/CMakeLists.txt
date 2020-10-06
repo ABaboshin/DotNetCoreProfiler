@@ -8,8 +8,16 @@ include(GoogleTest)
 
 IF (WIN32)
   add_definitions(-DUNICODE -D_UNICODE -DWIN32 -DNDEBUG -D_WINDOWS -D_USRDLL)
-ELSE()
+ENDIF()
+
+IF (UNIX AND NOT APPLE)
   add_compile_options(-std=c++11 -fPIC -fms-extensions -stdlib=libstdc++)
+  add_compile_options(-DBIT64 -DPAL_STDCPP_COMPAT -DPLATFORM_UNIX -DUNICODE)
+  add_compile_options(-Wno-invalid-noreturn -Wno-macro-redefined -Wno-pragma-pack)
+ENDIF()
+
+IF (APPLE)
+  add_compile_options(-std=c++11 -fPIC -fms-extensions -stdlib=libc++)
   add_compile_options(-DBIT64 -DPAL_STDCPP_COMPAT -DPLATFORM_UNIX -DUNICODE)
   add_compile_options(-Wno-invalid-noreturn -Wno-macro-redefined -Wno-pragma-pack)
 ENDIF()
