@@ -1,0 +1,37 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Launch",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "/opt/cli/.dotnet/dotnet",
+            "args": ["run", "-c", "Debug", "--launch-profile", "Host (local)"],
+            "stopAtEntry": false,
+            "cwd": "your .net core project",
+            "environment": [
+                {
+                    "name": "PROFILER_CONFIGURATION",
+                    "value": "/tmp/profiler.json"
+                },
+                {
+                    "name": "CORECLR_ENABLE_PROFILING",
+                    "value": "1"
+                },
+                {
+                    "name": "CORECLR_PROFILER",
+                    "value": "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
+                },
+                {
+                    "name": "CORECLR_PROFILER_PATH",
+                    "value": "${workspaceFolder}/build/DotNetCoreProfiler.dylib"
+                }
+            ],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        }
+    ]
+}
