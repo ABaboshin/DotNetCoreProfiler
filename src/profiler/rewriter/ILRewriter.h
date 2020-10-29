@@ -117,7 +117,7 @@ namespace rewriter
         //
         ////////////////////////////////////////////////////////////////////////////////////////////////
 
-        HRESULT Import();
+        virtual HRESULT Import();
 
         HRESULT ImportIL(LPCBYTE pIL);
 

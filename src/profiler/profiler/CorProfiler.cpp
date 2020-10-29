@@ -40,7 +40,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     }
 
     DWORD eventMask = COR_PRF_MONITOR_JIT_COMPILATION |
-        COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST | 
+        COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST |
         COR_PRF_DISABLE_INLINING | COR_PRF_MONITOR_MODULE_LOADS |
         COR_PRF_DISABLE_ALL_NGEN_IMAGES;
 
@@ -202,8 +202,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
         auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
-
-        IfFailRet(hr);
 
         logging::log(
             logging::LogLevel::INFO,
@@ -452,7 +450,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
     // return type
     auto retType = target.ResolveParameterType(target.Signature.ReturnType);
     signature.insert(signature.end(), retType.Raw.begin(), retType.Raw.end());
-    
+
     // insert this
     if (target.Signature.IsInstanceMethod())
     {
@@ -472,7 +470,7 @@ HRESULT CorProfiler::GenerateInterceptMethod(ModuleID moduleId, info::FunctionIn
 
         signature.push_back(argument.TypeDef);
     }
-    
+
     // define a method
     hr = metadataEmit->DefineMethod(newTypeDef,
         "__InterceptionMethod__"_W.c_str(),
@@ -1284,7 +1282,7 @@ std::vector<configuration::TypeInfo> CorProfiler::FindInterceptions(const wstrin
         configuration.StrictInterceptions.end(),
         configuration::back_inserter<configuration::StrictInterception>(result),
         [&callerAssemblyName,&target](const configuration::StrictInterception& interception) {
-            return 
+            return
                 interception.IgnoreCallerAssemblies.find(callerAssemblyName) == interception.IgnoreCallerAssemblies.end()
                 && target.Type.Name == interception.Target.TypeName
                 && target.Name == interception.Target.MethodName && target.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
