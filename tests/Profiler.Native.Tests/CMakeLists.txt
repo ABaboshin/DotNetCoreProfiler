@@ -47,7 +47,7 @@ set(src
   ../../src/profiler/util/util.cpp
   AssemblyInfoTests.cpp
   ConfigurationTests.cpp
-  CorProfilerTests.cpp
+  CorProfilerInjectLoadMethodTests.cpp
   ModuleInfoTests.cpp
   ParserTests.cpp
   main.cpp
@@ -69,7 +69,6 @@ target_include_directories(ProfilerTests
   PUBLIC ../../lib/coreclr/src/inc
   PUBLIC ../../src/profiler
   PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/googletest-src/googletest/include/
-  PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/googletest-src/googlemock/include/
   PUBLIC .
 )
 
@@ -82,7 +81,7 @@ IF (UNIX)
   )
 ENDIF()
 
-target_link_libraries(ProfilerTests gtest_main gmock_main)
+target_link_libraries(ProfilerTests gtest_main)
 
 gtest_add_tests(TARGET      ProfilerTests
                 TEST_SUFFIX .noArgs

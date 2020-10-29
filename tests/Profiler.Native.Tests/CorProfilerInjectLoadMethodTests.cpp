@@ -1,9 +1,8 @@
-#include "gmock/gmock.h"
 #include "pch.h"
 #include "profiler/CorProfiler.h"
 #include "PureICorProfilerInfo8Impl.h"
 
-class CorProfilerTests : public ::testing::Test {};
+class CorProfilerInjectLoadMethodTests : public ::testing::Test {};
 
 class IMetaDataImport2Mock : public IMetaDataImport2
 {
@@ -340,12 +339,9 @@ protected:
 	}
 
 public:
-	//MOCK_METHOD(HRESULT, InjectLoadMethod, (ModuleID moduleId, rewriter::ILRewriter& rewriter), (override));
-
-	void SetConfiguration(/*const configuration::Configuration& configuration*/)
+	void SetConfiguration()
 	{
 		this->corProfilerInfo = new ICorProfilerInfo8Mock();
-		//this->configuration = configuration;
 	}
 
 	rewriter::ILRewriter* CreateILRewriter(ICorProfilerFunctionControl* pICorProfilerFunctionControl, ModuleID moduleId, mdToken functionToken) override
@@ -354,25 +350,19 @@ public:
 	}
 };
 
-TEST_F(CorProfilerTests, ItCallsInjectLoadMethodAtFirstCallInAppDomain)
+TEST_F(CorProfilerInjectLoadMethodTests, ItCallsInjectLoadMethodAtFirstCallInAppDomain)
 {
 	auto mock = new CorProfilerMock();
 	mock->SetConfiguration();
-
-	/*EXPECT_CALL(*mock, InjectLoadMethod(::testing::_, ::testing::_))
-		.Times(3);*/
 
 	mock->JITCompilationStarted(0, FALSE);
 	EXPECT_EQ(mock->InjectLoadMethodCallCount, 1);
 }
 
-TEST_F(CorProfilerTests, ItCallsInjectLoadMethodOnlyOnceInAppDomain)
+TEST_F(CorProfilerInjectLoadMethodTests, ItCallsInjectLoadMethodOnlyOnceInAppDomain)
 {
 	auto mock = new CorProfilerMock();
 	mock->SetConfiguration();
-
-	/*EXPECT_CALL(*mock, InjectLoadMethod(::testing::_, ::testing::_))
-		.Times(3);*/
 
 	mock->JITCompilationStarted(0, FALSE);
 	mock->JITCompilationStarted(0, FALSE);
