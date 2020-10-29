@@ -32,12 +32,22 @@ SET_SOURCE_FILES_PROPERTIES(
 set(src
   ../../src/profiler/configuration/Configuration.cpp
   ../../src/profiler/info/AssemblyInfo.cpp
+  ../../src/profiler/info/FunctionInfo.cpp
+  ../../src/profiler/info/GenericMethodSignature.cpp
+  ../../src/profiler/info/MethodSignature.cpp
   ../../src/profiler/info/ModuleInfo.cpp
+  ../../src/profiler/info/TypeInfo.cpp
   ../../src/profiler/info/parser.cpp
+  ../../src/profiler/logging/logging.cpp
   ../../src/profiler/miniutf/miniutf.cpp
+  ../../src/profiler/profiler/CorProfiler.cpp
+  ../../src/profiler/rewriter/ILRewriter.cpp
+  ../../src/profiler/rewriter/ILRewriterHelper.cpp
+  ../../src/profiler/util/helpers.cpp
   ../../src/profiler/util/util.cpp
   AssemblyInfoTests.cpp
   ConfigurationTests.cpp
+  CorProfilerInjectLoadMethodTests.cpp
   ModuleInfoTests.cpp
   ParserTests.cpp
   main.cpp

@@ -14,7 +14,7 @@
 
 class CorProfiler : public ICorProfilerCallback8
 {
-private:
+protected:
     std::atomic<int> refCount;
 
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
@@ -28,7 +28,7 @@ private:
 
     HRESULT Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged);
 
-    HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter);
+    virtual HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter);
 
     HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken);
 
@@ -36,6 +36,11 @@ private:
 
     std::vector<configuration::TypeInfo> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
     std::pair<configuration::TypeInfo, bool> FindMethodFinder(const info::FunctionInfo& target);
+
+    virtual rewriter::ILRewriter* CreateILRewriter(ICorProfilerFunctionControl* pICorProfilerFunctionControl, ModuleID moduleId, mdToken functionToken)
+    {
+        return new rewriter::ILRewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
+    }
 
 public:
     CorProfiler();
