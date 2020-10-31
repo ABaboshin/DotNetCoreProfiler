@@ -339,9 +339,14 @@ protected:
 	}
 
 public:
-	void SetConfiguration()
+	CorProfilerMock()
 	{
 		this->corProfilerInfo = new ICorProfilerInfo8Mock();
+	}
+
+	void SetConfiguration(const configuration::Configuration configuration)
+	{
+		this->configuration = configuration;
 	}
 
 	rewriter::ILRewriter* CreateILRewriter(ICorProfilerFunctionControl* pICorProfilerFunctionControl, ModuleID moduleId, mdToken functionToken) override
@@ -353,7 +358,6 @@ public:
 TEST_F(CorProfilerInjectLoadMethodTests, ItCallsInjectLoadMethodAtFirstCallInAppDomain)
 {
 	auto mock = new CorProfilerMock();
-	mock->SetConfiguration();
 
 	mock->JITCompilationStarted(0, FALSE);
 	EXPECT_EQ(mock->InjectLoadMethodCallCount, 1);
@@ -362,9 +366,21 @@ TEST_F(CorProfilerInjectLoadMethodTests, ItCallsInjectLoadMethodAtFirstCallInApp
 TEST_F(CorProfilerInjectLoadMethodTests, ItCallsInjectLoadMethodOnlyOnceInAppDomain)
 {
 	auto mock = new CorProfilerMock();
-	mock->SetConfiguration();
 
 	mock->JITCompilationStarted(0, FALSE);
 	mock->JITCompilationStarted(0, FALSE);
 	EXPECT_EQ(mock->InjectLoadMethodCallCount, 1);
+}
+
+TEST_F(CorProfilerInjectLoadMethodTests, ItSkipsRewriting)
+{
+	std::stringstream s("{\"skipAssemblies\": [\"\"]}");
+
+	auto cfg = ::configuration::Configuration::LoadFromStream(s);
+
+	auto mock = new CorProfilerMock();
+	mock->SetConfiguration(cfg);
+
+	mock->JITCompilationStarted(0, FALSE);
+	EXPECT_EQ(mock->InjectLoadMethodCallCount, 0);
 }
