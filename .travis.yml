@@ -7,10 +7,12 @@ services:
 
 before_install:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-- yarn build:llvm
 - TAG=llvm-10
+- docker pull ababoshin/dotnetcoreprofiler:$TAG
+- yarn build:llvm
 - docker tag profiler:llvm ababoshin/dotnetcoreprofiler:$TAG
 - docker push ababoshin/dotnetcoreprofiler:$TAG
+- yarn tests:integration
 - yarn build:core
 - yarn build:native:nuget
 
