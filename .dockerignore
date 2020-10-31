@@ -10,3 +10,8 @@ tests/**/x64/
 tests/**/x86/
 tests/**/[Bb]in/
 tests/**/[Oo]bj/
+!samples/*
+samples/**/x64/
+samples/**/x86/
+samples/**/[Bb]in/
+samples/**/[Oo]bj/

@@ -6,7 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build:llvm": "docker build -t profiler:llvm -f Dockerfile.llvm .",
-    "build:native": "docker build -t profiler:native -f Dockerfile.native .",
+    "build:native": "yarn build:llvm && docker build -t profiler:native -f Dockerfile.native .",
     "build:native:nuget": "yarn build:native && docker build -t profiler:native.nuget -f Dockerfile.native.nuget --build-arg NUGET_KEY=$NUGET_KEY .",
     "build:interception:31": "docker build -t profiler:interception31 -f Dockerfile.interception31 .",
     "build:sampleapp:31": "docker build -t sampleapp:31 -f Dockerfile.sampleapp31 .",
@@ -18,6 +18,8 @@
     "run:all:jaeger:31": "yarn build:all:31 && docker-compose -f docker-compose.jaeger.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
     "run:all:prometheus:31": "yarn build:all:31 && docker-compose -f docker-compose.prometheus.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
     "run:all:prometheus:protobuf:31": "yarn build:all:31 && docker-compose up -f docker-compose.prometheus.protobuf.yml -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
-    "build:core": "docker build -t interception:core -f Dockerfile.core --build-arg NUGET_KEY=$NUGET_KEY ."
+    "build:core": "docker build -t interception:core -f Dockerfile.core --build-arg NUGET_KEY=$NUGET_KEY .",
+    "tests:integration": "yarn build:native && yarn tests:integration-1interceptor",
+    "tests:integration-1interceptor": "docker build -t profiler:integrationtests-1interceptor -f Dockerfile.integrationtests-1interceptor . && docker run -it --rm profiler:integrationtests-1interceptor"
   }
 }
