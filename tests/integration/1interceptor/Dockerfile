@@ -16,14 +16,6 @@ FROM profiler:native as profiler
 
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.4
 RUN apt update && apt install -y dos2unix
-COPY --from=build /app /app
-COPY --from=build /tests/integration/1interceptor/expected.txt /app
-COPY --from=build /tests/integration/1interceptor/run.sh /app
-RUN dos2unix /app/run.sh && chmod +x /app/run.sh
-RUN mkdir /profiler
-COPY --from=profiler /DotNetCoreProfiler.so /profiler
-COPY --from=build /interceptor/*.dll /profiler/
-COPY --from=build /interceptor/profiler.json /profiler/
 
 EXPOSE 80
 
@@ -36,3 +28,13 @@ ENV PROFILER_CONFIGURATION="/profiler/profiler.json"
 ENV PROFILER_LOG_LEVEL="NONE"
 
 ENTRYPOINT ["/app/run.sh"]
+
+RUN mkdir /profiler
+COPY --from=profiler /DotNetCoreProfiler.so /profiler
+
+COPY --from=build /app /app
+COPY --from=build /tests/integration/1interceptor/expected.txt /app
+COPY --from=build /tests/integration/1interceptor/run.sh /app
+COPY --from=build /interceptor/*.dll /profiler/
+COPY --from=build /interceptor/profiler.json /profiler/
+RUN dos2unix /app/run.sh && chmod +x /app/run.sh
