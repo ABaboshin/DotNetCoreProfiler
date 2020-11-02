@@ -4,13 +4,13 @@ COPY src src
 COPY tests tests
 COPY samples/skip.txt samples/skip.txt
 
+RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
 RUN dotnet publish -c Release -o /app tests/integration/1interceptor/app/app.csproj
 RUN dotnet publish -c Release -o /interceptor tests/integration/1interceptor/interceptor/interceptor.csproj
-RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
 
 WORKDIR /interceptor
 
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /samples/skip.txt && cat profiler.json
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /samples/skip.txt
 
 FROM profiler:native as profiler
 
