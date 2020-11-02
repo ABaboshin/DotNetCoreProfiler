@@ -1,6 +1,5 @@
 FROM ababoshin/dotnetcoreprofiler:llvm-10 as build
 
-WORKDIR /profiler
 COPY lib /profiler/lib
 COPY src/profiler /profiler/src/profiler
 
