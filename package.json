@@ -20,7 +20,7 @@
     "run:all:prometheus:protobuf:31": "yarn build:all:31 && docker-compose up -f docker-compose.prometheus.protobuf.yml -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
     "build:core": "docker build -t interception:core -f Dockerfile.core --build-arg NUGET_KEY=$NUGET_KEY .",
     "tests:integration": "yarn build:native && yarn tests:integration-1interceptor && yarn tests:integration-2interceptors",
-    "tests:integration-1interceptor": "docker build -t profiler:integrationtests-1interceptor -f Dockerfile.integrationtests-1interceptor . && docker run -it --rm profiler:integrationtests-1interceptor",
-    "tests:integration-2interceptors": "docker build -t profiler:integrationtests-2interceptors -f Dockerfile.integrationtests-2interceptors . && docker run -it --rm profiler:integrationtests-2interceptors"
+    "tests:integration-1interceptor": "docker build -t profiler:integrationtests-1interceptor -f tests/integration/1interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-1interceptor",
+    "tests:integration-2interceptors": "docker build -t profiler:integrationtests-2interceptors -f tests/integration/2interceptors/Dockerfile . && docker run -it --rm profiler:integrationtests-2interceptors"
   }
 }
