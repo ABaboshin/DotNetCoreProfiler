@@ -1,4 +1,4 @@
-FROM ababoshin/dotnetcoreprofiler:llvm-10 as build
+FROM profiler:llvm as build
 
 COPY lib /profiler/lib
 COPY src/profiler /profiler/src/profiler

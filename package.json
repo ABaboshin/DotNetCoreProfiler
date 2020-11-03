@@ -21,7 +21,9 @@
     "build:core": "docker build -t interception:core -f src/Dockerfile.core --build-arg NUGET_KEY=$NUGET_KEY .",
     "tests:all": "yarn tests:native && yarn tests:integration",
     "tests:native": "yarn build:llvm && docker build -t profiler:native -f tests/Profiler.Native.Tests/Dockerfile .",
-    "tests:integration": "yarn build:native && yarn tests:integration-1interceptor && yarn tests:integration-2interceptors",
+    "tests:integration": "yarn build:native && yarn tests:integration-1interceptor && yarn tests:integration-2interceptors && yarn tests:integration-this-null-interceptor && yarn tests:integration-this-not-null-interceptor",
+    "tests:integration-this-null-interceptor": "docker build -t profiler:integrationtests-this-null-interceptor -f tests/integration/this-null-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-this-null-interceptor",
+    "tests:integration-this-not-null-interceptor": "docker build -t profiler:integrationtests-this-not-null-interceptor -f tests/integration/this-not-null-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-this-not-null-interceptor",
     "tests:integration-1interceptor": "docker build -t profiler:integrationtests-1interceptor -f tests/integration/1interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-1interceptor",
     "tests:integration-2interceptors": "docker build -t profiler:integrationtests-2interceptors -f tests/integration/2interceptors/Dockerfile . && docker run -it --rm profiler:integrationtests-2interceptors"
   }
