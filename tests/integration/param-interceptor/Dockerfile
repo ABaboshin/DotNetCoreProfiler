@@ -5,8 +5,8 @@ COPY tests tests
 COPY samples/skip.txt samples/skip.txt
 
 RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
-RUN dotnet publish -c Release -o /app tests/integration/this-not-null-interceptor/app/app.csproj
-RUN dotnet publish -c Release -o /interceptor tests/integration/this-not-null-interceptor/interceptor/interceptor.csproj
+RUN dotnet publish -c Release -o /app tests/integration/param-interceptor/app/app.csproj
+RUN dotnet publish -c Release -o /interceptor tests/integration/param-interceptor/interceptor/interceptor.csproj
 
 WORKDIR /interceptor
 
@@ -33,8 +33,8 @@ RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
 
 COPY --from=build /app /app
-COPY --from=build /tests/integration/this-not-null-interceptor/expected.txt /app
-COPY --from=build /tests/integration/this-not-null-interceptor/run.sh /app
+COPY --from=build /tests/integration/param-interceptor/expected.txt /app
+COPY --from=build /tests/integration/param-interceptor/run.sh /app
 RUN dos2unix /app/run.sh && chmod +x /app/run.sh
 COPY --from=build /interceptor/*.dll /profiler/
 COPY --from=build /interceptor/profiler.json /profiler/

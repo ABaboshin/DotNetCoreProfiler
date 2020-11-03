@@ -11,7 +11,7 @@ namespace interceptor
 
         public override void ExecuteBefore()
         {
-            Console.WriteLine(this->This != null);
+            Console.WriteLine(This != null);
         }
 
         public override void ExecuteAfter()
