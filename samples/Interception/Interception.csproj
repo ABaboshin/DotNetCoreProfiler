@@ -1,0 +1,34 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
+    <Optimize>false</Optimize>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <AssemblyName>Interception</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Interception.AspNetCore.Tracing" Version="1.2020.6170" />
+    <PackageReference Include="Interception.Cache" Version="1.2020.6170" />
+    <PackageReference Include="Interception.DeadlockDetection" Version="1.2020.6170" />
+    <PackageReference Include="Interception.MassTransit" Version="1.2020.6170" />
+    <PackageReference Include="Interception.Observers" Version="1.2020.6170" />
+    <PackageReference Include="Interception.OpenTracing.Prometheus" Version="1.2020.6170" />
+    <PackageReference Include="Interception.Quartz" Version="1.2020.6170" />
+    <PackageReference Include="Interception.Tracing.Serilog" Version="1.2020.6170" />
+    <PackageReference Include="MassTransit.RabbitMQ" Version="6.2.5" />
+    <PackageReference Include="Jaeger" Version="0.3.7" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.4" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="3.0.0" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+    <PackageReference Include="Interception.Observers" Version="1.2020.6143" />
+  </ItemGroup>
+
+</Project>

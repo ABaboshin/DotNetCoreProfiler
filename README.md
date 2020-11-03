@@ -29,7 +29,7 @@ This project has a goal to demonstrate injection of the following devops-related
 ***Limitations***
  - Dynamic methods are not supported.
  - If you want to use parameter validator, use the `ValidationAttribute` on the method.
- - In some cases to intercept the generic method you have to implement `IMethodFinder` (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/cire-2.1/samples/Interception/MassTransit/ConsumeMethodFinder.cs#L13)
+ - In some cases to intercept the generic method you have to implement `IMethodFinder` (see https://github.com/ABaboshin/DotNetCoreProfiler/blob/master/src/Interception.MassTransit/ConsumeMethodFinder.cs#L13)
 
 ## Project structure
 
@@ -73,21 +73,21 @@ See [src/Interception.OpenTracing.Prometheus](Interception.OpenTracing.Prometheu
 
 ### Sample
 
-See [sample](sample).
+See [samples](samples).
 
 In order to run the sample execute
 
 ```
 # Supply metrics to jaeger, see X-Trace-Id header, Jaeger is hosted under http://localhost:16686/
-yarn run:all:jaeger:31
+yarn run:sample:jaeger
 
 # Supply metrics to prometheus, see X-Trace-Id header, prometheus is hosted under http://localhost:9090/, metric name is interception, trace field is X_Trace_Id
-yarn run:all:prometheus:31
+yarn run:sample:prometheus
 
 # Supply metrics to prometheus using protobuf, see X-Trace-Id header, prometheus is hosted under http://localhost:9090/, metric name is interception, trace field is X_Trace_Id
 # Pull https://github.com/ABaboshin/statsd_exporter
 # and build an image docker build -t statsd:protobuf .
-yarn run:all:prometheus:protobuf:31
+yarn run:sample:prometheus:protobuf
 ```
 
 It will create an app running on `http://localhost:5000` with the following endpoints:
