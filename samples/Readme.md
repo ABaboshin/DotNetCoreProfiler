@@ -9,4 +9,34 @@ In order to run:
 cd .. && yarn samples:dd
 ```
 
+This sample demonstrates the detection of deadlocks.
+
 As a result you'll see `Interception.DeadlockDetection.DeadlockException: Monitor o1->Thread  4; Thread  5->Thread  4; Monitor o2->Thread  4` in the output.
+
+## Cache
+
+See [cache](cache).
+
+In order to run:
+```
+cd .. && yarn samples:cache
+```
+
+This sample calculates a fibonacci number and caches the result in redis.
+
+Call `http://localhost:5000/api/sample` multiple time and compare execution time. It will be decreased.
+Morevoer you can go inside the `cache_redis_1` container and check the list of keys:
+
+```
+docker exec -it cache_redis_1 bash
+redis-cli
+keys *
+# 1) "Fibonacci30-30"
+```
+
+To invalidate the cache call `http://localhost:5000/api/sample/invalidate` and check that no key in redis is presenting.
+
+Morover this sample demonstrates:
+ - howto inject dependencies from an interceptor
+ - howto use  dependencies from an interceptor
+ - howto write an interceptor for an attribute.

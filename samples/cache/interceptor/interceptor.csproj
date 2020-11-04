@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\..\src\Interception.Attributes\Interception.Attributes.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Core\Interception.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Cache\Interception.Cache.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.AspNetCore.WebHost\Interception.AspNetCore.WebHost.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.5" />
+  </ItemGroup>
+
+</Project>

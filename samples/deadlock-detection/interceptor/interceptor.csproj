@@ -5,9 +5,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\..\..\src\Interception.Attributes\Interception.Attributes.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Interception.Core\Interception.Core.csproj" />
-    <ProjectReference Include="..\..\..\..\src\Interception.DeadlockDetection\Interception.DeadlockDetection.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Attributes\Interception.Attributes.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Core\Interception.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.DeadlockDetection\Interception.DeadlockDetection.csproj" />
   </ItemGroup>
 
 </Project>
