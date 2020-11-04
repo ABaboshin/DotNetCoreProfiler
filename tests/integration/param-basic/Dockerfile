@@ -2,7 +2,6 @@ FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
 
 COPY src src
 COPY tests tests
-COPY samples/skip.txt samples/skip.txt
 
 RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
 RUN dotnet publish -c Release -o /app tests/integration/param-basic/app/app.csproj
@@ -10,7 +9,7 @@ RUN dotnet publish -c Release -o /interceptor tests/integration/param-basic/inte
 
 WORKDIR /interceptor
 
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /samples/skip.txt
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /tests/integration/skip.txt
 
 FROM profiler:native as profiler
 
