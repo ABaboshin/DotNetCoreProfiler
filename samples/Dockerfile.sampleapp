@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.300 as build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
 
 COPY samples/sample sample/SampleApp/
 
@@ -8,7 +8,7 @@ FROM profiler:native as profiler
 
 FROM sample:interception as interception
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.4
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.5-bionic
 COPY --from=build /app /app
 RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler

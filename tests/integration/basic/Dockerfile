@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.300 as build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
 
 COPY src src
 COPY tests tests
@@ -14,7 +14,7 @@ RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Intercepti
 
 FROM profiler:native as profiler
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.4
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.5-bionic
 RUN apt update && apt install -y dos2unix
 
 EXPOSE 80

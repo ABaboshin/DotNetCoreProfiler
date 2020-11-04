@@ -96,7 +96,7 @@ namespace SampleApp
         public void Configure(IApplicationBuilder app, IHostingEnvironment env)
         {
             app.UseMvc();
-            //MigrateDatabase(app);
+            MigrateDatabase(app);
         }
 
         private static void MigrateDatabase(IApplicationBuilder app)
