@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\src\Interception.Attributes\Interception.Attributes.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Core\Interception.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.DeadlockDetection\Interception.DeadlockDetection.csproj" />
+  </ItemGroup>
+
+</Project>

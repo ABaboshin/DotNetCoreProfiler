@@ -2,7 +2,7 @@
 using Serilog.Core;
 using Serilog.Events;
 
-namespace Interception.Serilog
+namespace Interception.Tracing.Serilog
 {
     public class SerilogEnricher :
         ILogEventEnricher

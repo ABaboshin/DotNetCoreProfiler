@@ -1,0 +1,45 @@
+version: '3.3'
+
+services:
+  sampleapp:
+    image: samples:rabbitmq
+    environment:
+      ASPNETCORE_URLS: "http://*:5000"
+      ASPNETCORE_ENVIRONMENT: Development
+      RABBITMQ__HOST: "rabbitmq"
+      RABBITMQ__USER: "admin"
+      RABBITMQ__PASSWORD: "password"
+      JAEGER_SERVICE_NAME: "sampleapp"
+      JAEGER_AGENT_HOST: "jaeger"
+      JAEGER_AGENT_PORT: "6831"
+      JAEGER_SAMPLER_TYPE: "const"
+      tracing__collector: "jaeger"
+      masstransit_metrics__PublisherEnabled: "true"
+      masstransit_metrics__PublisherName: "masstransit_publish"
+      masstransit_metrics__ConsumerEnabled: "true"
+      masstransit_metrics__ConsumerName: "masstransit_consume"
+    ports:
+      - "5000:5000"
+
+  rabbitmq:
+    image: rabbitmq:3.8.9-management
+    environment:
+      RABBITMQ_DEFAULT_USER: "admin"
+      RABBITMQ_DEFAULT_PASS: "password"
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.20.0
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"

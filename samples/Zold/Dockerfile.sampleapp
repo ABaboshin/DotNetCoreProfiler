@@ -1,0 +1,22 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
+
+COPY samples/sample sample/SampleApp/
+
+RUN dotnet publish -c Release -o /app sample/SampleApp/SampleApp.csproj
+
+FROM profiler:native as profiler
+
+FROM sample:interception as interception
+
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.5-bionic
+COPY --from=build /app /app
+RUN mkdir /profiler
+COPY --from=profiler /DotNetCoreProfiler.so /profiler
+COPY --from=interception /interception/*.dll /profiler/
+COPY --from=interception /interception/profiler.json /profiler/
+
+EXPOSE 80
+
+WORKDIR /app
+
+ENTRYPOINT ["dotnet", "SampleApp.dll"]

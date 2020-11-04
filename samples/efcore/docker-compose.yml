@@ -1,0 +1,41 @@
+version: '3.3'
+
+services:
+  sampleapp:
+    image: samples:efcore
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://*:5000"
+      JAEGER_AGENT_HOST: "jaeger"
+      JAEGER_AGENT_PORT: "6831"
+      JAEGER_SAMPLER_TYPE: "const"
+      JAEGER_SERVICE_NAME: "sampleapp"
+      service__name: "sampleapp"
+      tracing__collector: "jaeger"
+      DATABASE__CONNECTIONSTRING: "Server=sqlserver;Database=mydb;User Id=sa;Password=passwoyourStrong(!)Passwordrd;"
+      entityframeworkcore_metrics__enabled: "true"
+      entityframeworkcore_metrics__name: "db_call"
+    ports:
+      - "5000:5000"
+
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2017-latest-ubuntu
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "passwoyourStrong(!)Passwordrd"
+    ports:
+      - "1433:1433"
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.20.0
+    environment:
+      COLLECTOR_ZIPKIN_HTTP_PORT: 9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"

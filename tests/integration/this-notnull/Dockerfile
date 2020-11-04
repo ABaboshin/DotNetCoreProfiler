@@ -1,20 +1,21 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.300 as build
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
 
 COPY src src
-COPY tests tests
-COPY samples/skip.txt samples/skip.txt
 
 RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
+
+COPY tests tests
+
 RUN dotnet publish -c Release -o /app tests/integration/this-notnull/app/app.csproj
 RUN dotnet publish -c Release -o /interceptor tests/integration/this-notnull/interceptor/interceptor.csproj
 
 WORKDIR /interceptor
 
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /samples/skip.txt
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /tests/integration/skip.txt
 
 FROM profiler:native as profiler
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.4
+FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.5-bionic
 RUN apt update && apt install -y dos2unix
 
 EXPOSE 80
