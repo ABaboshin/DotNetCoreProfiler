@@ -50,7 +50,7 @@ In order to run:
 cd .. && yarn samples:rabbitmq
 ```
 
-This samples sends and processes the messages with rabbitmq using masstransit:
+This sample sends and processes the messages with rabbitmq using masstransit:
  - Call `http://localhost:5000/api/sample/bad` to produce one messages which will be consumed with an error
  - Call `http://localhost:5000/api/sample/good` to produce one messages which will be consumed sucessfully
 
@@ -71,7 +71,7 @@ In order to run:
 cd .. && yarn samples:http
 ```
 
-This samples sends one outgoing http request and receives one incoming http request when calling `http://localhost:5000/api/sample`.
+This sample sends one outgoing http request and receives one incoming http request when calling `http://localhost:5000/api/sample`.
 
 Open `http://localhost:16686/search` to see the metrics.
 
@@ -88,10 +88,30 @@ In order to run:
 cd .. && yarn samples:quartz
 ```
 
-This samples schedules one job with quartz.
+This sample schedules one job with quartz.
 
 Open `http://localhost:16686/search` to see the metrics.
 
 Moreover this sample demonstrates:
  - howto inject custom trace id into logs,
  - howto inject customer custom trace id into http responses (see `x-trace-id`).
+
+## EFCore
+
+See [efcore](rabbefcoreitmq).
+
+In order to run:
+```
+cd .. && yarn samples:efcore
+```
+
+This sample:
+ - Call `http://localhost:5000/api/sample` to produce one successfull database call
+ - Call `http://localhost:5000/api/sample/bad` to produce one failed database call
+
+Open `http://localhost:16686/search` to see the metrics.
+
+Moreover this sample demonstrates:
+ - howto inject customer `ILogger` from an interceptor,
+ - howto report the metrics to jaeger,
+ - howto inject custom trace id into logs.

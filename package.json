@@ -40,7 +40,8 @@
     "samples:cache": "yarn build:native && docker build -t samples:cache -f samples/cache/Dockerfile . && docker-compose -f samples/cache/docker-compose.yml up -d && docker logs -f cache_sampleapp_1",
     "samples:rabbitmq": "yarn build:native && docker build -t samples:rabbitmq -f samples/rabbitmq/Dockerfile . && docker-compose -f samples/rabbitmq/docker-compose.yml up -d && docker logs -f rabbitmq_sampleapp_1",
     "samples:http": "yarn build:native && docker build -t samples:http -f samples/http/Dockerfile . && docker-compose -f samples/http/docker-compose.yml up -d && docker logs -f http_sampleapp_1",
-    "samples:quartz": "yarn build:native && docker build -t samples:quartz -f samples/quartz/Dockerfile . && docker-compose -f samples/quartz/docker-compose.yml up -d && docker logs -f quartz_sampleapp_1"
+    "samples:quartz": "yarn build:native && docker build -t samples:quartz -f samples/quartz/Dockerfile . && docker-compose -f samples/quartz/docker-compose.yml up -d && docker logs -f quartz_sampleapp_1",
+    "samples:efcore": "yarn build:native && docker build -t samples:efcore -f samples/efcore/Dockerfile . && docker-compose -f samples/efcore/docker-compose.yml up -d && docker logs -f efcore_sampleapp_1"
 
   }
 }
