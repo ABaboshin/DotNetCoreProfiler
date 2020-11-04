@@ -58,4 +58,5 @@ Open `http://localhost:16686/search` to see the metrics.
 
 Moreover this sample demonstrates:
  - howto inject customer `ILogger` from an interceptor,
- - howto report the metrics to jaeger.
+ - howto report the metrics to jaeger,
+ - howto write an interceptor for an attribute.
