@@ -1,0 +1,14 @@
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.300 as build
+
+RUN dotnet tool install -g Interception.Generator --version 1.2020.9010
+
+COPY samples samples
+
+RUN dotnet publish -c Release -o /interception samples/Interception/Interception.csproj
+
+RUN cd /interception && /root/.dotnet/tools/interception-generator -a Interception.dll,Interception.Cache.dll,Interception.DeadlockDetection.dll,Interception.MassTransit.dll,Interception.Quartz.dll \
+  -p /profiler -o /interception/profiler.json -s /samples/skip.txt && cat /interception/profiler.json
+
+FROM scratch
+
+COPY --from=build /interception/*.* /interception/

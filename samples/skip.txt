@@ -1,5 +1,4 @@
 ISymWrapper
-Interception
 Interception.AspNetCore.Tracing
 Interception.AspNetCore.WebHost
 Interception.Cache
@@ -11,6 +10,7 @@ Interception.Observers
 Interception.OpenTracing.Prometheus
 Interception.Quartz
 Interception.Tracing
+Interception.Tracing.Serilog
 Microsoft.AspNetCore.Mvc.RazorPages
 Microsoft.AspNetCore.Razor.Language
 Microsoft.CSharp

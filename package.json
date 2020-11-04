@@ -8,32 +8,43 @@
     "build:llvm": "docker build -t profiler:llvm -f src/Dockerfile.llvm .",
     "build:native": "yarn build:llvm && docker build -t profiler:native -f src/profiler/Dockerfile .",
     "build:native:nuget": "yarn build:native && docker build -t profiler:native.nuget -f src/profiler/Dockerfile.nuget --build-arg NUGET_KEY=$NUGET_KEY .",
-    "build:interception:31": "docker build -t profiler:interception31 -f Dockerfile.interception31 .",
-    "build:sampleapp:31": "docker build -t sampleapp:31 -f Dockerfile.sampleapp31 .",
-    "build:all:31": "yarn build:interception:31 && yarn build:native && yarn build:sampleapp:31 && yarn build:logstash && yarn build:prometheus && yarn build:grafana",
-    "build:logstash": "docker build -t logstash:local -f logstash/Dockerfile logstash",
-    "build:prometheus": "docker build -t prometheus:local -f prometheus/Dockerfile prometheus",
-    "build:grafana": "docker build -t grafana:local -f grafana/Dockerfile grafana",
-    "run:all:31": "yarn build:all:31 && docker-compose -f docker-compose.31.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
-    "run:all:jaeger:31": "yarn build:all:31 && docker-compose -f docker-compose.jaeger.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
-    "run:all:prometheus:31": "yarn build:all:31 && docker-compose -f docker-compose.prometheus.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
-    "run:all:prometheus:protobuf:31": "yarn build:all:31 && docker-compose up -f docker-compose.prometheus.protobuf.yml -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
     "build:core": "docker build -t interception:core -f src/Dockerfile.core --build-arg NUGET_KEY=$NUGET_KEY .",
     "tests:all": "yarn tests:native && yarn tests:integration",
     "tests:native": "yarn build:llvm && docker build -t profiler:native -f tests/Profiler.Native.Tests/Dockerfile .",
-    "tests:integration": "yarn build:native && yarn tests:integration-1interceptor && yarn tests:integration-2interceptors && yarn tests:integration-this-null-interceptor && yarn tests:integration-this-not-null-interceptor && yarn tests:integration-param-interceptor && yarn tests:integration-param-modify-interceptor && yarn tests:integration-param-ref-interceptor && yarn tests:integration-param-out-int-interceptor && yarn tests:integration-skip-execution-interceptor && yarn tests:integration-result-interceptor && yarn tests:integration-result-void-interceptor && yarn tests:integration-exception-interceptor && yarn tests:integration-no-exception-interceptor",
-    "tests:integration-param-interceptor": "docker build -t profiler:integrationtests-param-interceptor -f tests/integration/param-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-param-interceptor",
-    "tests:integration-param-modify-interceptor": "docker build -t profiler:integrationtests-param-modify-interceptor -f tests/integration/param-modify-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-param-modify-interceptor",
-    "tests:integration-param-ref-interceptor": "docker build -t profiler:integrationtests-param-ref-interceptor -f tests/integration/param-ref-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-param-ref-interceptor",
-    "tests:integration-param-out-int-interceptor": "docker build -t profiler:integrationtests-param-out-int-interceptor -f tests/integration/param-out-int-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-param-out-int-interceptor",
-    "tests:integration-skip-execution-interceptor": "docker build -t profiler:integrationtests-skip-execution-interceptor -f tests/integration/skip-execution-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-skip-execution-interceptor",
-    "tests:integration-result-interceptor": "docker build -t profiler:integrationtests-result-interceptor -f tests/integration/result-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-result-interceptor",
-    "tests:integration-result-void-interceptor": "docker build -t profiler:integrationtests-result-void-interceptor -f tests/integration/result-void-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-result-void-interceptor",
-    "tests:integration-exception-interceptor": "docker build -t profiler:integrationtests-exception-interceptor -f tests/integration/exception-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-exception-interceptor",
-    "tests:integration-no-exception-interceptor": "docker build -t profiler:integrationtests-no-exception-interceptor -f tests/integration/no-exception-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-no-exception-interceptor",
-    "tests:integration-this-null-interceptor": "docker build -t profiler:integrationtests-this-null-interceptor -f tests/integration/this-null-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-this-null-interceptor",
-    "tests:integration-this-not-null-interceptor": "docker build -t profiler:integrationtests-this-not-null-interceptor -f tests/integration/this-not-null-interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-this-not-null-interceptor",
-    "tests:integration-1interceptor": "docker build -t profiler:integrationtests-1interceptor -f tests/integration/1interceptor/Dockerfile . && docker run -it --rm profiler:integrationtests-1interceptor",
-    "tests:integration-2interceptors": "docker build -t profiler:integrationtests-2interceptors -f tests/integration/2interceptors/Dockerfile . && docker run -it --rm profiler:integrationtests-2interceptors"
+    "tests:integration": "yarn build:native && yarn tests:integration:basic && yarn tests:integration:order && yarn tests:integration:param && yarn tests:integration:result && yarn tests:integration:this && yarn tests:integration:skip:execution && yarn tests:integration:exception",
+
+    "tests:integration:param": "yarn tests:integration:param:basic && yarn tests:integration:param:modify && yarn tests:integration:param:ref && yarn tests:integration:param:out",
+    "tests:integration:param:basic": "docker build -t profiler:integrationtests-param-basic -f tests/integration/param-basic/Dockerfile . && docker run -it --rm profiler:integrationtests-param-basic",
+    "tests:integration:param:modify": "docker build -t profiler:integrationtests-param-modify -f tests/integration/param-modify/Dockerfile . && docker run -it --rm profiler:integrationtests-param-modify",
+    "tests:integration:param:ref": "docker build -t profiler:integrationtests-param-ref -f tests/integration/param-ref/Dockerfile . && docker run -it --rm profiler:integrationtests-param-ref",
+    "tests:integration:param:out": "docker build -t profiler:integrationtests-param-out -f tests/integration/param-out/Dockerfile . && docker run -it --rm profiler:integrationtests-param-out",
+
+    "tests:integration:skip:execution": "docker build -t profiler:integrationtests-skip-execution -f tests/integration/skip-execution/Dockerfile . && docker run -it --rm profiler:integrationtests-skip-execution",
+
+    "tests:integration:result": "yarn tests:integration:result:value && yarn tests:integration:result:void",
+    "tests:integration:result:value": "docker build -t profiler:integrationtests-result-value -f tests/integration/result-value/Dockerfile . && docker run -it --rm profiler:integrationtests-result-value",
+    "tests:integration:result:void": "docker build -t profiler:integrationtests-result-void -f tests/integration/result-void/Dockerfile . && docker run -it --rm profiler:integrationtests-result-void",
+
+    "tests:integration:exception": "yarn tests:integration:exception:yes && yarn tests:integration:exception:no",
+    "tests:integration:exception:yes": "docker build -t profiler:integrationtests-exception-yes -f tests/integration/exception-yes/Dockerfile . && docker run -it --rm profiler:integrationtests-exception-yes",
+    "tests:integration:exception:no": "docker build -t profiler:integrationtests-exception-no -f tests/integration/exception-no/Dockerfile . && docker run -it --rm profiler:integrationtests-exception-no",
+
+    "tests:integration:this": "yarn tests:integration:this:null && yarn tests:integration:this:notnull",
+    "tests:integration:this:null": "docker build -t profiler:integrationtests-this-null -f tests/integration/this-null/Dockerfile . && docker run -it --rm profiler:integrationtests-this-null",
+    "tests:integration:this:notnull": "docker build -t profiler:integrationtests-this-notnull -f tests/integration/this-notnull/Dockerfile . && docker run -it --rm profiler:integrationtests-this-notnull",
+
+    "tests:integration:basic": "docker build -t profiler:integrationtests-basic -f tests/integration/basic/Dockerfile . && docker run -it --rm profiler:integrationtests-basic",
+    "tests:integration:order": "docker build -t profiler:integrationtests-order -f tests/integration/order/Dockerfile . && docker run -it --rm profiler:integrationtests-order",
+
+    "build:sample:interception": "docker build -t sample:interception -f samples/Dockerfile.interception .",
+    "build:sample:app": "docker build -t sample:app -f samples/Dockerfile.sampleapp .",
+    "build:sample:all": "yarn build:sample:interception && yarn build:native && yarn build:sample:app && yarn build:logstash && yarn build:prometheus && yarn build:grafana",
+    "build:logstash": "docker build -t logstash:local -f samples/logstash/Dockerfile samples/logstash",
+    "build:prometheus": "docker build -t prometheus:local -f samples/prometheus/Dockerfile samples/prometheus",
+    "build:grafana": "docker build -t grafana:local -f samples/grafana/Dockerfile samples/grafana",
+    "run:sample:jaeger": "yarn build:sample:all && docker-compose -f samples/docker-compose.jaeger.yml up -d && docker logs -f samples_sampleapp_1",
+    "run:sample:prometheus": "yarn build:sample:all && docker-compose -f samples/docker-compose.prometheus.yml up -d && docker logs -f samples_sampleapp_1",
+    "run:sample:prometheus:protobuf": "yarn build:sample:all && docker-compose up -f samples/docker-compose.prometheus.protobuf.yml -d && docker logs -f samples_sampleapp_1"
+
   }
 }
