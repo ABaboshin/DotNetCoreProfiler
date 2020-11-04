@@ -16,10 +16,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using OpenTracing.Util;
+using sl = Serilog;
 using Serilog;
-using Serilog.Extensions.Logging;
 using Serilog.Core;
 using Serilog.Events;
+using Serilog.Extensions.Hosting;
+using Serilog.Extensions.Logging;
 using Serilog.Formatting.Json;
 using System;
 
@@ -41,8 +43,13 @@ namespace Interception.AspNetCore
 
             var serviceCollection = ((IServiceCollection)GetParameter(1));
 
-            var loggerFactory = new SerilogLoggerFactory(CreateLogger(), false);
-            serviceCollection.AddSingleton((ILoggerFactory)loggerFactory);
+            var logger = CreateLogger();
+            var loggerFactory = new SerilogLoggerFactory(logger);
+            serviceCollection.AddSingleton((Microsoft.Extensions.Logging.ILoggerFactory)loggerFactory);
+            serviceCollection.AddSingleton((sl::ILogger)logger);
+            var implementationInstance = new DiagnosticContext(logger);
+            serviceCollection.AddSingleton(implementationInstance);
+            serviceCollection.AddSingleton((sl::IDiagnosticContext)implementationInstance);
 
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
@@ -82,7 +89,7 @@ namespace Interception.AspNetCore
             });
         }
 
-        private void ConfigureMetrics(ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
+        private void ConfigureMetrics(Microsoft.Extensions.Logging.ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
         {
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
@@ -112,7 +119,7 @@ namespace Interception.AspNetCore
         {
             var logLevel = ParseLoggingLevel(Environment.GetEnvironmentVariable("LOG_LEVEL"));
 
-            var logger = new LoggerConfiguration()
+            var logger = new sl::LoggerConfiguration()
                 .Enrich.FromLogContext()
                 .Enrich.With((ILogEventEnricher)new SerilogEnricher())
                 .MinimumLevel.Is(LogEventLevel.Verbose)

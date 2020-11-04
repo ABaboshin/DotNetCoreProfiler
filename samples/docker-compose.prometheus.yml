@@ -163,3 +163,9 @@ services:
       - GF_SECURITY_ADMIN_PASSWORD=password
     ports:
       - "3000:3000"
+
+  redis:
+    image: redis:5.0.8
+    ports:
+      - "6379:6379"
+  

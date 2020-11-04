@@ -42,9 +42,9 @@
     "build:logstash": "docker build -t logstash:local -f samples/logstash/Dockerfile samples/logstash",
     "build:prometheus": "docker build -t prometheus:local -f samples/prometheus/Dockerfile samples/prometheus",
     "build:grafana": "docker build -t grafana:local -f samples/grafana/Dockerfile samples/grafana",
-    "run:sample:jaeger": "yarn build:sample:all && docker-compose -f samples/docker-compose.jaeger.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
-    "run:sample:prometheus": "yarn build:sample:all && docker-compose -f samples/docker-compose.prometheus.yml up -d && docker logs -f dotnetcoreprofiler_sampleapp_1",
-    "run:sample:prometheus:protobuf": "yarn build:sample:all && docker-compose up -f samples/docker-compose.prometheus.protobuf.yml -d && docker logs -f dotnetcoreprofiler_sampleapp_1"
+    "run:sample:jaeger": "yarn build:sample:all && docker-compose -f samples/docker-compose.jaeger.yml up -d && docker logs -f samples_sampleapp_1",
+    "run:sample:prometheus": "yarn build:sample:all && docker-compose -f samples/docker-compose.prometheus.yml up -d && docker logs -f samples_sampleapp_1",
+    "run:sample:prometheus:protobuf": "yarn build:sample:all && docker-compose up -f samples/docker-compose.prometheus.protobuf.yml -d && docker logs -f samples_sampleapp_1"
 
   }
 }
