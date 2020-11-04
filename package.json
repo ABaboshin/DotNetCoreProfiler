@@ -36,15 +36,7 @@
     "tests:integration:basic": "docker build -t profiler:integrationtests-basic -f tests/integration/basic/Dockerfile . && docker run -it --rm profiler:integrationtests-basic",
     "tests:integration:order": "docker build -t profiler:integrationtests-order -f tests/integration/order/Dockerfile . && docker run -it --rm profiler:integrationtests-order",
 
-    "build:sample:interception": "docker build -t sample:interception -f samples/Dockerfile.interception .",
-    "build:sample:app": "docker build -t sample:app -f samples/Dockerfile.sampleapp .",
-    "build:sample:all": "yarn build:sample:interception && yarn build:native && yarn build:sample:app && yarn build:logstash && yarn build:prometheus && yarn build:grafana",
-    "build:logstash": "docker build -t logstash:local -f samples/logstash/Dockerfile samples/logstash",
-    "build:prometheus": "docker build -t prometheus:local -f samples/prometheus/Dockerfile samples/prometheus",
-    "build:grafana": "docker build -t grafana:local -f samples/grafana/Dockerfile samples/grafana",
-    "run:sample:jaeger": "yarn build:sample:all && docker-compose -f samples/docker-compose.jaeger.yml up -d && docker logs -f samples_sampleapp_1",
-    "run:sample:prometheus": "yarn build:sample:all && docker-compose -f samples/docker-compose.prometheus.yml up -d && docker logs -f samples_sampleapp_1",
-    "run:sample:prometheus:protobuf": "yarn build:sample:all && docker-compose up -f samples/docker-compose.prometheus.protobuf.yml -d && docker logs -f samples_sampleapp_1"
+    "samples:dd": "yarn build:native && docker build -t samples:dd -f samples/deadlock-detection/Dockerfile . && docker run -it --rm samples:dd"
 
   }
 }
