@@ -38,7 +38,8 @@
 
     "samples:dd": "yarn build:native && docker build -t samples:dd -f samples/deadlock-detection/Dockerfile . && docker run -it --rm samples:dd",
     "samples:cache": "yarn build:native && docker build -t samples:cache -f samples/cache/Dockerfile . && docker-compose -f samples/cache/docker-compose.yml up -d && docker logs -f cache_sampleapp_1",
-    "samples:rabbitmq": "yarn build:native && docker build -t samples:rabbitmq -f samples/rabbitmq/Dockerfile . && docker-compose -f samples/rabbitmq/docker-compose.yml up -d && docker logs -f rabbitmq_sampleapp_1"
+    "samples:rabbitmq": "yarn build:native && docker build -t samples:rabbitmq -f samples/rabbitmq/Dockerfile . && docker-compose -f samples/rabbitmq/docker-compose.yml up -d && docker logs -f rabbitmq_sampleapp_1",
+    "samples:http": "yarn build:native && docker build -t samples:http -f samples/http/Dockerfile . && docker-compose -f samples/http/docker-compose.yml up -d && docker logs -f http_sampleapp_1"
 
   }
 }

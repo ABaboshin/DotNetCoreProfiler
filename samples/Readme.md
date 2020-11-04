@@ -60,3 +60,19 @@ Moreover this sample demonstrates:
  - howto inject customer `ILogger` from an interceptor,
  - howto report the metrics to jaeger,
  - howto write an interceptor for an attribute.
+
+## Http (incoming/outgoing)
+
+See [http](http).
+
+In order to run:
+```
+cd .. && yarn samples:http
+```
+
+This samples sends one outgoing http request and receives one incoming http request when calling `http://localhost:5000/api/sample`.
+
+Open `http://localhost:16686/search` to see the metrics.
+
+Moreover this sample demonstrates:
+ - howto inject customer custom trace id into http responses (see `x-trace-id`).

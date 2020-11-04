@@ -4,12 +4,12 @@ COPY src src
 COPY samples samples
 
 RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
-RUN dotnet publish -c Release -o /app samples/rabbitmq/app/app.csproj
-RUN dotnet publish -c Release -o /interceptor samples/rabbitmq/interceptor/interceptor.csproj
+RUN dotnet publish -c Release -o /app samples/http/app/app.csproj
+RUN dotnet publish -c Release -o /interceptor samples/http/interceptor/interceptor.csproj
 
 WORKDIR /interceptor
 
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.MassTransit.dll,Interception.AspNetCore.WebHost.dll -p /profiler -o profiler.json -s /samples/rabbitmq/skip.txt
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.AspNetCore.WebHost.dll -p /profiler -o profiler.json -s /samples/http/skip.txt
 
 FROM profiler:native as profiler
 
@@ -32,7 +32,7 @@ RUN mkdir /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
 
 COPY --from=build /app /app
-COPY --from=build /samples/rabbitmq/run.sh /app
+COPY --from=build /samples/http/run.sh /app
 COPY --from=build /interceptor/*.dll /profiler/
 COPY --from=build /interceptor/profiler.json /profiler/
 RUN dos2unix /app/run.sh && chmod +x /app/run.sh
