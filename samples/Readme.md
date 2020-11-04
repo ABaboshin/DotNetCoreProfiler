@@ -59,6 +59,7 @@ Open `http://localhost:16686/search` to see the metrics.
 Moreover this sample demonstrates:
  - howto inject customer `ILogger` from an interceptor,
  - howto report the metrics to jaeger,
+ - howto inject custom trace id into logs,
  - howto write an interceptor for an attribute.
 
 ## Http (incoming/outgoing)
@@ -75,4 +76,22 @@ This samples sends one outgoing http request and receives one incoming http requ
 Open `http://localhost:16686/search` to see the metrics.
 
 Moreover this sample demonstrates:
+ - howto inject custom trace id into logs,
+ - howto inject customer custom trace id into http responses (see `x-trace-id`).
+
+ ## Quartz
+
+See [quartz](quartz).
+
+In order to run:
+```
+cd .. && yarn samples:quartz
+```
+
+This samples schedules one job with quartz.
+
+Open `http://localhost:16686/search` to see the metrics.
+
+Moreover this sample demonstrates:
+ - howto inject custom trace id into logs,
  - howto inject customer custom trace id into http responses (see `x-trace-id`).

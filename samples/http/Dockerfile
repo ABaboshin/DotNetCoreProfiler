@@ -1,9 +1,11 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
 
 COPY src src
-COPY samples samples
 
 RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
+
+COPY samples samples
+
 RUN dotnet publish -c Release -o /app samples/http/app/app.csproj
 RUN dotnet publish -c Release -o /interceptor samples/http/interceptor/interceptor.csproj
 

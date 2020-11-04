@@ -1,9 +1,11 @@
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
 
 COPY src src
-COPY tests tests
 
 RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
+
+COPY tests tests
+
 RUN dotnet publish -c Release -o /app tests/integration/param-modify/app/app.csproj
 RUN dotnet publish -c Release -o /interceptor tests/integration/param-modify/interceptor/interceptor.csproj
 
