@@ -37,6 +37,25 @@ keys *
 To invalidate the cache call `http://localhost:5000/api/sample/invalidate` and check that no key in redis is presenting.
 
 Morover this sample demonstrates:
- - howto inject dependencies from an interceptor
- - howto use  dependencies from an interceptor
+ - howto inject dependencies from an interceptor,
+ - howto use  dependencies from an interceptor,
  - howto write an interceptor for an attribute.
+
+## Rabbitmq (masstransit)
+
+See [rabbitmq](rabbitmq).
+
+In order to run:
+```
+cd .. && yarn samples:rabbitmq
+```
+
+This samples sends and processes the messages with rabbitmq using masstransit:
+ - Call `http://localhost:5000/api/sample/bad` to produce one messages which will be consumed with an error
+ - Call `http://localhost:5000/api/sample/good` to produce one messages which will be consumed sucessfully
+
+Open `http://localhost:16686/search` to see the metrics.
+
+Moreover this sample demonstrates:
+ - howto inject customer `ILogger` from an interceptor,
+ - howto report the metrics to jaeger.
