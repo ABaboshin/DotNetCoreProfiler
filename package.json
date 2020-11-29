@@ -11,7 +11,7 @@
     "build:core": "docker build -t interception:core -f src/Dockerfile.core --build-arg NUGET_KEY=$NUGET_KEY .",
     "tests:all": "yarn tests:native && yarn tests:integration",
     "tests:native": "yarn build:llvm && docker build -t profiler:native -f tests/Profiler.Native.Tests/Dockerfile .",
-    "tests:integration": "yarn build:native && yarn tests:integration:basic && yarn tests:integration:order && yarn tests:integration:param && yarn tests:integration:result && yarn tests:integration:this && yarn tests:integration:skip:execution && yarn tests:integration:exception && yarn tests:integration:methodfinder",
+    "tests:integration": "yarn build:native && yarn tests:integration:basic && yarn tests:integration:order && yarn tests:integration:param && yarn tests:integration:result && yarn tests:integration:this && yarn tests:integration:skip:execution && yarn tests:integration:exception && yarn tests:integration:methodfinder && yarn tests:integration:validation",
 
     "tests:integration:param": "yarn tests:integration:param:basic && yarn tests:integration:param:modify && yarn tests:integration:param:ref && yarn tests:integration:param:out",
     "tests:integration:param:basic": "docker build -t profiler:integrationtests-param-basic -f tests/integration/param-basic/Dockerfile . && docker run -it --rm profiler:integrationtests-param-basic",
@@ -37,6 +37,8 @@
     "tests:integration:order": "docker build -t profiler:integrationtests-order -f tests/integration/order/Dockerfile . && docker run -it --rm profiler:integrationtests-order",
 
     "tests:integration:methodfinder": "docker build -t profiler:integrationtests-methodfinder -f tests/integration/methodfinder/Dockerfile . && docker run -it --rm profiler:integrationtests-methodfinder",
+
+    "tests:integration:validation": "docker build -t profiler:integrationtests-validation -f tests/integration/validation/Dockerfile . && docker run -it --rm profiler:integrationtests-validation",
 
     "samples:dd": "yarn build:native && docker build -t samples:dd -f samples/deadlock-detection/Dockerfile . && docker run -it --rm samples:dd",
     "samples:cache": "yarn build:native && docker build -t samples:cache -f samples/cache/Dockerfile . && docker-compose -f samples/cache/docker-compose.yml up -d && docker logs -f cache_sampleapp_1",
