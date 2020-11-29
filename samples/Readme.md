@@ -126,3 +126,14 @@ cd .. && yarn samples:methodfinder
 ```
 
 It prints `found` when calling the method finder to interceptr a call to a method of a generic class.
+
+## Parameter validation
+
+See [validation](validation).
+
+In order to run:
+```
+cd .. && yarn samples:validation
+```
+
+It prints `System.ArgumentOutOfRangeException` when validating a parameter value.
