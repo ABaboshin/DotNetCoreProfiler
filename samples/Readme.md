@@ -125,6 +125,11 @@ In order to run:
 cd .. && yarn samples:methodfinder
 ```
 
+This sample demonstrates howto customize the look up of a method.
+This technic can be used for:
+ - look up of the generic methods,
+ - replace methods on the fly.
+
 It prints `found` when calling the method finder to interceptr a call to a method of a generic class.
 
 ## Parameter validation
@@ -137,3 +142,22 @@ cd .. && yarn samples:validation
 ```
 
 It prints `System.ArgumentOutOfRangeException` when validating a parameter value.
+
+This method demonstrates the validation of the method parameters.
+
+## Attribute based
+
+See [attributed](attributed).
+
+In order to run:
+```
+cd .. && yarn samples:attributed
+```
+
+It prints
+```
+p1: 6000
+p2: an, array
+```
+
+This sample demonstrates intercept a method based on its attributes.
