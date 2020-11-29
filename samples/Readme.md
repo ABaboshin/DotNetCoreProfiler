@@ -115,3 +115,14 @@ Moreover this sample demonstrates:
  - howto inject customer `ILogger` from an interceptor,
  - howto report the metrics to jaeger,
  - howto inject custom trace id into logs.
+
+## Method Finder
+
+See [methodfinder](methodfinder).
+
+In order to run:
+```
+cd .. && yarn samples:methodfinder
+```
+
+It prints `found` when calling the method finder to interceptr a call to a method of a generic class.
