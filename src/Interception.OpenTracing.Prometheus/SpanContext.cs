@@ -1,5 +1,4 @@
 ﻿using OpenTracing;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -23,16 +22,15 @@ namespace Interception.OpenTracing.Prometheus
             _baggage = baggage;
         }
 
-        public SpanContext(string value)
+        public static SpanContext FromString(string value)
         {
             var parts = value.Split(':');
             if (parts.Length != 3)
             {
-                throw new ArgumentException($"Wrong SpanContext representation {value}");
+                return null;
             }
 
-            TraceId = $"{parts[0]}:{parts[1]}";
-            SpanId = parts[2];
+            return new SpanContext(parts[0], parts[1], parts[2], new Dictionary<string, string>());
         }
 
         public IEnumerable<KeyValuePair<string, string>> GetBaggageItems()
@@ -47,7 +45,7 @@ namespace Interception.OpenTracing.Prometheus
 
         public override string ToString()
         {
-            return $"{TraceId}:{SpanId}";
+            return $"{TraceId}:{SpanId}:{ParentSpanId}";
         }
 
         internal SpanContext WithBaggageItem(string key, string value)

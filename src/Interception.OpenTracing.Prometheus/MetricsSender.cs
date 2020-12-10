@@ -79,19 +79,14 @@ namespace Interception.OpenTracing.Prometheus
         private static void SendStatsdFormat(Span span, ILoggerFactory loggerFactory)
         {
             var duration = span.Duration.TotalMilliseconds;
-            var metricName = span.OperationName;
+            var metricType = span.OperationName;
             var tags = new Dictionary<string, string>(span.GetTags()?.ToDictionary(t => t.Key, t => t.Value?.ToString()))
             {
-                { "TraceId", span.Context.TraceId },
-                { "SpanId", span.Context.SpanId }
+                { "traceId", span.Context.TraceId },
+                { "spanId", span.Context.SpanId },
+                { "parentSpanId", span.Context.ParentSpanId },
+                { "service", _serviceConfiguration.Name }
             };
-
-            if (!string.IsNullOrEmpty(span.Context.ParentSpanId))
-            {
-                tags.Add("ParentSpanId", span.Context.ParentSpanId);
-            }
-
-            tags.Add("service", _serviceConfiguration.Name);
 
             foreach (var item in span.Context.GetBaggageItems())
             {
@@ -111,14 +106,50 @@ namespace Interception.OpenTracing.Prometheus
                 }
             }
 
-            tags.Add("metric", metricName);
-            tags.Add("startDate", span.StartTimestampUtc.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString());
-            tags.Add("finishDate", span.FinishTimestampUtc?.ToUniversalTime().Subtract(new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds.ToString());
+            tags.Add("type", metricType);
+            var startDate = span.StartTimestampUtc.ToUniversalTime().Subtract(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+            tags.Add("startDate", startDate.ToString());
+            var finishDate = span.FinishTimestampUtc?.ToUniversalTime().Subtract(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds;
+            tags.Add("finishDate", finishDate.ToString());
 
             loggerFactory.CreateLogger<MetricsSender>()
-                .LogDebug("Histogram {name} {duration} {tags}", metricName, duration, string.Join(", ", tags.Select(t => $"{t.Key}={t.Value}")));
+                .LogDebug("Histogram {name} {duration} {tags}", metricType, duration, string.Join(", ", tags.Select(t => $"{t.Key}={t.Value}")));
 
-            DogStatsd.Histogram("interception", duration, tags: tags.Where(t => t.Value != null).Select(t => $"{t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
+            DogStatsd.Histogram("metric", duration, tags:
+                new Dictionary<string, string>
+            {
+                { "type", tags["type"] },
+                { "startDate", tags["startDate"] },
+                { "finishDate", tags["finishDate"] },
+                { "traceId", tags["traceId"] },
+                { "spanId", tags["spanId"] },
+                { "parentSpanId", tags["parentSpanId"] },
+                { "service", tags["service"] },
+            }
+                .Where(t => t.Value != null).Select(t => $"{t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
+            DogStatsd.Histogram("startDate", startDate, tags:
+                new Dictionary<string, string>
+            {
+                { "traceId", tags["traceId"] },
+                { "spanId", tags["spanId"] },
+                { "parentSpanId", tags["parentSpanId"] },
+            }.Where(t => t.Value != null).Select(t => $"{t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
+            DogStatsd.Histogram("finishDate", finishDate, tags:
+                new Dictionary<string, string>
+            {
+                { "traceId", tags["traceId"] },
+                { "spanId", tags["spanId"] },
+                { "parentSpanId", tags["parentSpanId"] },
+            }.Where(t => t.Value != null).Select(t => $"{t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
+
+            Console.WriteLine($"finishDate: {finishDate.ToString()}");
+
+            DogStatsd.Histogram(metricType, duration, tags: tags.Where(t => t.Value != null && t.Key != "type").Select(t => $"{ t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
+
+            if (string.IsNullOrEmpty(span.Context.ParentSpanId))
+            {
+                DogStatsd.Histogram("metric_info", 1, tags: tags.Where(t => t.Value != null && !new List<string> { "startDate", "finishDate", "spanId", "parentSpanId" }.Contains(t.Key)).Select(t => $"{ t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
+            }
         }
     }
 }
