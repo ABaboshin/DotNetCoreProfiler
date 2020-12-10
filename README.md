@@ -71,6 +71,8 @@ See [src/Interception.Attributes](src/Interception.Attributes):
 
 See [src/Interception.OpenTracing.Prometheus](Interception.OpenTracing.Prometheus) is an implementation of OpenTracing to report the metrics into statsd.
 
+`(max by (traceId) (finishDate{quantile="0.99"}) - on (traceId) min by (traceId) (startDate{quantile="0.99"})) * on(traceId)  group_left(service, type) metric_info{quantile="0.99"}`
+
 ### Samples
 
 See [samples](samples).
