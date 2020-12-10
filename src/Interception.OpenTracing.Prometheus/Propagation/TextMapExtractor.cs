@@ -23,7 +23,7 @@ namespace Interception.OpenTracing.Prometheus.Propagation
             {
                 if (item.Key.ToLower() == _spanContextKey.ToLower())
                 {
-                    spanContext = new SpanContext(item.Value);
+                    spanContext = SpanContext.FromString(item.Value);
                 }
 
                 baggage.Add(item.Key, item.Value);

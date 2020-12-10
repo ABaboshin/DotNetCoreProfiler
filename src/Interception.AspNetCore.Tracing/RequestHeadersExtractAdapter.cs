@@ -1,5 +1,4 @@
-﻿using Interception.Tracing;
-using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Http;
 using OpenTracing.Propagation;
 using System;
 using System.Collections;
@@ -28,8 +27,6 @@ namespace Interception.AspNetCore
             {
                 yield return new KeyValuePair<string, string>(item.Key, item.Value);
             }
-
-            yield return new KeyValuePair<string, string>(Constants.TraceIdentifier, _context.TraceIdentifier);
         }
 
         IEnumerator IEnumerable.GetEnumerator()

@@ -60,7 +60,7 @@ namespace Interception.OpenTracing.Prometheus
                 var part1 = CorrelationIdGenerator.GetNextId();
                 var part2 = CorrelationIdGenerator.GetNextId();
 
-                spanContext = new SpanContext($"{part1}:{part2}", part2, "", new Dictionary<string, string>());
+                spanContext = new SpanContext(part1, part2, "", new Dictionary<string, string>());
             }
             else
             {
