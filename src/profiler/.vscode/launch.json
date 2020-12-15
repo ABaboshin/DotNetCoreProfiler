@@ -27,7 +27,7 @@
                 },
                 {
                     "name": "CORECLR_PROFILER_PATH",
-                    "value": "${workspaceFolder}/build/DotNetCoreProfiler.dylib"
+                    "value": "${workspaceFolder}/DotNetCoreProfiler.dylib"
                 }
             ],
             "externalConsole": false,

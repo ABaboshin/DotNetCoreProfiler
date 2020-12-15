@@ -368,3 +368,5 @@ CMakeCache.txt
 Makefile
 src/profiler/build
 tests/Profiler.Native.Tests/build
+DotNetCoreProfiler.dylib
+DotNetCoreProfiler.static.a
