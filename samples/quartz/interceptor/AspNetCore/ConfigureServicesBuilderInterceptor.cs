@@ -1,19 +1,12 @@
-﻿using Interception.AspNetCore;
-using Interception.Attributes;
+﻿using Interception.Attributes;
 using Interception.Core;
-using Interception.OpenTracing.Prometheus;
 using Interception.Quartz;
 using Interception.Tracing.Serilog;
-using Interception.Tracing;
-using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.Options;
 using OpenTracing.Util;
 using Serilog.Core;
 using Serilog.Events;
-using Serilog.Extensions.Hosting;
 using Serilog.Extensions.Logging;
 using Serilog.Formatting.Json;
 using Serilog;
@@ -52,22 +45,10 @@ namespace Interception.AspNetCore
                 .AddEnvironmentVariables()
                 .Build();
 
-            var tracingConfiguration = configuration.GetSection(TracingConfiguration.SectionKey).Get<TracingConfiguration>();
+            var config = Jaeger.Configuration.FromEnv(loggerFactory);
+            var tracer = config.GetTracer();
 
-            if (tracingConfiguration.Collector.ToLower() == "jaeger")
-            {
-                var config = Jaeger.Configuration.FromEnv(loggerFactory);
-                var tracer = config.GetTracer();
-
-                GlobalTracer.Register(tracer);
-            }
-            else
-            {
-                var config = PrometheusConfiguration.FromEnv(loggerFactory);
-                var tracer = config.GetTracer();
-
-                GlobalTracer.Register(tracer);
-            }
+            GlobalTracer.Register(tracer);
 
             serviceCollection.AddSingleton(sp => GlobalTracer.Instance);
         }

@@ -5,13 +5,13 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Interception.OpenTracing.Prometheus
+namespace Interception.OpenTracing
 {
-    class SpanBuilder : ISpanBuilder
+    public class SpanBuilder : ISpanBuilder
     {
         public Tracer Tracer { get; }
         private readonly string _operationName;
-        
+
         private readonly List<Reference> _references = new List<Reference>();
         private readonly Dictionary<string, object> _tags = new Dictionary<string, object>();
 

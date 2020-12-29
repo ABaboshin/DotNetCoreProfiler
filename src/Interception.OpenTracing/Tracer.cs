@@ -1,24 +1,22 @@
-﻿using Interception.OpenTracing.Prometheus.Propagation;
+﻿using Interception.OpenTracing.Propagation;
 using Interception.Tracing;
-using Microsoft.Extensions.Logging;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Util;
-using System;
 
-namespace Interception.OpenTracing.Prometheus
+namespace Interception.OpenTracing
 {
     public class Tracer : ITracer
     {
-        private readonly ILoggerFactory _loggerFactory;
         private readonly ServiceConfiguration _serviceConfiguration;
         private readonly string _spanContextKey;
+        private readonly IMetricsSender _metricSender;
 
-        public Tracer(ILoggerFactory loggerFactory, ServiceConfiguration serviceConfiguration, string spanContextKey)
+        public Tracer(ServiceConfiguration serviceConfiguration, string spanContextKey, IMetricsSender metricSender)
         {
-            _loggerFactory = loggerFactory;
             _serviceConfiguration = serviceConfiguration;
             _spanContextKey = spanContextKey;
+            _metricSender = metricSender;
             ScopeManager = new AsyncLocalScopeManager();
         }
 
@@ -47,7 +45,7 @@ namespace Interception.OpenTracing.Prometheus
 
         internal void ReportSpan(Span span)
         {
-            MetricsSender.Histogram(span, _loggerFactory);
+            _metricSender.Histogram(span);
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace Interception.OpenTracing.Prometheus.Extensions
+namespace Interception.OpenTracing.Statsd.Extensions
 {
     /// <summary>
     /// tags extensions
