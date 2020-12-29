@@ -79,7 +79,25 @@ Moreover this sample demonstrates:
  - howto inject custom trace id into logs,
  - howto inject customer custom trace id into http responses (see `x-trace-id`).
 
- ## Quartz
+## Http (incoming/outgoing) with Statsd
+
+See [http_statsd](http_statsd).
+
+In order to run:
+```
+cd .. && yarn samples:http:statsd
+```
+
+This sample sends one outgoing http request and receives one incoming http request when calling `http://localhost:5000/api/sample`.
+
+Open `http://localhost:9102/metrics` to see the metrics.
+
+Moreover this sample demonstrates:
+ - howto inject custom trace id into logs,
+ - howto inject customer custom trace id into http responses (see `x-trace-id`).
+
+
+## Quartz
 
 See [quartz](quartz).
 

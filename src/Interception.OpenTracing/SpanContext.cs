@@ -2,9 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Interception.OpenTracing.Prometheus
+namespace Interception.OpenTracing
 {
-    class SpanContext : ISpanContext
+    public class SpanContext : ISpanContext
     {
         private readonly IDictionary<string, string> _baggage = new Dictionary<string, string>();
 

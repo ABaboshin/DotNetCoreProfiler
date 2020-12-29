@@ -1,8 +1,8 @@
 ﻿using OpenTracing;
 
-namespace Interception.OpenTracing.Prometheus
+namespace Interception.OpenTracing
 {
-    class Reference
+    public class Reference
     {
         public ISpanContext Context { get; }
         public string Type { get; }

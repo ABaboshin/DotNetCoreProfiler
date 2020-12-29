@@ -1,14 +1,22 @@
-﻿using Interception.Attributes;
+﻿using Interception.AspNetCore;
+using Interception.Attributes;
 using Interception.Core;
+using Interception.Observers;
+using Interception.OpenTracing.Statsd;
 using Interception.Tracing.Serilog;
+using Interception.Tracing;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using OpenTracing.Util;
-using Serilog;
 using Serilog.Core;
 using Serilog.Events;
+using Serilog.Extensions.Hosting;
 using Serilog.Extensions.Logging;
 using Serilog.Formatting.Json;
+using Serilog;
 using System;
 
 namespace Interception.AspNetCore
@@ -23,6 +31,7 @@ namespace Interception.AspNetCore
 
         public override void ExecuteBefore()
         {
+            DiagnosticsObserver.ConfigureAndStart();
             var serviceCollection = ((IServiceCollection)GetParameter(1));
 
             var logger = CreateLogger();
@@ -33,6 +42,9 @@ namespace Interception.AspNetCore
                 .AddEnvironmentVariables()
                 .Build();
 
+            serviceCollection.Configure<AspNetCoreConfiguration>(configuration.GetSection(AspNetCoreConfiguration.SectionKey));
+            serviceCollection.AddSingleton<IStartupFilter>(_ => new TracingStartupFilter());
+
             ConfigureMetrics(loggerFactory, serviceCollection);
         }
 
@@ -42,7 +54,7 @@ namespace Interception.AspNetCore
                 .AddEnvironmentVariables()
                 .Build();
 
-            var config = Jaeger.Configuration.FromEnv(loggerFactory);
+            var config = StatsdConfiguration.FromEnv(loggerFactory);
             var tracer = config.GetTracer();
 
             GlobalTracer.Register(tracer);

@@ -1,6 +1,6 @@
 ﻿using OpenTracing;
 
-namespace Interception.OpenTracing.Prometheus.Propagation
+namespace Interception.OpenTracing.Propagation
 {
     interface IInjector<T>
     {

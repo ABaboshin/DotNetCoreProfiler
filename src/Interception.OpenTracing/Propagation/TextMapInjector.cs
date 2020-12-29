@@ -2,7 +2,7 @@
 using OpenTracing.Propagation;
 using System;
 
-namespace Interception.OpenTracing.Prometheus.Propagation
+namespace Interception.OpenTracing.Propagation
 {
     public class TextMapInjector : IInjector<ITextMap>
     {

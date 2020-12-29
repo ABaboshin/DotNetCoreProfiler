@@ -4,9 +4,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Interception.OpenTracing.Prometheus
+namespace Interception.OpenTracing
 {
-    internal class Span : ISpan
+    public class Span : ISpan
     {
         private SpanBuilder _spanBuilder;
         public string OperationName { get; private set; }

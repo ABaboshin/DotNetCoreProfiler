@@ -4,7 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Interception.OpenTracing.Prometheus.Propagation
+namespace Interception.OpenTracing.Propagation
 {
     class TextMapExtractor : IExtractor<ITextMap>
     {

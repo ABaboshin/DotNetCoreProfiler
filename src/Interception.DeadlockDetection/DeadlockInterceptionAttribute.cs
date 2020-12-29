@@ -10,7 +10,8 @@ namespace Interception.DeadlockDetection
         {
             IgnoreCallerAssemblies = new string[] { "GreenPipes",
             "Interception.DeadlockDetection",
-            "Interception.OpenTracing.Prometheus",
+            "Interception.OpenTracing",
+            "Interception.OpenTracing.Statsd",
             "Jaeger",
             "MassTransit",
             "Microsoft.AspNetCore.Authentication.Core",

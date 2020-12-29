@@ -7,7 +7,8 @@ Interception.DeadlockDetection
 Interception.DependencyInjection
 Interception.MassTransit
 Interception.Observers
-Interception.OpenTracing.Prometheus
+Interception.OpenTracing
+Interception.OpenTracing.Statsd
 Interception.Quartz
 Interception.Tracing
 Interception.Tracing.Serilog
