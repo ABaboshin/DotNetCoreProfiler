@@ -18,6 +18,7 @@ func main() {
 
 	go listenUDS()
 	go listenUDP()
+	go listenTCP()
 
 	for {
 		select {

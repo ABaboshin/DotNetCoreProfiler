@@ -22,6 +22,11 @@ namespace Interception.OpenTracing.MetricProxy
         /// </summary>
         public string Uds { get; set; }
 
+        /// <summary>
+        /// metric proxy server tcp address
+        /// </summary>
+        public string Tcp { get; set; }
+
         public static ITracer FromEnv(ILoggerFactory loggerFactory)
         {
             var configuration = new ConfigurationBuilder()

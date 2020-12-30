@@ -33,7 +33,7 @@ func listenUDS() error {
 	for {
 		conn, err := l.AcceptUnix()
 		if err != nil {
-			panic(err)
+			continue
 		}
 
 		var buf bytes.Buffer
@@ -41,7 +41,7 @@ func listenUDS() error {
 		message := &TraceMetric{}
 		err = proto.Unmarshal(buf.Bytes(), message)
 		if err != nil {
-			return err
+			continue
 		}
 
 		queue.Enqueue(message)

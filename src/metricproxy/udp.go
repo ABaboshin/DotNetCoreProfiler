@@ -22,25 +22,25 @@ func listenUDP() error {
 		Zone: ip.Zone,
 	}
 
-	uconn, err := net.ListenUDP("udp", addr)
+	conn, err := net.ListenUDP("udp", addr)
 	if err != nil {
 		log.Fatal(err)
 		os.Exit(1)
 	}
 
-	defer uconn.Close()
+	defer conn.Close()
 
 	log.Printf("listenUDP [%s]", os.Getenv("METRIC_PROXY_SERVER__UDP"))
 
 	buf := make([]byte, 65535)
 
 	for {
-		n, _, err := uconn.ReadFromUDP(buf)
+		n, _, err := conn.ReadFromUDP(buf)
 
 		message := &TraceMetric{}
 		err = proto.Unmarshal(buf[0:n], message)
 		if err != nil {
-			return err
+			continue
 		}
 
 		queue.Enqueue(message)

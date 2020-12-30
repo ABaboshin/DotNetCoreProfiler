@@ -31,6 +31,11 @@ namespace Interception.OpenTracing.MetricProxy
             {
                 _underlyingMetricSender = new UdsMetricSender(_loggerFactory, _metricProxyConfiguration.Uds);
             }
+
+            if (!string.IsNullOrEmpty(_metricProxyConfiguration.Tcp))
+            {
+                _underlyingMetricSender = new TcpMetricSender(_loggerFactory, _metricProxyConfiguration.Tcp);
+            }
         }
 
         public void Histogram(Span span)
