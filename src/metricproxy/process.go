@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/DataDog/datadog-go/statsd"
 )
@@ -25,16 +26,6 @@ func process() {
 			val := v.(*TraceMetric)
 
 			log.Printf("Got type [%s] value [%f] startDate [%f] finishDate [%f]", *val.Type, *val.Value, *val.StartDate, *val.FinishDate)
-
-			var tags []string
-
-			for _, t := range val.Tags {
-				tags = append(tags, fmt.Sprintf("%s:%s", *t.Name, *t.Value))
-			}
-
-			tags = append(tags, fmt.Sprintf("traceId:%s", *val.TraceId))
-			tags = append(tags, fmt.Sprintf("service:%s", *val.Service))
-			tags = append(tags, fmt.Sprintf("type:%s", *val.Type))
 
 			err = statsd.Histogram(
 				"startDate",
@@ -70,6 +61,16 @@ func process() {
 				},
 				1)
 
+			var tags []string
+
+			for _, t := range val.Tags {
+				tags = append(tags, fmt.Sprintf("%s:%s", *t.Name, *t.Value))
+			}
+
+			tags = append(tags, fmt.Sprintf("traceId:%s", *val.TraceId))
+			tags = append(tags, fmt.Sprintf("service:%s", *val.Service))
+			tags = append(tags, fmt.Sprintf("type:%s", *val.Type))
+
 			if *val.ParentSpanId == "" {
 				statsd.Histogram(
 					"metric_info",
@@ -77,6 +78,12 @@ func process() {
 					tags,
 					1)
 			}
+
+			statsd.Histogram(
+				"metric_stat",
+				*val.Value,
+				filter(tags, func(s string) bool { return !strings.HasPrefix(s, "type:") && !strings.HasPrefix(s, "traceId:") }),
+				1)
 
 			tags = append(tags, fmt.Sprintf("startDate:%f", *val.StartDate))
 			tags = append(tags, fmt.Sprintf("finishDate:%f", *val.FinishDate))
@@ -86,8 +93,17 @@ func process() {
 			statsd.Histogram(
 				*val.Type,
 				*val.Value,
-				tags,
+				filter(tags, func(s string) bool { return !strings.HasPrefix(s, "type:") }),
 				1)
 		}
 	}
+}
+
+func filter(ss []string, test func(string) bool) (ret []string) {
+	for _, s := range ss {
+		if test(s) {
+			ret = append(ret, s)
+		}
+	}
+	return
 }

@@ -95,6 +95,9 @@ namespace Interception.OpenTracing.Statsd
 
       DogStatsd.Histogram(metricType, duration, tags: tags.Where(t => t.Value != null && t.Key != "type").Select(t => $"{ t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
 
+      var statTags = tags.Where(t => t.Value != null && !new List<string> { "startDate", "finishDate", "spanId", "parentSpanId", "traceId", "type" }.Contains(t.Key)).Select(t => $"{ t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray();
+      DogStatsd.Histogram($"{metricType}_stat", duration, tags: statTags);
+
       if (string.IsNullOrEmpty(span.Context.ParentSpanId))
       {
         DogStatsd.Histogram("metric_info", 1, tags: tags.Where(t => t.Value != null && !new List<string> { "startDate", "finishDate", "spanId", "parentSpanId" }.Contains(t.Key)).Select(t => $"{ t.Key}:{t.Value?.ToString().EscapeTagValue()}").ToArray());
