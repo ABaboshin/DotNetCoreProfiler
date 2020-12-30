@@ -15,6 +15,8 @@ services:
       STATSD__SERVER: "statsd"
       STATSD__PORT: "9125"
       LOG_LEVEL: "Error"
+      METRIC_PROXY__UDS: "/var/metricproxy"
+      METRIC_PROXY_SERVER__UDS: "/var/metricproxy"
     ports:
       - "5000:5000"
 
@@ -32,6 +34,8 @@ services:
       STATSD__SERVER: "statsd"
       STATSD__PORT: "9125"
       LOG_LEVEL: "Error"
+      METRIC_PROXY__UDS: "/var/metricproxy"
+      METRIC_PROXY_SERVER__UDS: "/var/metricproxy"
     ports:
       - "6000:6000"
 

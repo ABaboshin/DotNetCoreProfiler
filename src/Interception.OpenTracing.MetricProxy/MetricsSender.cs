@@ -26,6 +26,11 @@ namespace Interception.OpenTracing.MetricProxy
             {
                 _underlyingMetricSender = new UdpMetricSender(_loggerFactory, _metricProxyConfiguration.Udp);
             }
+
+            if (!string.IsNullOrEmpty(_metricProxyConfiguration.Uds))
+            {
+                _underlyingMetricSender = new UdsMetricSender(_loggerFactory, _metricProxyConfiguration.Uds);
+            }
         }
 
         public void Histogram(Span span)
@@ -44,19 +49,6 @@ namespace Interception.OpenTracing.MetricProxy
             metric.Tags.Add(span.GetTags().Select(item => new TraceMetric.Types.Tag { Name = item.Key.EscapeTagName(), Value = item.Value?.ToString() }));
 
             _underlyingMetricSender.Send(metric);
-
-            //using (var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified))
-            //{
-            //    socket.Connect(new UnixDomainSocketEndPoint("/var/tracing-proxy.sock"));
-
-            //    var ns = new NetworkStream(socket);
-            //    using (var cod = new CodedOutputStream(ns))
-            //    {
-            //        Console.WriteLine($"start send metric {DateTime.UtcNow.Subtract(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds}");
-            //        metric.WriteTo(cod);
-            //        Console.WriteLine($"finish send metric {DateTime.UtcNow.Subtract(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds}");
-            //    }
-            //}
         }
     }
 }

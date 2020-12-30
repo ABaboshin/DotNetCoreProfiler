@@ -33,7 +33,7 @@ namespace Interception.OpenTracing.Statsd
       var serviceConfiguration = configuration.GetSection(ServiceConfiguration.SectionKey).Get<ServiceConfiguration>();
       var metricSender = new MetricsSender(serviceConfiguration, statsdConfiguration, loggerFactory);
 
-      return new Tracer(serviceConfiguration, Constants.TraceIdentifier, metricsSender);
+      return new Tracer(serviceConfiguration, Constants.TraceIdentifier, metricSender);
     }
   }
 }

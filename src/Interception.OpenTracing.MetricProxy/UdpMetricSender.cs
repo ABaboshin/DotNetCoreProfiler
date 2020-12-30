@@ -40,8 +40,6 @@ namespace Interception.OpenTracing.MetricProxy
 
         public void Send(TraceMetric metric)
         {
-            Console.WriteLine($"start send metric {DateTime.UtcNow.Subtract(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds}");
-            
             var ms = new MemoryStream();
             using (var cod = new CodedOutputStream(ms))
             {
@@ -51,8 +49,6 @@ namespace Interception.OpenTracing.MetricProxy
 
             var ar = ms.ToArray();
             _socket.SendTo(ar, 0, ar.Length, SocketFlags.None, _endPoint);
-
-            Console.WriteLine($"finish send metric {DateTime.UtcNow.Subtract(new DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)).TotalMilliseconds}");
         }
     }
 }

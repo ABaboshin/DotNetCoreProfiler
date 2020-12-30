@@ -54,8 +54,7 @@ namespace Interception.AspNetCore
                 .AddEnvironmentVariables()
                 .Build();
 
-            var config = MetricProxyConfiguration.FromEnv(loggerFactory);
-            var tracer = config.GetTracer();
+            var tracer = MetricProxyConfiguration.FromEnv(loggerFactory);
 
             GlobalTracer.Register(tracer);
 
