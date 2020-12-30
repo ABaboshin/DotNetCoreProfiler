@@ -7,7 +7,7 @@ services:
 
 before_install:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
-- TAG=linux-x64-20201230
+- TAG=linux-x64-20201231
 - yarn tests:all
 - yarn build:core
 - yarn build:native:nuget
