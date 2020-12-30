@@ -13,9 +13,7 @@ services:
       httphandler_metrics__name: "outgoing"
       service__name: "sampleapp"
       LOG_LEVEL: "Error"
-      METRIC_PROXY__UDP: "localhost:10000"
-      METRIC_PROXY_SERVER__UDP: ":10000"
-      METRIC_PROXY_SERVER__STATSD: "statsd:9125"
+      METRIC_PROXY__UDP: "metricproxy:10000"
     ports:
       - "5000:5000"
 
@@ -31,11 +29,15 @@ services:
       httphandler_metrics__name: "outgoing"
       service__name: "sampleapp"
       LOG_LEVEL: "Error"
-      METRIC_PROXY__UDP: "localhost:10000"
-      METRIC_PROXY_SERVER__UDP: ":10000"
-      METRIC_PROXY_SERVER__STATSD: "statsd:9125"
+      METRIC_PROXY__UDP: "metricproxy:10000"
     ports:
       - "6000:6000"
+
+  metricproxy:
+    image: metricproxy:native
+    environment:
+      METRIC_PROXY_SERVER__UDP: ":10000"
+      METRIC_PROXY_SERVER__STATSD: "statsd:9125"
 
   statsd:
     image: prom/statsd-exporter:v0.18.0

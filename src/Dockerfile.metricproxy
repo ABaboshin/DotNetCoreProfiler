@@ -10,3 +10,5 @@ RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o /metricpr
 FROM scratch
 
 COPY --from=builder /metricproxy /metricproxy
+
+ENTRYPOINT  [ "/metricproxy" ]

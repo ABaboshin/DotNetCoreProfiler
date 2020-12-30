@@ -15,8 +15,6 @@ RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Intercepti
 
 FROM profiler:native as profiler
 
-FROM interception:metricproxy as metricproxy
-
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.5-bionic
 RUN apt update && apt install -y dos2unix
 
@@ -33,11 +31,10 @@ ENV PROFILER_LOG_LEVEL="INFO"
 ENTRYPOINT ["/app/run.sh"]
 
 RUN mkdir /profiler
-COPY --from=metricproxy /metricproxy /profiler
 COPY --from=profiler /DotNetCoreProfiler.so /profiler
 
 COPY --from=build /app /app
 COPY --from=build /samples/http_metricproxy_udp/run.sh /app
 COPY --from=build /interceptor/*.dll /profiler/
 COPY --from=build /interceptor/profiler.json /profiler/
-RUN dos2unix /app/run.sh && chmod +x /app/run.sh && chmod +x /profiler/metricproxy
+RUN dos2unix /app/run.sh && chmod +x /app/run.sh

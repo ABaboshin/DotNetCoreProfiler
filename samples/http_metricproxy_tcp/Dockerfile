@@ -15,7 +15,7 @@ RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Intercepti
 
 FROM profiler:native as profiler
 
-FROM interception:metricproxy as metricproxy
+FROM metricproxy:native as metricproxy
 
 FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.5-bionic
 RUN apt update && apt install -y dos2unix

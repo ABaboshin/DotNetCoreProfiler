@@ -7,9 +7,13 @@ services:
 
 before_install:
 - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USERNAME" --password-stdin
+- TAG=linux-x64-20201230
 - yarn tests:all
 - yarn build:core
 - yarn build:native:nuget
+- yarn build:metricproxy
+- docker tag metricproxy:native ababoshin/metricproxy:$TAG
+- docker push ababoshin/metricproxy:$TAG
 
 script:
 - echo "done"
