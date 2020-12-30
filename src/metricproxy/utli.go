@@ -29,3 +29,12 @@ func ExtractIPInfo(addr string) (*net.IPAddr, int, error) {
 
 	return ip, port, nil
 }
+
+func filter(ss []string, test func(string) bool) (ret []string) {
+	for _, s := range ss {
+		if test(s) {
+			ret = append(ret, s)
+		}
+	}
+	return
+}

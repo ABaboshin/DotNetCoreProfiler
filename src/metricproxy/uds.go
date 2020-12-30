@@ -3,11 +3,11 @@ package main
 import (
 	"bytes"
 	"io"
-	"log"
 	"net"
 	"os"
 
 	proto "github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 )
 
 func listenUDS() error {
@@ -19,16 +19,24 @@ func listenUDS() error {
 	}
 
 	if err := os.RemoveAll(sockAddr); err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{
+			"error": err,
+			"path":  sockAddr,
+		}).Fatal("Cannot remove an unix domain socket")
 	}
 
 	l, err := net.ListenUnix("unix", &net.UnixAddr{sockAddr, "unix"})
 	if err != nil {
-		log.Fatal("listen error:", err)
+		log.WithFields(log.Fields{
+			"error": err,
+			"path":  sockAddr,
+		}).Fatal("Cannot listen to an unix domain socket")
 	}
 	defer l.Close()
 
-	log.Printf("listenUDS [%s]", sockAddr)
+	log.WithFields(log.Fields{
+		"path": sockAddr,
+	}).Info("Listen to an unix domain socket")
 
 	for {
 		conn, err := l.AcceptUnix()
@@ -41,6 +49,7 @@ func listenUDS() error {
 		message := &TraceMetric{}
 		err = proto.Unmarshal(buf.Bytes(), message)
 		if err != nil {
+			log.Debug("Cannot parse a metric, skip")
 			continue
 		}
 

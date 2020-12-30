@@ -38,6 +38,7 @@ services:
     environment:
       METRIC_PROXY_SERVER__UDP: ":10000"
       METRIC_PROXY_SERVER__STATSD: "statsd:9125"
+      METRIC_PROXY_SERVER__LOG_LEVEL: "info"
 
   statsd:
     image: prom/statsd-exporter:v0.18.0

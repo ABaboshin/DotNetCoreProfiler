@@ -3,11 +3,11 @@ package main
 import (
 	"bytes"
 	"io"
-	"log"
 	"net"
 	"os"
 
 	proto "github.com/golang/protobuf/proto"
+	log "github.com/sirupsen/logrus"
 )
 
 func listenTCP() error {
@@ -26,13 +26,17 @@ func listenTCP() error {
 
 	conn, err := net.ListenTCP("tcp", addr)
 	if err != nil {
-		log.Fatal(err)
-		os.Exit(1)
+		log.WithFields(log.Fields{
+			"error": err,
+			"path":  os.Getenv("METRIC_PROXY_SERVER__TCP"),
+		}).Fatal("Cannot listen to a TCP socket")
 	}
 
 	defer conn.Close()
 
-	log.Printf("listenTCP [%s]", os.Getenv("METRIC_PROXY_SERVER__TCP"))
+	log.WithFields(log.Fields{
+		"path": os.Getenv("METRIC_PROXY_SERVER__TCP"),
+	}).Info("Listen to a TCP socket")
 
 	for {
 		c, err := conn.AcceptTCP()
@@ -47,6 +51,7 @@ func listenTCP() error {
 		message := &TraceMetric{}
 		err = proto.Unmarshal(buf.Bytes(), message)
 		if err != nil {
+			log.Debug("Cannot parse a metric, skip")
 			continue
 		}
 

@@ -2,11 +2,11 @@ package main
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strings"
 
 	"github.com/DataDog/datadog-go/statsd"
+	log "github.com/sirupsen/logrus"
 )
 
 func process() {
@@ -17,15 +17,28 @@ func process() {
 
 	statsd, err := statsd.New(os.Getenv("METRIC_PROXY_SERVER__STATSD"))
 	if err != nil {
-		log.Fatal(err)
+		log.WithFields(log.Fields{
+			"error": err,
+			"path":  os.Getenv("METRIC_PROXY_SERVER__STATSD"),
+		}).Fatal("Cannot connect to statsd exporter")
 	}
+
+	log.WithFields(log.Fields{
+		"path": os.Getenv("METRIC_PROXY_SERVER__STATSD"),
+	}).Info("Connected to statsd exporter")
 
 	for {
 		select {
 		case v := <-iter:
 			val := v.(*TraceMetric)
 
-			log.Printf("Got type [%s] value [%f] startDate [%f] finishDate [%f]", *val.Type, *val.Value, *val.StartDate, *val.FinishDate)
+			log.WithFields(log.Fields{
+				"type":       *val.Type,
+				"value":      *val.Value,
+				"startDate":  *val.StartDate,
+				"finishDate": *val.FinishDate,
+				"traceId":    *val.TraceId,
+			}).Debug("Process metric")
 
 			err = statsd.Histogram(
 				"startDate",
@@ -97,13 +110,4 @@ func process() {
 				1)
 		}
 	}
-}
-
-func filter(ss []string, test func(string) bool) (ret []string) {
-	for _, s := range ss {
-		if test(s) {
-			ret = append(ret, s)
-		}
-	}
-	return
 }
