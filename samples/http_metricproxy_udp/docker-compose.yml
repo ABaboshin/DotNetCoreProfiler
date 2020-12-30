@@ -12,11 +12,10 @@ services:
       httphandler_metrics__enabled: "true"
       httphandler_metrics__name: "outgoing"
       service__name: "sampleapp"
-      STATSD__SERVER: "statsd"
-      STATSD__PORT: "9125"
       LOG_LEVEL: "Error"
       METRIC_PROXY__UDP: "localhost:10000"
       METRIC_PROXY_SERVER__UDP: ":10000"
+      METRIC_PROXY_SERVER__STATSD: "statsd:9125"
     ports:
       - "5000:5000"
 
@@ -31,11 +30,10 @@ services:
       httphandler_metrics__enabled: "true"
       httphandler_metrics__name: "outgoing"
       service__name: "sampleapp"
-      STATSD__SERVER: "statsd"
-      STATSD__PORT: "9125"
       LOG_LEVEL: "Error"
       METRIC_PROXY__UDP: "localhost:10000"
       METRIC_PROXY_SERVER__UDP: ":10000"
+      METRIC_PROXY_SERVER__STATSD: "statsd:9125"
     ports:
       - "6000:6000"
 
