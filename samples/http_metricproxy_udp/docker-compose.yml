@@ -1,0 +1,46 @@
+version: '3.3'
+
+services:
+  sampleapp:
+    image: samples:http
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://*:5000"
+      SERVICE_URL: "http://sampleapp2:6000"
+      aspnetcore_metrics__enabled: "true"
+      aspnetcore_metrics__name: "incoming"
+      httphandler_metrics__enabled: "true"
+      httphandler_metrics__name: "outgoing"
+      service__name: "sampleapp"
+      STATSD__SERVER: "statsd"
+      STATSD__PORT: "9125"
+      LOG_LEVEL: "Error"
+      METRIC_PROXY__UDP: "localhost:10000"
+      METRIC_PROXY_SERVER__UDP: ":10000"
+    ports:
+      - "5000:5000"
+
+  sampleapp2:
+    image: samples:http
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: "http://*:6000"
+      SERVICE_URL: "http://sampleapp2:6000"
+      aspnetcore_metrics__enabled: "true"
+      aspnetcore_metrics__name: "incoming"
+      httphandler_metrics__enabled: "true"
+      httphandler_metrics__name: "outgoing"
+      service__name: "sampleapp"
+      STATSD__SERVER: "statsd"
+      STATSD__PORT: "9125"
+      LOG_LEVEL: "Error"
+      METRIC_PROXY__UDP: "localhost:10000"
+      METRIC_PROXY_SERVER__UDP: ":10000"
+    ports:
+      - "6000:6000"
+
+  statsd:
+    image: prom/statsd-exporter:v0.18.0
+    ports:
+      - "9125:9125/udp"
+      - "9102:9102"

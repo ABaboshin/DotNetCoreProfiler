@@ -7,30 +7,27 @@ namespace Interception.OpenTracing.MetricProxy
 {
   public class MetricProxyConfiguration
   {
-    private readonly ServiceConfiguration _serviceConfiguration;
-    private readonly IMetricsSender _metricsSender;
+    /// <summary>
+    /// Section name in configuration
+    /// </summary>
+    public static readonly string SectionKey = "metric_proxy";
 
-    public MetricProxyConfiguration(ServiceConfiguration serviceConfiguration, IMetricsSender metricsSender)
-    {
-      _serviceConfiguration = serviceConfiguration;
-      _metricsSender = metricsSender;
-    }
+    /// <summary>
+    /// metric proxy server udp address
+    /// </summary>
+    public string Udp { get; set; }
 
-    public static MetricProxyConfiguration FromEnv(ILoggerFactory loggerFactory)
+    public static ITracer FromEnv(ILoggerFactory loggerFactory)
     {
       var configuration = new ConfigurationBuilder()
           .AddEnvironmentVariables()
           .Build();
 
+      var metricProxyConfiguration = configuration.GetSection(MetricProxyConfiguration.SectionKey).Get<MetricProxyConfiguration>();
       var serviceConfiguration = configuration.GetSection(ServiceConfiguration.SectionKey).Get<ServiceConfiguration>();
-      var metricSender = new MetricsSender(serviceConfiguration, loggerFactory);
+      var metricSender = new MetricsSender(metricProxyConfiguration, serviceConfiguration, loggerFactory);
 
-      return new MetricProxyConfiguration(serviceConfiguration, metricSender);
-    }
-
-    public ITracer GetTracer()
-    {
-      return new Tracer(_serviceConfiguration, Constants.TraceIdentifier, _metricsSender);
+      return new Tracer(serviceConfiguration, Constants.TraceIdentifier, metricSender);
     }
   }
 }
