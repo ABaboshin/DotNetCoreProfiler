@@ -18,6 +18,7 @@ RUN dotnet build -c Release src/Interception.OpenTracing.Statsd/Interception.Ope
 RUN dotnet build -c Release src/Interception.Quartz/Interception.Quartz.csproj
 RUN dotnet build -c Release src/Interception.Tracing/Interception.Tracing.csproj
 RUN dotnet build -c Release src/Interception.Tracing.Serilog/Interception.Tracing.Serilog.csproj
+RUN dotnet build -c Release src/Interception.OpenTracing.MetricProxy/Interception.OpenTracing.MetricProxy.csproj
 
 RUN mkdir /nuget && find /src -name "*.nupkg" -exec cp -t /nuget/ -- {} +
 

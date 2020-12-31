@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\..\..\src\Interception.Attributes\Interception.Attributes.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Core\Interception.Core.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Observers\Interception.Observers.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Tracing\Interception.Tracing.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.Tracing.Serilog\Interception.Tracing.Serilog.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.AspNetCore.Tracing\Interception.AspNetCore.Tracing.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.AspNetCore.WebHost\Interception.AspNetCore.WebHost.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.OpenTracing.MetricProxy\Interception.OpenTracing.MetricProxy.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.5" />
+    <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
+    <PackageReference Include="Serilog.Extensions.Hosting" Version="3.0.0" />
+  </ItemGroup>
+
+</Project>

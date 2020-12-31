@@ -54,8 +54,7 @@ namespace Interception.AspNetCore
                 .AddEnvironmentVariables()
                 .Build();
 
-            var config = StatsdConfiguration.FromEnv(loggerFactory);
-            var tracer = config.GetTracer();
+            var tracer = StatsdConfiguration.FromEnv(loggerFactory);
 
             GlobalTracer.Register(tracer);
 

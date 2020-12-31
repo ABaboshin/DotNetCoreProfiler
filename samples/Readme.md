@@ -96,6 +96,56 @@ Moreover this sample demonstrates:
  - howto inject custom trace id into logs,
  - howto inject customer custom trace id into http responses (see `x-trace-id`).
 
+## Http (incoming/outgoing) with metric proxy over UDP
+
+See [http_metricproxy](http_metricproxy_udp).
+
+In order to run:
+```
+cd .. && yarn samples:http:metricproxy:udp
+```
+
+This sample sends one outgoing http request and receives one incoming http request when calling `http://localhost:5000/api/sample`.
+
+Open `http://localhost:9102/metrics` to see the metrics.
+
+Moreover this sample demonstrates:
+ - howto inject custom trace id into logs,
+ - howto inject customer custom trace id into http responses (see `x-trace-id`).
+
+## Http (incoming/outgoing) with metric proxy over TCP
+
+See [http_metricproxy](http_metricproxy_tcp).
+
+In order to run:
+```
+cd .. && yarn samples:http:metricproxy:tcp
+```
+
+This sample sends one outgoing http request and receives one incoming http request when calling `http://localhost:5000/api/sample`.
+
+Open `http://localhost:9102/metrics` to see the metrics.
+
+Moreover this sample demonstrates:
+ - howto inject custom trace id into logs,
+ - howto inject customer custom trace id into http responses (see `x-trace-id`).
+
+## Http (incoming/outgoing) with metric proxy over unix domain socket
+
+See [http_metricproxy](http_metricproxy_uds).
+
+In order to run:
+```
+cd .. && yarn samples:http:metricproxy:uds
+```
+
+This sample sends one outgoing http request and receives one incoming http request when calling `http://localhost:5000/api/sample`.
+
+Open `http://localhost:9102/metrics` to see the metrics.
+
+Moreover this sample demonstrates:
+ - howto inject custom trace id into logs,
+ - howto inject customer custom trace id into http responses (see `x-trace-id`).
 
 ## Quartz
 

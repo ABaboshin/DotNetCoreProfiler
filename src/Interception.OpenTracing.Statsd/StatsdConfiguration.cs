@@ -23,16 +23,7 @@ namespace Interception.OpenTracing.Statsd
     /// </summary>
     public int Port { get; set; }
 
-    private readonly ServiceConfiguration _serviceConfiguration;
-    private readonly IMetricsSender _metricsSender;
-
-    public StatsdConfiguration(ServiceConfiguration serviceConfiguration, IMetricsSender metricsSender)
-    {
-      _serviceConfiguration = serviceConfiguration;
-      _metricsSender = metricsSender;
-    }
-
-    public static StatsdConfiguration FromEnv(ILoggerFactory loggerFactory)
+    public static ITracer FromEnv(ILoggerFactory loggerFactory)
     {
       var configuration = new ConfigurationBuilder()
           .AddEnvironmentVariables()
@@ -42,12 +33,7 @@ namespace Interception.OpenTracing.Statsd
       var serviceConfiguration = configuration.GetSection(ServiceConfiguration.SectionKey).Get<ServiceConfiguration>();
       var metricSender = new MetricsSender(serviceConfiguration, statsdConfiguration, loggerFactory);
 
-      return new StatsdConfiguration(serviceConfiguration, metricSender);
-    }
-
-    public ITracer GetTracer()
-    {
-      return new Tracer(_serviceConfiguration, Constants.TraceIdentifier, _metricsSender);
+      return new Tracer(serviceConfiguration, Constants.TraceIdentifier, metricSender);
     }
   }
 }
