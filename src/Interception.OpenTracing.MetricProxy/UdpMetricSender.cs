@@ -38,7 +38,7 @@ namespace Interception.OpenTracing.MetricProxy
             }
         }
 
-        public void Send(TraceMetric metric)
+        public bool Send(TraceMetric metric)
         {
             var ms = new MemoryStream();
             using (var cod = new CodedOutputStream(ms))
@@ -49,6 +49,8 @@ namespace Interception.OpenTracing.MetricProxy
 
             var ar = ms.ToArray();
             _socket.SendTo(ar, 0, ar.Length, SocketFlags.None, _endPoint);
+
+            return true;
         }
     }
 }

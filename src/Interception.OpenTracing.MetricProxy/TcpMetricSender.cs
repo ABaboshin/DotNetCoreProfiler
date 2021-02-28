@@ -25,13 +25,15 @@ namespace Interception.OpenTracing.MetricProxy
             Console.WriteLine($"Connected {_tcpClient.Connected}");
         }
 
-        public void Send(TraceMetric metric)
+        public bool Send(TraceMetric metric)
         {
             var ns = _tcpClient.GetStream();
             using (var cod = new CodedOutputStream(ns))
             {
                 metric.WriteTo(cod);
             }
+
+            return true;
         }
     }
 }

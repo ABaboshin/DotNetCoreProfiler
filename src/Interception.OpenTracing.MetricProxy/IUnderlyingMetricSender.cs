@@ -2,6 +2,6 @@
 {
     internal interface IUnderlyingMetricSender
     {
-        void Send(TraceMetric metric);
+        bool Send(TraceMetric metric);
     }
 }

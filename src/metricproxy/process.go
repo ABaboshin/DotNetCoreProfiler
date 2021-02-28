@@ -9,27 +9,36 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
+var (
+	err    error
+	client *statsd.Client
+)
+
 func process() {
 
 	watchIterator := queue.NewWatchIterator()
 	iter := watchIterator.Iter()
 	defer watchIterator.Close()
 
-	statsd, err := statsd.New(os.Getenv("METRIC_PROXY_SERVER__STATSD"))
-	if err != nil {
-		log.WithFields(log.Fields{
-			"error": err,
-			"path":  os.Getenv("METRIC_PROXY_SERVER__STATSD"),
-		}).Fatal("Cannot connect to statsd exporter")
-	}
-
-	log.WithFields(log.Fields{
-		"path": os.Getenv("METRIC_PROXY_SERVER__STATSD"),
-	}).Info("Connected to statsd exporter")
-
 	for {
 		select {
 		case v := <-iter:
+
+			if client == nil {
+				client, err = statsd.New(os.Getenv("METRIC_PROXY_SERVER__STATSD"))
+				if err != nil {
+					log.WithFields(log.Fields{
+						"error": err,
+						"path":  os.Getenv("METRIC_PROXY_SERVER__STATSD"),
+					}).Error("Cannot connect to statsd exporter")
+					continue
+				}
+			}
+
+			log.WithFields(log.Fields{
+				"path": os.Getenv("METRIC_PROXY_SERVER__STATSD"),
+			}).Info("Connected to statsd exporter")
+
 			val := v.(*TraceMetric)
 
 			log.WithFields(log.Fields{
@@ -40,7 +49,7 @@ func process() {
 				"traceId":    *val.TraceId,
 			}).Debug("Process metric")
 
-			err = statsd.Histogram(
+			client.Histogram(
 				"startDate",
 				*val.StartDate,
 				[]string{
@@ -50,7 +59,7 @@ func process() {
 				},
 				1)
 
-			statsd.Histogram(
+			client.Histogram(
 				"finishDate",
 				*val.FinishDate,
 				[]string{
@@ -60,7 +69,7 @@ func process() {
 				},
 				1)
 
-			statsd.Histogram(
+			client.Histogram(
 				"metric",
 				*val.Value,
 				[]string{
@@ -85,14 +94,14 @@ func process() {
 			tags = append(tags, fmt.Sprintf("type:%s", *val.Type))
 
 			if *val.ParentSpanId == "" {
-				statsd.Histogram(
+				client.Histogram(
 					"metric_info",
 					1,
 					tags,
 					1)
 			}
 
-			statsd.Histogram(
+			client.Histogram(
 				"metric_stat",
 				*val.Value,
 				filter(tags, func(s string) bool { return !strings.HasPrefix(s, "type:") && !strings.HasPrefix(s, "traceId:") }),
@@ -103,7 +112,7 @@ func process() {
 			tags = append(tags, fmt.Sprintf("parentSpanId:%s", *val.ParentSpanId))
 			tags = append(tags, fmt.Sprintf("spanId:%s", *val.SpanId))
 
-			statsd.Histogram(
+			client.Histogram(
 				*val.Type,
 				*val.Value,
 				filter(tags, func(s string) bool { return !strings.HasPrefix(s, "type:") }),
