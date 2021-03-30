@@ -1,0 +1,7 @@
+init:
+  image: ababoshin/kubernetes-cert-signer:20210321-1
+  imagePullPolicy: Always
+
+webhook:
+  image: ababoshin/monitoring-mutator:20210320
+  imagePullPolicy: Always

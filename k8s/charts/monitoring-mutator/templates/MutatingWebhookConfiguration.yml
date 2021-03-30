@@ -1,0 +1,31 @@
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: {{ template "mutator.fullname" . }}-app
+  labels:
+    app: {{ template "mutator.fullname" . }}-app
+    chart: {{ template "mutator.name" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+webhooks:
+  - name: monitoring-mutator
+    clientConfig:
+      caBundle: "ZW1wdHk="
+      service:
+        name: {{ template "mutator.fullname" . }}-app
+        namespace: default
+        path: "/validate"
+        port: 443
+    rules:
+      - operations: ["CREATE", "UPDATE"]
+        apiGroups: ["*"]
+        apiVersions: ["*"]
+        resources: ["pods"]
+    admissionReviewVersions: ["v1", "v1beta1"]
+    sideEffects: NoneOnDryRun
+    timeoutSeconds: 5
+    reinvocationPolicy: Never
+    failurePolicy: Ignore
+    # namespaceSelector:
+    #   matchLabels:
+    #     inject-monitoring: enabled

@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "mutator.fullname" . }}-app
+  labels:
+    app: {{ template "mutator.fullname" . }}-app
+    chart: {{ template "mutator.name" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "mutator.fullname" . }}-app
+  template:
+    metadata:
+      name: {{ template "mutator.fullname" . }}-app
+      labels:
+        app: {{ template "mutator.fullname" . }}-app
+    spec:
+      volumes:
+        - name: {{ template "mutator.fullname" . }}-cert
+          secret:
+            secretName: {{ template "mutator.fullname" . }}-cert
+      serviceAccountName: {{ template "mutator.fullname" . }}-cert-ca
+      initContainers:
+        - name: {{ template "mutator.fullname" . }}-init
+          image: {{ .Values.init.image }}
+          imagePullPolicy: {{ .Values.init.imagePullPolicy }}
+          env:
+          - name: SERVICE
+            value: "{{ template "mutator.fullname" . }}-app"
+          - name: NAMESPACE
+            value: "default"
+          - name: SECRET
+            value: "{{ template "mutator.fullname" . }}-cert"
+          - name: WEBHOOK
+            value: "{{ template "mutator.fullname" . }}-app"
+          - name: FORCE_RENEWAL
+            value: "true"
+      containers:
+        - name: {{ template "mutator.fullname" . }}-app
+          image: {{ .Values.webhook.image }}
+          imagePullPolicy: {{ .Values.webhook.imagePullPolicy }}
+          volumeMounts:
+          - name: {{ template "mutator.fullname" . }}-cert
+            mountPath: "/ssl"
+            readOnly: true
+          resources:
+            limits:
+              cpu: 500m
+              memory: 128Mi
+            requests:
+              cpu: 250m
+              memory: 64Mi
