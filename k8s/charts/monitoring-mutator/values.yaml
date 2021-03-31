@@ -7,3 +7,6 @@ mutator:
   imagePullPolicy: Always
 
 config: ""
+
+namespaceSelector: {}
+objectSelector: {}

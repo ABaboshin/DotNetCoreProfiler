@@ -19,6 +19,8 @@ A custom ceritificate signer is using https://github.com/ABaboshin/kubernetes-ce
 | `mutator.image`          | An image for the mutator container                                                                                                                    | `ababoshin/monitoring-mutator`                        |
 | `mutator.imagePullPolicy`          | An mutator image pull policy                                                                                                                    | `Always`                        |
 | `config`          | A json configuration with environments variables, volumes and init containers for the monitorable containers. See sample for details                                                                                                                    | `Always`                        |
+| `namespaceSelector`          | A namespace selector for the webhook                                                                                                                    | `{}`                        |
+| `objectSelector`          | An oject (pod) selector for the webhook                                                                                                                    | `{}`                        |
 
 
 ## Sample

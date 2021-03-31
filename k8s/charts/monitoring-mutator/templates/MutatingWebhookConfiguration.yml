@@ -26,9 +26,25 @@ webhooks:
     timeoutSeconds: 5
     reinvocationPolicy: Never
     failurePolicy: Ignore
-    # namespaceSelector:
-    #   matchLabels:
-    #     inject-monitoring: true
-    objectSelector:
+    {{- if .Values.namespaceSelector }}
+    namespaceSelector:
+    {{- if .Values.namespaceSelector.matchLabels }}
       matchLabels:
-        inject-monitoring: "true"
+  {{ toYaml .Values.namespaceSelector.matchLabels | indent 6 }}
+    {{- end }}
+      matchExpressions:
+      {{- if .Values.namespaceSelector.matchExpressions }}
+  {{ toYaml .Values.namespaceSelector.matchExpressions | indent 4 }}
+      {{- end }}
+    {{- end }}
+    {{- if .Values.objectSelector }}
+    objectSelector:
+    {{- if .Values.objectSelector.matchLabels }}
+      matchLabels:
+  {{ toYaml .Values.objectSelector.matchLabels | indent 6 }}
+    {{- end }}
+      matchExpressions:
+      {{- if .Values.objectSelector.matchExpressions }}
+  {{ toYaml .Values.objectSelector.matchExpressions | indent 4 }}
+      {{- end }}
+    {{- end }}

@@ -90,3 +90,7 @@ config: |
       }
     ]
   }
+
+objectSelector:
+  matchLabels:
+    inject-monitoring: "true"
