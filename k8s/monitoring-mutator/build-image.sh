@@ -1,6 +1,6 @@
 #!/bin/bash
 
-VERSION=20210331-1
+VERSION=linux-x64-20210401
 
 docker build -t ababoshin/monitoring-mutator:$VERSION .
 docker push ababoshin/monitoring-mutator:$VERSION
