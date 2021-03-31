@@ -2,7 +2,7 @@
 using Interception.Attributes;
 using Interception.Core;
 using Interception.Observers;
-using Interception.OpenTracing.MetricProxy;
+using Interception.OpenTracing.Statsd;
 using Interception.Tracing.Serilog;
 using Interception.Tracing;
 using Microsoft.AspNetCore.Hosting;
@@ -50,15 +50,15 @@ namespace Interception.AspNetCore
 
         private void ConfigureMetrics(Microsoft.Extensions.Logging.ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
         {
-            var configuration = new ConfigurationBuilder()
-                .AddEnvironmentVariables()
-                .Build();
+          var configuration = new ConfigurationBuilder()
+              .AddEnvironmentVariables()
+              .Build();
 
-            var tracer = MetricProxyConfiguration.FromEnv(loggerFactory);
+          var tracer = StatsdConfiguration.FromEnv(loggerFactory);
 
-            GlobalTracer.Register(tracer);
+          GlobalTracer.Register(tracer);
 
-            serviceCollection.AddSingleton(sp => GlobalTracer.Instance);
+          serviceCollection.AddSingleton(sp => GlobalTracer.Instance);
         }
 
         private Logger CreateLogger()

@@ -24,14 +24,14 @@ WORKDIR /profiler/src/profiler
 
 RUN cmake -DCMAKE_BUILD_TYPE=Release . && make && cp DotNetCoreProfiler.so /
 
-FROM golang:1.16.2-alpine as proxybuild
+# FROM golang:1.16.2-alpine as proxybuild
 
-RUN apk add git
-WORKDIR $GOPATH/src/metricproxy
-COPY src/metricproxy .
-RUN go get -d -v
+# RUN apk add git
+# WORKDIR $GOPATH/src/metricproxy
+# COPY src/metricproxy .
+# RUN go get -d -v
 
-RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o /metricproxy
+# RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o /metricproxy
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
 
@@ -44,7 +44,7 @@ RUN dotnet publish -c Release -o /interceptor /k8s/sample/interceptor/intercepto
 
 WORKDIR /interceptor
 
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.AspNetCore.WebHost.dll -p /profiler -o profiler.json -s /samples/http/skip.txt
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.AspNetCore.WebHost.dll -p /profiler -o profiler.json -s /k8s/sample/interceptor/skip.txt
 
 RUN cat profiler.json
 
@@ -52,4 +52,4 @@ FROM alpine
 
 COPY --from=build /interceptor/*.* /interceptor/
 COPY --from=profilerbuild /DotNetCoreProfiler.so /interceptor/
-COPY --from=proxybuild /metricproxy /interceptor/metricproxy
+# COPY --from=proxybuild /metricproxy /interceptor/metricproxy

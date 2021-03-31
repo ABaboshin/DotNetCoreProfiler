@@ -13,7 +13,7 @@
     <ProjectReference Include="..\..\..\src\Interception.Tracing.Serilog\Interception.Tracing.Serilog.csproj" />
     <ProjectReference Include="..\..\..\src\Interception.AspNetCore.Tracing\Interception.AspNetCore.Tracing.csproj" />
     <ProjectReference Include="..\..\..\src\Interception.AspNetCore.WebHost\Interception.AspNetCore.WebHost.csproj" />
-    <ProjectReference Include="..\..\..\src\Interception.OpenTracing.MetricProxy\Interception.OpenTracing.MetricProxy.csproj" />
+    <ProjectReference Include="..\..\..\src\Interception.OpenTracing.Statsd\Interception.OpenTracing.Statsd.csproj" />
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.5" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="3.0.0" />

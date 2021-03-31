@@ -29,20 +29,12 @@ config: |
         "value": "sampleapp"
       },
       {
-        "name": "METRIC_PROXY__UDS",
-        "value": "/var/metricproxy"
+        "name": "STATSD__SERVER",
+        "value": "statsd-prometheus-statsd-exporter"
       },
       {
-        "name": "METRIC_PROXY_SERVER__UDS",
-        "value": "/var/metricproxy"
-      },
-      {
-        "name": "METRIC_PROXY_SERVER__STATSD",
-        "value": "statsd-prometheus-statsd-exporter:9125"
-      },
-      {
-        "name": "METRIC_PROXY_SERVER__LOG_LEVEL",
-        "value": "info"
+        "name": "STATSD__PORT",
+        "value": "9125"
       },
       {
         "name": "CORECLR_ENABLE_PROFILING",

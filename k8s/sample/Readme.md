@@ -10,4 +10,6 @@ helm upgrade --install monitoring-mutator ../charts/monitoring-mutator -f miniku
 
 docker build -f Dockerfile -t sample:app ../../
 docker build -f Dockerfile.interceptor -t sample:init ../../
+
+kubectl apply -f test.yml
 ```
