@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
+  name: test
 spec:
   selector:
     matchLabels:
@@ -12,8 +12,32 @@ spec:
       labels:
         inject-monitoring: "true"
     spec:
+      # volumes:
+      # - name: profiler-volume
+      #   emptyDir: {}
+      # initContainers:
+      # - name: copy-files
+      #   image: sample:init
+      #   imagePullPolicy: Never
+      #   volumeMounts:
+      #   - mountPath: /profiler
+      #     name: profiler-volume
+      #   command:
+      #     - /bin/sh
+      #   args:
+      #     - -c
+      #     - cp /interceptor/* /profiler/
       containers:
-      - name: nginx
-        image: nginx:1.14.2
+      - name: sampleapp
+        image: sample:app
+        imagePullPolicy: Never
         ports:
-        - containerPort: 80
+        - containerPort: 5000
+        env:
+        - name: SERVICE_URL
+          value: "http://sampleapp2:6000"
+        - name: ASPNETCORE_URLS
+          value: "http://*:5000"
+        # volumeMounts:
+        # - mountPath: /profiler
+        #   name: profiler-volume

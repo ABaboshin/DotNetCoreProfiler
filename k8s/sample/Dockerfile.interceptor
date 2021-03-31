@@ -1,0 +1,55 @@
+FROM ubuntu:20.04 as profilerbuild
+
+ENV TZ=Europe/Berlin
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
+
+RUN apt-get update && \
+  apt-get install -y curl lsb-release gnupg2 software-properties-common wget make git
+
+RUN curl -o /tmp/llvm.sh https://apt.llvm.org/llvm.sh
+RUN chmod +x /tmp/llvm.sh
+RUN /tmp/llvm.sh 10
+RUN curl -o /tmp/cmake.sh https://cmake.org/files/v3.17/cmake-3.17.1-Linux-x86_64.sh
+RUN sh /tmp/cmake.sh --prefix=/usr/local --exclude-subdir --skip-license
+
+RUN apt install -y libstdc++-10-dev
+
+ENV CXX=clang++-10
+ENV CC=clang-10
+
+COPY lib /profiler/lib
+COPY src/profiler /profiler/src/profiler
+
+WORKDIR /profiler/src/profiler
+
+RUN cmake -DCMAKE_BUILD_TYPE=Release . && make && cp DotNetCoreProfiler.so /
+
+FROM golang:1.16.2-alpine as proxybuild
+
+RUN apk add git
+WORKDIR $GOPATH/src/metricproxy
+COPY src/metricproxy .
+RUN go get -d -v
+
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o /metricproxy
+
+FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
+
+COPY src src
+RUN dotnet publish -c Release -o /generator src/Interception.Generator/Interception.Generator.csproj
+
+COPY k8s /k8s
+
+RUN dotnet publish -c Release -o /interceptor /k8s/sample/interceptor/interceptor.csproj
+
+WORKDIR /interceptor
+
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.AspNetCore.WebHost.dll -p /profiler -o profiler.json -s /samples/http/skip.txt
+
+RUN cat profiler.json
+
+FROM alpine
+
+COPY --from=build /interceptor/*.* /interceptor/
+COPY --from=profilerbuild /DotNetCoreProfiler.so /interceptor/
+COPY --from=proxybuild /metricproxy /interceptor/metricproxy

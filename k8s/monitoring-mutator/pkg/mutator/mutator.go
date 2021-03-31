@@ -5,9 +5,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"log"
-	"path/filepath"
 
-	yaml "gopkg.in/yaml.v2"
 	"k8s.io/api/admission/v1beta1"
 	admv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
@@ -21,7 +19,10 @@ type PatchOperation struct {
 }
 
 type Config struct {
-	Env []corev1.EnvVar `yaml:"env"`
+	Env            []corev1.EnvVar      `json:"env"`
+	Volumes        []corev1.Volume      `json:"volumes"`
+	VolumeMounts   []corev1.VolumeMount `json:"volumeMounts"`
+	InitContainers []corev1.Container   `json:"initContainers"`
 }
 
 func Mutate(body []byte, verbose bool) ([]byte, error) {
@@ -44,36 +45,36 @@ func Mutate(body []byte, verbose bool) ([]byte, error) {
 	responseBody := []byte{}
 	resp := admv1beta1.AdmissionResponse{}
 
-	log.Printf("recv namespace: %s\n", admReview.Request.Namespace)
-
 	resp.Allowed = true
 	resp.UID = admReview.Request.UID
 	pT := v1beta1.PatchTypeJSONPatch
 	resp.PatchType = &pT
 
-	filename, _ := filepath.Abs("/config.yml")
-	yamlFile, err := ioutil.ReadFile(filename)
-
-	if err != nil {
-		return nil, fmt.Errorf("unable marshal patches %v", err)
-	}
-
-	log.Println(yamlFile)
-
 	var config Config
 
-	err = yaml.Unmarshal(yamlFile, &config)
-
+	configJson, err := ioutil.ReadFile("/config.json")
 	if err != nil {
-		return nil, fmt.Errorf("unable marshal patches %v", err)
+		return nil, fmt.Errorf("unable read config %v", err)
 	}
 
-	log.Println(config)
+	err = json.Unmarshal(configJson, &config)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable marshal config %v", err)
+	}
 
 	var patches []PatchOperation
 	for idx, container := range pod.Spec.Containers {
 		patches = append(patches, addEnv(container.Env, config.Env, fmt.Sprintf("/spec/containers/%d/env", idx))...)
 	}
+
+	for idx, container := range pod.Spec.Containers {
+		patches = append(patches, addVolumeMounts(container.VolumeMounts, config.VolumeMounts, fmt.Sprintf("/spec/containers/%d/volumeMounts", idx))...)
+	}
+
+	patches = append(patches, addVolumes(pod.Spec.Volumes, config.Volumes, "/spec/volumes")...)
+
+	patches = append(patches, addInitContainers(pod.Spec.InitContainers, config.InitContainers, "/spec/initContainers")...)
 
 	resp.Patch, err = json.Marshal(patches)
 
@@ -112,6 +113,69 @@ func addEnv(target, envVars []corev1.EnvVar, basePath string) (patch []PatchOper
 		if first {
 			first = false
 			value = []corev1.EnvVar{envVar}
+		} else {
+			path = path + "/-"
+		}
+		patch = append(patch, PatchOperation{
+			Op:    "add",
+			Path:  path,
+			Value: value,
+		})
+	}
+	return patch
+}
+
+func addVolumes(target, volumes []corev1.Volume, basePath string) (patch []PatchOperation) {
+	first := len(target) == 0
+	var value interface{}
+	for _, volume := range volumes {
+		value = volume
+		path := basePath
+		if first {
+			first = false
+			value = []corev1.Volume{volume}
+		} else {
+			path = path + "/-"
+		}
+		patch = append(patch, PatchOperation{
+			Op:    "add",
+			Path:  path,
+			Value: value,
+		})
+	}
+	return patch
+}
+
+func addVolumeMounts(target, volumes []corev1.VolumeMount, basePath string) (patch []PatchOperation) {
+	first := len(target) == 0
+	var value interface{}
+	for _, volume := range volumes {
+		value = volume
+		path := basePath
+		if first {
+			first = false
+			value = []corev1.VolumeMount{volume}
+		} else {
+			path = path + "/-"
+		}
+		patch = append(patch, PatchOperation{
+			Op:    "add",
+			Path:  path,
+			Value: value,
+		})
+	}
+	return patch
+}
+
+func addInitContainers(target, containers []corev1.Container, basePath string) (patch []PatchOperation) {
+	first := len(target) == 0
+	var value interface{}
+	for _, container := range containers {
+		value = container
+		path := basePath
+		if first {
+			first = false
+			value = []corev1.Container{container}
 		} else {
 			path = path + "/-"
 		}
