@@ -52,7 +52,7 @@ spec:
             mountPath: "/ssl"
             readOnly: true
           - name: config
-            mountPath: /config/config
+            mountPath: /config.yml
             subPath: config
           resources:
             limits:

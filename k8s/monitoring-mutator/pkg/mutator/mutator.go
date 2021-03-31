@@ -3,13 +3,26 @@ package mutator
 import (
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
+	"path/filepath"
 
+	yaml "gopkg.in/yaml.v2"
 	"k8s.io/api/admission/v1beta1"
 	admv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
+
+type PatchOperation struct {
+	Op    string      `json:"op"`
+	Path  string      `json:"path"`
+	Value interface{} `json:"value,omitempty"`
+}
+
+type Config struct {
+	Env []corev1.EnvVar `yaml:"env"`
+}
 
 func Mutate(body []byte, verbose bool) ([]byte, error) {
 	if verbose {
@@ -38,17 +51,35 @@ func Mutate(body []byte, verbose bool) ([]byte, error) {
 	pT := v1beta1.PatchTypeJSONPatch
 	resp.PatchType = &pT
 
-	p := []map[string]string{}
-	for i := range pod.Spec.Containers {
-		patch := map[string]string{
-			"op":    "replace",
-			"path":  fmt.Sprintf("/spec/containers/%d/image", i),
-			"value": "debian",
-		}
-		p = append(p, patch)
+	filename, _ := filepath.Abs("/config.yml")
+	yamlFile, err := ioutil.ReadFile(filename)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable marshal patches %v", err)
 	}
 
-	resp.Patch, err = json.Marshal(p)
+	log.Println(yamlFile)
+
+	var config Config
+
+	err = yaml.Unmarshal(yamlFile, &config)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable marshal patches %v", err)
+	}
+
+	log.Println(config)
+
+	var patches []PatchOperation
+	for idx, container := range pod.Spec.Containers {
+		patches = append(patches, addEnv(container.Env, config.Env, fmt.Sprintf("/spec/containers/%d/env", idx))...)
+	}
+
+	resp.Patch, err = json.Marshal(patches)
+
+	if err != nil {
+		return nil, fmt.Errorf("unable marshal patches %v", err)
+	}
 
 	resp.AuditAnnotations = map[string]string{
 		"monitoring mutation": "done",
@@ -70,4 +101,25 @@ func Mutate(body []byte, verbose bool) ([]byte, error) {
 	}
 
 	return responseBody, nil
+}
+
+func addEnv(target, envVars []corev1.EnvVar, basePath string) (patch []PatchOperation) {
+	first := len(target) == 0
+	var value interface{}
+	for _, envVar := range envVars {
+		value = envVar
+		path := basePath
+		if first {
+			first = false
+			value = []corev1.EnvVar{envVar}
+		} else {
+			path = path + "/-"
+		}
+		patch = append(patch, PatchOperation{
+			Op:    "add",
+			Path:  path,
+			Value: value,
+		})
+	}
+	return patch
 }
