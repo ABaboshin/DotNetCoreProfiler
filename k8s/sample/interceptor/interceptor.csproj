@@ -17,8 +17,7 @@
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="3.1.5" />
     <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="3.0.0" />
-    <!-- <PackageReference Include="Interception.Profiler.Native.Linux.x64" Version="1.2021.228" />
-    <PackageReference Include="Interception.MetricProxy.Native.Linux.x64" Version="1.2021.228" /> -->
+    <PackageReference Include="Interception.Profiler.Native.Linux.x64" Version="1.2021.228" />
   </ItemGroup>
 
 </Project>

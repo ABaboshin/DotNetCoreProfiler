@@ -9,7 +9,7 @@ ADD . .
 RUN go get -v ./...
 RUN go build -v -o monitoring-mutator main.go
 
-FROM alpine
+FROM scratch
 WORKDIR /app
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
 COPY --from=build /go/src/github.com/ABaboshin/k8s/monitoring-mutator/monitoring-mutator .
