@@ -8,7 +8,7 @@ metadata:
     release: {{ .Release.Name | quote }}
     heritage: {{ .Release.Service | quote }}
 webhooks:
-  - name: monitoring-mutator
+  - name: monitoring-mutator.default.svc.cluster.local
     clientConfig:
       caBundle: "ZW1wdHk="
       service:
@@ -28,4 +28,7 @@ webhooks:
     failurePolicy: Ignore
     # namespaceSelector:
     #   matchLabels:
-    #     inject-monitoring: enabled
+    #     inject-monitoring: true
+    objectSelector:
+      matchLabels:
+        inject-monitoring: "true"

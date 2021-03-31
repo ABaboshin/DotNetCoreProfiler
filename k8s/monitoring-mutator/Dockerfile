@@ -11,8 +11,8 @@ RUN go build -v -o monitoring-mutator main.go
 
 FROM scratch
 WORKDIR /app
-COPY --from=build /go/src/github.com/ABaboshin/k8s/monitoring-mutator/monitoring-mutator .
 COPY --from=build /etc/ssl/certs/ca-certificates.crt /etc/ssl/certs/
-CMD ["/app/ingress-validation"]
+COPY --from=build /go/src/github.com/ABaboshin/k8s/monitoring-mutator/monitoring-mutator .
+CMD ["/app/monitoring-mutator"]
 
 VOLUME [ "/etc/webhook/certs/" ]

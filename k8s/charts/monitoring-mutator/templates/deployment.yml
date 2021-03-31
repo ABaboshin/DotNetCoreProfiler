@@ -17,11 +17,16 @@ spec:
       name: {{ template "mutator.fullname" . }}-app
       labels:
         app: {{ template "mutator.fullname" . }}-app
+      annotations:
+        configchecksum: {{ include (print .Template.BasePath "/configmap.yml") . | sha256sum | trunc 63 }}
     spec:
       volumes:
         - name: {{ template "mutator.fullname" . }}-cert
           secret:
             secretName: {{ template "mutator.fullname" . }}-cert
+        - name: config
+          configMap:
+            name: {{ template "mutator.fullname" . }}-config
       serviceAccountName: {{ template "mutator.fullname" . }}-cert-ca
       initContainers:
         - name: {{ template "mutator.fullname" . }}-init
@@ -40,12 +45,15 @@ spec:
             value: "true"
       containers:
         - name: {{ template "mutator.fullname" . }}-app
-          image: {{ .Values.webhook.image }}
-          imagePullPolicy: {{ .Values.webhook.imagePullPolicy }}
+          image: {{ .Values.mutator.image }}
+          imagePullPolicy: {{ .Values.mutator.imagePullPolicy }}
           volumeMounts:
           - name: {{ template "mutator.fullname" . }}-cert
             mountPath: "/ssl"
             readOnly: true
+          - name: config
+            mountPath: /config/config
+            subPath: config
           resources:
             limits:
               cpu: 500m

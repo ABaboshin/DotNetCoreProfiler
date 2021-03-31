@@ -1,0 +1,9 @@
+init:
+  image: ababoshin/kubernetes-cert-signer:20210330-1
+
+mutator:
+  image: ababoshin/monitoring-mutator:20210330-2
+
+config: |
+  env:
+    k1: v1
