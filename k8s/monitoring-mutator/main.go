@@ -9,8 +9,6 @@ import (
 	"time"
 
 	m "github.com/ABaboshin/k8s/monitoring-mutator/pkg/mutator"
-
-	ctrl "sigs.k8s.io/controller-runtime"
 )
 
 func handleRoot(w http.ResponseWriter, r *http.Request) {
@@ -43,8 +41,6 @@ func sendError(err error, w http.ResponseWriter) {
 }
 
 func main() {
-	_ = ctrl.GetConfigOrDie()
-
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", handleRoot)

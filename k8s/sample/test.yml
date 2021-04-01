@@ -37,7 +37,7 @@ spec:
     app: app1
 ---
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: app2
 spec:
@@ -45,6 +45,7 @@ spec:
     matchLabels:
       inject-monitoring: "true"
       app: app2
+  serviceName: app2
   replicas: 1
   template:
     metadata:

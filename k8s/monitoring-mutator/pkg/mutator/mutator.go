@@ -1,6 +1,7 @@
 package mutator
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,6 +11,8 @@ import (
 	admv1beta1 "k8s.io/api/admission/v1beta1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	"k8s.io/client-go/rest"
 )
 
 type PatchOperation struct {
@@ -63,9 +66,17 @@ func Mutate(body []byte, verbose bool) ([]byte, error) {
 		return nil, fmt.Errorf("unable marshal config %v", err)
 	}
 
+	name, err := getAppName(pod)
+	if err != nil {
+		return nil, fmt.Errorf("unable get app name %v", err)
+	}
+
+	env := config.Env
+	env = append(env, corev1.EnvVar{Name: "service__name", Value: name})
+
 	var patches []PatchOperation
 	for idx, container := range pod.Spec.Containers {
-		patches = append(patches, addEnv(container.Env, config.Env, fmt.Sprintf("/spec/containers/%d/env", idx))...)
+		patches = append(patches, addEnv(container.Env, env, fmt.Sprintf("/spec/containers/%d/env", idx))...)
 	}
 
 	for idx, container := range pod.Spec.Containers {
@@ -98,10 +109,40 @@ func Mutate(body []byte, verbose bool) ([]byte, error) {
 	}
 
 	if verbose {
-		log.Printf("resp: %s\n", string(responseBody)) // untested section
+		log.Printf("resp: %s\n", string(responseBody))
 	}
 
 	return responseBody, nil
+}
+
+// TODO DaemonSet, Job
+func getAppName(pod *corev1.Pod) (string, error) {
+	if pod.ObjectMeta.OwnerReferences != nil && len(pod.ObjectMeta.OwnerReferences) != 0 {
+
+		if pod.ObjectMeta.OwnerReferences[0].Kind == "StatefulSet" {
+			return pod.ObjectMeta.OwnerReferences[0].Name, nil
+		}
+
+		if pod.ObjectMeta.OwnerReferences[0].Kind == "ReplicaSet" {
+			kcfg, err := rest.InClusterConfig()
+			if err != nil {
+				return "", fmt.Errorf("unable connect to the cluster %v", err)
+			}
+
+			clientset, err := kubernetes.NewForConfig(kcfg)
+			replica, err := clientset.AppsV1().ReplicaSets("default").Get(context.TODO(), pod.ObjectMeta.OwnerReferences[0].Name, metav1.GetOptions{})
+
+			if err != nil {
+				return "", fmt.Errorf("unable get replicaset %v", err)
+			}
+
+			if replica.ObjectMeta.OwnerReferences != nil && len(replica.ObjectMeta.OwnerReferences) != 0 && replica.ObjectMeta.OwnerReferences[0].Kind == "Deployment" {
+				return replica.ObjectMeta.OwnerReferences[0].Name, nil
+			}
+		}
+	}
+
+	return pod.ObjectMeta.Name, nil
 }
 
 func addEnv(target, envVars []corev1.EnvVar, basePath string) (patch []PatchOperation) {

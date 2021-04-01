@@ -2,7 +2,7 @@ init:
   image: ababoshin/kubernetes-cert-signer:20210401
 
 mutator:
-  image: ababoshin/monitoring-mutator:20210401
+  image: ababoshin/monitoring-mutator:linux-x64-20210401
 
 config: |
   {
@@ -22,10 +22,6 @@ config: |
       {
         "name": "httphandler_metrics__name",
         "value": "outgoing"
-      },
-      {
-        "name": "service__name",
-        "value": "sampleapp"
       },
       {
         "name": "STATSD__SERVER",

@@ -1,6 +1,8 @@
 # Monitoring Mutator
 
-A Mutating admission webhook to inject the .net core profiler from this repository.
+A Mutating admission webhook which injects tracing and monitoring using the .net core profiler from this repository.
+
+Kubernetes feature: auto detecting of the app names based on the parent deployment/statefulset name.
 
 ## Implementation
 
@@ -53,6 +55,6 @@ docker build -f Dockerfile.interceptor -t sample:init ../../
 kubectl apply -f test.yml
 
 # Call http://app1:5000/api/sample from inside the cluster
-# Check that statsd has the new metrics.
+# Check that statsd has the new metrics which container service names like app1 and app2.
 ```
 
