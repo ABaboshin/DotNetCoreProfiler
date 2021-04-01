@@ -1,0 +1,12 @@
+init:
+  image: ababoshin/kubernetes-cert-signer:20210401
+  imagePullPolicy: Always
+
+mutator:
+  image: ababoshin/monitoring-mutator:20210401
+  imagePullPolicy: Always
+
+config: ""
+
+namespaceSelector: {}
+objectSelector: {}

@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: {{ template "mutator.fullname" . }}-cert
+  labels:
+    app: {{ template "mutator.name" . }}
+    chart: {{ template "mutator.name" . }}
+    release: {{ .Release.Name | quote }}
+    heritage: {{ .Release.Service | quote }}
+type: kubernetes.io/tls
+data:
+  tls.crt: ""
+  tls.key: ""

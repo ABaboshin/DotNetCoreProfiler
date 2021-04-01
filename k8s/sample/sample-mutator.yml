@@ -1,0 +1,92 @@
+init:
+  image: ababoshin/kubernetes-cert-signer:20210401
+
+mutator:
+  image: ababoshin/monitoring-mutator:linux-x64-20210401
+
+config: |
+  {
+    "env": [
+      {
+        "name": "aspnetcore_metrics__enabled",
+        "value": "true"
+      },
+      {
+        "name": "aspnetcore_metrics__name",
+        "value": "incoming"
+      },
+      {
+        "name": "httphandler_metrics__enabled",
+        "value": "true"
+      },
+      {
+        "name": "httphandler_metrics__name",
+        "value": "outgoing"
+      },
+      {
+        "name": "STATSD__SERVER",
+        "value": "statsd-prometheus-statsd-exporter"
+      },
+      {
+        "name": "STATSD__PORT",
+        "value": "9125"
+      },
+      {
+        "name": "CORECLR_ENABLE_PROFILING",
+        "value": "1"
+      },
+      {
+        "name": "CORECLR_PROFILER",
+        "value": "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
+      },
+      {
+        "name": "CORECLR_PROFILER_PATH",
+        "value": "/profiler/DotNetCoreProfiler.so"
+      },
+      {
+        "name": "PROFILER_CONFIGURATION",
+        "value": "/profiler/profiler.json"
+      },
+      {
+        "name": "PROFILER_LOG_LEVEL",
+        "value": "INFO"
+      }
+    ],
+    "volumeMounts": [
+      {
+        "mountPath": "/profiler",
+        "name": "profiler",
+        "readOnly": true
+      }
+    ],
+    "volumes": [
+      {
+        "name": "profiler",
+        "emptyDir": {}
+      }
+    ],
+    "initContainers": [
+      {
+        "name": "copy-files",
+        "image": "sample:init",
+        "imagePullPolicy": "Never",
+        "volumeMounts": [
+          {
+            "mountPath": "/profiler",
+            "name": "profiler"
+          }
+        ],
+        "command": [
+          "/bin/sh"
+        ],
+        "args": [
+          "-c",
+          "cp /interceptor/* /profiler/"
+        ]
+      }
+    ]
+  }
+
+objectSelector:
+  matchLabels:
+    inject-monitoring: "true"

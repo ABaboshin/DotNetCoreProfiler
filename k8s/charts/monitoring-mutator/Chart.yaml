@@ -1,0 +1,11 @@
+apiVersion: v1
+description: Monitoring Mutator
+home: https://github.com/ABaboshin/DotNetCoreProfiler
+maintainers:
+- email: andrey.baboshin@gmail.com
+  name: MonitoringMutator
+name: monitoringmutator
+version: 20210330
+appVersion: 20210330
+sources:
+  - https://github.com/ABaboshin/DotNetCoreProfiler
