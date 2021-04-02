@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
 	"html"
 	"io/ioutil"
@@ -44,15 +45,27 @@ func main() {
 	mux := http.NewServeMux()
 
 	mux.HandleFunc("/", handleRoot)
-	mux.HandleFunc("/validate", handleMutate)
+	mux.HandleFunc("/mutate", handleMutate)
+
+	pair, err := tls.LoadX509KeyPair("/ssl/tls.crt", "/ssl/tls.key")
+
+	if err != nil {
+		log.Panicf("Error loading keys %v", err)
+	}
 
 	s := &http.Server{
 		Addr:           ":8443",
 		Handler:        mux,
 		ReadTimeout:    10 * time.Second,
 		WriteTimeout:   10 * time.Second,
-		MaxHeaderBytes: 1 << 20, // 1048576
+		MaxHeaderBytes: 1 << 20,
+		TLSConfig:      &tls.Config{Certificates: []tls.Certificate{pair}},
 	}
 
-	log.Fatal(s.ListenAndServeTLS("/ssl/tls.crt", "/ssl/tls.key"))
+	err = m.Init()
+	if err != nil {
+		log.Panicf("Error init %v", err)
+	}
+
+	log.Fatal(s.ListenAndServeTLS("", ""))
 }

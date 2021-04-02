@@ -47,17 +47,12 @@ spec:
         - name: {{ template "mutator.fullname" . }}-app
           image: {{ .Values.mutator.image }}
           imagePullPolicy: {{ .Values.mutator.imagePullPolicy }}
+          env:
+          - name: DEFAULT_CONFIGURATION
+            value: {{ template "mutator.fullname" . }}-config
+          - name: CURRENT_NAMESPACE
+            value: {{ .Release.Namespace }}
           volumeMounts:
           - name: {{ template "mutator.fullname" . }}-cert
             mountPath: "/ssl"
             readOnly: true
-          - name: config
-            mountPath: /config.json
-            subPath: config
-          resources:
-            limits:
-              cpu: 500m
-              memory: 128Mi
-            requests:
-              cpu: 250m
-              memory: 64Mi

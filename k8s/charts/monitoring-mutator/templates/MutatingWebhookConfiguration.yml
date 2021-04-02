@@ -14,7 +14,7 @@ webhooks:
       service:
         name: {{ template "mutator.fullname" . }}-app
         namespace: default
-        path: "/validate"
+        path: "/mutate"
         port: 443
     rules:
       - operations: ["CREATE", "UPDATE"]
