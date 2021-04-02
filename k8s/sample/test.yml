@@ -1,11 +1,105 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: testconfig
+  namespace: test
+data:
+  config: |
+    {
+      "env": [
+        {
+          "name": "aspnetcore_metrics__enabled",
+          "value": "true"
+        },
+        {
+          "name": "aspnetcore_metrics__name",
+          "value": "incoming"
+        },
+        {
+          "name": "httphandler_metrics__enabled",
+          "value": "true"
+        },
+        {
+          "name": "httphandler_metrics__name",
+          "value": "outgoing"
+        },
+        {
+          "name": "STATSD__SERVER",
+          "value": "statsd-prometheus-statsd-exporter"
+        },
+        {
+          "name": "STATSD__PORT",
+          "value": "9125"
+        },
+        {
+          "name": "CORECLR_ENABLE_PROFILING",
+          "value": "1"
+        },
+        {
+          "name": "CORECLR_PROFILER",
+          "value": "{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
+        },
+        {
+          "name": "CORECLR_PROFILER_PATH",
+          "value": "/profiler/DotNetCoreProfiler.so"
+        },
+        {
+          "name": "PROFILER_CONFIGURATION",
+          "value": "/profiler/profiler.json"
+        },
+        {
+          "name": "PROFILER_LOG_LEVEL",
+          "value": "INFO"
+        },
+        {
+          "name": "INJECTED",
+          "value": "true"
+        }
+      ],
+      "volumeMounts": [
+        {
+          "mountPath": "/profiler",
+          "name": "profiler",
+          "readOnly": true
+        }
+      ],
+      "volumes": [
+        {
+          "name": "profiler",
+          "emptyDir": {}
+        }
+      ],
+      "initContainers": [
+        {
+          "name": "copy-files",
+          "image": "sample:init",
+          "imagePullPolicy": "Never",
+          "volumeMounts": [
+            {
+              "mountPath": "/profiler",
+              "name": "profiler"
+            }
+          ],
+          "command": [
+            "/bin/sh"
+          ],
+          "args": [
+            "-c",
+            "cp /interceptor/* /profiler/"
+          ]
+        }
+      ]
+    }
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: app1
+  namespace: test
 spec:
   selector:
     matchLabels:
-      inject-monitoring: "true"
       app: app1
   replicas: 1
   template:
@@ -13,6 +107,7 @@ spec:
       labels:
         inject-monitoring: "true"
         app: app1
+        monitoring-configuration: testconfig
     spec:
       containers:
       - name: sampleapp
@@ -28,6 +123,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: app1
+  namespace: test
 spec:
   publishNotReadyAddresses: true
   ports:
@@ -40,10 +136,10 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: app2
+  namespace: test
 spec:
   selector:
     matchLabels:
-      inject-monitoring: "true"
       app: app2
   serviceName: app2
   replicas: 1
@@ -67,6 +163,7 @@ apiVersion: v1
 kind: Service
 metadata:
   name: app2
+  namespace: test
 spec:
   publishNotReadyAddresses: true
   ports:

@@ -4,8 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"log"
+	"os"
 
 	"k8s.io/api/admission/v1beta1"
 	admv1beta1 "k8s.io/api/admission/v1beta1"
@@ -26,6 +26,18 @@ type Config struct {
 	Volumes        []corev1.Volume      `json:"volumes"`
 	VolumeMounts   []corev1.VolumeMount `json:"volumeMounts"`
 	InitContainers []corev1.Container   `json:"initContainers"`
+}
+
+var clientset *kubernetes.Clientset
+
+func Init() error {
+	config, err := rest.InClusterConfig()
+	if err != nil {
+		return err
+	}
+
+	clientset, err = kubernetes.NewForConfig(config)
+	return err
 }
 
 func Mutate(body []byte, verbose bool) ([]byte, error) {
@@ -53,20 +65,13 @@ func Mutate(body []byte, verbose bool) ([]byte, error) {
 	pT := v1beta1.PatchTypeJSONPatch
 	resp.PatchType = &pT
 
-	var config Config
-
-	configJson, err := ioutil.ReadFile("/config.json")
-	if err != nil {
-		return nil, fmt.Errorf("unable read config %v", err)
-	}
-
-	err = json.Unmarshal(configJson, &config)
+	config, err := getMonitoringConfigurationWithFallback(pod, admReview)
 
 	if err != nil {
-		return nil, fmt.Errorf("unable marshal config %v", err)
+		return nil, err
 	}
 
-	name, err := getAppName(pod)
+	name, err := getAppName(admReview.Request.Namespace, pod)
 	if err != nil {
 		return nil, fmt.Errorf("unable get app name %v", err)
 	}
@@ -115,8 +120,41 @@ func Mutate(body []byte, verbose bool) ([]byte, error) {
 	return responseBody, nil
 }
 
+func getMonitoringConfigurationWithFallback(pod *corev1.Pod, admReview admv1beta1.AdmissionReview) (Config, error) {
+	if configMap, ok := pod.ObjectMeta.Labels["monitoring-configuration"]; ok {
+		customConfig, err := getMonitoringConfiguration(admReview.Request.Namespace, configMap)
+		if err != nil {
+			log.Println(err)
+		} else {
+			return customConfig, nil
+		}
+	}
+
+	return getMonitoringConfiguration(os.Getenv("CURRENT_NAMESPACE"), os.Getenv("DEFAULT_CONFIGURATION"))
+}
+
+func getMonitoringConfiguration(namespace string, configmap string) (Config, error) {
+	var config Config
+
+	cm, err := clientset.CoreV1().ConfigMaps(namespace).Get(context.TODO(), configmap, metav1.GetOptions{})
+	if err != nil {
+		log.Printf("1 %v %s %s", err, namespace, configmap)
+		return config, err
+	}
+
+	err = json.Unmarshal([]byte(cm.Data["config"]), &config)
+
+	if err != nil {
+		log.Printf("2 %v %s %s", err, namespace, configmap)
+		return config, err
+	}
+
+	return config, nil
+
+}
+
 // TODO DaemonSet, Job
-func getAppName(pod *corev1.Pod) (string, error) {
+func getAppName(namespace string, pod *corev1.Pod) (string, error) {
 	if pod.ObjectMeta.OwnerReferences != nil && len(pod.ObjectMeta.OwnerReferences) != 0 {
 
 		if pod.ObjectMeta.OwnerReferences[0].Kind == "StatefulSet" {
@@ -124,13 +162,7 @@ func getAppName(pod *corev1.Pod) (string, error) {
 		}
 
 		if pod.ObjectMeta.OwnerReferences[0].Kind == "ReplicaSet" {
-			kcfg, err := rest.InClusterConfig()
-			if err != nil {
-				return "", fmt.Errorf("unable connect to the cluster %v", err)
-			}
-
-			clientset, err := kubernetes.NewForConfig(kcfg)
-			replica, err := clientset.AppsV1().ReplicaSets("default").Get(context.TODO(), pod.ObjectMeta.OwnerReferences[0].Name, metav1.GetOptions{})
+			replica, err := clientset.AppsV1().ReplicaSets(namespace).Get(context.TODO(), pod.ObjectMeta.OwnerReferences[0].Name, metav1.GetOptions{})
 
 			if err != nil {
 				return "", fmt.Errorf("unable get replicaset %v", err)

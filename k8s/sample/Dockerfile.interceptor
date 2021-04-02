@@ -11,8 +11,6 @@ WORKDIR /interceptor
 
 RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.AspNetCore.WebHost.dll -p /profiler -o profiler.json -s /k8s/sample/interceptor/skip.txt
 
-RUN cat profiler.json
-
 FROM alpine
 
 COPY --from=build /interceptor/*.* /interceptor/
