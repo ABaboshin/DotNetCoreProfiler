@@ -7,7 +7,7 @@ RUN apk add git make openssl
 WORKDIR /go/src/github.com/ABaboshin/k8s/monitoring-mutator
 ADD . .
 RUN go get -v ./...
-RUN go build -v -o monitoring-mutator main.go
+RUN GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-w -s" -o monitoring-mutator main.go
 
 FROM scratch
 WORKDIR /app

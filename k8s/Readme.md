@@ -2,7 +2,9 @@
 
 A Mutating admission webhook which injects tracing and monitoring using the .net core profiler from this repository.
 
-Kubernetes feature: auto detecting of the app names based on the parent deployment/statefulset name.
+Features:
+- auto detecting of the app names based on the parent deployment/statefulset name,
+- inject custom profiler configuration via configmap (see Sample).
 
 ## Implementation
 
@@ -37,7 +39,7 @@ To run the sample execute
 cd sample
 # install a statsd exporter
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
-helm install statsd prometheus-community/prometheus-statsd-exporter
+helm install statsd prometheus-community/prometheus-statsd-exporter -n test --create-namespace
 
 # install the monitoring mutator
 helm upgrade --install monitoring-mutator ../charts/monitoring-mutator -f sample-mutator.yml

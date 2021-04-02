@@ -3,7 +3,7 @@ init:
   imagePullPolicy: Always
 
 mutator:
-  image: ababoshin/monitoring-mutator:20210401
+  image: ababoshin/monitoring-mutator:linux-x64-20210402
   imagePullPolicy: Always
 
 config: ""
