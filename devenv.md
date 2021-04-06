@@ -15,6 +15,8 @@
 
   - Checkout `https://github.com/dotnet/cli/tree/release/3.1.4xx` into `/opt/cli`, run build.sh.
   - Open `src/profiler` in vscode.
+  - Run `cmake -DCMAKE_BUILD_TYPE=Debug . && make` to build the profile so.
+  - `dotnet tool install -g Interception.Generator --version 1.2021.228 `
   - Create `/tmp/profiler.json` with `Interception.Generator`.
   - Change `args` and `cwd` as you need in `.vscode/launch.json`.
   - Set the breakpoints and start the `Launch` target.

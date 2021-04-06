@@ -5,17 +5,17 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Launch",
+            "name": "Launch Sample 1",
             "type": "cppdbg",
             "request": "launch",
             "program": "/opt/cli/.dotnet/dotnet",
-            "args": ["run", "-c", "Debug", "--launch-profile", "Host (local)"],
+            "args": ["run", "-c", "Debug"],
             "stopAtEntry": false,
-            "cwd": "your .net core project",
+            "cwd": "/Users/ababoshin/src/DotNetCoreProfiler/demo/app/",
             "environment": [
                 {
                     "name": "PROFILER_CONFIGURATION",
-                    "value": "/tmp/profiler.json"
+                    "value": "/Users/ababoshin/src/DotNetCoreProfiler/demo/interceptor/release/profiler.json"
                 },
                 {
                     "name": "CORECLR_ENABLE_PROFILING",
@@ -30,8 +30,8 @@
                     "value": "${workspaceFolder}/DotNetCoreProfiler.dylib"
                 }
             ],
-            "externalConsole": false,
-            "MIMode": "lldb"
+            "MIMode": "lldb",
+            "logging": { "trace": true, "traceResponse": true }
         }
     ]
 }
