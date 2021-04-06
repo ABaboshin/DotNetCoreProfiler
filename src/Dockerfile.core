@@ -14,6 +14,8 @@ RUN dotnet build -c Release src/Interception.DependencyInjection/Interception.De
 RUN dotnet build -c Release src/Interception.Generator/Interception.Generator.csproj
 RUN dotnet build -c Release src/Interception.MassTransit/Interception.MassTransit.csproj
 RUN dotnet build -c Release src/Interception.Observers/Interception.Observers.csproj
+RUN dotnet build -c Release src/Interception.Observers.Http/Interception.Observers.Http.csproj
+RUN dotnet build -c Release src/Interception.Observers.EFCore2/Interception.Observers.EFCore2.csproj
 RUN dotnet build -c Release src/Interception.OpenTracing.Statsd/Interception.OpenTracing.Statsd.csproj
 RUN dotnet build -c Release src/Interception.Quartz/Interception.Quartz.csproj
 RUN dotnet build -c Release src/Interception.Tracing/Interception.Tracing.csproj

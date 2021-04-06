@@ -5,14 +5,12 @@ using System.Diagnostics;
 
 namespace Interception.Observers
 {
-    public class DiagnosticsObserver : IObserver<DiagnosticListener>
+    public class EFCoreDiagnosticsObserver : IObserver<DiagnosticListener>
     {
-        private readonly HttpHandlerConfiguration _httpHandlerConfiguration;
         private readonly EntityFrameworkCoreConfiguration _entityFrameworkCoreConfiguration;
 
-        public DiagnosticsObserver(HttpHandlerConfiguration httpHandlerConfiguration, EntityFrameworkCoreConfiguration entityFrameworkCoreConfiguration)
+        public EFCoreDiagnosticsObserver(EntityFrameworkCoreConfiguration entityFrameworkCoreConfiguration)
         {
-            _httpHandlerConfiguration = httpHandlerConfiguration;
             _entityFrameworkCoreConfiguration = entityFrameworkCoreConfiguration;
         }
 
@@ -27,7 +25,6 @@ namespace Interception.Observers
         public void OnNext(DiagnosticListener diagnosticListener)
         {
             new EntityFrameworkCoreObserver(_entityFrameworkCoreConfiguration).Subscribe(diagnosticListener);
-            new HttpHandlerDiagnostrics(_httpHandlerConfiguration).Subscribe(diagnosticListener);
         }
 
         public static void ConfigureAndStart()
@@ -36,10 +33,9 @@ namespace Interception.Observers
                 .AddEnvironmentVariables()
                 .Build();
 
-            var httpHandlerConfiguration = configuration.GetSection(HttpHandlerConfiguration.SectionKey).Get<HttpHandlerConfiguration>();
             var entityFrameworkCoreConfiguration = configuration.GetSection(EntityFrameworkCoreConfiguration.SectionKey).Get<EntityFrameworkCoreConfiguration>();
 
-            DiagnosticListener.AllListeners.Subscribe(new DiagnosticsObserver(httpHandlerConfiguration, entityFrameworkCoreConfiguration));
+            DiagnosticListener.AllListeners.Subscribe(new EFCoreDiagnosticsObserver(entityFrameworkCoreConfiguration));
         }
     }
 }
