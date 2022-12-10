@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 as build
 
 COPY src src
 
@@ -17,7 +17,7 @@ FROM profiler:native as profiler
 
 FROM metricproxy:native as metricproxy
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.5-bionic
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
 RUN apt update && apt install -y dos2unix
 
 EXPOSE 80

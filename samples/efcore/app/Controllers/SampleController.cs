@@ -27,8 +27,8 @@ namespace app.Controllers
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MyEntity>>> Get()
     {
-        _myDbContext.Database.ExecuteSqlCommand("SELECT 1;");
-        await _myDbContext.Database.ExecuteSqlCommandAsync("SELECT 2;");
+        _myDbContext.Database.ExecuteSqlRaw("SELECT 1;");
+        await _myDbContext.Database.ExecuteSqlRawAsync("SELECT 2;");
 
         return await _myDbContext.MyEntities.Where(e => e.Id > 0).ToListAsync();
     }

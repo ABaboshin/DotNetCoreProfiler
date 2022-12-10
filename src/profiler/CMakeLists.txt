@@ -1,16 +1,18 @@
 cmake_minimum_required (VERSION 3.17)
 cmake_policy(SET CMP0015 NEW)
+cmake_policy(SET CMP0042 NEW)
+cmake_policy(SET CMP0091 NEW)
 
-project("DotNetCoreProfiler" VERSION 1.0.0)
+project("DotNetCoreProfiler" VERSION 1.6.0)
 
 IF (WIN32)
-  add_definitions(-DUNICODE -D_UNICODE -DWIN32 -DNDEBUG -D_WINDOWS -D_USRDLL)
+  add_definitions(-DUNICODE -D_UNICODE -DWIN32 -DNDEBUG -D_WINDOWS -D_USRDLL -D_WIN32 -DWINVER=0x0602 -D_WIN32_WINNT=0x0602 -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS)
 ENDIF()
 
 IF (UNIX AND NOT APPLE)
   add_compile_options(-std=c++11 -fPIC -fms-extensions -stdlib=libstdc++)
   add_compile_options(-DBIT64 -DPAL_STDCPP_COMPAT -DPLATFORM_UNIX -DUNICODE)
-  add_compile_options(-Wno-invalid-noreturn -Wno-macro-redefined -Wno-pragma-pack)
+  add_compile_options(-Wno-invalid-noreturn -Wno-macro-redefined -Wno-pragma-pack -g -Wall -Wno-null-conversion)
 ENDIF()
 
 IF (APPLE)
