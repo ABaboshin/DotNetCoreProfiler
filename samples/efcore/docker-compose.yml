@@ -15,6 +15,12 @@ services:
       DATABASE__CONNECTIONSTRING: "Server=sqlserver;Database=mydb;User Id=sa;Password=passwoyourStrong(!)Passwordrd;"
       entityframeworkcore_metrics__enabled: "true"
       entityframeworkcore_metrics__name: "db_call"
+      samplers_metrics__CPUEnabled: "true"
+      samplers_metrics__MemEnabled: "true"
+      samplers_metrics__GCEnabled: "true"
+      # samplers_metrics__CPUInterval: 5
+      # samplers_metrics__MemInterval: 5
+      samplers_metrics__GCInterval: 5
     ports:
       - "5000:5000"
 

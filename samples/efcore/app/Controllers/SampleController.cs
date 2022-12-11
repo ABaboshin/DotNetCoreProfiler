@@ -38,5 +38,12 @@ namespace app.Controllers
     {
         return _myDbContext.BadEntities;
     }
+
+    [HttpGet("mem")]
+    public ActionResult<IEnumerable<BadEntity>> Mem()
+    {
+      var x = new byte[1000000];
+      return _myDbContext.BadEntities;
+    }
   }
 }
