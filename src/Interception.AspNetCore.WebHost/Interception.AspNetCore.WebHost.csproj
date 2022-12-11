@@ -5,12 +5,8 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/ABaboshin/DotNetCoreProfiler</RepositoryUrl>
-    <Version>1.2022.1210</Version>
+    <Version>1.2022.1211</Version>
   </PropertyGroup>
-
-  <ItemGroup>
-    <!-- <FrameworkReference Include="Microsoft.AspNetCore.App" /> -->
-  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Interception.Attributes\Interception.Attributes.csproj" />
