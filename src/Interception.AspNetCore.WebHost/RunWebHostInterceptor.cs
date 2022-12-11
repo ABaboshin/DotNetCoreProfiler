@@ -9,7 +9,7 @@ namespace Interception.AspNetCore
     /// intercept WebHost.Run
     /// and get the DI
     /// </summary>
-    [StrictIntercept(TargetAssemblyName = "Microsoft.AspNetCore.Hosting.Abstractions", TargetMethodName = "RunAsync", TargetTypeName = "Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions", TargetMethodParametersCount = 2)]
+    //[StrictIntercept(TargetAssemblyName = "Microsoft.AspNetCore.Hosting.Abstractions", TargetMethodName = "RunAsync", TargetTypeName = "Microsoft.Extensions.Hosting.HostingAbstractionsHostExtensions", TargetMethodParametersCount = 2)]
     public class RunWebHostInterceptor : BaseInterceptor
     {
         public override int Priority => 0;

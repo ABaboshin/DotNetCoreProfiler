@@ -26,7 +26,7 @@ namespace Interception.AspNetCore
         public override void ExecuteBefore()
         {
             HttpDiagnosticsObserver.ConfigureAndStart();
-            EFCoreDiagnosticsObserver.ConfigureAndStart();
+            // EFCoreDiagnosticsObserver.ConfigureAndStart();
             var serviceCollection = ((IServiceCollection)GetParameter(1));
 
             var logger = CreateLogger();
