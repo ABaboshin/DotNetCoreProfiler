@@ -22,7 +22,6 @@ namespace Interception.Observers.Samplers
 
             if (_configuration.GCEnabled)
             {
-                Console.WriteLine("!!!!!!!!!!!!!!!!! gc ENABLED");
                 _timer = new Timer(_configuration.GCInterval * 1000);
                 _timer.Elapsed += _timer_Elapsed;
                 _timer.Enabled = true;

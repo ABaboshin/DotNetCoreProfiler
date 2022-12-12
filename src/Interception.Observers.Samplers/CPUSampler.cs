@@ -19,7 +19,6 @@ namespace Interception.Observers.Samplers
 
             if (_configuration.CPUEnabled)
             {
-                Console.WriteLine("!!!!!!!!!!!!!!!!! CPU ENABLED");
                 _timer = new Timer(_configuration.CPUInterval * 1000);
                 _timer.Elapsed += _timer_Elapsed;
                 _timer.Enabled = true;
@@ -30,7 +29,6 @@ namespace Interception.Observers.Samplers
 
         private void _timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            Console.WriteLine("!!!!!!!!!!!!!!!!! CPU elapsed");
             GlobalTracer.Instance
                     .BuildSpan(_configuration.CPUName)
                     .WithTag(Tags.SpanKind, Tags.SpanKindClient)

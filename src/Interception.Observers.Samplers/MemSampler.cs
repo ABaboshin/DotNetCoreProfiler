@@ -19,7 +19,6 @@ namespace Interception.Observers.Samplers
 
             if (_configuration.MemEnabled)
             {
-                Console.WriteLine("!!!!!!!!!!!!!!!!! mem ENABLED");
                 _timer = new Timer(_configuration.MemInterval * 1000);
                 _timer.Elapsed += _timer_Elapsed;
                 _timer.Enabled = true;
@@ -30,7 +29,6 @@ namespace Interception.Observers.Samplers
 
         private void _timer_Elapsed(object sender, ElapsedEventArgs e)
         {
-            Console.WriteLine("!!!!!!!!!!!!!!!!! mem elapsed");
             GlobalTracer.Instance
                     .BuildSpan(_configuration.MemName)
                     .WithTag(Tags.SpanKind, Tags.SpanKindClient)

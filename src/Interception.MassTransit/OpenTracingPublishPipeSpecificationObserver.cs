@@ -1,4 +1,4 @@
-﻿using MassTransit.PublishPipeSpecifications;
+﻿using MassTransit.Configuration;
 
 namespace Interception.MassTransit
 {

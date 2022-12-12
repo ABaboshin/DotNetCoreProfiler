@@ -5,14 +5,14 @@
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <RepositoryUrl>https://github.com/ABaboshin/DotNetCoreProfiler</RepositoryUrl>
-    <Version>1.2022.1211</Version>
+    <Version>1.2022.1212</Version>
   </PropertyGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Interception.Attributes\Interception.Attributes.csproj" />
     <ProjectReference Include="..\Interception.Core\Interception.Core.csproj" />
     <ProjectReference Include="..\Interception.DependencyInjection\Interception.DependencyInjection.csproj" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+    <PackageReference Include="Microsoft.AspNetCore.Hosting" Version="2.2.7" />
   </ItemGroup>
 
 </Project>
