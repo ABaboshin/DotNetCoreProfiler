@@ -20,6 +20,7 @@ protected:
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
 
     std::unordered_map<ModuleID, GUID> modules;
+    std::vector<ModuleID> enabledModules;
 
     configuration::Configuration configuration{};
     ICorProfilerInfo8* corProfilerInfo;

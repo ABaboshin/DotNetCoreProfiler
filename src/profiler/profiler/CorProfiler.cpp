@@ -126,6 +126,16 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     modules[moduleId] = module_version_id;
 
+    logging::log(logging::LogLevel::VERBOSE,
+        "Module {0} loaded"_W, module_info.assembly.name);
+        enabledModules.push_back(moduleId);
+    
+    if (std::find(configuration.EnabledAssemblies.begin(), configuration.EnabledAssemblies.end(), module_info.assembly.name) != configuration.EnabledAssemblies.end()) {
+        logging::log(logging::LogLevel::INFO,
+        "Module {0} enabled"_W, module_info.assembly.name);
+        enabledModules.push_back(moduleId);
+    }
+
     return S_OK;
 }
 
@@ -186,10 +196,31 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         return S_OK;
     }
 
+    // white listed
+    if (std::find(enabledModules.begin(), enabledModules.end(), moduleId) == enabledModules.end()) {
+        return S_OK;
+    }
+
+    // auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
+
+    // ComPtr<IUnknown> metadataInterfaces;
+    // IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+    // const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+    // auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
+
+    // if (configuration.OnlyMethodsFromTypes.find(moduleInfo.assembly.name + "."_W + functionInfo.Type.Name) == configuration.OnlyMethodsFromTypes.end()) {
+    //     return S_OK;
+    // }
+
+    // std::cout << "!!! profiler " << util::ToString(moduleInfo.assembly.name) << " " << util::ToString(functionInfo.Type.Name) << std::endl;
+
     rewriter::ILRewriter* rewriter = CreateILRewriter(nullptr, moduleId, functionToken);
     IfFailRet(rewriter->Import());
 
     auto alreadyChanged = false;
+
+    
 
     // load once into appdomain
     if (loadedIntoAppDomains.find(moduleInfo.assembly.appDomainId) == loadedIntoAppDomains.end())
@@ -201,6 +232,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
         const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
+        
         auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
 
         logging::log(
