@@ -21,6 +21,7 @@ namespace configuration
 		TypeInfo MethodFinderInterface{};
 		std::vector<MethodFinder> MethodFinders{};
 		std::unordered_set<wstring> SkipAssemblies;
+		std::unordered_set<wstring> EnabledAssemblies;
 
 		Configuration(std::vector<StrictInterception> strictInterceptions,
 			std::vector<wstring>& assemblies,
@@ -29,7 +30,8 @@ namespace configuration
 			const TypeInfo& composed,
 			const TypeInfo& methodFinderInterface,
 			std::vector<MethodFinder> methodFinders,
-			std::unordered_set<wstring>& skipAssemblies) :
+			std::unordered_set<wstring>& skipAssemblies,
+			std::unordered_set<wstring>& enabledAssemblies) :
 			StrictInterceptions(strictInterceptions),
 			Assemblies(assemblies),
 			AttributedInterceptors(attributedInterceptors),
@@ -37,7 +39,8 @@ namespace configuration
 			ComposedInterceptor(composed),
 			MethodFinderInterface(methodFinderInterface),
 			MethodFinders(methodFinders),
-			SkipAssemblies(skipAssemblies) {}
+			SkipAssemblies(skipAssemblies),
+			EnabledAssemblies(enabledAssemblies) {}
 
 		Configuration() {}
 

@@ -1,6 +1,6 @@
 ﻿using Interception.Attributes;
 using Interception.Core;
-using MassTransit.RabbitMqTransport;
+using MassTransit;
 using Microsoft.Extensions.Configuration;
 using System;
 
@@ -10,7 +10,7 @@ namespace Interception.MassTransit
     /// intercept rabbitmq masstransit configuration
     /// and inject tracing
     /// </summary>
-    [StrictIntercept(TargetAssemblyName = "MassTransit.RabbitMqTransport", TargetMethodName = "CreateUsingRabbitMq", TargetTypeName = "MassTransit.BusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
+    [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "UsingRabbitMq", TargetTypeName = "MassTransit.RabbitMqBusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
     public class CreateUsingRabbitMqInterceptor : BaseInterceptor
     {
         public override int Priority => 0;
@@ -23,8 +23,8 @@ namespace Interception.MassTransit
 
             var config = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
 
-            var typedConfigure = (Action<IRabbitMqBusFactoryConfigurator>)GetParameter(1);
-            Action<IRabbitMqBusFactoryConfigurator> configure = (IRabbitMqBusFactoryConfigurator cfg) => {
+            var typedConfigure = (Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator>)GetParameter(1);
+            Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> configure = (IBusRegistrationContext context, IRabbitMqBusFactoryConfigurator cfg) => {
                 if (config.PublisherEnabled)
                 {
                     cfg.ConfigurePublish(configurator => {
@@ -32,7 +32,7 @@ namespace Interception.MassTransit
                     });
                 }
 
-                typedConfigure(cfg);
+                typedConfigure(context, cfg);
             };
 
             ModifyParameter(1, configure);

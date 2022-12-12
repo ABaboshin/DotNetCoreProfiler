@@ -1,0 +1,22 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net6.0</TargetFramework>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <RepositoryUrl>https://github.com/ABaboshin/DotNetCoreProfiler</RepositoryUrl>
+    <Version>1.2022.1213</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Interception.Observers\Interception.Observers.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="6.0.11" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="6.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Primitives" Version="6.0.0" />
+  </ItemGroup>
+
+</Project>

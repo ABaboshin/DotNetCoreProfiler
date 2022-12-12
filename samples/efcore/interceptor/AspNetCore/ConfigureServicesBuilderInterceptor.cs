@@ -1,6 +1,7 @@
 ﻿using Interception.Attributes;
 using Interception.Core;
 using Interception.Observers;
+using Interception.Observers.Samplers;
 using Interception.Tracing.Serilog;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -26,6 +27,11 @@ namespace Interception.AspNetCore
         {
             HttpDiagnosticsObserver.ConfigureAndStart();
             EFCoreDiagnosticsObserver.ConfigureAndStart();
+
+            CPUSampler.ConfigureAndStart();
+            MemSampler.ConfigureAndStart();
+            GCSampler.ConfigureAndStart();
+
             var serviceCollection = ((IServiceCollection)GetParameter(1));
 
             var logger = CreateLogger();

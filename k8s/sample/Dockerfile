@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 as build
 
 COPY src src
 
@@ -6,7 +6,7 @@ COPY k8s /k8s
 
 RUN dotnet publish -c Release -o /app /k8s/sample/app/app.csproj
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.5-bionic
+FROM mcr.microsoft.com/dotnet/aspnet:6.0
 
 EXPOSE 80
 

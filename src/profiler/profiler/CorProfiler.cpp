@@ -126,6 +126,16 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     modules[moduleId] = module_version_id;
 
+    logging::log(logging::LogLevel::VERBOSE,
+        "Module {0} loaded"_W, module_info.assembly.name);
+        enabledModules.push_back(moduleId);
+    
+    if (std::find(configuration.EnabledAssemblies.begin(), configuration.EnabledAssemblies.end(), module_info.assembly.name) != configuration.EnabledAssemblies.end()) {
+        logging::log(logging::LogLevel::INFO,
+        "Module {0} enabled"_W, module_info.assembly.name);
+        enabledModules.push_back(moduleId);
+    }
+
     return S_OK;
 }
 
@@ -186,6 +196,11 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         return S_OK;
     }
 
+    // white listed
+    if (std::find(enabledModules.begin(), enabledModules.end(), moduleId) == enabledModules.end()) {
+        return S_OK;
+    }
+
     rewriter::ILRewriter* rewriter = CreateILRewriter(nullptr, moduleId, functionToken);
     IfFailRet(rewriter->Import());
 
@@ -200,8 +215,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
 
         const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
-        auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
+        
+        const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
 
         logging::log(
             logging::LogLevel::INFO,

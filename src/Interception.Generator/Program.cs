@@ -20,6 +20,7 @@ namespace Interception.Generator
                     var methodFinders = new List<MethodFinderInfo>();
                     var attributed = new List<AttributedInterceptor>();
                     var skipAssemblies = File.Exists(opts.Skip) ?  File.ReadAllLines(opts.Skip) : new string[] { };
+                    var enabledAssemblies = File.Exists(opts.EnabledAssemblies) ? File.ReadAllLines(opts.EnabledAssemblies) : new string[] { };
 
                     foreach (var assemblyPath in opts.Assemblies)
                     {
@@ -49,6 +50,7 @@ namespace Interception.Generator
                         },
                         methodFinders,
                         skipAssemblies = skipAssemblies?.OrderBy(s => s),
+                        enabledAssemblies = enabledAssemblies?.OrderBy(s => s),
                         strict,
                     };
 

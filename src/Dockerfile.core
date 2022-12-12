@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.301 as build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 as build
 
 ARG NUGET_KEY
 
@@ -15,7 +15,8 @@ RUN dotnet build -c Release src/Interception.Generator/Interception.Generator.cs
 RUN dotnet build -c Release src/Interception.MassTransit/Interception.MassTransit.csproj
 RUN dotnet build -c Release src/Interception.Observers/Interception.Observers.csproj
 RUN dotnet build -c Release src/Interception.Observers.Http/Interception.Observers.Http.csproj
-RUN dotnet build -c Release src/Interception.Observers.EFCore2/Interception.Observers.EFCore2.csproj
+RUN dotnet build -c Release src/Interception.Observers.EFCore6/Interception.Observers.EFCore6.csproj
+RUN dotnet build -c Release src/Interception.Observers.Samplers/Interception.Observers.Samplers.csproj
 RUN dotnet build -c Release src/Interception.OpenTracing.Statsd/Interception.OpenTracing.Statsd.csproj
 RUN dotnet build -c Release src/Interception.Quartz/Interception.Quartz.csproj
 RUN dotnet build -c Release src/Interception.Tracing/Interception.Tracing.csproj

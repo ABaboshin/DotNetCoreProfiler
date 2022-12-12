@@ -42,6 +42,7 @@ namespace configuration
 		std::vector<StrictInterception> interceptions{};
 		std::vector<wstring> assemblies{};
 		std::unordered_set<wstring> skipAssemblies{};
+		std::unordered_set<wstring> enabledAssemblies{};
 		std::unordered_map<wstring, AttributedInterceptor> attributedInterceptors{};
 		std::vector<MethodFinder> methodFinders{};
 
@@ -70,6 +71,10 @@ namespace configuration
 			skipAssemblies.insert(ToWSTRING(el));
 		}
 
+		for (auto& el : j["enabledAssemblies"]) {
+			enabledAssemblies.insert(ToWSTRING(el));
+		}
+
 		for (auto& el : j["attributed"]) {
 			auto i = LoadAttributedInterceptorFromJson(el);
 			if (std::get<1>(i)) {
@@ -89,7 +94,8 @@ namespace configuration
 			std::get<0>(composedInterceptor),
 			std::get<0>(methodFinderInterface),
 			methodFinders,
-			skipAssemblies
+			skipAssemblies,
+			enabledAssemblies
 		};
 	}
 

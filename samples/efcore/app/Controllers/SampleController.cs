@@ -27,8 +27,8 @@ namespace app.Controllers
     [HttpGet]
     public async Task<ActionResult<IEnumerable<MyEntity>>> Get()
     {
-        _myDbContext.Database.ExecuteSqlCommand("SELECT 1;");
-        await _myDbContext.Database.ExecuteSqlCommandAsync("SELECT 2;");
+        _myDbContext.Database.ExecuteSqlRaw("SELECT 1;");
+        await _myDbContext.Database.ExecuteSqlRawAsync("SELECT 2;");
 
         return await _myDbContext.MyEntities.Where(e => e.Id > 0).ToListAsync();
     }
@@ -37,6 +37,13 @@ namespace app.Controllers
     public ActionResult<IEnumerable<BadEntity>> Bad()
     {
         return _myDbContext.BadEntities;
+    }
+
+    [HttpGet("mem")]
+    public ActionResult<IEnumerable<BadEntity>> Mem()
+    {
+      var x = new byte[1000000];
+      return _myDbContext.BadEntities;
     }
   }
 }

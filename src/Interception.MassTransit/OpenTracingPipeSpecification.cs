@@ -1,5 +1,5 @@
-﻿using GreenPipes;
-using MassTransit;
+﻿using MassTransit;
+using MassTransit.Configuration;
 using System.Collections.Generic;
 using System.Linq;
 

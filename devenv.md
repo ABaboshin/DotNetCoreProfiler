@@ -1,5 +1,13 @@
 # Development environment
 
+## Windows 10
+
+ - cmake https://cmake.org/download/
+ - Visual Studio 2019+ with Desktop Development c++ component
+ - Windows Kist https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/
+ - .net core 6 sdk
+ - `cd src/profiler`, `cmake .`, open DotNetCoreProfiler.sln in Visual Studio
+
 ## OS X Catalana
 
  - install latest xcode

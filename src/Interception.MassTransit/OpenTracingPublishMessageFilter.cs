@@ -1,10 +1,10 @@
-﻿using GreenPipes;
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.Extensions.Options;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
 using OpenTracing.Util;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Interception.MassTransit
@@ -18,7 +18,7 @@ namespace Interception.MassTransit
         public async Task Send(PublishContext<TMessage> context, IPipe<PublishContext<TMessage>> next)
         {
             var baseSpan = GlobalTracer.Instance
-                .BuildSpan(DependencyInjection.Instance.ServiceProvider.GetService<IOptions<MassTransitConfiguration>>().Value.PublisherName)
+                .BuildSpan(DependencyInjection.Instance.ServiceProvider.GetService<IConfiguration>().GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>().PublisherName)
                 .AsChildOf(GlobalTracer.Instance.ActiveSpan);
 
             using (var scope = baseSpan.StartActive(finishSpanOnDispose: true))
