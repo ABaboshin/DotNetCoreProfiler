@@ -220,8 +220,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     auto alreadyChanged = false;
 
-    
-
     // load once into appdomain
     if (loadedIntoAppDomains.find(moduleInfo.assembly.appDomainId) == loadedIntoAppDomains.end())
     {
@@ -231,9 +229,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
 
         const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
         
-        auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
+        const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
 
         logging::log(
             logging::LogLevel::INFO,

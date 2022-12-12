@@ -305,6 +305,7 @@ class ICorProfilerInfo8Mock : public ::PureICorProfilerInfo8Impl
 {
 	virtual HRESULT __stdcall GetFunctionInfo(FunctionID functionId, ClassID* pClassId, ModuleID* pModuleId, mdToken* pToken) override
 	{
+		*pModuleId = 0;
 		return S_OK;
 	}
 
@@ -344,6 +345,11 @@ public:
 		this->corProfilerInfo = new ICorProfilerInfo8Mock();
 	}
 
+	void SetEnabled(ModuleID id)
+	{
+		enabledModules.push_back(id);
+	}
+
 	void SetConfiguration(const configuration::Configuration configuration)
 	{
 		this->configuration = configuration;
@@ -358,6 +364,7 @@ public:
 TEST_F(CorProfilerInjectLoadMethodTests, ItCallsInjectLoadMethodAtFirstCallInAppDomain)
 {
 	auto mock = new CorProfilerMock();
+	mock->SetEnabled(0);
 
 	mock->JITCompilationStarted(0, FALSE);
 	EXPECT_EQ(mock->InjectLoadMethodCallCount, 1);
@@ -366,6 +373,7 @@ TEST_F(CorProfilerInjectLoadMethodTests, ItCallsInjectLoadMethodAtFirstCallInApp
 TEST_F(CorProfilerInjectLoadMethodTests, ItCallsInjectLoadMethodOnlyOnceInAppDomain)
 {
 	auto mock = new CorProfilerMock();
+	mock->SetEnabled(0);
 
 	mock->JITCompilationStarted(0, FALSE);
 	mock->JITCompilationStarted(0, FALSE);
