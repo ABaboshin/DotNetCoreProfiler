@@ -29,6 +29,15 @@ namespace Interception.MassTransit
 
         public override int Priority => 0;
 
+        public override void ExecuteBefore()
+        {
+            Console.WriteLine($"!!! profiler ConsumeInterceptor {Enabled}");
+            if (Enabled)
+            {
+                CreateScope();
+            }
+        }
+
         protected override void CreateScope()
         {
             var context = (ConsumeContext)GetParameter(0);

@@ -18,9 +18,6 @@ namespace Interception.Generator
         [Option('s', "skip")]
         public string Skip { get; set; }
 
-        [Option('t', "onlyMethodsFromTypes")]
-        public string OnlyMethodsFromTypes { get; set; }
-
         [Option('e', "enabledAssemblies")]
         public string EnabledAssemblies { get; set; }
     }

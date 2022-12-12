@@ -201,20 +201,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         return S_OK;
     }
 
-    // auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
-
-    // ComPtr<IUnknown> metadataInterfaces;
-    // IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
-    // const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
-    // auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
-
-    // if (configuration.OnlyMethodsFromTypes.find(moduleInfo.assembly.name + "."_W + functionInfo.Type.Name) == configuration.OnlyMethodsFromTypes.end()) {
-    //     return S_OK;
-    // }
-
-    // std::cout << "!!! profiler " << util::ToString(moduleInfo.assembly.name) << " " << util::ToString(functionInfo.Type.Name) << std::endl;
-
     rewriter::ILRewriter* rewriter = CreateILRewriter(nullptr, moduleId, functionToken);
     IfFailRet(rewriter->Import());
 
