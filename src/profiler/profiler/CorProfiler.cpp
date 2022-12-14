@@ -40,11 +40,14 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
     }
 
     DWORD eventMask = COR_PRF_MONITOR_JIT_COMPILATION |
-        COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST |
-        COR_PRF_DISABLE_INLINING | COR_PRF_MONITOR_MODULE_LOADS |
-        COR_PRF_DISABLE_ALL_NGEN_IMAGES;
+                      COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST |
+                      // COR_PRF_DISABLE_INLINING |
+                      COR_PRF_MONITOR_MODULE_LOADS |
+                      COR_PRF_MONITOR_ASSEMBLY_LOADS | COR_PRF_MONITOR_APPDOMAIN_LOADS |
+                      //COR_PRF_DISABLE_ALL_NGEN_IMAGES |
+                      COR_PRF_ENABLE_REJIT;
 
-    auto hr = this->corProfilerInfo->SetEventMask(eventMask);
+    auto hr = this->corProfilerInfo->SetEventMask2(eventMask, COR_PRF_HIGH_ADD_ASSEMBLY_REFERENCES);
 
     configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"));
 
@@ -129,14 +132,86 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
     logging::log(logging::LogLevel::VERBOSE,
         "Module {0} loaded"_W, module_info.assembly.name);
         enabledModules.push_back(moduleId);
-    
-    if (std::find(configuration.EnabledAssemblies.begin(), configuration.EnabledAssemblies.end(), module_info.assembly.name) != configuration.EnabledAssemblies.end()) {
+
+    // if (std::find(configuration.EnabledAssemblies.begin(), configuration.EnabledAssemblies.end(), module_info.assembly.name) != configuration.EnabledAssemblies.end()) {
+    //     logging::log(logging::LogLevel::INFO,
+    //     "Module {0} enabled"_W, module_info.assembly.name);
+    //     enabledModules.push_back(moduleId);
+    // }
+
+    if (module_info.assembly.name == "app"_W) {
+      logging::log(logging::LogLevel::INFO,
+                   "Module {0} analyze"_W, module_info.assembly.name);
+      // enabledModules.push_back(moduleId);
+
+      mdTypeDef typeDef = mdTypeRefNil;
+      metadataImport->FindTypeDefByName("app.Program"_W.c_str(), mdTokenNil, &typeDef);
+
+      if (typeDef != mdTypeRefNil) {
         logging::log(logging::LogLevel::INFO,
-        "Module {0} enabled"_W, module_info.assembly.name);
-        enabledModules.push_back(moduleId);
+                     "Found app.Program"_W);
+
+        HCORENUM hcorenum = 0;
+        const auto maxMethods = 1000;
+        mdMethodDef methods[maxMethods]{};
+        ULONG cnt;
+        metadataImport->EnumMethods(&hcorenum, typeDef, methods, maxMethods, &cnt);
+
+        logging::log(logging::LogLevel::INFO,
+                     "Found app.Program methods"_W);
+
+        for (auto i = 0; i < cnt; i++) {
+          const auto method_info = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
+
+          logging::log(logging::LogLevel::INFO,
+                       "Found app.Program method {0}"_W, method_info.Name);
+
+          if (method_info.Name == "TestM"_W) {
+            logging::log(logging::LogLevel::INFO,
+                         "Found app.Program method {0} request rejit"_W, method_info.Name);
+            ModuleID m1[1]{moduleId};
+            mdMethodDef m2[1]{methods[i]};
+            hr = corProfilerInfo->RequestReJIT(1, m1, m2);
+            if(FAILED(hr)) {
+              logging::log(logging::LogLevel::INFO,
+                           "Found app.Program method {0} request rejit failed"_W, method_info.Name);
+            } else {
+              logging::log(logging::LogLevel::INFO,
+                           "Found app.Program method {0} request rejit success"_W, method_info.Name);
+            }
+          }
+        }
+
+      } else {
+        logging::log(logging::LogLevel::INFO,
+                     "Not Found app.Program"_W);
+      }
+
+      //         HCORENUM hcorenum;
+      // const auto maxType = 256;
+      // mdTypeRef typeRefs[maxType]{};
+      // ULONG cnt;
+      // metadataImport->EnumTypeRefs(&hcorenum, typeRefs, maxType, &cnt);
+
+      // logging::log(logging::LogLevel::INFO,
+      //              "Module {0} analyze got {1} types"_W, module_info.assembly.name, cnt);
+
+      // mdToken parent = mdTokenNil;
+
+      // for (auto i = 0; i < cnt; i++) {
+      //   const auto maxNameSize = 1024;
+      //   WCHAR name[maxNameSize]{};
+      //   ULONG nameSize;
+      //   metadataImport->GetTypeRefProps(typeRefs[i], &parent, name, maxNameSize, &nameSize);
+      //   if (name == "app.Program"_W)
+      //   {
+      //     logging::log(logging::LogLevel::INFO,
+      //                  "Class {0} found"_W, name);
+      //   }
+      // }
     }
 
-    return S_OK;
+      return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ModuleUnloadStarted(ModuleID moduleId)
@@ -215,7 +290,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
 
         const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-        
+
         const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
 
         logging::log(
@@ -233,11 +308,13 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         alreadyChanged = true;
     }
 
-    auto result = Rewrite(moduleId, *rewriter, alreadyChanged);
+    return S_OK;
 
-    delete rewriter;
+    // auto result = Rewrite(moduleId, *rewriter, alreadyChanged);
 
-    return result;
+    // delete rewriter;
+
+    // return result;
 }
 
 HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter)
@@ -373,7 +450,7 @@ HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, 
         auto targetMdToken = pInstr->m_Arg32;
 
         logging::log(
-            logging::LogLevel::VERBOSE, "Found call to {0}.{1} num args {2} from assembly {3}"_W,
+            logging::LogLevel::INFO, "Found call to {0}.{1} num args {2} from assembly {3}"_W,
             target.Type.Name,
             target.Name,
             target.Signature.NumberOfArguments(),
@@ -1235,22 +1312,91 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ProfilerDetachSucceeded()
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationStarted(FunctionID functionId, ReJITID rejitId, BOOL fIsSafeToBlock)
 {
-    return S_OK;
+  logging::log(
+      logging::LogLevel::INFO,
+      "ReJITCompilationStarted"_W);
+  return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdMethodDef methodId, ICorProfilerFunctionControl* pFunctionControl)
 {
+  HRESULT hr;
+  mdToken functionToken;
+  ClassID classId;
+  // ModuleID moduleId;
+
+  logging::log(
+      logging::LogLevel::INFO,
+      "GetReJITParameters {0} {1} {2} {3}"_W, moduleId, methodId, pFunctionControl != NULL, this->corProfilerInfo != NULL);
+
+  auto rewriter = CreateILRewriter(pFunctionControl, moduleId, methodId);
+  hr = rewriter->Import();
+  if (FAILED(hr)) {
+    logging::log(
+        logging::LogLevel::INFO,
+        "GetReJITParameters rewriter->Import failed"_W);
     return S_OK;
-}
+  }
+
+  for (rewriter::ILInstr *pInstr = rewriter->GetILList()->m_pNext;
+       pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
+  {
+    std::cout << std::hex << pInstr->m_opcode << std::endl;
+  }
+
+    //TODO save method metadata when requesting rejitting
+    // hr = this->corProfilerInfo->GetFunctionInfo(methodId, &classId, &moduleId, &functionToken);
+    // if (FAILED(hr)) {
+    //   logging::log(
+    //       logging::LogLevel::INFO,
+    //       "GetReJITParameters GetFunctionInfo failed"_W);
+    //   return S_OK;
+    // }
+
+    // auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
+
+    // logging::log(
+    //     logging::LogLevel::INFO,
+    //     "GetReJITParameters GetModuleInfo done"_W);
+    // ComPtr<IUnknown> metadataInterfaces;
+    // hr = this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
+    // if (FAILED(hr)) {
+    //   logging::log(
+    //       logging::LogLevel::INFO,
+    //       "GetReJITParameters GetModuleMetaData failed"_W);
+    //   return S_OK;
+    // }
+
+    // const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+    // const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
+
+    // logging::log(
+    //     logging::LogLevel::INFO,
+    //     "GetReJITParameters for app_domain_id {0} method {1}.{2} num args {3} from assembly {4}"_W,
+    //     moduleInfo.assembly.appDomainId,
+    //     functionInfo.Type.Name,
+    //     functionInfo.Name,
+    //     functionInfo.Signature.NumberOfArguments(),
+    //     moduleInfo.assembly.name);
+
+    return S_OK;
+  }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationFinished(FunctionID functionId, ReJITID rejitId, HRESULT hrStatus, BOOL fIsSafeToBlock)
 {
-    return S_OK;
+  logging::log(
+      logging::LogLevel::INFO,
+      "ReJITCompilationFinished"_W);
+  return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITError(ModuleID moduleId, mdMethodDef methodId, FunctionID functionId, HRESULT hrStatus)
 {
-    return S_OK;
+  logging::log(
+      logging::LogLevel::INFO,
+      "ReJITError"_W);
+  return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::MovedReferences2(ULONG cMovedObjectIDRanges, ObjectID oldObjectIDRangeStart[], ObjectID newObjectIDRangeStart[], SIZE_T cObjectIDRangeLength[])

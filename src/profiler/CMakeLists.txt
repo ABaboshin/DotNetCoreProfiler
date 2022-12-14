@@ -29,6 +29,7 @@ SET_SOURCE_FILES_PROPERTIES(
 )
 
 add_library("DotNetCoreProfiler.static" STATIC
+  profiler/CorProfiler.cpp
   ClassFactory.cpp
   configuration/Configuration.cpp
   info/AssemblyInfo.cpp
@@ -40,7 +41,6 @@ add_library("DotNetCoreProfiler.static" STATIC
   info/parser.cpp
   logging/logging.cpp
   miniutf/miniutf.cpp
-  profiler/CorProfiler.cpp
   rewriter/ILRewriter.cpp
   rewriter/ILRewriterHelper.cpp
   util/helpers.cpp
