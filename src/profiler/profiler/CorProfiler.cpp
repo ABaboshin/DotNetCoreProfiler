@@ -1338,11 +1338,38 @@ HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdM
     return S_OK;
   }
 
+  // auto rewriter = CreateILRewriter(NULL, moduleId, methodId);
+  // rewriter->InitializeTiny();
+  rewriter::ILRewriterHelper helper(rewriter);
+  // helper.Ret();
+
   for (rewriter::ILInstr *pInstr = rewriter->GetILList()->m_pNext;
        pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
   {
-    std::cout << std::hex << pInstr->m_opcode << std::endl;
+    if (pInstr->m_opcode != rewriter::CEE_CALL && pInstr->m_opcode != rewriter::CEE_CALLVIRT && pInstr->m_opcode != rewriter::CEE_RET)
+    {
+      continue;
+    }
+
+    pInstr->m_opcode = rewriter::CEE_NOP;
   }
+
+  hr = rewriter->Export();
+
+  if (FAILED(hr)) {
+    logging::log(
+        logging::LogLevel::INFO,
+        "GetReJITParameters rewriter->Export failed"_W);
+    return S_OK;
+  }
+
+  return S_OK;
+
+  // for (rewriter::ILInstr *pInstr = rewriter->GetILList()->m_pNext;
+  //      pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
+  // {
+  //   std::cout << std::hex << pInstr->m_opcode << std::endl;
+  // }
 
     //TODO save method metadata when requesting rejitting
     // hr = this->corProfilerInfo->GetFunctionInfo(methodId, &classId, &moduleId, &functionToken);

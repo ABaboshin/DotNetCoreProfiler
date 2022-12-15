@@ -11,6 +11,7 @@ namespace app
 
     static void TestM()
     {
+      Console.WriteLine("TestM");
     }
   }
 }
