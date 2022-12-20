@@ -143,13 +143,13 @@ namespace configuration
 
 		auto interceptor = std::get<0>(LoadTypeInfoFromJson(src["Interceptor"]));
 		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
-		std::unordered_set<wstring> ignoreCallerAssemblies{};
+		//std::unordered_set<wstring> ignoreCallerAssemblies{};
 
-		for (auto& el : src["IgnoreCallerAssemblies"]) {
-			ignoreCallerAssemblies.insert(ToWSTRING(el));
-		}
+		//for (auto& el : src["IgnoreCallerAssemblies"]) {
+		//	ignoreCallerAssemblies.insert(ToWSTRING(el));
+		//}
 
-		return std::make_pair<StrictInterception, bool>({ ignoreCallerAssemblies, target, interceptor }, true);
+		return std::make_pair<StrictInterception, bool>({ /*ignoreCallerAssemblies,*/ target, interceptor}, true);
 	}
 
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src)

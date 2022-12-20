@@ -28,8 +28,23 @@ SET_SOURCE_FILES_PROPERTIES(
   GENERATED true
 )
 
+# include(FetchContent)
+
+# FetchContent_Declare(fmt
+#   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+#   GIT_TAG master
+# )
+
+# FetchContent_MakeAvailable(fmt)
+
+# # add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/_deps/fmt-src/include
+# #                  EXCLUDE_FROM_ALL)
+
 add_library("DotNetCoreProfiler.static" STATIC
   profiler/CorProfiler.cpp
+  profiler/CorProfiler.ModuleLoadFinished.cpp
+  profiler/CorProfiler.JITCompilationStarted.cpp
+  profiler/CorProfiler.Rejit.cpp
   ClassFactory.cpp
   configuration/Configuration.cpp
   info/AssemblyInfo.cpp
@@ -52,6 +67,7 @@ set_target_properties("DotNetCoreProfiler.static" PROPERTIES PREFIX "")
 target_include_directories("DotNetCoreProfiler.static"
   PUBLIC ../../lib/coreclr/src/inc
   PUBLIC .
+  # PuBLIC include
 )
 
 IF (WIN32)

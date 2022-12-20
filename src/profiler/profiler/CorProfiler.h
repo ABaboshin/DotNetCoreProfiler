@@ -11,6 +11,16 @@
 #include "info/ModuleInfo.h"
 #include "configuration/Configuration.h"
 #include "rewriter/ILRewriter.h"
+#include <mutex>
+
+struct RejitInfo {
+    ModuleID moduleId;
+    mdMethodDef methodId;
+    info::FunctionInfo info;
+
+    RejitInfo() {}
+    RejitInfo(ModuleID m, mdMethodDef f, info::FunctionInfo i) :moduleId(m), methodId(f), info(i) {}
+};
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -20,22 +30,27 @@ protected:
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
 
     std::unordered_map<ModuleID, GUID> modules;
-    std::vector<ModuleID> enabledModules;
+    std::unordered_set<ModuleID> skippedModules;
+    std::vector<RejitInfo> rejitInfo;
+    //std::vector<ModuleID> enabledModules;
+
+    std::mutex mutex;
+    bool alreadyLoaded;
 
     configuration::Configuration configuration{};
     ICorProfilerInfo8* corProfilerInfo;
 
     bool SkipAssembly(const wstring& name);
 
-    HRESULT Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged);
+    //HRESULT Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged);
 
     virtual HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter);
 
     HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken);
 
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::TypeInfo>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
+    //HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::TypeInfo>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
 
-    std::vector<configuration::TypeInfo> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
+    //std::vector<configuration::TypeInfo> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
     std::pair<configuration::TypeInfo, bool> FindMethodFinder(const info::FunctionInfo& target);
 
     virtual rewriter::ILRewriter* CreateILRewriter(ICorProfilerFunctionControl* pICorProfilerFunctionControl, ModuleID moduleId, mdToken functionToken)

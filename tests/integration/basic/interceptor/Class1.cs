@@ -4,7 +4,7 @@ using System;
 
 namespace interceptor
 {
-    // [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "TestM", TargetTypeName = "app.Program", TargetMethodParametersCount = 0)]
+    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "TestM", TargetTypeName = "app.Program", TargetMethodParametersCount = 0)]
     public class Class1 : BaseInterceptor
     {
         public override int Priority => 0;

@@ -3,7 +3,7 @@
 namespace Interception.Attributes
 {
     /// <summary>
-    /// a strict interceptor 
+    /// a strict interceptor
     /// to intercept an exact method
     /// </summary>
     [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
@@ -12,7 +12,7 @@ namespace Interception.Attributes
         /// <summary>
         /// ignore calls to the method from the listed assemblies
         /// </summary>
-        public string[] IgnoreCallerAssemblies { get; set; }
+        // public string[] IgnoreCallerAssemblies { get; set; }
 
         /// <summary>
         /// assembly name where the method is placed

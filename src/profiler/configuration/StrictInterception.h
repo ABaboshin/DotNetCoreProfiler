@@ -10,12 +10,14 @@ using namespace util;
 namespace configuration
 {
 	struct StrictInterception {
-		std::unordered_set<wstring> IgnoreCallerAssemblies{};
+		//std::unordered_set<wstring> IgnoreCallerAssemblies{};
 		TargetMethod Target{};
 		TypeInfo Interceptor{};
 
-		StrictInterception(const std::unordered_set<wstring>& ignoreCallerAssemblies, const TargetMethod& targetMethod, const ::configuration::TypeInfo& interceptor) :
-			IgnoreCallerAssemblies(ignoreCallerAssemblies),
+		StrictInterception(
+			//const std::unordered_set<wstring>& ignoreCallerAssemblies,
+			const TargetMethod& targetMethod, const ::configuration::TypeInfo& interceptor) :
+			//IgnoreCallerAssemblies(ignoreCallerAssemblies),
 			Target(targetMethod),
 			Interceptor(interceptor) {}
 

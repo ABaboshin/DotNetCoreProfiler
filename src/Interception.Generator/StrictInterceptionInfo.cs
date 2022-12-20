@@ -2,7 +2,7 @@
 {
     public class StrictInterceptionInfo
     {
-        public string[] IgnoreCallerAssemblies { get; set; }
+        // public string[] IgnoreCallerAssemblies { get; set; }
         public TypeInfo Interceptor { get; set; }
         public TargetMethod Target { get; set; }
     }

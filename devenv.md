@@ -6,7 +6,7 @@
  - Visual Studio 2019+ with Desktop Development c++ component
  - Windows Kist https://developer.microsoft.com/en-us/windows/downloads/windows-sdk/
  - .net core 6 sdk
- - `cd src/profiler`, `cmake .`, open DotNetCoreProfiler.sln in Visual Studio
+ - `cd src/profiler && mkdir build && cd build`, `cmake -B. -S..`, open DotNetCoreProfiler.sln in Visual Studio
 
 ## OS X Catalana
 
