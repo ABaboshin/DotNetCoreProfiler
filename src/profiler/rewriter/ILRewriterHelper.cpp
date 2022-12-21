@@ -120,6 +120,22 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
+    void ILRewriterHelper::LoadArgumentRef(UINT16 index)
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+
+        if (index <= 255) {
+            pNewInstr->m_opcode = CEE_LDARGA_S;
+            pNewInstr->m_Arg8 = static_cast<UINT8>(index);
+        }
+        else {
+            pNewInstr->m_opcode = CEE_LDARGA;
+            pNewInstr->m_Arg16 = index;
+        }
+
+        _rewriter->InsertBefore(_instr, pNewInstr);
+    }
+
     void ILRewriterHelper::EndLoadValueIntoArray()
     {
         // stelem.ref (store value into array at the specified index)
@@ -187,6 +203,13 @@ namespace rewriter
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_NEWOBJ;
+        pNewInstr->m_Arg32 = token;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+    }
+
+    void ILRewriterHelper::LoadObj(mdToken token) {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_LDOBJ;
         pNewInstr->m_Arg32 = token;
         _rewriter->InsertBefore(_instr, pNewInstr);
     }

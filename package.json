@@ -36,7 +36,7 @@
     "tests:integration:this:null": "docker build -t profiler:integrationtests-this-null -f tests/integration/this-null/Dockerfile . && docker run -it --rm profiler:integrationtests-this-null",
     "tests:integration:this:notnull": "docker build -t profiler:integrationtests-this-notnull -f tests/integration/this-notnull/Dockerfile . && docker run -it --rm profiler:integrationtests-this-notnull",
 
-    "tests:integration:basic": "yarn build:native && docker build -t profiler:integrationtests-basic -f tests/integration/basic/Dockerfile . && docker run -it --rm profiler:integrationtests-basic",
+    "tests:integration:basic": "yarn build:native && docker build -t profiler:integrationtests-basic -f tests/integration/basic/Dockerfile . && docker run -it --rm --entrypoint=bash profiler:integrationtests-basic",
     "tests:integration:order": "docker build -t profiler:integrationtests-order -f tests/integration/order/Dockerfile . && docker run -it --rm profiler:integrationtests-order",
 
     "tests:integration:methodfinder": "docker build -t profiler:integrationtests-methodfinder -f tests/integration/methodfinder/Dockerfile . && docker run -it --rm profiler:integrationtests-methodfinder",

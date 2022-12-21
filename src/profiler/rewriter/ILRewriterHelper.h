@@ -29,6 +29,7 @@ namespace rewriter
         void BeginLoadValueIntoArray(INT32 arrayIndex);
 
         void LoadArgument(UINT16 index);
+        void LoadArgumentRef(UINT16 index);
 
         void EndLoadValueIntoArray();
 
@@ -71,5 +72,7 @@ namespace rewriter
         ILInstr* Throw();
 
         HRESULT AddLocalVariable(mdTypeRef typeRef, int& newIndex);
+
+        void LoadObj(mdToken token);
     };
 }

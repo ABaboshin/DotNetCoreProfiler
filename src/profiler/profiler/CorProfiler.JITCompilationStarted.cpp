@@ -16,6 +16,9 @@
 #include "dllmain.h"
 #include "logging/logging.h"
 
+std::string GetILCodes(const std::string& title, rewriter::ILRewriter* rewriter, const info::FunctionInfo& caller,
+    const ComPtr<IMetaDataImport2>& metadata_import);
+
 HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID functionId, BOOL fIsSafeToBlock)
 {
     std::lock_guard<std::mutex> guard(mutex);
@@ -53,7 +56,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
       return S_OK;
     }*/
 
-    rewriter::ILRewriter* rewriter = CreateILRewriter(nullptr, moduleId, functionToken);
+    auto rewriter = CreateILRewriter(nullptr, moduleId, functionToken);
     IfFailRet(rewriter->Import());
 
     // load once into appdomain
@@ -77,7 +80,16 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         functionInfo.Signature.NumberOfArguments(),
         moduleInfo.assembly.name);
 
-    IfFailRet(InjectLoadMethod(moduleId, *rewriter));
+    IfFailRet(InjectLoadMethod(moduleId, *rewriter, functionInfo));
+
+    hr = rewriter->Export();
+
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::INFO, "Failed to InjectLoadMethod"_W);
+        return S_FALSE;
+    }
+
     //}
 
     return S_OK;
@@ -89,21 +101,27 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     // return result;
 }
 
-HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter)
+HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter, const info::FunctionInfo& functionInfo)
 {
     mdMethodDef retMethodToken;
 
-    auto hr = GenerateLoadMethod(moduleId, retMethodToken);
+    auto hr = GenerateLoadMethod(moduleId, retMethodToken, functionInfo);
     IfFailRet(hr);
 
     rewriter::ILRewriterHelper helper(&rewriter);
     helper.SetILPosition(rewriter.GetILList()->m_pNext);
     helper.CallMember(retMethodToken, false);
 
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+    const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+    std::cout << GetILCodes("main", &rewriter, functionInfo, metadataImport) << std::endl;
+
     return S_OK;
 }
 
-HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken)
+HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken, const info::FunctionInfo& functionInfo)
 {
 
     HRESULT hr;
@@ -111,8 +129,9 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
     ComPtr<IUnknown> metadataInterfaces;
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
 
-    auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
-    auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+    const auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+    const auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+    const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
@@ -165,10 +184,41 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
         assemblyLoadFromSignature.size(),
         &assemblyLoadFromRef);
 
-    rewriter::ILRewriter rewriter(this->corProfilerInfo, nullptr, moduleId, retMethodToken);
-    rewriter.InitializeTiny();
-    rewriter::ILRewriterHelper helper(&rewriter);
-    helper.SetILPosition(rewriter.GetILList()->m_pNext);
+    // Get Assembly.CreateInstance(string)
+    COR_SIGNATURE createInstanceSignature[] = { IMAGE_CEE_CS_CALLCONV_HASTHIS, 1,
+                                                          ELEMENT_TYPE_OBJECT,
+                                                          ELEMENT_TYPE_STRING };
+
+    mdMemberRef createInstanceMemberRef;
+    hr = metadataEmit->DefineMemberRef(assemblyTypeRef, "CreateInstance"_W.c_str(),
+        createInstanceSignature, sizeof(createInstanceSignature),
+        &createInstanceMemberRef);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::INFO, "Failed to get CreateInstance in load method"_W);
+        return hr;
+    }
+
+    auto rewriter = CreateILRewriter(nullptr, moduleId, retMethodToken);
+    rewriter->InitializeTiny();
+
+    mdSignature localSignatureToken;
+    COR_SIGNATURE localSignature[7] = {
+        IMAGE_CEE_CS_CALLCONV_LOCAL_SIG,
+        1,
+        ELEMENT_TYPE_CLASS
+    };
+    CorSigCompressToken(assemblyTypeRef, &localSignature[3]);
+    hr = metadataEmit->GetTokenFromSig(localSignature, sizeof(localSignature), &localSignatureToken);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::INFO, "Failed to create local sig in load method"_W);
+    }
+
+    rewriter->SetTkLocalVarSig(localSignatureToken);
+
+    rewriter::ILRewriterHelper helper(rewriter);
+    helper.SetILPosition(rewriter->GetILList()->m_pNext);
 
     for (const auto& el : configuration.Assemblies)
     {
@@ -180,15 +230,241 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
         helper.LoadStr(pathToken);
         helper.CallMember(assemblyLoadFromRef, false);
-        helper.Pop();
+        //helper.Pop();
+        helper.StLocal(0);
     }
 
+    logging::log(logging::LogLevel::INFO,
+        "Loader {0}"_W,
+        configuration.Loader);
+
+
+    mdString loaderToken;
+    metadataEmit->DefineUserString(configuration.Loader.c_str(), (ULONG)configuration.Loader.length(), &loaderToken);
+
+    helper.LoadLocal(0);
+    helper.LoadStr(loaderToken);
+    helper.CallMember(createInstanceMemberRef, true);
+    helper.Pop();
+
+    //_exit:
     // ret
     helper.Ret();
 
-    hr = rewriter.Export();
+    std::cout << GetILCodes("load", rewriter, functionInfo, metadataImport) << std::endl;
+
+    hr = rewriter->Export();
+
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::INFO, "Failed to create load method"_W);
+    }
 
     return hr;
+}
+
+#include <sstream>
+
+const std::string indent_values[] = {
+    "",
+    std::string(2 * 1, ' '),
+    std::string(2 * 2, ' '),
+    std::string(2 * 3, ' '),
+    std::string(2 * 4, ' '),
+    std::string(2 * 5, ' '),
+    std::string(2 * 6, ' '),
+    std::string(2 * 7, ' '),
+    std::string(2 * 8, ' '),
+    std::string(2 * 9, ' '),
+    std::string(2 * 10, ' '),
+};
+
+std::vector<std::string> opcodes_names;
+
+CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
+{
+    logging::init();
+#define OPDEF(c, s, pop, push, args, type, l, s1, s2, flow) opcodes_names.push_back(s);
+#include "opcode.def"
+#undef OPDEF
+    opcodes_names.push_back("(count)");
+    opcodes_names.push_back("->");
+}
+
+std::string GetILCodes(const std::string& title, rewriter::ILRewriter* rewriter, const info::FunctionInfo& caller,
+    const ComPtr<IMetaDataImport2>& metadata_import)
+{
+    std::stringstream sstream;
+    sstream << title;
+    sstream << util::ToString(caller.Type.Name);
+    sstream << ".";
+    sstream << util::ToString(caller.Name) << std::endl;
+
+    const auto ehCount = rewriter->GetEHCount();
+    const auto ehPtr = rewriter->GetEHPointer();
+    int indent = 1;
+
+    for (auto cInstr = rewriter->GetILList()->m_pNext; cInstr != rewriter->GetILList(); cInstr = cInstr->m_pNext)
+    {
+
+        if (ehCount > 0)
+        {
+            for (unsigned int i = 0; i < ehCount; i++)
+            {
+                const auto& currentEH = ehPtr[i];
+                if (currentEH.m_Flags == COR_ILEXCEPTION_CLAUSE_FINALLY)
+                {
+                    if (currentEH.m_pTryBegin == cInstr)
+                    {
+                        if (indent > 0)
+                        {
+                            sstream << indent_values[indent];
+                        }
+                        sstream << ".try {" << std::endl;
+                        indent++;
+                    }
+                    if (currentEH.m_pTryEnd == cInstr)
+                    {
+                        indent--;
+                        if (indent > 0)
+                        {
+                            sstream << indent_values[indent];
+                        }
+                        sstream << "}" << std::endl;
+                    }
+                    if (currentEH.m_pHandlerBegin == cInstr)
+                    {
+                        if (indent > 0)
+                        {
+                            sstream << indent_values[indent];
+                        }
+                        sstream << ".finally {" << std::endl;
+                        indent++;
+                    }
+                }
+            }
+            for (unsigned int i = 0; i < ehCount; i++)
+            {
+                const auto& currentEH = ehPtr[i];
+                if (currentEH.m_Flags == COR_ILEXCEPTION_CLAUSE_NONE)
+                {
+                    if (currentEH.m_pTryBegin == cInstr)
+                    {
+                        if (indent > 0)
+                        {
+                            sstream << indent_values[indent];
+                        }
+                        sstream << ".try {" << std::endl;
+                        indent++;
+                    }
+                    if (currentEH.m_pTryEnd == cInstr)
+                    {
+                        indent--;
+                        if (indent > 0)
+                        {
+                            sstream << indent_values[indent];
+                        }
+                        sstream << "}" << std::endl;
+                    }
+                    if (currentEH.m_pHandlerBegin == cInstr)
+                    {
+                        if (indent > 0)
+                        {
+                            sstream << indent_values[indent];
+                        }
+                        sstream << ".catch {" << std::endl;
+                        indent++;
+                    }
+                }
+            }
+        }
+
+        if (indent > 0)
+        {
+            sstream << indent_values[indent];
+        }
+
+        if (cInstr->m_opcode < opcodes_names.size())
+        {
+            sstream << std::setw(10) << opcodes_names[cInstr->m_opcode];
+        }
+        else
+        {
+            sstream << "0x";
+            sstream << std::setfill('0') << std::setw(2) << std::hex << cInstr->m_opcode;
+        }
+        if (cInstr->m_pTarget != NULL)
+        {
+            sstream << "  ";
+            sstream << cInstr->m_pTarget;
+
+            if (cInstr->m_opcode == rewriter::OPCODE::CEE_CALL || cInstr->m_opcode == rewriter::OPCODE::CEE_CALLVIRT || cInstr->m_opcode == rewriter::OPCODE::CEE_NEWOBJ)
+            {
+                const auto memberInfo = info::FunctionInfo::GetFunctionInfo(metadata_import, (mdMemberRef)cInstr->m_Arg32);
+                sstream << "  | ";
+                sstream << util::ToString(memberInfo.Type.Name);
+                sstream << ".";
+                sstream << util::ToString(memberInfo.Name);
+                if (memberInfo.Signature.NumberOfArguments() > 0)
+                {
+                    sstream << "(";
+                    sstream << memberInfo.Signature.NumberOfArguments();
+                    sstream << " argument{s}";
+                    sstream << ")";
+                }
+                else
+                {
+                    sstream << "()";
+                }
+            }
+            else if (cInstr->m_opcode == rewriter::OPCODE::CEE_CASTCLASS || cInstr->m_opcode == rewriter::OPCODE::CEE_BOX ||
+                cInstr->m_opcode == rewriter::OPCODE::CEE_UNBOX_ANY || cInstr->m_opcode == rewriter::OPCODE::CEE_NEWARR ||
+                cInstr->m_opcode == rewriter::OPCODE::CEE_INITOBJ)
+            {
+                const auto typeInfo = info::TypeInfo::GetTypeInfo(metadata_import, (mdTypeRef)cInstr->m_Arg32);
+                sstream << "  | ";
+                sstream << util::ToString(typeInfo.Name);
+            }
+            else if (cInstr->m_opcode == rewriter::OPCODE::CEE_LDSTR)
+            {
+                WCHAR szString[1024];
+                ULONG szStringLength;
+                auto hr = metadata_import->GetUserString((mdString)cInstr->m_Arg32, szString, 1024,
+                    &szStringLength);
+                if (SUCCEEDED(hr))
+                {
+                    const auto wstr = util::wstring(szString, szStringLength);
+                    sstream << "  | \"";
+                    sstream << util::ToString(wstr);
+                    sstream << "\"";
+                }
+            }
+        }
+        else if (cInstr->m_Arg64 != 0)
+        {
+            sstream << " ";
+            sstream << cInstr->m_Arg64;
+        }
+        sstream << std::endl;
+
+        if (ehCount > 0)
+        {
+            for (unsigned int i = 0; i < ehCount; i++)
+            {
+                const auto& currentEH = ehPtr[i];
+                if (currentEH.m_pHandlerEnd == cInstr)
+                {
+                    indent--;
+                    if (indent > 0)
+                    {
+                        sstream << indent_values[indent];
+                    }
+                    sstream << "}" << std::endl;
+                }
+            }
+        }
+    }
+    return sstream.str();
 }
 
 //HRESULT CorProfiler::Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged)

@@ -22,4 +22,10 @@ namespace Interception.Core
             }
         }
     }
+
+    public class Loader {
+      static Loader () {
+        System.Console.WriteLine("Loader");
+      }
+    }
 }

@@ -52,6 +52,7 @@ namespace Interception.Generator
                         skipAssemblies = skipAssemblies?.OrderBy(s => s),
                         // enabledAssemblies = enabledAssemblies?.OrderBy(s => s),
                         strict,
+                        loader = opts.Loader
                     };
 
                     File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));

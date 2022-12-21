@@ -17,9 +17,10 @@ struct RejitInfo {
     ModuleID moduleId;
     mdMethodDef methodId;
     info::FunctionInfo info;
+    configuration::StrictInterception interceptor;
 
     RejitInfo() {}
-    RejitInfo(ModuleID m, mdMethodDef f, info::FunctionInfo i) :moduleId(m), methodId(f), info(i) {}
+    RejitInfo(ModuleID m, mdMethodDef f, info::FunctionInfo i, configuration::StrictInterception interceptor) :moduleId(m), methodId(f), info(i), interceptor(interceptor) {}
 };
 
 class CorProfiler : public ICorProfilerCallback8
@@ -29,9 +30,10 @@ protected:
 
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
 
-    std::unordered_map<ModuleID, GUID> modules;
+    //std::unordered_map<ModuleID, GUID> modules;
     std::unordered_set<ModuleID> skippedModules;
     std::vector<RejitInfo> rejitInfo;
+    std::unordered_map<util::wstring, ModuleID> loadedModules;
     //std::vector<ModuleID> enabledModules;
 
     std::mutex mutex;
@@ -44,9 +46,9 @@ protected:
 
     //HRESULT Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged);
 
-    virtual HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter);
+    virtual HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter, const info::FunctionInfo& functionInfo);
 
-    HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken);
+    HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken, const info::FunctionInfo& functionInfo);
 
     //HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::TypeInfo>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
 

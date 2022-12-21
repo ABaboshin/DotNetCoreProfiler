@@ -16,10 +16,7 @@
 #include "dllmain.h"
 #include "logging/logging.h"
 
-CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
-{
-    logging::init();
-}
+
 
 CorProfiler::~CorProfiler()
 {
@@ -92,6 +89,10 @@ HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadStarted(AssemblyID assemblyId
 
 HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus)
 {
+    const auto assemblyInfo = info::AssemblyInfo::GetAssemblyInfo(this->corProfilerInfo, assemblyId);
+    logging::log(
+        logging::LogLevel::VERBOSE,
+        "Assembly loaded {0} {1}"_W, assemblyId, assemblyInfo.name);
     return S_OK;
 }
 
