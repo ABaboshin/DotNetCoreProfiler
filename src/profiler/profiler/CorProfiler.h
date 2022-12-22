@@ -13,10 +13,14 @@
 #include "configuration/Configuration.h"
 #include "rewriter/ILRewriter.h"
 #include "RejitInfo.h"
+#include "ILDumper.h"
+#include "MethodRewriter.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
 protected:
+    ILDumper ilDumper;
+    MethodRewriter methodRewriter;
     std::atomic<int> refCount;
 
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
@@ -184,4 +188,6 @@ public:
 
         return count;
     }
+
+    friend class MethodRewriter;
 };

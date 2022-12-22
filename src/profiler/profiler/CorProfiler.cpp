@@ -15,12 +15,11 @@
 #include "CorProfiler.h"
 #include "dllmain.h"
 #include "logging/logging.h"
-#include "ILDumper.h"
 
-CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
+
+CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr), methodRewriter(this)
 {
     logging::init();
-    InitILDumper();
 }
 
 CorProfiler::~CorProfiler()

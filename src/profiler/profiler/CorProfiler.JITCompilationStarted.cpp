@@ -114,7 +114,7 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
     const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
-    std::cout << DumpILCodes("main ", &rewriter, functionInfo, metadataImport) << std::endl;
+    std::cout << ilDumper.DumpILCodes("main ", &rewriter, functionInfo, metadataImport) << std::endl;
 
     return S_OK;
 }
@@ -246,7 +246,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
         // ret
         helper.Ret();
 
-        std::cout << DumpILCodes("load ", rewriter, functionInfo, metadataImport) << std::endl;
+        std::cout << ilDumper.DumpILCodes("load ", rewriter, functionInfo, metadataImport) << std::endl;
 
         hr = rewriter->Export();
 
