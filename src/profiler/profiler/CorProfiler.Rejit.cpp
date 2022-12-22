@@ -15,9 +15,7 @@
 #include "CorProfiler.h"
 #include "dllmain.h"
 #include "logging/logging.h"
-
-const util::wstring BeforeMethod = "Before"_W;
-const util::wstring AfterMethod = "After"_W;
+#include "ILDumper.h"
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationFinished(FunctionID functionId, ReJITID rejitId, HRESULT hrStatus, BOOL fIsSafeToBlock)
 {
@@ -73,77 +71,132 @@ HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdM
     }
     else
     {
-        logging::log(logging::LogLevel::VERBOSE, "Continue rejit as interceptor assembly is not loaded {0}"_W, loadedModules[interceptor->interceptor.Interceptor.AssemblyName]);
+        logging::log(logging::LogLevel::VERBOSE, "Continue rejit as interceptor assembly is loaded {0}"_W, loadedModules[interceptor->interceptor.Interceptor.AssemblyName]);
     }
 
-    const auto shift = interceptor->info.Signature.IsInstanceMethod() ? 1 : 0;
-    if (interceptor->info.Signature.IsInstanceMethod())
-    {
-        logging::log(logging::LogLevel::VERBOSE, "load this"_W);
-        helper.LoadArgument(0);
-        if (interceptor->info.Type.IsValueType) {
-            if (interceptor->info.Type.TypeSpec != mdTypeSpecNil) {
-                helper.LoadObj(interceptor->info.Type.TypeSpec);
-            }
-            else {
-                helper.LoadObj(interceptor->info.Type.Id);
-            }
-        }
-    }
-    else
-    {
-        /*logging::log(
-            logging::LogLevel::VERBOSE,
-            "load null instead of this"_W);
-        helper.LoadNull();*/
-    }
-
-    for (auto i = 0; i < interceptor->info.Signature.NumberOfArguments(); i++)
-    {
-        logging::log(logging::LogLevel::VERBOSE, "load arg {0}"_W, i);
-
-        if (!interceptor->info.Signature.Arguments[i].IsRefType) {
-            helper.LoadArgument(i + shift);
-        }
-        else {
-            helper.LoadArgument(i + shift);
-        }
-    }
-
-    const auto interceptorModuleId = loadedModules[interceptor->interceptor.Interceptor.AssemblyName];
     ComPtr<IUnknown> metadataInterfaces;
-    IfFailRet(this->corProfilerInfo->GetModuleMetaData(interceptorModuleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+    auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
     auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
+    auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
 
-    mdTypeDef interceptorToken;
-    metadataImport->FindTypeDefByName(interceptor->interceptor.Interceptor.TypeName.c_str(), mdTokenNil, &interceptorToken);
-
-    logging::log(
-        logging::LogLevel::VERBOSE,
-        "Got typedef {0} for {1}"_W, interceptorToken, interceptor->interceptor.Interceptor.TypeName);
-
-    HCORENUM hcorenum = 0;
-    const auto maxMethods = 1000;
-    mdMethodDef methods[maxMethods]{};
-    ULONG cnt;
-    metadataImport->EnumMethods(&hcorenum, interceptorToken, methods, maxMethods, &cnt);
-
-    mdMethodDef beforeToken = mdTypeSpecNil;
-    for (auto i = 0; i < cnt; i++) {
-        const auto methodInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
-        if (methodInfo.Name == BeforeMethod)
-        {
-            logging::log(
-                        logging::LogLevel::VERBOSE,
-                        "Found {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
-            beforeToken = methods[i];
-            break;
-        }
-        //logging::log(
-        //    logging::LogLevel::VERBOSE,
-        //    "Got {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
+    {
+        std::cout << DumpILCodes("rejit before ", rewriter, interceptor->info, metadataImport) << std::endl;
     }
+
+    //const auto interceptorModuleId = loadedModules[interceptor->interceptor.Interceptor.AssemblyName];
+    //ComPtr<IUnknown> metadataInterfaces;
+    //IfFailRet(this->corProfilerInfo->GetModuleMetaData(interceptorModuleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+    //auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+    // define interception.core.dll
+    mdModuleRef baseDllRef;
+    GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::VERBOSE, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+    }
+
+    mdTypeRef interceptorTypeRef;
+    hr = metadataEmit->DefineTypeRefByName(
+        baseDllRef,
+        interceptor->interceptor.Interceptor.TypeName.data(),
+        &interceptorTypeRef);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::VERBOSE, "Failed DefineTypeRefByName {0}"_W, interceptor->interceptor.Interceptor.TypeName);
+    }
+
+    std::vector<BYTE> beforeSignature = {
+    IMAGE_CEE_CS_CALLCONV_DEFAULT,
+    0,
+    ELEMENT_TYPE_VOID };
+
+    mdMemberRef beforeRef;
+    hr = metadataEmit->DefineMemberRef(
+        interceptorTypeRef,
+        _const::BeforeMethod.data(),
+        beforeSignature.data(),
+        beforeSignature.size(),
+        &beforeRef);
+
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::VERBOSE, "Failed DefineMemberRef {0}"_W, interceptor->interceptor.Interceptor.TypeName);
+    }
+
+    helper.CallMember(beforeRef, false);
+
+
+
+    //mdTypeDef interceptorToken;
+    //metadataImport->FindTypeDefByName(interceptor->interceptor.Interceptor.TypeName.c_str(), mdTokenNil, &interceptorToken);
+
+    //logging::log(
+    //    logging::LogLevel::VERBOSE,
+    //    "Got typedef {0} for {1}"_W, interceptorToken, interceptor->interceptor.Interceptor.TypeName);
+
+    //HCORENUM hcorenum = 0;
+    //const auto maxMethods = 1000;
+    //mdMethodDef methods[maxMethods]{};
+    //ULONG cnt;
+    //metadataImport->EnumMethods(&hcorenum, interceptorToken, methods, maxMethods, &cnt);
+
+    //mdMethodDef beforeToken = mdTypeSpecNil;
+    //for (auto i = 0; i < cnt; i++) {
+    //    const auto methodInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
+    //    if (methodInfo.Name == BeforeMethod)
+    //    {
+    //        logging::log(
+    //                    logging::LogLevel::VERBOSE,
+    //                    "Found {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
+    //        beforeToken = methods[i];
+    //        break;
+    //    }
+    //    //logging::log(
+    //    //    logging::LogLevel::VERBOSE,
+    //    //    "Got {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
+    //}
+
+    //if (beforeToken != mdTypeSpecNil)
+    //{
+    //    const auto shift = interceptor->info.Signature.IsInstanceMethod() ? 1 : 0;
+    //    if (interceptor->info.Signature.IsInstanceMethod())
+    //    {
+    //        logging::log(logging::LogLevel::VERBOSE, "load this"_W);
+    //        helper.LoadArgument(0);
+    //        if (interceptor->info.Type.IsValueType) {
+    //            if (interceptor->info.Type.TypeSpec != mdTypeSpecNil) {
+    //                helper.LoadObj(interceptor->info.Type.TypeSpec);
+    //            }
+    //            else {
+    //                helper.LoadObj(interceptor->info.Type.Id);
+    //            }
+    //        }
+    //    }
+    //    else
+    //    {
+    //        /*logging::log(
+    //            logging::LogLevel::VERBOSE,
+    //            "load null instead of this"_W);
+    //        helper.LoadNull();*/
+    //    }
+
+    //    for (auto i = 0; i < interceptor->info.Signature.NumberOfArguments(); i++)
+    //    {
+    //        logging::log(logging::LogLevel::VERBOSE, "load arg {0}"_W, i);
+
+    //        if (!interceptor->info.Signature.Arguments[i].IsRefType) {
+    //            helper.LoadArgument(i + shift);
+    //        }
+    //        else {
+    //            helper.LoadArgument(i + shift);
+    //        }
+    //    }
+
+    //    helper.CallMember(beforeToken, false);
+    //}
 
 
     //for (const auto& x : loadedModules) {
@@ -205,6 +258,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdM
 
     //  pInstr->m_opcode = rewriter::CEE_NOP;
     //}
+
+    std::cout << DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport) << std::endl;
 
     hr = rewriter->Export();
 

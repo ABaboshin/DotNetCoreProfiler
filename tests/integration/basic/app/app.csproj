@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Interception.Core\Interception.Core.csproj" />
+    <!-- <ProjectReference Include="..\interceptor\interceptor.csproj" /> -->
   </ItemGroup>
 
 </Project>

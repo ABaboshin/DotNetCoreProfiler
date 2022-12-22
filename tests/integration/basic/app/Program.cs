@@ -6,6 +6,7 @@ namespace app
   {
     static void Main(string[] args)
     {
+      // interceptor.C1.Before();
       // Exception ex = null;
       // try
       // {

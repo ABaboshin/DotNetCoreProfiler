@@ -30,4 +30,6 @@ namespace _const
 	const auto mscorlib = "mscorlib"_W;
 	const auto LoadFrom = "LoadFrom"_W;
 	const auto ctor = ".ctor"_W;
+	const auto BeforeMethod = "Before"_W;
+	const auto AfterMethod = "After"_W;
 }
