@@ -5,23 +5,14 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <iostream>
+#include <mutex>
 #include "cor.h"
 #include "corprof.h"
 #include "info/FunctionInfo.h"
 #include "info/ModuleInfo.h"
 #include "configuration/Configuration.h"
 #include "rewriter/ILRewriter.h"
-#include <mutex>
-
-struct RejitInfo {
-    ModuleID moduleId;
-    mdMethodDef methodId;
-    info::FunctionInfo info;
-    configuration::StrictInterception interceptor;
-
-    RejitInfo() {}
-    RejitInfo(ModuleID m, mdMethodDef f, info::FunctionInfo i, configuration::StrictInterception interceptor) :moduleId(m), methodId(f), info(i), interceptor(interceptor) {}
-};
+#include "RejitInfo.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
@@ -53,7 +44,7 @@ protected:
     //HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::TypeInfo>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
 
     //std::vector<configuration::TypeInfo> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
-    std::pair<configuration::TypeInfo, bool> FindMethodFinder(const info::FunctionInfo& target);
+//    std::pair<configuration::TypeInfo, bool> FindMethodFinder(const info::FunctionInfo& target);
 
     virtual rewriter::ILRewriter* CreateILRewriter(ICorProfilerFunctionControl* pICorProfilerFunctionControl, ModuleID moduleId, mdToken functionToken)
     {

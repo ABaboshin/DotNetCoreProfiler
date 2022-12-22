@@ -18,8 +18,8 @@ namespace Interception.Generator
     [Option('s', "skip")]
     public string Skip { get; set; }
 
-    [Option('l', "loader")]
-    public string Loader { get; set; }
+    //[Option('l', "loader")]
+    //public string Loader { get; set; }
 
     // [Option('e', "enabledAssemblies")]
     // public string EnabledAssemblies { get; set; }

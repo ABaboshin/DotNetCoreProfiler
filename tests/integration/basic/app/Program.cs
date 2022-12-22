@@ -6,16 +6,16 @@ namespace app
   {
     static void Main(string[] args)
     {
-      Exception ex = null;
-      try
-      {
-        try
-        {
-            Console.WriteLine("before");
-        }
-        catch (System.Exception)
-        {
-        }
+      // Exception ex = null;
+      // try
+      // {
+      //   try
+      //   {
+      //       Console.WriteLine("before");
+      //   }
+      //   catch (System.Exception)
+      //   {
+      //   }
 
           // TestM();
 
@@ -25,20 +25,20 @@ namespace app
 
           C1.M1();
           C1.M2(3);
-      }
-      catch (System.Exception e)
-      {
-        ex = e;
-      }
-      finally {
-        try
-        {
-            Console.WriteLine($"after {ex}");
-        }
-        catch (System.Exception)
-        {
-        }
-      }
+      // }
+      // catch (System.Exception e)
+      // {
+      //   ex = e;
+      // }
+      // finally {
+      //   try
+      //   {
+      //       Console.WriteLine($"after {ex}");
+      //   }
+      //   catch (System.Exception)
+      //   {
+      //   }
+      // }
 
     }
 

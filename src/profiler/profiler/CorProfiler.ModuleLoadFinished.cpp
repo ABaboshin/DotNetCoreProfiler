@@ -45,8 +45,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     //modules[moduleId] = module_version_id;
 
-    logging::log(logging::LogLevel::VERBOSE,
-        "Module {0} loaded {1}"_W, moduleInfo.assembly.name, moduleId);
+    logging::log(logging::LogLevel::VERBOSE, "Module {0} loaded {1}"_W, moduleInfo.assembly.name, moduleId);
 
     std::pair<util::wstring, ModuleID> lm(moduleInfo.assembly.name, moduleId);
     loadedModules.insert(lm);

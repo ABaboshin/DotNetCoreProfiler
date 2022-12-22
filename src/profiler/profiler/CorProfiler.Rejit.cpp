@@ -16,27 +16,24 @@
 #include "dllmain.h"
 #include "logging/logging.h"
 
+const util::wstring BeforeMethod = "Before"_W;
+const util::wstring AfterMethod = "After"_W;
+
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationFinished(FunctionID functionId, ReJITID rejitId, HRESULT hrStatus, BOOL fIsSafeToBlock)
 {
-    /*logging::log(
-        logging::LogLevel::INFO,
-        "ReJITCompilationFinished"_W);*/
+    //logging::log(logging::LogLevel::INFO, "ReJITCompilationFinished"_W);
     return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITError(ModuleID moduleId, mdMethodDef methodId, FunctionID functionId, HRESULT hrStatus)
 {
-    logging::log(
-        logging::LogLevel::INFO,
-        "ReJITError {0} {1} {2} {3}"_W, moduleId, methodId, functionId, hrStatus);
+    logging::log(logging::LogLevel::INFO, "ReJITError {0} {1} {2} {3}"_W, moduleId, methodId, functionId, hrStatus);
     return S_OK;
 }
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationStarted(FunctionID functionId, ReJITID rejitId, BOOL fIsSafeToBlock)
 {
-    /*logging::log(
-        logging::LogLevel::INFO,
-        "ReJITCompilationStarted"_W);*/
+    //logging::log(logging::LogLevel::INFO, "ReJITCompilationStarted"_W);
     return S_OK;
 }
 
@@ -56,29 +53,33 @@ HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdM
     // no rejit info => exit
     if (interceptor == rejitInfo.end()) return S_OK;
 
-    logging::log(
-        logging::LogLevel::INFO,
-        "GetReJITParameters {0}.{1}"_W, interceptor->info.Type.Name, interceptor->info.Name);
+    logging::log(logging::LogLevel::INFO, "GetReJITParameters {0}.{1}"_W, interceptor->info.Type.Name, interceptor->info.Name);
 
     auto rewriter = CreateILRewriter(pFunctionControl, moduleId, methodId);
     hr = rewriter->Import();
     if (FAILED(hr))
     {
-        logging::log(
-            logging::LogLevel::INFO,
-            "GetReJITParameters rewriter->Import failed"_W);
+        logging::log(logging::LogLevel::INFO, "GetReJITParameters rewriter->Import failed"_W);
         return S_FALSE;
     }
 
     rewriter::ILRewriterHelper helper(rewriter);
     helper.SetILPosition(rewriter->GetILList()->m_pNext);
 
+    if (loadedModules.find(interceptor->interceptor.Interceptor.AssemblyName) == loadedModules.end())
+    {
+        logging::log(logging::LogLevel::VERBOSE, "Skip rejit because interceptor assembly is not loaded yet"_W);
+        return S_FALSE;
+    }
+    else
+    {
+        logging::log(logging::LogLevel::VERBOSE, "Continue rejit as interceptor assembly is not loaded {0}"_W, loadedModules[interceptor->interceptor.Interceptor.AssemblyName]);
+    }
+
     const auto shift = interceptor->info.Signature.IsInstanceMethod() ? 1 : 0;
     if (interceptor->info.Signature.IsInstanceMethod())
     {
-        logging::log(
-            logging::LogLevel::VERBOSE,
-            "load this"_W);
+        logging::log(logging::LogLevel::VERBOSE, "load this"_W);
         helper.LoadArgument(0);
         if (interceptor->info.Type.IsValueType) {
             if (interceptor->info.Type.TypeSpec != mdTypeSpecNil) {
@@ -99,9 +100,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdM
 
     for (auto i = 0; i < interceptor->info.Signature.NumberOfArguments(); i++)
     {
-        logging::log(
-            logging::LogLevel::VERBOSE,
-            "load arg {0}"_W, i);
+        logging::log(logging::LogLevel::VERBOSE, "load arg {0}"_W, i);
 
         if (!interceptor->info.Signature.Arguments[i].IsRefType) {
             helper.LoadArgument(i + shift);
@@ -111,8 +110,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdM
         }
     }
 
+    const auto interceptorModuleId = loadedModules[interceptor->interceptor.Interceptor.AssemblyName];
     ComPtr<IUnknown> metadataInterfaces;
-    IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+    IfFailRet(this->corProfilerInfo->GetModuleMetaData(interceptorModuleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
     auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
 
@@ -129,11 +129,20 @@ HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdM
     ULONG cnt;
     metadataImport->EnumMethods(&hcorenum, interceptorToken, methods, maxMethods, &cnt);
 
+    mdMethodDef beforeToken = mdTypeSpecNil;
     for (auto i = 0; i < cnt; i++) {
         const auto methodInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
-        logging::log(
-            logging::LogLevel::VERBOSE,
-            "Got {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
+        if (methodInfo.Name == BeforeMethod)
+        {
+            logging::log(
+                        logging::LogLevel::VERBOSE,
+                        "Found {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
+            beforeToken = methods[i];
+            break;
+        }
+        //logging::log(
+        //    logging::LogLevel::VERBOSE,
+        //    "Got {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
     }
 
 

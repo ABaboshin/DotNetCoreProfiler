@@ -15,8 +15,13 @@
 #include "CorProfiler.h"
 #include "dllmain.h"
 #include "logging/logging.h"
+#include "ILDumper.h"
 
-
+CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr)
+{
+    logging::init();
+    InitILDumper();
+}
 
 CorProfiler::~CorProfiler()
 {
@@ -89,10 +94,10 @@ HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadStarted(AssemblyID assemblyId
 
 HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus)
 {
-    const auto assemblyInfo = info::AssemblyInfo::GetAssemblyInfo(this->corProfilerInfo, assemblyId);
-    logging::log(
-        logging::LogLevel::VERBOSE,
-        "Assembly loaded {0} {1}"_W, assemblyId, assemblyInfo.name);
+    //const auto assemblyInfo = info::AssemblyInfo::GetAssemblyInfo(this->corProfilerInfo, assemblyId);
+    //logging::log(
+    //    logging::LogLevel::VERBOSE,
+    //    "Assembly loaded {0} {1}"_W, assemblyId, assemblyInfo.name);
     return S_OK;
 }
 
@@ -509,16 +514,16 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
 //    return result;
 //}
 
-std::pair<configuration::TypeInfo, bool> CorProfiler::FindMethodFinder(const info::FunctionInfo& target)
-{
-    for (auto methodFinder : configuration.MethodFinders)
-    {
-        if (target.Type.Name == methodFinder.Target.TypeName
-            && target.Name == methodFinder.Target.MethodName && target.Signature.NumberOfArguments() == methodFinder.Target.MethodParametersCount)
-        {
-            return std::make_pair<configuration::TypeInfo, bool>({ methodFinder.Finder.AssemblyName, methodFinder.Finder.TypeName}, true);
-        }
-    }
-
-    return std::make_pair<configuration::TypeInfo, bool>({}, false);
-}
+//std::pair<configuration::TypeInfo, bool> CorProfiler::FindMethodFinder(const info::FunctionInfo& target)
+//{
+//    for (auto methodFinder : configuration.MethodFinders)
+//    {
+//        if (target.Type.Name == methodFinder.Target.TypeName
+//            && target.Name == methodFinder.Target.MethodName && target.Signature.NumberOfArguments() == methodFinder.Target.MethodParametersCount)
+//        {
+//            return std::make_pair<configuration::TypeInfo, bool>({ methodFinder.Finder.AssemblyName, methodFinder.Finder.TypeName}, true);
+//        }
+//    }
+//
+//    return std::make_pair<configuration::TypeInfo, bool>({}, false);
+//}

@@ -1,4 +1,5 @@
 ﻿using Interception.Core.Extensions;
+using Interception.Core.Info;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -203,7 +204,7 @@ namespace Interception.Core
         {
             var method = FindMethod();
 
-            var underilyingType = ((TypeInfo)method.ReturnType).GenericTypeArguments[0];
+            var underilyingType = ((System.Reflection.TypeInfo)method.ReturnType).GenericTypeArguments[0];
 
             var createExecutionDelegateGeneric = typeof(ComposedInterceptor).GetMethods(BindingFlags.Instance | BindingFlags.NonPublic).Where(m => m.Name == nameof(CreateExecutionDelegate)).First();
             var createExecutionDelegate = createExecutionDelegateGeneric.MakeGenericMethod(underilyingType);
