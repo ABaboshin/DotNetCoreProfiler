@@ -1,4 +1,7 @@
 #include <algorithm>
+#include "cor.h"
+#include "corprof.h"
+#include <corhlpr.h>
 #include "MethodRewriter.h"
 #include "logging/logging.h"
 #include "CorProfiler.h"
@@ -6,12 +9,38 @@
 #include "util/helpers.h"
 #include "const/const.h"
 
+/*
+
+The idea behind is to rewrite the original method in the following way
+
+Exception methodException = null;
+try {
+    try {
+        Interceptor.Before(method params);
+    } catch()
+    {
+    // ignore interceptor's exceptions
+    }
+
+    .... original method body ...
+} catch (Exception e) {
+    methodException = e;
+} finally {
+    try {
+        Interceptor.After(result if not void otherwise null, methodException);
+    } catch()
+    {
+    // ignore interceptor's exceptions
+    }
+}
+
+*/
+
 HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorProfilerFunctionControl* pFunctionControl)
 {
     HRESULT hr;
     mdToken functionToken;
     ClassID classId;
-    // ModuleID moduleId;
 
     const auto interceptor = std::find_if(profiler->rejitInfo.begin(), profiler->rejitInfo.end(), [moduleId, methodId](const RejitInfo& ri) {
         return ri.methodId == methodId && ri.moduleId == moduleId;
@@ -26,7 +55,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     hr = rewriter->Import();
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::INFO, "GetReJITParameters rewriter->Import failed"_W);
+        logging::log(logging::LogLevel::_ERROR, "GetReJITParameters rewriter->Import failed"_W);
         return S_FALSE;
     }
 
@@ -50,23 +79,122 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
     auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
 
-    {
-        std::cout << profiler->ilDumper.DumpILCodes("rejit before ", rewriter, interceptor->info, metadataImport) << std::endl;
-    }
+    logging::log(logging::LogLevel::VERBOSE, "{0}"_W, profiler->ilDumper.DumpILCodes("rejit before ", rewriter, interceptor->info, metadataImport));
 
-    //const auto interceptorModuleId = loadedModules[interceptor->interceptor.Interceptor.AssemblyName];
-    //ComPtr<IUnknown> metadataInterfaces;
-    //IfFailRet(this->corProfilerInfo->GetModuleMetaData(interceptorModuleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
-    //auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+    std::cout << util::ToString(profiler->ilDumper.DumpILCodes("rejit before ", rewriter, interceptor->info, metadataImport)) << std::endl;
 
-    // define interception.core.dll
+    // define mscorlib.dll
+    mdModuleRef mscorlibRef;
+    GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
+    IfFailRet(hr);
+
+    // Define System.Exception
+    mdTypeRef exceptionTypeRef;
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemException.data(), &exceptionTypeRef);
+
+    //// modify local signature
+    //// to add an exception and the return value
+    //mdToken localVarSig = rewriter->GetTkLocalVarSig();
+    //PCCOR_SIGNATURE originalSignature = nullptr;
+    //ULONG originalSignatureSize = 0;
+
+    //if (localVarSig != mdTokenNil) {
+    //    IfFailRet(metadataImport->GetSigFromToken(localVarSig, &originalSignature, &originalSignatureSize));
+    //}
+    //
+    //// exception type buffer and size
+    //unsigned exceptionTypeRefBuffer;
+    //auto exceptionTypeRefSize = CorSigCompressToken(exceptionTypeRef, &exceptionTypeRefBuffer);
+
+    //// return type signature
+    //ULONG returnSignatureTypeSize = 0;
+    //mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
+
+    //auto newSignatureSize = originalSignatureSize + (1 + exceptionTypeRefSize);
+    //ULONG newSignatureOffset = 0;
+    //ULONG newLocalsCount = 1;
+    //if (!interceptor->info.Signature.ReturnType.IsVoid)
+    //{
+    //    returnSignatureTypeSize = interceptor->info.Signature.ReturnType.Raw.size();
+
+    //    mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
+    //    hr = metadataEmit->GetTokenFromTypeSpec(&interceptor->info.Signature.ReturnType.Raw[0], interceptor->info.Signature.ReturnType.Raw.size(), &returnValueTypeSpec);
+    //    newSignatureSize += (1 + returnSignatureTypeSize);
+    //    newLocalsCount++;
+    //}
+
+    //ULONG oldLocalsBuffer;
+    //ULONG oldLocalsLen = 0;
+    //unsigned newLocalsBuffer;
+    //ULONG newLocalsLen;
+
+    //if (originalSignatureSize == 0)
+    //{
+    //    newSignatureSize += 2;
+    //    newLocalsLen = CorSigCompressData(newLocalsCount, &newLocalsBuffer);
+    //}
+    //else
+    //{
+    //    oldLocalsLen = CorSigUncompressData(originalSignature + 1, &oldLocalsBuffer);
+    //    newLocalsCount += oldLocalsBuffer;
+    //    newLocalsLen = CorSigCompressData(newLocalsCount, &newLocalsBuffer);
+    //    newSignatureSize += newLocalsLen - oldLocalsLen;
+    //}
+
+    //// New signature declaration
+    //COR_SIGNATURE newSignatureBuffer[500];
+    //newSignatureBuffer[newSignatureOffset++] = IMAGE_CEE_CS_CALLCONV_LOCAL_SIG;
+
+    //// Set the locals count
+    //memcpy(&newSignatureBuffer[newSignatureOffset], &newLocalsBuffer, newLocalsLen);
+    //newSignatureOffset += newLocalsLen;
+
+    //if (originalSignatureSize > 0)
+    //{
+    //    const auto copyLength = originalSignatureSize - 1 - oldLocalsLen;
+    //    memcpy(&newSignatureBuffer[newSignatureOffset], originalSignature + 1 + oldLocalsLen, copyLength);
+    //    newSignatureOffset += copyLength;
+    //}
+
+    //// exception 
+    //newSignatureBuffer[newSignatureOffset++] = ELEMENT_TYPE_CLASS;
+    //memcpy(&newSignatureBuffer[newSignatureOffset], &exceptionTypeRefBuffer, exceptionTypeRefSize);
+    //newSignatureOffset += exceptionTypeRefSize;
+
+    //// return value if not void
+    //if (!interceptor->info.Signature.ReturnType.IsVoid) {
+    //    memcpy(&newSignatureBuffer[newSignatureOffset], &interceptor->info.Signature.ReturnType.Raw[0], returnSignatureTypeSize);
+    //    newSignatureOffset += returnSignatureTypeSize;
+    //}
+
+    //// Get new locals token
+    //mdToken newLocalVarSig;
+    //hr = metadataEmit->GetTokenFromSig(newSignatureBuffer, newSignatureSize, &newLocalVarSig);
+    //if (FAILED(hr))
+    //{
+    //    logging::log(logging::LogLevel::_ERROR, "Failed local sig {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+    //    return hr;
+    //}
+
+    //rewriter->SetTkLocalVarSig(newLocalVarSig);
+
+    //ULONG exceptionIndex = newLocalsCount - 1;
+    //ULONG returnIndex = -1;
+    //if (!interceptor->info.Signature.ReturnType.IsVoid) {
+    //    exceptionIndex--;
+    //    returnIndex = newLocalsCount - 1;
+    //}
+
+    // define interceptor.dll
     mdModuleRef baseDllRef;
     GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::VERBOSE, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::_ERROR, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        return hr;
     }
 
+    // define interceptor type
     mdTypeRef interceptorTypeRef;
     hr = metadataEmit->DefineTypeRefByName(
         baseDllRef,
@@ -74,7 +202,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
         &interceptorTypeRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::VERBOSE, "Failed DefineTypeRefByName {0}"_W, interceptor->interceptor.Interceptor.TypeName);
+        logging::log(logging::LogLevel::_ERROR, "Failed DefineTypeRefByName {0}"_W, interceptor->interceptor.Interceptor.TypeName);
     }
 
     std::vector<BYTE> beforeSignature = {
@@ -82,6 +210,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     0,
     ELEMENT_TYPE_VOID };
 
+    // define Before method
     mdMemberRef beforeRef;
     hr = metadataEmit->DefineMemberRef(
         interceptorTypeRef,
@@ -92,201 +221,163 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::VERBOSE, "Failed DefineMemberRef {0}"_W, interceptor->interceptor.Interceptor.TypeName);
+        logging::log(logging::LogLevel::_ERROR, "Failed DefineMemberRef {0}"_W, interceptor->interceptor.Interceptor.TypeName);
     }
 
-    helper.CallMember(beforeRef, false);
+    // call Before method
+    auto beginFirst = helper.CallMember(beforeRef, false);
 
+    auto leaveBeforeTry = helper.LeaveS();
+    auto nopBeforeCatch = helper.Pop();
+    auto leaveBeforeCatch = helper.LeaveS();
 
+    // try/catch for Interceptor.Begin
+    rewriter::EHClause beforeEx{};
+    beforeEx.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
+    beforeEx.m_pTryBegin = beginFirst;
+    beforeEx.m_pTryEnd = nopBeforeCatch;
+    beforeEx.m_pHandlerBegin = nopBeforeCatch;
+    beforeEx.m_pHandlerEnd = leaveBeforeCatch;
+    beforeEx.m_ClassToken = exceptionTypeRef;
 
-    //mdTypeDef interceptorToken;
-    //metadataImport->FindTypeDefByName(interceptor->interceptor.Interceptor.TypeName.c_str(), mdTokenNil, &interceptorToken);
+    leaveBeforeCatch->m_pTarget = helper.GetCurrentInstr();
+    leaveBeforeTry->m_pTarget = helper.GetCurrentInstr();
 
-    //logging::log(
-    //    logging::LogLevel::VERBOSE,
-    //    "Got typedef {0} for {1}"_W, interceptorToken, interceptor->interceptor.Interceptor.TypeName);
+    // new ret instruction
+    auto newRet = helper.NewInstr();
+    newRet->m_opcode = rewriter::CEE_RET;
+    rewriter->InsertAfter(rewriter->GetILList()->m_pPrev, newRet);
+    helper.SetILPosition(newRet);
 
-    //HCORENUM hcorenum = 0;
-    //const auto maxMethods = 1000;
-    //mdMethodDef methods[maxMethods]{};
-    //ULONG cnt;
-    //metadataImport->EnumMethods(&hcorenum, interceptorToken, methods, maxMethods, &cnt);
+    // main catch
+    //auto mainCatch = helper.StLocal(exceptionIndex);
+    auto mainCatch = helper.Pop();
+    helper.SetILPosition(newRet);
+    auto rethrow = helper.Rethrow();
+    auto nopFinally = helper.Nop();
 
-    //mdMethodDef beforeToken = mdTypeSpecNil;
-    //for (auto i = 0; i < cnt; i++) {
-    //    const auto methodInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
-    //    if (methodInfo.Name == BeforeMethod)
-    //    {
-    //        logging::log(
-    //                    logging::LogLevel::VERBOSE,
-    //                    "Found {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
-    //        beforeToken = methods[i];
-    //        break;
-    //    }
-    //    //logging::log(
-    //    //    logging::LogLevel::VERBOSE,
-    //    //    "Got {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
-    //}
+    // finally
 
-    //if (beforeToken != mdTypeSpecNil)
-    //{
-    //    const auto shift = interceptor->info.Signature.IsInstanceMethod() ? 1 : 0;
-    //    if (interceptor->info.Signature.IsInstanceMethod())
-    //    {
-    //        logging::log(logging::LogLevel::VERBOSE, "load this"_W);
-    //        helper.LoadArgument(0);
-    //        if (interceptor->info.Type.IsValueType) {
-    //            if (interceptor->info.Type.TypeSpec != mdTypeSpecNil) {
-    //                helper.LoadObj(interceptor->info.Type.TypeSpec);
-    //            }
-    //            else {
-    //                helper.LoadObj(interceptor->info.Type.Id);
-    //            }
-    //        }
-    //    }
-    //    else
-    //    {
-    //        /*logging::log(
-    //            logging::LogLevel::VERBOSE,
-    //            "load null instead of this"_W);
-    //        helper.LoadNull();*/
-    //    }
+    std::vector<BYTE> afterSignature = {
+    IMAGE_CEE_CS_CALLCONV_DEFAULT,
+    0,
+    ELEMENT_TYPE_VOID };
 
-    //    for (auto i = 0; i < interceptor->info.Signature.NumberOfArguments(); i++)
-    //    {
-    //        logging::log(logging::LogLevel::VERBOSE, "load arg {0}"_W, i);
+    // define After method
+    mdMemberRef afterRef;
+    hr = metadataEmit->DefineMemberRef(
+        interceptorTypeRef,
+        _const::AfterMethod.data(),
+        afterSignature.data(),
+        afterSignature.size(),
+        &beforeRef);
 
-    //        if (!interceptor->info.Signature.Arguments[i].IsRefType) {
-    //            helper.LoadArgument(i + shift);
-    //        }
-    //        else {
-    //            helper.LoadArgument(i + shift);
-    //        }
-    //    }
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::_ERROR, "Failed DefineMemberRef {0}"_W, interceptor->interceptor.Interceptor.TypeName);
+    }
 
-    //    helper.CallMember(beforeToken, false);
-    //}
+    // call After method
+    auto afterFirst = helper.CallMember(beforeRef, false);
 
+    auto leaveAfterTry = helper.LeaveS();
+    auto nopAfterCatch = helper.Pop();
+    auto leaveAfterCatch = helper.LeaveS();
 
-    //for (const auto& x : loadedModules) {
-    //    logging::log(
-    //        logging::LogLevel::VERBOSE,
-    //        "Loaded {0} {1}"_W, x.first, x.second);
-    //}
+    // try/catch for Interceptor.Begin
+    rewriter::EHClause afterEx{};
+    afterEx.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
+    afterEx.m_pTryBegin = afterFirst;
+    afterEx.m_pTryEnd = nopAfterCatch;
+    afterEx.m_pHandlerBegin = nopAfterCatch;
+    afterEx.m_pHandlerEnd = leaveAfterCatch;
+    afterEx.m_ClassToken = exceptionTypeRef;
 
-    //const auto interceptorModuleId = this->loadedModules[interceptor->interceptor.Interceptor.AssemblyName];
+    // finally
 
-    //// the interceptor module is not loaded yet
-    //if (interceptorModuleId == 0) {
-    //    ModuleID m1[1]{ moduleId };
-    //    mdMethodDef m2[1]{ methodId };
-    //    hr = corProfilerInfo->RequestReJIT(1, m1, m2);
-    //    return S_FALSE;
-    //}
+    auto endFinally = helper.EndFinally();
+    leaveAfterCatch->m_pTarget = endFinally;
+    leaveAfterTry->m_pTarget = endFinally;
 
-    /*logging::log(
-        logging::LogLevel::VERBOSE,
-        "Got {0} for {1}"_W, interceptorModuleId, interceptor->interceptor.Interceptor.AssemblyName);
-
-    ComPtr<IUnknown> metadataInterfaces;
-    IfFailRet(this->corProfilerInfo->GetModuleMetaData(interceptorModuleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
-    const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
-    mdTypeDef interceptorToken;
-    metadataImport->FindTypeDefByName(interceptor->interceptor.Interceptor.TypeName.c_str(), mdTokenNil, &interceptorToken);
-
-    logging::log(
-        logging::LogLevel::VERBOSE,
-        "Got {0} for {1}"_W, interceptorToken, interceptor->interceptor.Interceptor.TypeName);
-
-    HCORENUM hcorenum = 0;
-    const auto maxMethods = 1000;
-    mdMethodDef methods[maxMethods]{};
-    ULONG cnt;
-    metadataImport->EnumMethods(&hcorenum, interceptorToken, methods, maxMethods, &cnt);
-
-    for (auto i = 0; i < cnt; i++) {
-        const auto methodInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
-        logging::log(
-            logging::LogLevel::VERBOSE,
-            "Got {0} for {1}"_W, methodInfo.Name, interceptor->interceptor.Interceptor.TypeName);
+    /*if (!interceptor->info.Signature.ReturnType.IsVoid) {
+        helper.LoadLocal(returnIndex);
     }*/
 
-    // auto rewriter = CreateILRewriter(NULL, moduleId, methodId);
-    // rewriter->InitializeTiny();
-    //rewriter::ILRewriterHelper helper(rewriter);
-    //// helper.Ret();
+    // ret -> leave_s
+    for (auto pInstr = rewriter->GetILList()->m_pNext; pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
+    {
+        switch (pInstr->m_opcode)
+        {
+        case rewriter::CEE_RET:
+        {
+            if (pInstr != newRet)
+            {
+                if (interceptor->info.Signature.ReturnType.IsVoid)
+                {
+                    pInstr->m_opcode = rewriter::CEE_LEAVE_S;
+                    pInstr->m_pTarget = endFinally->m_pNext;
+                }
+                else
+                {
+                    /*pInstr->m_opcode = rewriter::CEE_STLOC;
+                    pInstr->m_Arg16 = static_cast<INT16>(returnIndex);
 
-    //for (rewriter::ILInstr *pInstr = rewriter->GetILList()->m_pNext;
-    //     pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
-    //{
-    //  if (pInstr->m_opcode != rewriter::CEE_CALL && pInstr->m_opcode != rewriter::CEE_CALLVIRT && pInstr->m_opcode != rewriter::CEE_RET)
-    //  {
-    //    continue;
-    //  }
+                    auto leaveInstr = rewriter->NewILInstr();
+                    leaveInstr->m_opcode = rewriter::CEE_LEAVE_S;
+                    leaveInstr->m_pTarget = endFinally->m_pNext;
+                    rewriter->InsertAfter(pInstr, leaveInstr);*/
+                }
+            }
+            break;
+        }
+        default:
+            break;
+        }
+    }
 
-    //  pInstr->m_opcode = rewriter::CEE_NOP;
-    //}
+    rewriter::EHClause exClause{};
+    exClause.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
+    exClause.m_pTryBegin = beginFirst;
+    exClause.m_pTryEnd = mainCatch;
+    exClause.m_pHandlerBegin = mainCatch;
+    exClause.m_pHandlerEnd = rethrow;
+    exClause.m_ClassToken = exceptionTypeRef;
 
-    std::cout << profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport) << std::endl;
+    rewriter::EHClause finallyClause{};
+    finallyClause.m_Flags = COR_ILEXCEPTION_CLAUSE_FINALLY;
+    finallyClause.m_pTryBegin = beginFirst;
+    finallyClause.m_pTryEnd = rethrow->m_pNext;
+    finallyClause.m_pHandlerBegin = nopFinally;// rethrow->m_pNext;
+    finallyClause.m_pHandlerEnd = endFinally;
+
+    auto ehCount = rewriter->GetEHCount();
+    auto ehPointer = rewriter->GetEHPointer();
+
+    auto newEx = new rewriter::EHClause[ehCount + 4];
+    for (unsigned i = 0; i < ehCount; i++)
+    {
+        newEx[i] = ehPointer[i];
+    }
+
+    ehCount += 4;
+    newEx[ehCount - 4] = beforeEx;
+    newEx[ehCount - 3] = afterEx;
+    newEx[ehCount - 2] = exClause;
+    newEx[ehCount - 1] = finallyClause;
+    rewriter->SetEHClause(newEx, ehCount + 1);
+
+    logging::log(logging::LogLevel::VERBOSE, "{0}"_W, profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport));
+    std::cout << util::ToString(profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport)) << std::endl;
 
     hr = rewriter->Export();
 
     if (FAILED(hr))
     {
-        logging::log(
-            logging::LogLevel::INFO,
-            "GetReJITParameters rewriter->Export failed"_W);
+        logging::log(logging::LogLevel::_ERROR, "GetReJITParameters rewriter->Export failed"_W);
         return S_FALSE;
     }
 
-    logging::log(
-        logging::LogLevel::INFO,
-        "GetReJITParameters done"_W);
-
-    return S_OK;
-
-    // for (rewriter::ILInstr *pInstr = rewriter->GetILList()->m_pNext;
-    //      pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
-    // {
-    //   std::cout << std::hex << pInstr->m_opcode << std::endl;
-    // }
-
-    //TODO save method metadata when requesting rejitting
-    // hr = this->corProfilerInfo->GetFunctionInfo(methodId, &classId, &moduleId, &functionToken);
-    // if (FAILED(hr)) {
-    //   logging::log(
-    //       logging::LogLevel::INFO,
-    //       "GetReJITParameters GetFunctionInfo failed"_W);
-    //   return S_OK;
-    // }
-
-    // auto moduleInfo = info::ModuleInfo::GetModuleInfo(this->corProfilerInfo, moduleId);
-
-    // logging::log(
-    //     logging::LogLevel::INFO,
-    //     "GetReJITParameters GetModuleInfo done"_W);
-    // ComPtr<IUnknown> metadataInterfaces;
-    // hr = this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
-    // if (FAILED(hr)) {
-    //   logging::log(
-    //       logging::LogLevel::INFO,
-    //       "GetReJITParameters GetModuleMetaData failed"_W);
-    //   return S_OK;
-    // }
-
-    // const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
-    // const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, functionToken);
-
-    // logging::log(
-    //     logging::LogLevel::INFO,
-    //     "GetReJITParameters for app_domain_id {0} method {1}.{2} num args {3} from assembly {4}"_W,
-    //     moduleInfo.assembly.appDomainId,
-    //     functionInfo.Type.Name,
-    //     functionInfo.Name,
-    //     functionInfo.Signature.NumberOfArguments(),
-    //     moduleInfo.assembly.name);
+    logging::log(logging::LogLevel::INFO, "GetReJITParameters done"_W);
 
     return S_OK;
 }

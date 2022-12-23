@@ -144,12 +144,13 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
-    void ILRewriterHelper::CallMember(mdMemberRef memberRef, bool isVirtual)
+    ILInstr* ILRewriterHelper::CallMember(mdMemberRef memberRef, bool isVirtual)
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         pNewInstr->m_opcode = isVirtual ? CEE_CALLVIRT : CEE_CALL;
         pNewInstr->m_Arg32 = memberRef;
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::Cast(mdTypeRef typeRef)
@@ -214,11 +215,12 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
-    void ILRewriterHelper::Pop()
+    ILInstr* ILRewriterHelper::Pop()
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_POP;
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::Ret()
@@ -401,10 +403,18 @@ namespace rewriter
         return pNewInstr;
     }
 
-    ILInstr* ILRewriterHelper::CgtUn()
+    ILInstr* ILRewriterHelper::Rethrow()
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
-        pNewInstr->m_opcode = CEE_CGT_UN;
+        pNewInstr->m_opcode = CEE_RETHROW;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::EndFinally()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_ENDFINALLY;
         _rewriter->InsertBefore(_instr, pNewInstr);
         return pNewInstr;
     }
@@ -413,6 +423,14 @@ namespace rewriter
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_THROW;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::LeaveS()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_LEAVE_S;
         _rewriter->InsertBefore(_instr, pNewInstr);
         return pNewInstr;
     }

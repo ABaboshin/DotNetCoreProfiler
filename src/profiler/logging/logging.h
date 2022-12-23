@@ -10,6 +10,7 @@ namespace logging
 		VERBOSE = 0,
 		DEBUG = 10,
 		INFO = 20,
+		_ERROR = 20,
 		NONE = 10000
 	};
 

@@ -6,13 +6,13 @@ namespace app
   {
     static void Main(string[] args)
     {
-      // interceptor.C1.Before();
-      // Exception ex = null;
+      // // interceptor.C1.Before();
+      // // Exception ex = null;
       // try
       // {
       //   try
       //   {
-      //       Console.WriteLine("before");
+      //       interceptor.C1.Before();
       //   }
       //   catch (System.Exception)
       //   {
@@ -25,16 +25,18 @@ namespace app
           c.M4("test", new C1());
 
           C1.M1();
+          C1.M11();
           C1.M2(3);
       // }
-      // catch (System.Exception e)
+      // catch (System.Exception)
       // {
-      //   ex = e;
+      //   // ex = e;
+      //   throw;
       // }
       // finally {
       //   try
       //   {
-      //       Console.WriteLine($"after {ex}");
+      //       interceptor.C1.After();
       //   }
       //   catch (System.Exception)
       //   {
@@ -51,6 +53,7 @@ namespace app
 
   public class C1 {
     public static void M1() {}
+    public static int M11() {return 1;}
     public static void M2(int i) { }
 
     public void M3() { }

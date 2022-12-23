@@ -171,5 +171,7 @@ namespace rewriter
         {
             return m_pEH;
         }
+
+        void SetEHClause(EHClause* ehPointer, unsigned ehLength);
     };
 }

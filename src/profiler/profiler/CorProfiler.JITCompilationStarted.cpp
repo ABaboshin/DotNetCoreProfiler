@@ -114,7 +114,9 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
     IfFailRet(this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
     const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
-    std::cout << ilDumper.DumpILCodes("main ", &rewriter, functionInfo, metadataImport) << std::endl;
+    logging::log(logging::LogLevel::VERBOSE, "{0}"_W, ilDumper.DumpILCodes("main ", &rewriter, functionInfo, metadataImport));
+
+    std::cout << util::ToString(ilDumper.DumpILCodes("main ", &rewriter, functionInfo, metadataImport)) << std::endl;
 
     return S_OK;
 }
@@ -141,7 +143,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
     // Define an anonymous type
     mdTypeDef newTypeDef;
-    hr = metadataEmit->DefineTypeDef("__InterceptionDllLoaderClass__"_W.c_str(), tdAbstract | tdSealed,
+    hr = metadataEmit->DefineTypeDef("__Profiler__"_W.c_str(), tdAbstract | tdSealed,
         objectTypeRef, NULL, &newTypeDef);
 
     // Define a a new static method
@@ -151,7 +153,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
         ELEMENT_TYPE_VOID };
 
     hr = metadataEmit->DefineMethod(newTypeDef,
-        "__InterceptionDllLoaderMethod__"_W.c_str(),
+        "__Loader__"_W.c_str(),
         mdStatic | mdPublic | miAggressiveInlining,
         loadMethodSignature,
         sizeof(loadMethodSignature),
@@ -246,7 +248,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
         // ret
         helper.Ret();
 
-        std::cout << ilDumper.DumpILCodes("load ", rewriter, functionInfo, metadataImport) << std::endl;
+        logging::log(logging::LogLevel::VERBOSE, "{0}"_W, ilDumper.DumpILCodes("load ", rewriter, functionInfo, metadataImport));
 
         hr = rewriter->Export();
 

@@ -12,8 +12,4 @@
     <ProjectReference Include="..\Interception.Attributes\Interception.Attributes.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-  </ItemGroup>
-
 </Project>

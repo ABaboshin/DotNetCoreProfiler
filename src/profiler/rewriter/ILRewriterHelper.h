@@ -33,7 +33,7 @@ namespace rewriter
 
         void EndLoadValueIntoArray();
 
-        void CallMember(mdMemberRef memberRef, bool isVirtual);
+        ILInstr* CallMember(mdMemberRef memberRef, bool isVirtual);
 
         void Cast(mdTypeRef typeRef);
 
@@ -43,7 +43,7 @@ namespace rewriter
 
         void NewObject(mdToken token);
 
-        void Pop();
+        ILInstr* Pop();
 
         void Ret();
 
@@ -67,12 +67,24 @@ namespace rewriter
 
         ILInstr* LoadNull();
 
-        ILInstr* CgtUn();
-
         ILInstr* Throw();
+        ILInstr* Rethrow();
+        ILInstr* EndFinally();
 
         HRESULT AddLocalVariable(mdTypeRef typeRef, int& newIndex);
 
         void LoadObj(mdToken token);
+
+        ILInstr* LeaveS();
+
+        ILInstr* GetCurrentInstr() const
+        {
+            return _instr;
+        }
+
+        ILInstr* NewInstr() {
+            _instr++;
+            return new ILInstr();
+        }
     };
 }

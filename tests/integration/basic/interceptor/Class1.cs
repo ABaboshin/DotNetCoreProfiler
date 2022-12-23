@@ -7,11 +7,22 @@ namespace interceptor
     [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
     public class C1
     {
-      static C1 () {
-        Console.WriteLine($"Static C1.C1");
-      }
       public static void Before(){
       Console.WriteLine($"Execute C1.Before");
+      throw new Exception("break");
+      }
+      public static void After(){
+      Console.WriteLine($"Execute C1.After");
+      throw new Exception("break");
+      }
+    }
+
+    // [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M11", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
+    public class C11
+    {
+      public static void Before(){
+      Console.WriteLine($"Execute C11.Before");
+      throw new Exception("break");
       }
     }
 
