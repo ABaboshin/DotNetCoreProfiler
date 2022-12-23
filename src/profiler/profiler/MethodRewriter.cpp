@@ -162,7 +162,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     // call After method
     rewriter::ILInstr* afterFirst;
-    IfFailRet(CreateBeforeMethod(helper, &afterFirst, metadataEmit, interceptorTypeRef, *interceptor));
+    IfFailRet(CreateAfterMethod(helper, &afterFirst, metadataEmit, interceptorTypeRef, *interceptor));
 
     auto leaveAfterTry = helper.LeaveS();
     // TODO log exception
@@ -316,7 +316,7 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper& helper, re
     mdMemberRef afterRef;
     hr = metadataEmit->DefineMemberRef(
         interceptorTypeRef,
-        _const::BeforeMethod.data(),
+        _const::AfterMethod.data(),
         afterSignature.data(),
         afterSignature.size(),
         &afterRef);
@@ -430,4 +430,6 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
         (*exceptionIndex)--;
         *returnIndex = newLocalsCount - 1;
     }
+
+    return S_OK;
 }
