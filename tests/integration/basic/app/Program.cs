@@ -6,8 +6,9 @@ namespace app
   {
     static void Main(string[] args)
     {
-      // interceptor.C1.Before();
+      // // interceptor.C1.Before();
 //       Exception ex = null;
+//       int i = 0;
 //       try
 //       {
 //         try
@@ -18,8 +19,8 @@ namespace app
 //         {
 //         }
 
-// throw new Exception("test");
-          // TestM();
+// // throw new Exception("test");
+// i = 3;
 
           var c = new C1();
           c.M3();
@@ -32,7 +33,6 @@ namespace app
       // catch (System.Exception e)
       // {
       //   ex = e;
-      //   // throw;
       // }
       // finally {
       //   try
@@ -44,17 +44,12 @@ namespace app
       //   }
       //   if (ex != null) throw ex;
       // }
-
+      // return i;
     }
-
-    // static void TestM()
-    // {
-    //   Console.WriteLine("TestM");
-    // }
   }
 
   public class C1 {
-    public static void M1() {throw new Exception("test");}
+    public static void M1() {}
     public static int M11() {return 1;}
     public static void M2(int i) { }
 

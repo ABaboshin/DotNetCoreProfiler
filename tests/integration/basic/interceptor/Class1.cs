@@ -24,6 +24,10 @@ namespace interceptor
       Console.WriteLine($"Execute C11.Before");
       throw new Exception("break");
       }
+      public static void After(){
+      Console.WriteLine($"Execute C11.After");
+      throw new Exception("break");
+      }
     }
 
   // [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M2", TargetTypeName = "app.C1", TargetMethodParametersCount = 1)]

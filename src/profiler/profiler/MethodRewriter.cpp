@@ -5,7 +5,6 @@
 #include "MethodRewriter.h"
 #include "logging/logging.h"
 #include "CorProfiler.h"
-#include "rewriter/ILRewriterHelper.h"
 #include "util/helpers.h"
 #include "const/const.h"
 
@@ -92,98 +91,17 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     mdTypeRef exceptionTypeRef;
     metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemException.data(), &exceptionTypeRef);
 
-    // modify local signature
-    // to add an exception and the return value
-    mdToken localVarSig = rewriter->GetTkLocalVarSig();
-    PCCOR_SIGNATURE originalSignature = nullptr;
-    ULONG originalSignatureSize = 0;
+    ULONG exceptionIndex = 0;
+    ULONG returnIndex = 0;
 
-    if (localVarSig != mdTokenNil) {
-        IfFailRet(metadataImport->GetSigFromToken(localVarSig, &originalSignature, &originalSignatureSize));
-    }
-    
-    // exception type buffer and size
-    unsigned exceptionTypeRefBuffer;
-    auto exceptionTypeRefSize = CorSigCompressToken(exceptionTypeRef, &exceptionTypeRefBuffer);
+    IfFailRet(DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *interceptor, &exceptionIndex, &returnIndex));
 
-    // return type signature
-    ULONG returnSignatureTypeSize = 0;
-    mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
-
-    auto newSignatureSize = originalSignatureSize + (1 + exceptionTypeRefSize);
-    ULONG newSignatureOffset = 0;
-    ULONG newLocalsCount = 1;
-    if (!interceptor->info.Signature.ReturnType.IsVoid)
-    {
-        returnSignatureTypeSize = interceptor->info.Signature.ReturnType.Raw.size();
-
-        mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
-        hr = metadataEmit->GetTokenFromTypeSpec(&interceptor->info.Signature.ReturnType.Raw[0], interceptor->info.Signature.ReturnType.Raw.size(), &returnValueTypeSpec);
-        newSignatureSize += (1 + returnSignatureTypeSize);
-        newLocalsCount++;
-    }
-
-    ULONG oldLocalsBuffer;
-    ULONG oldLocalsLen = 0;
-    unsigned newLocalsBuffer;
-    ULONG newLocalsLen;
-
-    if (originalSignatureSize == 0)
-    {
-        newSignatureSize += 2;
-        newLocalsLen = CorSigCompressData(newLocalsCount, &newLocalsBuffer);
-    }
-    else
-    {
-        oldLocalsLen = CorSigUncompressData(originalSignature + 1, &oldLocalsBuffer);
-        newLocalsCount += oldLocalsBuffer;
-        newLocalsLen = CorSigCompressData(newLocalsCount, &newLocalsBuffer);
-        newSignatureSize += newLocalsLen - oldLocalsLen;
-    }
-
-    // New signature declaration
-    COR_SIGNATURE newSignatureBuffer[500];
-    newSignatureBuffer[newSignatureOffset++] = IMAGE_CEE_CS_CALLCONV_LOCAL_SIG;
-
-    // Set the locals count
-    memcpy(&newSignatureBuffer[newSignatureOffset], &newLocalsBuffer, newLocalsLen);
-    newSignatureOffset += newLocalsLen;
-
-    if (originalSignatureSize > 0)
-    {
-        const auto copyLength = originalSignatureSize - 1 - oldLocalsLen;
-        memcpy(&newSignatureBuffer[newSignatureOffset], originalSignature + 1 + oldLocalsLen, copyLength);
-        newSignatureOffset += copyLength;
-    }
-
-    // exception 
-    newSignatureBuffer[newSignatureOffset++] = ELEMENT_TYPE_CLASS;
-    memcpy(&newSignatureBuffer[newSignatureOffset], &exceptionTypeRefBuffer, exceptionTypeRefSize);
-    newSignatureOffset += exceptionTypeRefSize;
-
-    // return value if not void
-    if (!interceptor->info.Signature.ReturnType.IsVoid) {
-        memcpy(&newSignatureBuffer[newSignatureOffset], &interceptor->info.Signature.ReturnType.Raw[0], returnSignatureTypeSize);
-        newSignatureOffset += returnSignatureTypeSize;
-    }
-
-    // Get new locals token
-    mdToken newLocalVarSig;
-    hr = metadataEmit->GetTokenFromSig(newSignatureBuffer, newSignatureSize, &newLocalVarSig);
-    if (FAILED(hr))
-    {
-        logging::log(logging::LogLevel::_ERROR, "Failed local sig {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
-        return hr;
-    }
-
-    rewriter->SetTkLocalVarSig(newLocalVarSig);
-
-    ULONG exceptionIndex = newLocalsCount - 1;
-    ULONG returnIndex = -1;
-    if (!interceptor->info.Signature.ReturnType.IsVoid) {
-        exceptionIndex--;
-        returnIndex = newLocalsCount - 1;
-    }
+    // TODO
+    // initialize local var
+    // ex = null
+    helper.LoadNull();
+    helper.StLocal(exceptionIndex);
+    // resultIndex = default(return type)
 
     // define interceptor.dll
     mdModuleRef baseDllRef;
@@ -205,37 +123,16 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
         logging::log(logging::LogLevel::_ERROR, "Failed DefineTypeRefByName {0}"_W, interceptor->interceptor.Interceptor.TypeName);
     }
 
-    std::vector<BYTE> beforeSignature = {
-    IMAGE_CEE_CS_CALLCONV_DEFAULT,
-    0,
-    ELEMENT_TYPE_VOID };
-
-    // define Before method
-    mdMemberRef beforeRef;
-    hr = metadataEmit->DefineMemberRef(
-        interceptorTypeRef,
-        _const::BeforeMethod.data(),
-        beforeSignature.data(),
-        beforeSignature.size(),
-        &beforeRef);
-
-    if (FAILED(hr))
-    {
-        logging::log(logging::LogLevel::_ERROR, "Failed DefineMemberRef {0}"_W, interceptor->interceptor.Interceptor.TypeName);
-    }
-
-    // ex = null
-    helper.LoadNull();
-    helper.StLocal(exceptionIndex);
-
     // call Before method
-    auto beginFirst = helper.CallMember(beforeRef, false);
+    rewriter::ILInstr* beginFirst;
+    IfFailRet(CreateBeforeMethod(helper, &beginFirst, metadataEmit, interceptorTypeRef, *interceptor));
 
     auto leaveBeforeTry = helper.LeaveS();
+    // TODO log exception
     auto nopBeforeCatch = helper.Pop();
     auto leaveBeforeCatch = helper.LeaveS();
 
-    // try/catch for Interceptor.Begin
+    // try/catch for Interceptor.Before
     rewriter::EHClause beforeEx{};
     beforeEx.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
     beforeEx.m_pTryBegin = beginFirst;
@@ -263,33 +160,16 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     // finally
 
-    std::vector<BYTE> afterSignature = {
-    IMAGE_CEE_CS_CALLCONV_DEFAULT,
-    0,
-    ELEMENT_TYPE_VOID };
-
-    // define After method
-    mdMemberRef afterRef;
-    hr = metadataEmit->DefineMemberRef(
-        interceptorTypeRef,
-        _const::AfterMethod.data(),
-        afterSignature.data(),
-        afterSignature.size(),
-        &beforeRef);
-
-    if (FAILED(hr))
-    {
-        logging::log(logging::LogLevel::_ERROR, "Failed DefineMemberRef {0}"_W, interceptor->interceptor.Interceptor.TypeName);
-    }
-
     // call After method
-    auto afterFirst = helper.CallMember(beforeRef, false);
+    rewriter::ILInstr* afterFirst;
+    IfFailRet(CreateBeforeMethod(helper, &afterFirst, metadataEmit, interceptorTypeRef, *interceptor));
 
     auto leaveAfterTry = helper.LeaveS();
+    // TODO log exception
     auto nopAfterCatch = helper.Pop();
     auto leaveAfterCatch = helper.LeaveS();
 
-    // try/catch for Interceptor.Begin
+    // try/catch for Interceptor.After
     rewriter::EHClause afterEx{};
     afterEx.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
     afterEx.m_pTryBegin = afterFirst;
@@ -392,4 +272,162 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     logging::log(logging::LogLevel::INFO, "GetReJITParameters done"_W);
 
     return S_OK;
+}
+
+// TODO
+HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2> metadataEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor)
+{
+    HRESULT hr;
+    std::vector<BYTE> beforeSignature = {
+    IMAGE_CEE_CS_CALLCONV_DEFAULT,
+    0,
+    ELEMENT_TYPE_VOID };
+
+    // define Before method
+    mdMemberRef beforeRef;
+    hr = metadataEmit->DefineMemberRef(
+        interceptorTypeRef,
+        _const::BeforeMethod.data(),
+        beforeSignature.data(),
+        beforeSignature.size(),
+        &beforeRef);
+
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::_ERROR, "Failed CreateBeforeMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+        return S_FALSE;
+    }
+
+    *instr = helper.CallMember(beforeRef, false);
+    return S_OK;
+
+}
+
+//TODO
+HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2> metadataEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor)
+{
+    HRESULT hr;
+    std::vector<BYTE> afterSignature = {
+    IMAGE_CEE_CS_CALLCONV_DEFAULT,
+    0,
+    ELEMENT_TYPE_VOID };
+
+    // define After method
+    mdMemberRef afterRef;
+    hr = metadataEmit->DefineMemberRef(
+        interceptorTypeRef,
+        _const::BeforeMethod.data(),
+        afterSignature.data(),
+        afterSignature.size(),
+        &afterRef);
+
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::_ERROR, "Failed CreateAfterMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+        return S_FALSE;
+    }
+
+    *instr = helper.CallMember(afterRef, false);
+    return S_OK;
+}
+
+HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, ModuleID moduleId, mdTypeRef exceptionTypeRef, const RejitInfo& interceptor, ULONG* exceptionIndex, ULONG* returnIndex) {
+    HRESULT hr;
+
+    ComPtr<IUnknown> metadataInterfaces;
+    IfFailRet(profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+    auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+    auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+
+    // modify local signature
+    // to add an exception and the return value
+    mdToken localVarSig = rewriter->GetTkLocalVarSig();
+    PCCOR_SIGNATURE originalSignature = nullptr;
+    ULONG originalSignatureSize = 0;
+
+    if (localVarSig != mdTokenNil) {
+        IfFailRet(metadataImport->GetSigFromToken(localVarSig, &originalSignature, &originalSignatureSize));
+    }
+
+    // exception type buffer and size
+    unsigned exceptionTypeRefBuffer;
+    auto exceptionTypeRefSize = CorSigCompressToken(exceptionTypeRef, &exceptionTypeRefBuffer);
+    // return type signature
+    ULONG returnSignatureTypeSize = 0;
+    mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
+
+    auto newSignatureSize = originalSignatureSize + (1 + exceptionTypeRefSize);
+    ULONG newSignatureOffset = 0;
+    ULONG newLocalsCount = 1;
+    if (!interceptor.info.Signature.ReturnType.IsVoid)
+    {
+        returnSignatureTypeSize = interceptor.info.Signature.ReturnType.Raw.size();
+
+        mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
+        hr = metadataEmit->GetTokenFromTypeSpec(&interceptor.info.Signature.ReturnType.Raw[0], interceptor.info.Signature.ReturnType.Raw.size(), &returnValueTypeSpec);
+        newSignatureSize += (1 + returnSignatureTypeSize);
+        newLocalsCount++;
+    }
+
+    ULONG oldLocalsBuffer;
+    ULONG oldLocalsLen = 0;
+    unsigned newLocalsBuffer;
+    ULONG newLocalsLen;
+
+    if (originalSignatureSize == 0)
+    {
+        newSignatureSize += 2;
+        newLocalsLen = CorSigCompressData(newLocalsCount, &newLocalsBuffer);
+    }
+    else
+    {
+        oldLocalsLen = CorSigUncompressData(originalSignature + 1, &oldLocalsBuffer);
+        newLocalsCount += oldLocalsBuffer;
+        newLocalsLen = CorSigCompressData(newLocalsCount, &newLocalsBuffer);
+        newSignatureSize += newLocalsLen - oldLocalsLen;
+    }
+
+    // New signature declaration
+    COR_SIGNATURE newSignatureBuffer[500];
+    newSignatureBuffer[newSignatureOffset++] = IMAGE_CEE_CS_CALLCONV_LOCAL_SIG;
+
+    // Set the locals count
+    memcpy(&newSignatureBuffer[newSignatureOffset], &newLocalsBuffer, newLocalsLen);
+    newSignatureOffset += newLocalsLen;
+
+    if (originalSignatureSize > 0)
+    {
+        const auto copyLength = originalSignatureSize - 1 - oldLocalsLen;
+        memcpy(&newSignatureBuffer[newSignatureOffset], originalSignature + 1 + oldLocalsLen, copyLength);
+        newSignatureOffset += copyLength;
+    }
+
+    // exception 
+    newSignatureBuffer[newSignatureOffset++] = ELEMENT_TYPE_CLASS;
+    memcpy(&newSignatureBuffer[newSignatureOffset], &exceptionTypeRefBuffer, exceptionTypeRefSize);
+    newSignatureOffset += exceptionTypeRefSize;
+
+    // return value if not void
+    if (!interceptor.info.Signature.ReturnType.IsVoid) {
+        memcpy(&newSignatureBuffer[newSignatureOffset], &interceptor.info.Signature.ReturnType.Raw[0], returnSignatureTypeSize);
+        newSignatureOffset += returnSignatureTypeSize;
+    }
+
+    // Get new locals token
+    mdToken newLocalVarSig;
+    hr = metadataEmit->GetTokenFromSig(newSignatureBuffer, newSignatureSize, &newLocalVarSig);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::_ERROR, "Failed local sig {0}"_W, interceptor.interceptor.Interceptor.AssemblyName);
+        return hr;
+    }
+
+    rewriter->SetTkLocalVarSig(newLocalVarSig);
+
+    *exceptionIndex = newLocalsCount - 1;
+    *returnIndex = -1;
+    if (!interceptor.info.Signature.ReturnType.IsVoid) {
+        (*exceptionIndex)--;
+        *returnIndex = newLocalsCount - 1;
+    }
 }

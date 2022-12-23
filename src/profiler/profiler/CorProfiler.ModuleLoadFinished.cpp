@@ -73,6 +73,9 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             mdMethodDef methods[maxMethods]{};
             ULONG cnt;
             metadataImport->EnumMethods(&hcorenum, typeDef, methods, maxMethods, &cnt);
+            // TODO interfaces
+            // TODO trace attributes
+            // TODO dump local variables based on PDB
             for (auto i = 0; i < cnt; i++) {
                 const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
 
