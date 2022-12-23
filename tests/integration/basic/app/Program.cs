@@ -6,18 +6,19 @@ namespace app
   {
     static void Main(string[] args)
     {
-      // // interceptor.C1.Before();
-      // // Exception ex = null;
-      // try
-      // {
-      //   try
-      //   {
-      //       interceptor.C1.Before();
-      //   }
-      //   catch (System.Exception)
-      //   {
-      //   }
+      // interceptor.C1.Before();
+//       Exception ex = null;
+//       try
+//       {
+//         try
+//         {
+//             interceptor.C1.Before();
+//         }
+//         catch (System.Exception)
+//         {
+//         }
 
+// throw new Exception("test");
           // TestM();
 
           var c = new C1();
@@ -28,10 +29,10 @@ namespace app
           C1.M11();
           C1.M2(3);
       // }
-      // catch (System.Exception)
+      // catch (System.Exception e)
       // {
-      //   // ex = e;
-      //   throw;
+      //   ex = e;
+      //   // throw;
       // }
       // finally {
       //   try
@@ -41,6 +42,7 @@ namespace app
       //   catch (System.Exception)
       //   {
       //   }
+      //   if (ex != null) throw ex;
       // }
 
     }
@@ -52,7 +54,7 @@ namespace app
   }
 
   public class C1 {
-    public static void M1() {}
+    public static void M1() {throw new Exception("test");}
     public static int M11() {return 1;}
     public static void M2(int i) { }
 
