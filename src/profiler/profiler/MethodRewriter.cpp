@@ -91,18 +91,6 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     mdTypeRef exceptionTypeRef;
     metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemException.data(), &exceptionTypeRef);
 
-    ULONG exceptionIndex = 0;
-    ULONG returnIndex = 0;
-
-    IfFailRet(DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *interceptor, &exceptionIndex, &returnIndex));
-
-    // TODO
-    // initialize local var
-    // ex = null
-    helper.LoadNull();
-    helper.StLocal(exceptionIndex);
-    // resultIndex = default(return type)
-
     // define interceptor.dll
     mdModuleRef baseDllRef;
     GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
@@ -111,6 +99,30 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
         logging::log(logging::LogLevel::_ERROR, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
         return hr;
     }
+
+    ULONG exceptionIndex = 0;
+    ULONG returnIndex = 0;
+
+    IfFailRet(DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *interceptor, &exceptionIndex, &returnIndex));
+
+    // initialize local variables
+    hr = InitLocalValues(helper, rewriter, moduleId, *interceptor, exceptionIndex, returnIndex, baseDllRef);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::_ERROR, "Failed InitLocalValues {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        return hr;
+    }
+
+
+
+    // // TODO
+    // // initialize local var
+    // // ex = null
+    // helper.LoadNull();
+    // helper.StLocal(exceptionIndex);
+    // // resultIndex = default(return type)
+
+    
 
     // define interceptor type
     mdTypeRef interceptorTypeRef;
@@ -365,7 +377,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
 
         mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
         hr = metadataEmit->GetTokenFromTypeSpec(&interceptor.info.Signature.ReturnType.Raw[0], interceptor.info.Signature.ReturnType.Raw.size(), &returnValueTypeSpec);
-        newSignatureSize += (1 + returnSignatureTypeSize);
+        newSignatureSize += (returnSignatureTypeSize);
         newLocalsCount++;
     }
 
@@ -407,9 +419,12 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     memcpy(&newSignatureBuffer[newSignatureOffset], &exceptionTypeRefBuffer, exceptionTypeRefSize);
     newSignatureOffset += exceptionTypeRefSize;
 
+    std::cout << " exceptionTypeRefSize " << exceptionTypeRefSize << std::endl;
+
     // return value if not void
     if (!interceptor.info.Signature.ReturnType.IsVoid) {
         memcpy(&newSignatureBuffer[newSignatureOffset], &interceptor.info.Signature.ReturnType.Raw[0], returnSignatureTypeSize);
+        std::cout << " returnSignatureTypeSize " << returnSignatureTypeSize << std::endl;
         newSignatureOffset += returnSignatureTypeSize;
     }
 
@@ -433,3 +448,4 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
 
     return S_OK;
 }
+

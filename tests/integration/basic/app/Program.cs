@@ -50,7 +50,7 @@ namespace app
 
   public class C1 {
     public static void M1() {}
-    public static int M11() {return 1;}
+    public static C1 M11() {return new C1();}
     public static void M2(int i) { }
 
     public void M3() { }

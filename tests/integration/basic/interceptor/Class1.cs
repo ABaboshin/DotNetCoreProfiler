@@ -4,7 +4,7 @@ using System;
 
 namespace interceptor
 {
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
+    // [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
     public class C1
     {
       public static void Before(){
@@ -17,7 +17,7 @@ namespace interceptor
       }
     }
 
-    // [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M11", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
+    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M11", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
     public class C11
     {
       public static void Before(){

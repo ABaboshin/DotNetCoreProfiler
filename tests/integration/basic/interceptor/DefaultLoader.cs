@@ -28,4 +28,11 @@ namespace interceptor
             // }
         }
     }
+
+        [DefaultInitializer]
+    public static class DefaultInitializer
+    {
+        public static T GetDefault<T>() => default;
+    }
+
 }

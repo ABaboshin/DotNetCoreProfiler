@@ -10,4 +10,14 @@ namespace Interception.Attributes
     public class LoaderAttribute : Attribute
     {
     }
+
+        /// <summary>
+    /// a default attribute
+    /// to create a default(T)
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class, AllowMultiple = true, Inherited = false)]
+    public class DefaultInitializerAttribute : Attribute
+    {
+    }
+
 }

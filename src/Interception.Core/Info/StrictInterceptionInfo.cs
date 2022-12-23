@@ -20,6 +20,15 @@ namespace Interception.Core.Info
         //public TargetMethod Target { get; set; }
     }
 
+    public class DefaultInitializerInfo
+    {
+        // public string[] IgnoreCallerAssemblies { get; set; }
+        public string TypeName { get; set; }
+        public string AssemblyPath { get; set; }
+        //public TargetMethod Target { get; set; }
+    }
+
+
     //public class MethodFinderInfo
     //{
     //    public TypeInfo MethodFinder { get; set; }
@@ -48,17 +57,11 @@ namespace Interception.Core.Info
 
     public class ProfilerInfo
     {
-        public List<string> Assemblies { get; }
-        public LoaderInfo Loader { get; }
-        public List<string> SkipAssemblies { get; }
-        public List<StrictInterceptionInfo> Strict { get; }
+                public List<string> Assemblies { get; set; }
+        public LoaderInfo Loader { get; set; }
+        public List<string> SkipAssemblies { get; set; }
+        public List<StrictInterceptionInfo> Strict { get; set; }
+        public DefaultInitializerInfo DefaultInitializer {get;set;}
 
-        public ProfilerInfo(List<string> assemblies, LoaderInfo loader, List<string> skipAssemblies, List<StrictInterceptionInfo> strict)
-        {
-            Assemblies = assemblies;
-            Loader = loader;
-            SkipAssemblies = skipAssemblies;
-            Strict = strict;
-        }
     }
 }

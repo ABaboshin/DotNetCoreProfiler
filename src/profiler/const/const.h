@@ -32,4 +32,5 @@ namespace _const
 	const auto ctor = ".ctor"_W;
 	const auto BeforeMethod = "Before"_W;
 	const auto AfterMethod = "After"_W;
+	const auto GetDefault = "GetDefault"_W;
 }

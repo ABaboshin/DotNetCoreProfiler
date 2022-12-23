@@ -11,6 +11,7 @@ namespace configuration
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src);
 	//std::pair<AttributedInterceptor, bool> LoadAttributedInterceptorFromJson(const nlohmann::json::value_type& src);
 	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src);
+	DefaultInitializerInfo LoadDefaultInitializerFromJson(const nlohmann::json::value_type& src);
 	//std::pair<MethodFinder, bool> LoadMethodFinder(const nlohmann::json::value_type& src);
 
 	LoaderInfo LoadLoaderFromJson(const nlohmann::json::value_type& src);
@@ -51,7 +52,8 @@ namespace configuration
 		nlohmann::json j;
 		stream >> j;
 
-		LoaderInfo loader = LoadLoaderFromJson(j["Loader"]);
+		auto loader = LoadLoaderFromJson(j["Loader"]);
+		auto defaultInitializer = LoadDefaultInitializerFromJson(j["DefaultInitializer"]);
 
 		for (auto& el : j["Strict"]) {
 			auto i = LoadInterceptionFromJson(el);
@@ -99,7 +101,8 @@ namespace configuration
 			//std::get<0>(methodFinderInterface),
 			//methodFinders,
 			skipAssemblies,
-			loader
+			loader,
+			defaultInitializer
 			//ToWSTRING(j.value("loader", ""))
 			//enabledAssemblies
 		};
@@ -166,17 +169,18 @@ namespace configuration
 		}
 
 		return { ToWSTRING(src.value("AssemblyPath", "")) , ToWSTRING(src.value("TypeName", "")) };
-
-		//auto interceptor = std::get<0>(LoadTypeInfoFromJson(src["Interceptor"]));
-		//auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
-		////std::unordered_set<wstring> ignoreCallerAssemblies{};
-
-		////for (auto& el : src["IgnoreCallerAssemblies"]) {
-		////	ignoreCallerAssemblies.insert(ToWSTRING(el));
-		////}
-
-		//return std::make_pair<StrictInterception, bool>({ /*ignoreCallerAssemblies,*/ target, interceptor }, true);
 	}
+
+	DefaultInitializerInfo LoadDefaultInitializerFromJson(const nlohmann::json::value_type& src)
+	{
+		if (!src.is_object()) {
+			throw std::string("DefaultInitializer not found");
+			//return std::make_pair<StrictInterception, bool>({}, false);
+		}
+
+		return { ToWSTRING(src.value("AssemblyPath", "")) , ToWSTRING(src.value("TypeName", "")) };
+	}
+
 
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src)
 	{

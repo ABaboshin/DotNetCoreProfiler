@@ -24,6 +24,8 @@ namespace Interception.Generator
                     var skipAssemblies = File.Exists(opts.Skip) ?  File.ReadAllLines(opts.Skip) : new string[] { };
                     // var enabledAssemblies = File.Exists(opts.EnabledAssemblies) ? File.ReadAllLines(opts.EnabledAssemblies) : new string[] { };
                     LoaderInfo loader = null;
+                                        DefaultInitializerInfo defaultInitializer = null;
+
 
                     foreach (var assemblyPath in opts.Assemblies)
                     {
@@ -38,27 +40,63 @@ namespace Interception.Generator
                         }
                         else if (FindLoader(assembly, fullPath) != null)
                         {
-                            throw new Exception();
+                                                        throw new Exception("duplicate loader");
+                        }
+
+                        if (defaultInitializer is null)
+                        {
+                            defaultInitializer = FindDefaultInitializer(assembly, fullPath);
+                        }
+                        else if (FindDefaultInitializer(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate default initializer");
+
                         }
                     }
 
                     if (loader is null)
                     {
-                        throw new Exception();
+                                                throw new Exception("load not found");
                     }
 
-                    var result = new ProfilerInfo(
-                        opts.Assemblies.Select(a => Path.Combine(opts.Path, new FileInfo(a).Name)).ToList(),
-                        loader,
-                        skipAssemblies?.OrderBy(s => s).ToList(),
+                    if (defaultInitializer is null)
+                    {
+                        throw new Exception("default initializer not found");
+
+                    }
+
+                    var result = new ProfilerInfo{
+                        Assemblies = opts.Assemblies.Select(a => Path.Combine(opts.Path, new FileInfo(a).Name)).ToList(),
+                        Loader = loader,
+                        SkipAssemblies = skipAssemblies?.OrderBy(s => s).ToList(),
                         // enabledAssemblies = enabledAssemblies?.OrderBy(s => s),
-                        strict
+                        Strict = strict,
+                        DefaultInitializer = defaultInitializer
                         //loader = opts.Loader
-                    );
+                    };
 
                     File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));
                 });
         }
+
+                private static DefaultInitializerInfo FindDefaultInitializer(Assembly assembly, string path)
+        {
+            var result = assembly
+                .GetTypes()
+                .Where(type => type.GetCustomAttributes<DefaultInitializerAttribute>().Any())
+                .SelectMany(type => type.GetCustomAttributes<DefaultInitializerAttribute>().Select(attribute => new { type, attribute }))
+                .Select(info => {
+                    return new DefaultInitializerInfo
+                    {
+                        TypeName = info.type.FullName,
+                        AssemblyPath = path
+                    };
+                })
+                .FirstOrDefault();
+
+            return result;
+        }
+
 
         //private static IEnumerable<AttributedInterceptor> ProcessAttributedInterceptors(Assembly assembly)
         //{

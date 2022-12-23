@@ -7,6 +7,7 @@
 // #include "AttributedInterceptor.h"
 #include "TypeInfo.h"
 #include "StrictInterception.h"
+#include "DefaultInitializerInfo.h"
 // #include "MethodFinder.h"
 
 
@@ -23,6 +24,7 @@ namespace configuration
 		//std::vector<MethodFinder> MethodFinders{};
 		std::unordered_set<wstring> SkipAssemblies;
 		LoaderInfo Loader;
+		DefaultInitializerInfo DefaultInitializer;
 		//std::unordered_set<wstring> EnabledAssemblies;
 
 		Configuration(std::vector<StrictInterception> strictInterceptions,
@@ -33,7 +35,8 @@ namespace configuration
 			//const TypeInfo& methodFinderInterface,
 			//std::vector<MethodFinder> methodFinders,
 			std::unordered_set<wstring>& skipAssemblies,
-			LoaderInfo loader
+			LoaderInfo loader,
+			DefaultInitializerInfo defaultInitializer
 			//std::unordered_set<wstring>& enabledAssemblies
 		) :
 			StrictInterceptions(strictInterceptions),
@@ -44,7 +47,8 @@ namespace configuration
 			//MethodFinderInterface(methodFinderInterface),
 			//MethodFinders(methodFinders),
 			SkipAssemblies(skipAssemblies),
-			Loader(loader)
+			Loader(loader),
+			DefaultInitializer(defaultInitializer)
 			//EnabledAssemblies(enabledAssemblies)
 		{}
 

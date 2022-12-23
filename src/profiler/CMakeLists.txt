@@ -46,6 +46,7 @@ add_library("DotNetCoreProfiler.static" STATIC
   profiler/CorProfiler.JITCompilationStarted.cpp
   profiler/CorProfiler.Rejit.cpp
   profiler/MethodRewriter.cpp
+  profiler/MethodRewriter.InitLocalValues.cpp
   ClassFactory.cpp
   configuration/Configuration.cpp
   info/AssemblyInfo.cpp

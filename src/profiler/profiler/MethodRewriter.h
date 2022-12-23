@@ -14,6 +14,7 @@ class MethodRewriter {
 	HRESULT DefineLocalSignature(rewriter::ILRewriter* rewriter, ModuleID moduleId, mdTypeRef exceptionTypeRef, const RejitInfo& interceptor, ULONG* exceptionIndex, ULONG* returnIndex);
 	HRESULT CreateBeforeMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2> metadataEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor);
 	HRESULT CreateAfterMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2> metadataEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor);
+	HRESULT InitLocalValues(rewriter::ILRewriterHelper& helper, rewriter::ILRewriter* rewriter, ModuleID moduleId, const RejitInfo& interceptor, ULONG exceptionIndex, ULONG returnIndex, mdModuleRef baseDllRef);
 public:
 	MethodRewriter(CorProfiler* profiler) : profiler(profiler) {}
 
