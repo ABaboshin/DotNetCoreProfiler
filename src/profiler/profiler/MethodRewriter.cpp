@@ -364,7 +364,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     newEx[ehCount - 3] = afterEx;
     newEx[ehCount - 2] = exClause;
     newEx[ehCount - 1] = finallyClause;
-    rewriter->SetEHClause(newEx, ehCount + 1);
+    rewriter->SetEHClause(newEx, ehCount);
 
     logging::log(logging::LogLevel::VERBOSE, "{0}"_W, profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport));
     std::cout << util::ToString(profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport)) << std::endl;
