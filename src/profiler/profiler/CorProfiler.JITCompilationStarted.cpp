@@ -242,7 +242,7 @@ ELEMENT_TYPE_MVAR,
         helper.StLocal(returnIndex);*/
     }
 
-    std::cout << util::ToString(ilDumper.DumpILCodes("main ", rewriter, functionInfo, metadataImport)) << std::endl;
+    //std::cout << util::ToString(ilDumper.DumpILCodes("main ", rewriter, functionInfo, metadataImport)) << std::endl;
 
     hr = rewriter->Export();
 

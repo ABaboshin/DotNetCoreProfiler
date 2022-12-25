@@ -58,7 +58,37 @@ namespace app
 
   public class C1 {
     public static void M1() {}
-    public static C1 M11() {return new C1();}
+    public static C1 M11() {
+            return new C1();
+            //Exception ex = null;
+            //C1 c1 = interceptor.DefaultInitializer.GetDefault<C1>();
+            //try
+            //{
+            //    try
+            //    {
+            //        try
+            //        {
+            //            interceptor.C11.Before();
+            //        }
+            //        catch (Exception)
+            //        {
+
+            //        }
+            //        c1 = new C1();
+            //    }
+            //    catch (Exception e)
+            //    {
+            //        ex = e;
+            //    }
+            //}
+            //finally {
+            //    if (ex != null)
+            //    {
+            //        throw ex;
+            //    }
+            //}
+            //return c1;
+        }
     public static void M2(int i) { }
 
     public void M3() { }

@@ -32,7 +32,10 @@ namespace interceptor
         [DefaultInitializer]
     public static class DefaultInitializer
     {
-        public static T GetDefault<T>() => default;
+        public static T GetDefault<T>() {
+            Console.WriteLine($"GetDefault {typeof(T).FullName}");
+            return default;
+        }
     }
 
 }

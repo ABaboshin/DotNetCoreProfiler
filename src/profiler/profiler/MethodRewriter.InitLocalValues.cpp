@@ -27,7 +27,10 @@ HRESULT MethodRewriter::InitLocalValues(rewriter::ILRewriterHelper& helper, rewr
     helper.LoadNull();
     helper.StLocal(exceptionIndex);
 
-    if (!interceptor.info.Signature.ReturnType.IsVoid)
+    auto isVoid = interceptor.info.Signature.ReturnType.IsVoid;
+    //isVoid = true;
+
+    if (!isVoid)
     {
         // define assembly where default initializer is placed
         // mdModuleRef baseDllRef;
@@ -135,9 +138,9 @@ for (auto i = 0; i < signatureLength; i++)
             return S_FALSE;
         }
 
-        /*helper.CallMember(getDefaultSpecRef, false);
-        helper.Pop();*/
-        //helper.StLocal(returnIndex);
+        helper.CallMember(getDefaultSpecRef, false);
+        //helper.Pop();
+        helper.StLocal(returnIndex);
     }
 
     return S_OK;

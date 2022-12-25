@@ -164,7 +164,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     // main catch
     auto mainCatch = helper.StLocal(exceptionIndex);
-    auto mainCatchLeave = helper.LeaveS();
+    auto mainCatchLeave = helper.Rethrow(); // helper.LeaveS();
     mainCatchLeave->m_pTarget = newRet;
     helper.SetILPosition(newRet);
     //auto rethrow = helper.StLocal(exceptionIndex);
@@ -193,18 +193,21 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     // finally
 
     // if ex != null throw ex
-    auto ldLocal = helper.LoadLocal(exceptionIndex);
+    /*auto ldLocal = helper.LoadLocal(exceptionIndex);
     auto brFalseS = helper.BrFalseS();
     helper.LoadLocal(exceptionIndex);
-    helper.Throw();
+    helper.Throw();*/
 
     auto endFinally = helper.EndFinally();
-    leaveAfterCatch->m_pTarget = ldLocal;
+    leaveAfterCatch->m_pTarget = endFinally;// ldLocal;
     leaveAfterTry->m_pTarget = endFinally;
-    brFalseS->m_pTarget = endFinally;
+    //brFalseS->m_pTarget = endFinally;
 
-    if (!interceptor->info.Signature.ReturnType.IsVoid) {
-        //helper.LoadLocal(returnIndex);
+    auto isVoid = interceptor->info.Signature.ReturnType.IsVoid;
+    //isVoid = true;
+
+    if (!isVoid) {
+        helper.LoadLocal(returnIndex);
     }
 
     // ret -> leave_s
@@ -216,16 +219,15 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
         {
             if (pInstr != newRet)
             {
-                if (interceptor->info.Signature.ReturnType.IsVoid)
+                if (isVoid)
                 {
                     pInstr->m_opcode = rewriter::CEE_LEAVE_S;
                     pInstr->m_pTarget = endFinally->m_pNext;
                 }
                 else
                 {
-                    /*pInstr->m_opcode = rewriter::CEE_STLOC;
-                    pInstr->m_Arg16 = static_cast<INT16>(returnIndex);*/
-                    pInstr->m_opcode = rewriter::CEE_NOP;
+                    pInstr->m_opcode = rewriter::CEE_STLOC;
+                    pInstr->m_Arg16 = static_cast<INT16>(returnIndex);
 
                     auto leaveInstr = rewriter->NewILInstr();
                     leaveInstr->m_opcode = rewriter::CEE_LEAVE_S;
@@ -372,18 +374,44 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     auto newSignatureSize = originalSignatureSize + (1 + exceptionTypeRefSize);
     ULONG newSignatureOffset = 0;
     ULONG newLocalsCount = 1;
-    auto hasReturn = interceptor.info.Signature.ReturnType.IsVoid;
+    
+    auto returnSignature = interceptor.info.Signature.ReturnType.Raw;
+    auto isVoid = interceptor.info.Signature.ReturnType.IsVoid;
 
-    hasReturn = false;
+    //isVoid = true;
 
-    if (!hasReturn)
+    if (!isVoid)
     {
-        returnSignatureTypeSize = interceptor.info.Signature.ReturnType.Raw.size();
+        returnSignatureTypeSize = returnSignature.size();
 
         mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
-        hr = metadataEmit->GetTokenFromTypeSpec(&interceptor.info.Signature.ReturnType.Raw[0], interceptor.info.Signature.ReturnType.Raw.size(), &returnValueTypeSpec);
+        hr = metadataEmit->GetTokenFromTypeSpec(&returnSignature[0], returnSignature.size(), &returnValueTypeSpec);
         newSignatureSize += (returnSignatureTypeSize);
         newLocalsCount++;
+    }
+    else {
+        /*mdTypeDef c1Def;
+        hr = metadataImport->FindTypeDefByName("app.C1"_W.c_str(), mdMethodDefNil, &c1Def);
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::_ERROR, "Failed FindTypeDefByName app.c1"_W);
+            return hr;
+        }
+
+        auto typeInfo = info::TypeInfo::GetTypeInfo(metadataImport, c1Def);
+        std::cout << "found " << util::ToString(typeInfo.Name) << " " << typeInfo.Raw.size() << std::endl;
+
+        returnSignature.clear();
+        std::copy(typeInfo.Raw.begin(), typeInfo.Raw.end(), returnSignature.begin());
+
+        returnSignature = typeInfo.Raw;
+        isVoid = false;
+
+        returnSignatureTypeSize = returnSignature.size();
+
+        mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
+        hr = metadataEmit->GetTokenFromTypeSpec(&returnSignature[0], returnSignature.size(), &returnValueTypeSpec);
+        newSignatureSize += (returnSignatureTypeSize);
+        newLocalsCount++;*/
     }
 
     ULONG oldLocalsBuffer;
@@ -427,8 +455,8 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     std::cout << " exceptionTypeRefSize " << exceptionTypeRefSize << std::endl;
 
     // return value if not void
-    if (!hasReturn) {
-        memcpy(&newSignatureBuffer[newSignatureOffset], &interceptor.info.Signature.ReturnType.Raw[0], returnSignatureTypeSize);
+    if (!isVoid) {
+        memcpy(&newSignatureBuffer[newSignatureOffset], &returnSignature[0], returnSignatureTypeSize);
         std::cout << " returnSignatureTypeSize " << returnSignatureTypeSize << std::endl;
         newSignatureOffset += returnSignatureTypeSize;
     }
@@ -446,7 +474,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
 
     *exceptionIndex = newLocalsCount - 1;
     *returnIndex = -1;
-    if (!hasReturn) {
+    if (!isVoid) {
         (*exceptionIndex)--;
         *returnIndex = newLocalsCount - 1;
     }
