@@ -50,6 +50,36 @@ HRESULT MethodRewriter::InitLocalValues(rewriter::ILRewriterHelper& helper, rewr
             return S_FALSE;
         }
 
+        //{
+        //    mdTypeRef testRef;
+        //    hr = metadataImport->FindTypeRef(baseDllRef, profiler->configuration.DefaultInitializer.TypeName.data(), &testRef);
+        //    if (FAILED(hr)) {
+        //        std::cout << "cannot FindTypeRef" << std::endl;
+        //    }
+
+        //    hr = metadataImport->FindTypeDefByName(profiler->configuration.DefaultInitializer.TypeName.data(), mdTokenNil, &testRef);
+        //    if (FAILED(hr)) {
+        //        std::cout << "cannot FindTypeDefByName" << std::endl;
+        //    }
+
+        //    HCORENUM hcorenum = 0;
+        //    const auto maxMethods = 1000;
+        //    mdMethodDef methods[maxMethods]{};
+        //    ULONG cnt;
+        //    hr = metadataImport->EnumMethods(&hcorenum, testRef, methods, maxMethods, &cnt);
+        //    if (FAILED(hr)) {
+        //        std::cout << "cannot enum default init" << std::endl;
+        //    }
+        //    else {
+        //        std::cout << "enum default init " << cnt << std::endl;
+        //    }
+        //    
+        //    /*for (auto i = 0; i < cnt; i++) {
+        //        const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
+        //        std::cout << " default initializer " << util::ToString(functionInfo.Name) << std::endl;
+        //    }*/
+        //}
+
         std::vector<BYTE> memberSignature = {
         IMAGE_CEE_CS_CALLCONV_GENERIC,
         1,
@@ -105,8 +135,9 @@ for (auto i = 0; i < signatureLength; i++)
             return S_FALSE;
         }
 
-        helper.CallMember(getDefaultSpecRef, false);
-        helper.StLocal(returnIndex);
+        /*helper.CallMember(getDefaultSpecRef, false);
+        helper.Pop();*/
+        //helper.StLocal(returnIndex);
     }
 
     return S_OK;

@@ -80,6 +80,170 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     IfFailRet(InjectLoadMethod(moduleId, *rewriter, functionInfo));
 
+    if (!false) {
+        mdToken localVarSig = rewriter->GetTkLocalVarSig();
+        PCCOR_SIGNATURE originalSignature = nullptr;
+        ULONG originalSignatureSize = 0;
+
+        if (localVarSig != mdTokenNil) {
+            IfFailRet(metadataImport->GetSigFromToken(localVarSig, &originalSignature, &originalSignatureSize));
+        }
+
+        ULONG returnSignatureTypeSize = 0;
+        //mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
+
+        auto newSignatureSize = originalSignatureSize;
+        ULONG newSignatureOffset = 0;
+        ULONG newLocalsCount = 0;
+
+        returnSignatureTypeSize = functionInfo.Signature.ReturnType.Raw.size();
+
+        auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+
+        mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
+        hr = metadataEmit->GetTokenFromTypeSpec(&functionInfo.Signature.ReturnType.Raw[0], functionInfo.Signature.ReturnType.Raw.size(), &returnValueTypeSpec);
+        newSignatureSize += (returnSignatureTypeSize);
+        newLocalsCount++;
+
+        ULONG oldLocalsBuffer;
+        ULONG oldLocalsLen = 0;
+        unsigned newLocalsBuffer;
+        ULONG newLocalsLen;
+
+        if (originalSignatureSize == 0)
+        {
+            newSignatureSize += 2;
+            newLocalsLen = CorSigCompressData(newLocalsCount, &newLocalsBuffer);
+        }
+        else
+        {
+            oldLocalsLen = CorSigUncompressData(originalSignature + 1, &oldLocalsBuffer);
+            newLocalsCount += oldLocalsBuffer;
+            newLocalsLen = CorSigCompressData(newLocalsCount, &newLocalsBuffer);
+            newSignatureSize += newLocalsLen - oldLocalsLen;
+        }
+
+        // New signature declaration
+        COR_SIGNATURE newSignatureBuffer[500];
+        newSignatureBuffer[newSignatureOffset++] = IMAGE_CEE_CS_CALLCONV_LOCAL_SIG;
+
+        // Set the locals count
+        memcpy(&newSignatureBuffer[newSignatureOffset], &newLocalsBuffer, newLocalsLen);
+        newSignatureOffset += newLocalsLen;
+
+        if (originalSignatureSize > 0)
+        {
+            const auto copyLength = originalSignatureSize - 1 - oldLocalsLen;
+            memcpy(&newSignatureBuffer[newSignatureOffset], originalSignature + 1 + oldLocalsLen, copyLength);
+            newSignatureOffset += copyLength;
+        }
+
+        memcpy(&newSignatureBuffer[newSignatureOffset], &functionInfo.Signature.ReturnType.Raw[0], returnSignatureTypeSize);
+        std::cout << " returnSignatureTypeSize " << returnSignatureTypeSize << std::endl;
+        newSignatureOffset += returnSignatureTypeSize;
+
+        // Get new locals token
+        mdToken newLocalVarSig;
+        hr = metadataEmit->GetTokenFromSig(newSignatureBuffer, newSignatureSize, &newLocalVarSig);
+        if (FAILED(hr))
+        {
+            //logging::log(logging::LogLevel::_ERROR, "Failed local sig {0}"_W, interceptor.interceptor.Interceptor.AssemblyName);
+            return hr;
+        }
+
+        rewriter->SetTkLocalVarSig(newLocalVarSig);
+
+        auto returnIndex = newLocalsCount - 1;
+
+        // define interceptor.dll
+        mdModuleRef baseDllRef;
+        auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+        GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, "interceptor"_W);
+        if (FAILED(hr))
+        {
+            //logging::log(logging::LogLevel::_ERROR, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+            return hr;
+        }
+
+        // define default initializer type
+        mdTypeRef defaultInitializerTypeRef;
+        hr = metadataEmit->DefineTypeRefByName(
+            baseDllRef,
+            configuration.DefaultInitializer.TypeName.data(),
+            &defaultInitializerTypeRef);
+        if (FAILED(hr))
+        {
+            logging::log(logging::LogLevel::_ERROR, "Failed DefineTypeRefByName {0}"_W, configuration.DefaultInitializer.TypeName);
+            return S_FALSE;
+        }
+
+        std::vector<BYTE> memberSignature = {
+IMAGE_CEE_CS_CALLCONV_GENERIC,
+1,
+0,
+ELEMENT_TYPE_MVAR,
+0 };
+
+        // define generic GetDefault method
+        mdMemberRef getDefaultRef;
+        hr = metadataEmit->DefineMemberRef(
+            defaultInitializerTypeRef,
+            _const::GetDefault.data(),
+            memberSignature.data(),
+            memberSignature.size(),
+            &getDefaultRef);
+
+        if (FAILED(hr))
+        {
+            logging::log(logging::LogLevel::_ERROR, "Failed DefineMemberRef {0}"_W, configuration.DefaultInitializer.TypeName);
+            return S_FALSE;
+        }
+
+        auto methodArgumentSignatureSize = functionInfo.Signature.ReturnType.Raw.size();
+        auto signatureLength = 2 + methodArgumentSignatureSize;
+
+        COR_SIGNATURE signature[500];
+        unsigned offset = 0;
+        signature[offset++] = IMAGE_CEE_CS_CALLCONV_GENERICINST;
+        signature[offset++] = 0x01;
+
+        std::cout << "return type size " << functionInfo.Signature.ReturnType.Raw.size() << std::endl;
+        for (auto i = 0; i < functionInfo.Signature.ReturnType.Raw.size(); i++)
+        {
+            std::cout << std::hex << (int)functionInfo.Signature.ReturnType.Raw[i] << std::endl;
+        }
+
+        memcpy(&signature[offset], &functionInfo.Signature.ReturnType.Raw[0], functionInfo.Signature.ReturnType.Raw.size());
+        offset += methodArgumentSignatureSize;
+
+        std::cout << "sig length " << signatureLength << std::endl;
+        for (auto i = 0; i < signatureLength; i++)
+        {
+            std::cout << std::hex << (int)signature[i] << std::endl;
+        }
+
+        mdMethodSpec getDefaultSpecRef = mdMethodSpecNil;
+        hr = metadataEmit->DefineMethodSpec(getDefaultRef, signature, signatureLength,
+            &getDefaultSpecRef);
+
+        if (FAILED(hr))
+        {
+            logging::log(logging::LogLevel::_ERROR, "Failed DefineMethodSpec {0}"_W, configuration.DefaultInitializer.TypeName);
+            return S_FALSE;
+        }
+
+        rewriter::ILRewriterHelper helper(rewriter);
+        helper.SetILPosition(rewriter->GetILList()->m_pNext->m_pNext->m_pNext);
+
+        helper.CallMember(getDefaultSpecRef, false);
+        helper.Pop();
+
+        /*helper.CallMember(getDefaultSpecRef, false);
+        helper.StLocal(returnIndex);*/
+    }
+
+    std::cout << util::ToString(ilDumper.DumpILCodes("main ", rewriter, functionInfo, metadataImport)) << std::endl;
+
     hr = rewriter->Export();
 
     if (FAILED(hr))
@@ -115,8 +279,6 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
     const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
     logging::log(logging::LogLevel::VERBOSE, "{0}"_W, ilDumper.DumpILCodes("main ", &rewriter, functionInfo, metadataImport));
-
-    std::cout << util::ToString(ilDumper.DumpILCodes("main ", &rewriter, functionInfo, metadataImport)) << std::endl;
 
     return S_OK;
 }

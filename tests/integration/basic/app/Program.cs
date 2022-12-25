@@ -4,47 +4,55 @@ namespace app
 {
   class Program
   {
-    static void Main(string[] args)
+    static int Main(string[] args)
     {
-      // // interceptor.C1.Before();
-//       Exception ex = null;
-//       int i = 0;
-//       try
-//       {
-//         try
-//         {
-//             interceptor.C1.Before();
-//         }
-//         catch (System.Exception)
-//         {
-//         }
+            //var test = typeof(interceptor.DefaultInitializer);
+            //var m1 = test.GetMethod("GetDefault");
+            //var mb1 = test.Module.ResolveMethod(m1.MetadataToken);
 
-// // throw new Exception("test");
-// i = 3;
+            //test.Module.ResolveMethod(test.DEcla)
+            //interceptor.DefaultInitializer.GetDefault<int>();
+            // // interceptor.C1.Before();
+            //       Exception ex = null;
+            //       int i = 0;
+            //       try
+            //       {
+            //         try
+            //         {
+            //             interceptor.C1.Before();
+            //         }
+            //         catch (System.Exception)
+            //         {
+            //         }
 
-          var c = new C1();
-          c.M3();
-          c.M4("test", new C1());
+            // // throw new Exception("test");
+            // i = 3;
 
-          C1.M1();
-          C1.M11();
-          C1.M2(3);
-      // }
-      // catch (System.Exception e)
-      // {
-      //   ex = e;
-      // }
-      // finally {
-      //   try
-      //   {
-      //       interceptor.C1.After();
-      //   }
-      //   catch (System.Exception)
-      //   {
-      //   }
-      //   if (ex != null) throw ex;
-      // }
-      // return i;
+            var c = new C1();
+            c.M3();
+            c.M4("test", new C1());
+
+            C1.M1();
+            C1.M11();
+            C1.M2(3);
+            // }
+            // catch (System.Exception e)
+            // {
+            //   ex = e;
+            // }
+            // finally {
+            //   try
+            //   {
+            //       interceptor.C1.After();
+            //   }
+            //   catch (System.Exception)
+            //   {
+            //   }
+            //   if (ex != null) throw ex;
+            // }
+            // return i;
+            //System.Diagnostics.Debugger.Break();
+            return 0;
     }
   }
 

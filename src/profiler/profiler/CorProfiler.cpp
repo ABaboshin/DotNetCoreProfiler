@@ -48,7 +48,11 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
                       //COR_PRF_DISABLE_ALL_NGEN_IMAGES |
                       COR_PRF_ENABLE_REJIT;
 
-    auto hr = this->corProfilerInfo->SetEventMask2(eventMask, COR_PRF_HIGH_ADD_ASSEMBLY_REFERENCES);
+    //auto hr = this->corProfilerInfo->SetEventMask2(eventMask, COR_PRF_HIGH_ADD_ASSEMBLY_REFERENCES);
+    auto hr = this->corProfilerInfo->SetEventMask(eventMask);
+    if (FAILED(hr)) {
+        return S_FALSE;
+    }
 
     configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"));
 

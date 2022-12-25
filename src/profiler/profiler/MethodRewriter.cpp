@@ -204,7 +204,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     brFalseS->m_pTarget = endFinally;
 
     if (!interceptor->info.Signature.ReturnType.IsVoid) {
-        helper.LoadLocal(returnIndex);
+        //helper.LoadLocal(returnIndex);
     }
 
     // ret -> leave_s
@@ -223,8 +223,9 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
                 }
                 else
                 {
-                    pInstr->m_opcode = rewriter::CEE_STLOC;
-                    pInstr->m_Arg16 = static_cast<INT16>(returnIndex);
+                    /*pInstr->m_opcode = rewriter::CEE_STLOC;
+                    pInstr->m_Arg16 = static_cast<INT16>(returnIndex);*/
+                    pInstr->m_opcode = rewriter::CEE_NOP;
 
                     auto leaveInstr = rewriter->NewILInstr();
                     leaveInstr->m_opcode = rewriter::CEE_LEAVE_S;
@@ -371,7 +372,11 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     auto newSignatureSize = originalSignatureSize + (1 + exceptionTypeRefSize);
     ULONG newSignatureOffset = 0;
     ULONG newLocalsCount = 1;
-    if (!interceptor.info.Signature.ReturnType.IsVoid)
+    auto hasReturn = interceptor.info.Signature.ReturnType.IsVoid;
+
+    hasReturn = false;
+
+    if (!hasReturn)
     {
         returnSignatureTypeSize = interceptor.info.Signature.ReturnType.Raw.size();
 
@@ -422,7 +427,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     std::cout << " exceptionTypeRefSize " << exceptionTypeRefSize << std::endl;
 
     // return value if not void
-    if (!interceptor.info.Signature.ReturnType.IsVoid) {
+    if (!hasReturn) {
         memcpy(&newSignatureBuffer[newSignatureOffset], &interceptor.info.Signature.ReturnType.Raw[0], returnSignatureTypeSize);
         std::cout << " returnSignatureTypeSize " << returnSignatureTypeSize << std::endl;
         newSignatureOffset += returnSignatureTypeSize;
@@ -441,7 +446,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
 
     *exceptionIndex = newLocalsCount - 1;
     *returnIndex = -1;
-    if (!interceptor.info.Signature.ReturnType.IsVoid) {
+    if (!hasReturn) {
         (*exceptionIndex)--;
         *returnIndex = newLocalsCount - 1;
     }

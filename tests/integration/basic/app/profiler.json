@@ -1,0 +1,68 @@
+{
+  "Assemblies": [
+    "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+  ],
+  "Loader": {
+    "TypeName": "interceptor.DefaultLoader",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+  },
+  "SkipAssemblies": [
+    "Interception.AspNetCore.Tracing",
+    "Interception.AspNetCore.WebHost",
+    "Interception.Cache",
+    "Interception.Core",
+    "Interception.DeadlockDetection",
+    "Interception.DependencyInjection",
+    "Interception.MassTransit",
+    "Interception.Observers",
+    "Interception.OpenTracing",
+    "Interception.OpenTracing.Statsd",
+    "Interception.Quartz",
+    "Interception.Tracing",
+    "Interception.Tracing.Serilog",
+    "ISymWrapper",
+    "Microsoft.AspNetCore.Mvc.RazorPages",
+    "Microsoft.AspNetCore.Razor.Language",
+    "Microsoft.CSharp",
+    "Microsoft.Extensions.ObjectPool",
+    "Microsoft.Extensions.Options",
+    "mscorlib",
+    "netstandard",
+    "Newtonsoft.Json",
+    "StatsdClient",
+    "System.Collections",
+    "System.ComponentModel",
+    "System.Configuration",
+    "System.Console",
+    "System.Core",
+    "System.Diagnostics.DiagnosticSource",
+    "System.IO.FileSystem",
+    "System.Private.CoreLib",
+    "System.Runtime",
+    "System.Runtime.Extensions",
+    "System.Runtime.InteropServices",
+    "System.Runtime.InteropServices.RuntimeInformation",
+    "System.Threading.Tasks",
+    "System.Xml.Linq",
+    "Microsoft.Extensions.DotNetDeltaApplier"
+  ],
+  "Strict": [
+    {
+      "Interceptor": {
+        "AssemblyName": "interceptor",
+        "TypeName": "interceptor.C1"
+      },
+      "Target": {
+        "AssemblyName": "app",
+        "MethodName": "M1",
+        "MethodParametersCount": 0,
+        "TypeName": "app.C1"
+      },
+      "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+    }
+  ],
+  "DefaultInitializer": {
+    "TypeName": "interceptor.DefaultInitializer",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+  }
+}

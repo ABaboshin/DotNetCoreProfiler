@@ -50,6 +50,55 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
     std::pair<util::wstring, ModuleID> lm(moduleInfo.assembly.name, moduleId);
     loadedModules.insert(lm);
 
+    /*if (moduleInfo.assembly.name == "interceptor"_W) {
+        std::cout << "interceptor" << std::endl;
+        HCORENUM hcorenum = 0;
+        const auto maxMethods = 1000;
+        mdTypeDef types[maxMethods]{};
+        ULONG cnt;
+        hr = metadataImport->EnumTypeDefs(&hcorenum, types, maxMethods, &cnt);
+        if (FAILED(hr)) {
+            std::cout << "failed EnumTypeDefs" << std::endl;
+        }
+        else {
+            std::cout << "EnumTypeDefs " << cnt << std::endl;
+            for (auto i = 0; i < cnt; i++) {
+                const auto typeInfo = info::TypeInfo::GetTypeInfo(metadataImport, types[i]);
+
+                std::cout << "EnumTypeDefs " << util::ToString(typeInfo.Name) << std::endl;
+
+                if (typeInfo.Name == "interceptor.DefaultInitializer"_W) {
+                    HCORENUM hcorenum = 0;
+                    const auto maxMethods = 1000;
+                    mdMethodDef methods[maxMethods]{};
+                    ULONG cnt;
+                    metadataImport->EnumMethods(&hcorenum, types[i], methods, maxMethods, &cnt);
+                    if (FAILED(hr)) {
+                        std::cout << "failed EnumMethods" << std::endl;
+                    }
+                    else
+                    {
+                        for (auto i = 0; i < cnt; i++) {
+                            const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
+                            std::cout << "EnumMethods " << util::ToString(functionInfo.Name) << std::endl;
+
+                            for (auto j = 0; j < functionInfo.Signature.Raw.size(); j++)
+                            {
+                                std::cout << std::hex << (int)functionInfo.Signature.Raw[j] << std::endl;
+                            }
+
+                            std::cout << "EnumMethods " << util::ToString(functionInfo.Name) << std::endl;
+                        }
+                    }
+
+                    
+
+                    break;
+                }
+            }
+        }
+    }*/
+
     // check all strict interceptors
     for (const auto& interceptor : configuration.StrictInterceptions) {
         //logging::log(logging::LogLevel::VERBOSE,
