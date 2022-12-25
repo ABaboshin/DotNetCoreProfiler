@@ -50,11 +50,11 @@
     {
       "Interceptor": {
         "AssemblyName": "interceptor",
-        "TypeName": "interceptor.C11"
+        "TypeName": "interceptor.C1"
       },
       "Target": {
         "AssemblyName": "app",
-        "MethodName": "M11",
+        "MethodName": "M1",
         "MethodParametersCount": 0,
         "TypeName": "app.C1"
       },
