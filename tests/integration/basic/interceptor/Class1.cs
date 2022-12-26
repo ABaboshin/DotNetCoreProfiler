@@ -40,7 +40,6 @@ namespace interceptor
         public static void Before<TType, T1>(TType instance, T1 a1)
         {
             Console.WriteLine($"Execute M2.Before {a1} {typeof(T1)} instance {instance != null} {typeof(TType).FullName}");
-            throw new Exception("break");
         }
         public static void After<TResult>(TResult result, Exception ex)
         {
@@ -55,12 +54,11 @@ namespace interceptor
         public static void Before<T1>(T1 a1)
         {
             Console.WriteLine($"Execute M3.Before {a1} {typeof(T1)}");
-            throw new Exception("break");
         }
 
         public static void After<TResult>(TResult result, Exception ex)
         {
-            Console.WriteLine($"Execute M3.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
+            Console.WriteLine($"Execute M4.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
             throw new Exception("break");
         }
     }

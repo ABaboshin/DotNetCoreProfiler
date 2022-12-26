@@ -145,21 +145,16 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
-    hr = GetOrAddAssemblyRef(moduleId, _const::mscorlib, mscorlibRef);
+    hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GenerateLoadMethod GetOrAddAssemblyRef"_W);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GenerateLoadMethod GetMsCorLibRef"_W);
         return hr;
     }
 
     // Define System.Object
     mdTypeRef objectTypeRef;
-    hr = GetOrAddTypeRef(moduleId, mscorlibRef, _const::SystemObject.data(), objectTypeRef);
-    if (FAILED(hr))
-    {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GenerateLoadMethod GetOrAddTypeRef"_W);
-        return hr;
-    }
+    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemObject.data(), &objectTypeRef);
 
     // Define an anonymous type
     mdTypeDef newTypeDef;
@@ -183,12 +178,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
     // System.Reflection.Assembly
     mdTypeRef assemblyTypeRef;
-    hr = GetOrAddTypeRef(moduleId, mscorlibRef, _const::SystemReflectionAssembly.data(), assemblyTypeRef);
-    if (FAILED(hr))
-    {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GenerateLoadMethod GetOrAddTypeRef"_W);
-        return hr;
-    }
+    hr = metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemReflectionAssembly.data(), &assemblyTypeRef);
 
     // Assembly.LoadFrom
     BYTE compressedToken[10];

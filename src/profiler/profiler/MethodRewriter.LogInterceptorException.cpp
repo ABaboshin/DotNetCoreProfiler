@@ -8,7 +8,7 @@
 #include "util/helpers.h"
 #include "const/const.h"
 
-HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& helper, rewriter::ILRewriter* rewriter, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef exceptionTypeRef, ModuleID moduleId)
+HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& helper, rewriter::ILRewriter* rewriter, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef exceptionTypeRef)
 {
     // if no exception logger is defined => do nothing
     if (profiler->configuration.ExceptionLogger.NotFound) {
@@ -17,7 +17,7 @@ HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& help
     }
     // define interceptor.dll
     mdModuleRef baseDllRef;
-    auto hr = profiler->GetOrAddAssemblyRef(moduleId, profiler->configuration.ExceptionLogger.AssemblyName, baseDllRef);
+    auto hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, profiler->configuration.ExceptionLogger.AssemblyName);
     if (FAILED(hr))
     {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, profiler->configuration.ExceptionLogger.AssemblyName);
@@ -25,11 +25,14 @@ HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& help
     }
 
     // define ExceptionLogger type
-    mdTypeRef exceptionLoggerTypeRef;
-    hr = profiler->GetOrAddTypeRef(moduleId, baseDllRef, profiler->configuration.ExceptionLogger.TypeName.data(), exceptionLoggerTypeRef);
+    mdTypeRef defaultInitializerTypeRef;
+    hr = metadataEmit->DefineTypeRefByName(
+        baseDllRef,
+        profiler->configuration.ExceptionLogger.TypeName.data(),
+        &defaultInitializerTypeRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetOrAddTypeRef {0}"_W, profiler->configuration.ExceptionLogger.TypeName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.ExceptionLogger.TypeName);
         return hr;
     }
 
@@ -48,7 +51,7 @@ HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& help
 
     mdMemberRef loggerRef;
     hr = metadataEmit->DefineMemberRef(
-        exceptionLoggerTypeRef, profiler->configuration.ExceptionLogger.MethodName.data(),
+        defaultInitializerTypeRef, profiler->configuration.ExceptionLogger.MethodName.data(),
         memberSignature,
         offset,
         &loggerRef);

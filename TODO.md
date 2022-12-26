@@ -1,5 +1,5 @@
 cleanup
-cor_signature -> vector or use const for arrays sizes
+cor_signature -> vector
 pointer -> reference in c++ method params
 interfaces
 trace attributes

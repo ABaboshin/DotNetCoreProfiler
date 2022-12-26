@@ -43,9 +43,6 @@ namespace app
             C1.M11();
             C1.M2(3);
 
-            //I1 i1 = new II1();
-            //i1.X1();
-
             // }
             // catch (System.Exception e)
             // {
@@ -64,18 +61,6 @@ namespace app
             // return i;
             //System.Diagnostics.Debugger.Break();
             return 0;
-        }
-    }
-
-    public interface I1 {
-        void X1();
-    }
-
-    public class II1 : I1
-    {
-        public void X1()
-        {
-            throw new NotImplementedException();
         }
     }
 

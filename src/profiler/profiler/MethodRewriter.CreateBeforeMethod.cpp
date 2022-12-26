@@ -8,7 +8,7 @@
 #include "util/helpers.h"
 #include "const/const.h"
 
-HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor, ModuleID moduleId)
+HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor)
 {
     HRESULT hr;
 
@@ -51,7 +51,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
     mdToken targetTypeRef = mdTokenNil;
     if (interceptor.info.Signature.IsInstanceMethod())
     {
-        hr = GetTargetTypeRef(interceptor.info.Type, metadataEmit, metadataAssemblyEmit, &targetTypeRef, &isValueType, moduleId);
+        hr = GetTargetTypeRef(interceptor.info.Type, metadataEmit, metadataAssemblyEmit, &targetTypeRef, &isValueType);
         if (FAILED(hr)) {
             logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
             return hr;
@@ -86,9 +86,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     // non generic Before method
     if (targetTypeRef == mdTokenNil) {
-        mdModuleRef mscorlibRef;
-        hr = profiler->GetOrAddAssemblyRef(moduleId, _const::mscorlib, mscorlibRef);
-        hr = profiler->GetOrAddTypeRef(moduleId, mscorlibRef, _const::SystemObject, targetTypeRef);
+        hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &targetTypeRef);
         if (FAILED(hr))
         {
             logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod GetObjectTypeRef"_W);

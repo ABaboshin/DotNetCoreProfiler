@@ -9,7 +9,7 @@
 #include "const/const.h"
 #include <vector>
 
-HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, rewriter::ILInstr **instr, util::ComPtr<IMetaDataEmit2> &metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef interceptorTypeRef, const RejitInfo &interceptor, ULONG returnIndex, mdTypeRef exceptionTypeRef, ULONG exceptionIndex, ModuleID moduleId)
+HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, rewriter::ILInstr **instr, util::ComPtr<IMetaDataEmit2> &metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef interceptorTypeRef, const RejitInfo &interceptor, ULONG returnIndex, mdTypeRef exceptionTypeRef, ULONG exceptionIndex)
 {
     HRESULT hr;
 
@@ -88,10 +88,8 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, re
     else {
         // else use System.Object
         signature[offset++] = ELEMENT_TYPE_CLASS;
-        mdModuleRef mscorlibRef;
-        hr = profiler->GetOrAddAssemblyRef(moduleId, _const::mscorlib, mscorlibRef);
         mdTypeRef objectTypeRef;
-        hr = profiler->GetOrAddTypeRef(moduleId, mscorlibRef, _const::SystemObject, objectTypeRef);
+        hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &objectTypeRef);
         if (FAILED(hr))
         {
             logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod GetObjectTypeRef"_W);

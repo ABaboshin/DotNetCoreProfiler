@@ -63,13 +63,13 @@
   ],
   "DefaultInitializer": {
     "AssemblyName": "interceptor",
-    "TypeName": "interceptor.DefaultImpl",
+    "TypeName": "interceptor.DefaultInitializer",
     "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll",
     "MethodName": "GetDefault"
   },
   "ExceptionLogger": {
     "AssemblyName": "interceptor",
-    "TypeName": "interceptor.DefaultImpl",
+    "TypeName": "interceptor.ExceptionLogger",
     "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll",
     "MethodName": "LogException"
   }
