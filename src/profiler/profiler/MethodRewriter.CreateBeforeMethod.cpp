@@ -16,15 +16,17 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     // define generic Before method
     std::vector<BYTE> genericBeforeSignature = {
-    IMAGE_CEE_CS_CALLCONV_GENERIC,
+        // see ECMA-355 II.23.2.15 MethodSpec
+        IMAGE_CEE_CS_CALLCONV_GENERIC,
+        // num of generic arguments
+        // num of all arguments
         (BYTE)interceptorNumberOfArguments,
         (BYTE)interceptorNumberOfArguments,
-        ELEMENT_TYPE_VOID,
+        // return type
+        ELEMENT_TYPE_VOID};
 
-         };
     for (auto i = 0; i < interceptorNumberOfArguments; i++)
     {
-        //genericBeforeSignature.push_back(ELEMENT_TYPE_BYREF);
         genericBeforeSignature.push_back(ELEMENT_TYPE_MVAR);
         genericBeforeSignature.push_back((BYTE)i);
     }
@@ -36,12 +38,6 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
         genericBeforeSignature.data(),
         genericBeforeSignature.size(),
         &genericBeforeRef);
-
-    //std::cout << "generic sig" << std::endl;
-    //for (auto i = 0; i < genericBeforeSignature.size(); i++)
-    //{
-    //    std::cout << std::hex << (int)genericBeforeSignature[i] << std::endl;
-    //}
 
     if (FAILED(hr))
     {
@@ -64,8 +60,6 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     // load this or null
     if (targetTypeRef == mdTokenNil || !interceptor.info.Signature.IsInstanceMethod()) {
-        std::cout << "targetTypeRef " << targetTypeRef << std::endl;
-        std::cout << "IsInstanceMethod " << interceptor.info.Signature.IsInstanceMethod() << std::endl;
         *instr = helper.LoadNull();
     }
     else
@@ -103,21 +97,12 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
     unsigned targetTypeBuffer = 0;
     ULONG targetTypeSize = CorSigCompressToken(targetTypeRef, &targetTypeBuffer);
 
-    //auto signatureLength = 4 + targetTypeSize;
-    //std::cout << "num args " << interceptor.info.Signature.NumberOfArguments() << std::endl;
-
-    //for (auto i = 0; i < interceptor.info.Signature.NumberOfArguments(); i++)
-    //{
-    //    signatureLength += interceptor.info.Signature.Arguments[i].Raw.size();
-    //}
-
     COR_SIGNATURE signature[1024];
     unsigned offset = 0;
 
     signature[offset++] = IMAGE_CEE_CS_CALLCONV_GENERICINST;
-    //signature[offset++] = interceptorNumberOfArguments;
+    // number of generic parameters
     signature[offset++] = interceptorNumberOfArguments;
-    //signature[offset++] = ELEMENT_TYPE_VOID;
 
     if (isValueType) {
         signature[offset++] = ELEMENT_TYPE_VALUETYPE;
@@ -135,14 +120,6 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
         offset += interceptor.info.Signature.Arguments[i].Raw.size();
     }
 
-    //std::cout << "non generic sig" << std::endl;
-    //for (auto i = 0; i < offset; i++)
-    //{
-    //    std::cout << std::hex << (int)signature[i] << std::endl;
-    //}
-
-    //std::cout << "offset " << offset << /*" length " << signatureLength <<*/ std::endl;
-
     mdMethodSpec beforeMethodSpec = mdMethodSpecNil;
     hr = metadataEmit->DefineMethodSpec(genericBeforeRef, signature,
         offset, &beforeMethodSpec);
@@ -154,7 +131,5 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
     }
 
     helper.CallMember(beforeMethodSpec, false);
-    //*instr = helper.Nop();
     return S_OK;
-
 }

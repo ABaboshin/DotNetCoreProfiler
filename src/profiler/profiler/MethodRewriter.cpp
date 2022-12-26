@@ -88,8 +88,6 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     logging::log(logging::LogLevel::VERBOSE, "{0}"_W, profiler->ilDumper.DumpILCodes("rejit before ", rewriter, interceptor->info, metadataImport));
 
-    std::cout << util::ToString(profiler->ilDumper.DumpILCodes("rejit before ", rewriter, interceptor->info, metadataImport)) << std::endl;
-
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
     hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
@@ -187,7 +185,6 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     // call After method
     rewriter::ILInstr* afterFirst;
     hr = CreateAfterMethod(helper, &afterFirst, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor, returnIndex, exceptionTypeRef, exceptionIndex);
-    std::cout << "x " << hr << std::endl;
     if (FAILED(hr)) {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
         return hr;
@@ -198,8 +195,6 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     auto nopAfterCatch = helper.Pop();
     auto leaveAfterCatch = helper.LeaveS();
 
-    std::cout << "x1" << std::endl;
-
     // try/catch for Interceptor.After
     rewriter::EHClause afterEx{};
     afterEx.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
@@ -208,8 +203,6 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     afterEx.m_pHandlerBegin = nopAfterCatch;
     afterEx.m_pHandlerEnd = leaveAfterCatch;
     afterEx.m_ClassToken = exceptionTypeRef;
-
-    std::cout << "x2" << std::endl;
 
     // finally
 
@@ -224,16 +217,11 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     leaveAfterTry->m_pTarget = endFinally;
     //brFalseS->m_pTarget = endFinally;
 
-    std::cout << "x3" << std::endl;
-
     auto isVoid = interceptor->info.Signature.ReturnType.IsVoid;
-    //isVoid = true;
 
     if (!isVoid) {
         helper.LoadLocal(returnIndex);
     }
-
-    std::cout << "x4" << std::endl;
 
     // ret -> leave_s
     for (auto pInstr = rewriter->GetILList()->m_pNext; pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
@@ -267,8 +255,6 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
         }
     }
 
-    std::cout << "x5" << std::endl;
-
     rewriter::EHClause exClause{};
     exClause.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
     exClause.m_pTryBegin = beginFirst;
@@ -293,8 +279,6 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
         newEx[i] = ehPointer[i];
     }
 
-    std::cout << "x6" << std::endl;
-
     ehCount += 4;
     newEx[ehCount - 4] = beforeEx;
     newEx[ehCount - 3] = afterEx;
@@ -302,24 +286,15 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     newEx[ehCount - 1] = finallyClause;
     rewriter->SetEHClause(newEx, ehCount);
 
-    std::cout << "x7 " << profiler->rejitInfo.size() << std::endl;
-
-    /*logging::log(logging::LogLevel::VERBOSE, "{0}"_W, profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport));
-    */
-
-    std::cout << util::ToString(profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport)) << std::endl;
+    logging::log(logging::LogLevel::VERBOSE, "{0}"_W, profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport));
 
     hr = rewriter->Export();
-
-    std::cout << "x8 " << hr << std::endl;
 
     if (FAILED(hr))
     {
         logging::log(logging::LogLevel::NONSUCCESS, "GetReJITParameters rewriter->Export failed"_W);
         return hr;
     }
-
-    std::cout << "x9" << std::endl;
 
     logging::log(logging::LogLevel::INFO, "GetReJITParameters done"_W);
 

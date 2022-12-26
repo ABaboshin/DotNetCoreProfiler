@@ -1,4 +1,3 @@
-after
 cleanup
 cor_signature -> vector
 pointer -> reference in c++ method params
@@ -11,4 +10,3 @@ cmake install deps
 multpile depedencies
 ref parameters
 ngen
-log format

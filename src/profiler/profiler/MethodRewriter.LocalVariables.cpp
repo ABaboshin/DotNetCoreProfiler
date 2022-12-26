@@ -101,13 +101,10 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
   memcpy(&newSignatureBuffer[newSignatureOffset], &exceptionTypeRefBuffer, exceptionTypeRefSize);
   newSignatureOffset += exceptionTypeRefSize;
 
-  std::cout << " exceptionTypeRefSize " << exceptionTypeRefSize << std::endl;
-
   // return value if not void
   if (!isVoid)
   {
     memcpy(&newSignatureBuffer[newSignatureOffset], &returnSignature[0], returnSignatureTypeSize);
-    std::cout << " returnSignatureTypeSize " << returnSignatureTypeSize << std::endl;
     newSignatureOffset += returnSignatureTypeSize;
   }
 
@@ -153,7 +150,6 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
     helper.StLocal(exceptionIndex);
 
     auto isVoid = interceptor.info.Signature.ReturnType.IsVoid;
-    //isVoid = true;
 
     if (!isVoid)
     {
@@ -170,8 +166,11 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
         }
 
         std::vector<BYTE> memberSignature = {
+            // see ECMA-355 II.23.2.15 MethodSpec
         IMAGE_CEE_CS_CALLCONV_GENERIC,
+        // one generic argument
         1,
+        // method without arguments
         0,
         ELEMENT_TYPE_MVAR,
         0 };
@@ -199,24 +198,11 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
         signature[offset++] = IMAGE_CEE_CS_CALLCONV_GENERICINST;
         signature[offset++] = 0x01;
 
-std::cout << "return type size " << interceptor.info.Signature.ReturnType.Raw.size() << std::endl;
-for (auto i = 0; i < interceptor.info.Signature.ReturnType.Raw.size(); i++)
-{
-    std::cout << std::hex << (int)interceptor.info.Signature.ReturnType.Raw[i] << std::endl;
-}
-
         memcpy(&signature[offset], &interceptor.info.Signature.ReturnType.Raw[0], interceptor.info.Signature.ReturnType.Raw.size());
         offset += methodArgumentSignatureSize;
 
-        std::cout << "sig length " << signatureLength << std::endl;
-for (auto i = 0; i < signatureLength; i++)
-{
-    std::cout << std::hex << (int)signature[i] << std::endl;
-}
-
         mdMethodSpec getDefaultSpecRef = mdMethodSpecNil;
-        hr = metadataEmit->DefineMethodSpec(getDefaultRef, signature, signatureLength,
-                                                          &getDefaultSpecRef);
+        hr = metadataEmit->DefineMethodSpec(getDefaultRef, signature, signatureLength, &getDefaultSpecRef);
 
         if (FAILED(hr))
         {
@@ -225,7 +211,6 @@ for (auto i = 0; i < signatureLength; i++)
         }
 
         helper.CallMember(getDefaultSpecRef, false);
-        //helper.Pop();
         helper.StLocal(returnIndex);
     }
 
