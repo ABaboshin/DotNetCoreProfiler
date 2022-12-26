@@ -61,8 +61,6 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     rewriter::ILRewriterHelper helper(rewriter);
     helper.SetILPosition(rewriter->GetILList()->m_pNext);
 
-    //auto firstIL = helper.GetCurrentInstr();
-
     if (profiler->loadedModules.find(interceptor->interceptor.Interceptor.AssemblyName) == profiler->loadedModules.end())
     {
         logging::log(logging::LogLevel::VERBOSE, "Skip rejit because interceptor assembly is not loaded yet"_W);
@@ -90,23 +88,28 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
-    hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
+    hr = profiler->GetOrAddAssemblyRef(moduleId, _const::mscorlib, mscorlibRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetMsCorLibRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetOrAddAssemblyRef {0}"_W, _const::mscorlib);
         return hr;
     }
 
     // Define System.Exception
     mdTypeRef exceptionTypeRef;
-    metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemException.data(), &exceptionTypeRef);
+    hr = profiler->GetOrAddTypeRef(moduleId,mscorlibRef, _const::SystemException.data(), exceptionTypeRef);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetOrAddTypeRef {0}"_W, _const::SystemException);
+        return hr;
+    }
 
     // define interceptor.dll
     mdModuleRef baseDllRef;
-    hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
+    hr = profiler->GetOrAddAssemblyRef(moduleId, interceptor->interceptor.Interceptor.AssemblyName, baseDllRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetOrAddAssemblyRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
         return hr;
     }
 
@@ -130,20 +133,18 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
     // define interceptor type
     mdTypeRef interceptorTypeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        baseDllRef,
-        interceptor->interceptor.Interceptor.TypeName.data(),
-        &interceptorTypeRef);
+    hr = profiler->GetOrAddTypeRef(moduleId, baseDllRef, interceptor->interceptor.Interceptor.TypeName.data(), interceptorTypeRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, interceptor->interceptor.Interceptor.TypeName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetOrAddTypeRef {0}"_W, interceptor->interceptor.Interceptor.TypeName);
+        return hr;
     }
 
     interceptor->info.Signature.ParseArguments();
 
     // call Before method
     rewriter::ILInstr* beginFirst;
-    hr = CreateBeforeMethod(helper, &beginFirst, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor);
+    hr = CreateBeforeMethod(helper, &beginFirst, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor, moduleId);
     if (FAILED(hr)) {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
         return hr;
@@ -151,7 +152,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
     auto leaveBeforeTry = helper.LeaveS();
     rewriter::ILInstr* beforeCatch;
-    hr = LogInterceptorException(helper, rewriter, &beforeCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
+    hr = LogInterceptorException(helper, rewriter, &beforeCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef, moduleId);
     if (FAILED(hr)) {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
         return hr;
@@ -188,7 +189,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
     // call After method
     rewriter::ILInstr* afterFirst;
-    hr = CreateAfterMethod(helper, &afterFirst, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor, returnIndex, exceptionTypeRef, exceptionIndex);
+    hr = CreateAfterMethod(helper, &afterFirst, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor, returnIndex, exceptionTypeRef, exceptionIndex, moduleId);
     if (FAILED(hr)) {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
         return hr;
@@ -198,7 +199,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     // TODO log exception
     //auto nopAfterCatch = helper.Pop();
     rewriter::ILInstr* nopAfterCatch;
-    hr = LogInterceptorException(helper, rewriter, &nopAfterCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
+    hr = LogInterceptorException(helper, rewriter, &nopAfterCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef, moduleId);
     if (FAILED(hr)) {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
         return hr;
@@ -311,7 +312,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     return S_OK;
 }
 
-HRESULT MethodRewriter::GetTargetTypeRef(const info::TypeInfo& targetType, util::ComPtr< IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdToken* targetTypeRef, bool* isValueType) {
+HRESULT MethodRewriter::GetTargetTypeRef(const info::TypeInfo& targetType, util::ComPtr< IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdToken* targetTypeRef, bool* isValueType, ModuleID moduleId) {
     HRESULT hr;
     *isValueType = targetType.IsValueType;
     *targetTypeRef = targetType.TypeSpec;
@@ -322,7 +323,9 @@ HRESULT MethodRewriter::GetTargetTypeRef(const info::TypeInfo& targetType, util:
 
     // TODO cache references to known types
     mdTypeRef objectTypeRef;
-    hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &objectTypeRef);
+    mdModuleRef mscorlibRef;
+    hr = profiler->GetOrAddAssemblyRef(moduleId, _const::mscorlib, mscorlibRef);
+    hr = profiler->GetOrAddTypeRef(moduleId, mscorlibRef, _const::SystemObject, objectTypeRef);
     if (FAILED(hr))
     {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed GetTargetTypeRef GetObjectTypeRef"_W);

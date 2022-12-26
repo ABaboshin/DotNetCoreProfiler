@@ -143,7 +143,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
     {
         // define interceptor.dll
         mdModuleRef baseDllRef;
-        hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, profiler->configuration.DefaultInitializer.AssemblyName);
+        hr = profiler->GetOrAddAssemblyRef(moduleId, profiler->configuration.DefaultInitializer.AssemblyName, baseDllRef);
         if (FAILED(hr))
         {
             logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, profiler->configuration.DefaultInitializer.AssemblyName);
@@ -152,13 +152,10 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
 
         // define default initializer type
         mdTypeRef defaultInitializerTypeRef;
-        hr = metadataEmit->DefineTypeRefByName(
-            baseDllRef,
-            profiler->configuration.DefaultInitializer.TypeName.data(),
-            &defaultInitializerTypeRef);
+        hr = profiler->GetOrAddTypeRef(moduleId, baseDllRef, profiler->configuration.DefaultInitializer.TypeName.data(), defaultInitializerTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed GetOrAddTypeRef {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
             return hr;
         }
 

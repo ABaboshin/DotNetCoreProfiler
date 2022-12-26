@@ -31,6 +31,74 @@ CorProfiler::~CorProfiler()
     }
 }
 
+HRESULT CorProfiler::GetOrAddAssemblyRef(ModuleID moduleId, const util::wstring& assemblyName, mdModuleRef& moduleRef) {
+    auto it = std::find_if(cachedAssemblies.begin(), cachedAssemblies.end(), [moduleId, assemblyName](const CachedAssembly& ca) { return ca.ModuleId == moduleId && ca.AssemblyName == assemblyName; });
+    if (it != cachedAssemblies.end())
+    {
+        moduleRef = it->Ref;
+        return S_OK;
+    }
+
+    ComPtr<IUnknown> metadataInterfaces;
+    auto hr = corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetModuleMetaData from GetOrAddAssemblyRef"_W);
+        return hr;
+    }
+
+    auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
+
+    if (assemblyName == _const::mscorlib)
+    {
+        hr = GetMsCorLibRef(metadataAssemblyEmit, moduleRef);
+    }
+    else
+    {
+        hr = GetAssemblyRef(metadataAssemblyEmit, moduleRef, assemblyName);
+    }
+
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetAssemblyRef from GetOrAddAssemblyRef for {0}"_W, assemblyName);
+        return hr;
+    }
+
+    cachedAssemblies.push_back({ moduleId, assemblyName, moduleRef });
+
+    return S_OK;
+}
+
+HRESULT CorProfiler::GetOrAddTypeRef(ModuleID moduleId, mdModuleRef moduleRef, const util::wstring& typeName, mdTypeRef& typeRef) {
+    auto it = std::find_if(cachedTypes.begin(), cachedTypes.end(), [moduleId, moduleRef, typeName](const CachedType& ca) { return ca.ModuleId == moduleId && ca.TypeName == typeName && ca.ModuleRef == moduleRef; });
+    if (it != cachedTypes.end())
+    {
+        moduleRef = it->TypeRef;
+        return S_OK;
+    }
+
+    ComPtr<IUnknown> metadataInterfaces;
+    auto hr = corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetModuleMetaData from GetOrAddAssemblyRef"_W);
+        return hr;
+    }
+
+    auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
+
+    hr = metadataEmit->DefineTypeRefByName(moduleRef, typeName.data(), &typeRef);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetOrAddTypeRef DefineTypeRefByName"_W);
+        return hr;
+    }
+
+    cachedTypes.push_back({ moduleId, moduleRef, typeName, typeRef });
+
+    return S_OK;
+}
+
 HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk)
 {
     HRESULT queryInterfaceResult = pICorProfilerInfoUnk->QueryInterface(__uuidof(ICorProfilerInfo8), reinterpret_cast<void**>(&this->corProfilerInfo));

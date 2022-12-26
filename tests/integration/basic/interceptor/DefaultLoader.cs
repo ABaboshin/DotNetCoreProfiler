@@ -31,15 +31,12 @@ namespace interceptor
     }
 
     
-    public static class DefaultInitializer
+    public static class DefaultImpl
     {
         [DefaultInitializer]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static T GetDefault<T>() => default(T);
-    }
+        public static T GetDefault<T>() => default;
 
-    public static class ExceptionLogger
-    {
         [ExceptionLogger]
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void LogException(Exception exception) { Console.WriteLine("From interceptor " + exception.ToString()); }

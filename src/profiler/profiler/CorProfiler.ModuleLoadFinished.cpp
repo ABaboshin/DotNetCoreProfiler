@@ -30,6 +30,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     if (SkipAssembly(moduleInfo.assembly.name)) {
         skippedModules.insert(moduleId);
+        return S_OK;
     }
 
     ComPtr<IUnknown> metadataInterfaces;

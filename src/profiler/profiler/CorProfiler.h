@@ -15,12 +15,20 @@
 #include "RejitInfo.h"
 #include "ILDumper.h"
 #include "MethodRewriter.h"
+#include "CachedAssembly.h"
+#include "CachedType.h"
 
 class CorProfiler : public ICorProfilerCallback8
 {
 protected:
     DWORD eventMask;
     bool oneAppDomainMode = false;
+
+    std::vector<CachedAssembly> cachedAssemblies;
+    HRESULT GetOrAddAssemblyRef(ModuleID moduleId, const util::wstring& assemblyName, mdModuleRef& moduleRef);
+    std::vector<CachedType> cachedTypes;
+    HRESULT GetOrAddTypeRef(ModuleID moduleId, mdModuleRef moduleRef, const util::wstring& typeName, mdTypeRef& typeRef);
+
     ILDumper ilDumper;
     MethodRewriter methodRewriter;
     std::atomic<int> refCount;
