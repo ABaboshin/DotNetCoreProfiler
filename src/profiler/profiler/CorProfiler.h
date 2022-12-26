@@ -25,11 +25,9 @@ protected:
 
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
 
-    //std::unordered_map<ModuleID, GUID> modules;
     std::unordered_set<ModuleID> skippedModules;
     std::vector<RejitInfo> rejitInfo;
     std::unordered_map<util::wstring, ModuleID> loadedModules;
-    //std::vector<ModuleID> enabledModules;
 
     std::mutex mutex;
     bool alreadyLoaded;
@@ -39,16 +37,9 @@ protected:
 
     bool SkipAssembly(const wstring& name);
 
-    //HRESULT Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged);
-
     virtual HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter, const info::FunctionInfo& functionInfo);
 
     HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken, const info::FunctionInfo& functionInfo);
-
-    //HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::TypeInfo>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
-
-    //std::vector<configuration::TypeInfo> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
-//    std::pair<configuration::TypeInfo, bool> FindMethodFinder(const info::FunctionInfo& target);
 
     virtual rewriter::ILRewriter* CreateILRewriter(ICorProfilerFunctionControl* pICorProfilerFunctionControl, ModuleID moduleId, mdToken functionToken)
     {

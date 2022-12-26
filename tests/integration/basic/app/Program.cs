@@ -77,7 +77,7 @@ namespace app
         }
 
         public void M3() { }
-        public void M4(string s, object o) { 
+        public int M4<T1, T2>(T1 s, T2 o) { 
             throw new Exception();
         }
     }

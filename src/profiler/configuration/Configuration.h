@@ -4,11 +4,10 @@
 #include <unordered_map>
 #include <unordered_set>
 #include "LoaderInfo.h"
-// #include "AttributedInterceptor.h"
 #include "TypeInfo.h"
 #include "StrictInterception.h"
 #include "DefaultInitializerInfo.h"
-// #include "MethodFinder.h"
+#include "ExceptionLoggerInfo.h"
 
 
 namespace configuration
@@ -17,39 +16,24 @@ namespace configuration
 	{
 		std::vector<StrictInterception> StrictInterceptions{};
 		std::vector<wstring> Assemblies;
-		//std::unordered_map<wstring, AttributedInterceptor> AttributedInterceptors;
-		//TypeInfo InterceptorInterface{};
-		//TypeInfo ComposedInterceptor{};
-		//TypeInfo MethodFinderInterface{};
-		//std::vector<MethodFinder> MethodFinders{};
 		std::unordered_set<wstring> SkipAssemblies;
 		LoaderInfo Loader;
 		DefaultInitializerInfo DefaultInitializer;
-		//std::unordered_set<wstring> EnabledAssemblies;
+		ExceptionLoggerInfo ExceptionLogger;
 
 		Configuration(std::vector<StrictInterception> strictInterceptions,
 			std::vector<wstring>& assemblies,
-			//const std::unordered_map<wstring, AttributedInterceptor>& attributedInterceptors,
-			//const TypeInfo& base,
-			//const TypeInfo& composed,
-			//const TypeInfo& methodFinderInterface,
-			//std::vector<MethodFinder> methodFinders,
 			std::unordered_set<wstring>& skipAssemblies,
 			LoaderInfo loader,
-			DefaultInitializerInfo defaultInitializer
-			//std::unordered_set<wstring>& enabledAssemblies
+			DefaultInitializerInfo defaultInitializer,
+			ExceptionLoggerInfo exceptionLogger
 		) :
 			StrictInterceptions(strictInterceptions),
 			Assemblies(assemblies),
-			//AttributedInterceptors(attributedInterceptors),
-			//InterceptorInterface(base),
-			//ComposedInterceptor(composed),
-			//MethodFinderInterface(methodFinderInterface),
-			//MethodFinders(methodFinders),
 			SkipAssemblies(skipAssemblies),
 			Loader(loader),
-			DefaultInitializer(defaultInitializer)
-			//EnabledAssemblies(enabledAssemblies)
+			DefaultInitializer(defaultInitializer),
+			ExceptionLogger(exceptionLogger)
 		{}
 
 		Configuration() {}

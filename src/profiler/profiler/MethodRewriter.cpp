@@ -35,7 +35,7 @@ try {
 
 */
 
-HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorProfilerFunctionControl* pFunctionControl)
+HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef methodId, ICorProfilerFunctionControl* pFunctionControl)
 {
     HRESULT hr;
     mdToken functionToken;
@@ -103,7 +103,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     // define interceptor.dll
     mdModuleRef baseDllRef;
-    hr = GetWrapperRef(metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
+    hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
     if (FAILED(hr))
     {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
@@ -121,7 +121,7 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     }
 
     // initialize local variables
-    hr = InitLocalVariables(helper, rewriter, moduleId, *interceptor, exceptionIndex, returnIndex, baseDllRef);
+    hr = InitLocalVariables(helper, rewriter, metadataEmit, metadataAssemblyEmit, moduleId, *interceptor, exceptionIndex, returnIndex);
     if (FAILED(hr))
     {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed InitLocalValues {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
@@ -150,16 +150,20 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     }
 
     auto leaveBeforeTry = helper.LeaveS();
-    // TODO log exception
-    auto nopBeforeCatch = helper.Pop();
+    rewriter::ILInstr* beforeCatch;
+    hr = LogInterceptorException(helper, rewriter, &beforeCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
+        return hr;
+    }
     auto leaveBeforeCatch = helper.LeaveS();
 
     // try/catch for Interceptor.Before
     rewriter::EHClause beforeEx{};
     beforeEx.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
     beforeEx.m_pTryBegin = beginFirst;
-    beforeEx.m_pTryEnd = nopBeforeCatch;
-    beforeEx.m_pHandlerBegin = nopBeforeCatch;
+    beforeEx.m_pTryEnd = beforeCatch;
+    beforeEx.m_pHandlerBegin = beforeCatch;
     beforeEx.m_pHandlerEnd = leaveBeforeCatch;
     beforeEx.m_ClassToken = exceptionTypeRef;
 
@@ -192,7 +196,13 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     auto leaveAfterTry = helper.LeaveS();
     // TODO log exception
-    auto nopAfterCatch = helper.Pop();
+    //auto nopAfterCatch = helper.Pop();
+    rewriter::ILInstr* nopAfterCatch;
+    hr = LogInterceptorException(helper, rewriter, &nopAfterCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
+        return hr;
+    }
     auto leaveAfterCatch = helper.LeaveS();
 
     // try/catch for Interceptor.After

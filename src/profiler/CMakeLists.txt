@@ -49,6 +49,7 @@ add_library("DotNetCoreProfiler.static" STATIC
   profiler/MethodRewriter.LocalVariables.cpp
   profiler/MethodRewriter.CreateAfterMethod.cpp
   profiler/MethodRewriter.CreateBeforeMethod.cpp
+  profiler/MethodRewriter.LogInterceptorException.cpp
   ClassFactory.cpp
   configuration/Configuration.cpp
   info/AssemblyInfo.cpp

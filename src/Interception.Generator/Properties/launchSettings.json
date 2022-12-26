@@ -2,8 +2,8 @@
   "profiles": {
     "Interception.Generator": {
       "commandName": "Project",
-      "commandLineArgs": "-a Interception.MassTransit.dll,Interception.Quartz.dll -s ../../skip.txt -p /profiler -o profiler.json",
-      "workingDirectory": "D:\\playground\\DotNetCoreProfiler\\samples\\Interception\\bin\\Debug\\netcoreapp3.1"
+      "commandLineArgs": "-a Interceptor.dll -s ../../skip.txt -p /profiler -o profiler.json",
+      "workingDirectory": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0"
     }
   }
 }

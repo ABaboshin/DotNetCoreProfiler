@@ -9,10 +9,9 @@ namespace configuration
 	std::pair<StrictInterception, bool> LoadInterceptionFromJson(const nlohmann::json::value_type& src);
 	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src);
 	std::pair<TargetMethod, bool> LoadTargetFromJson(const nlohmann::json::value_type& src);
-	//std::pair<AttributedInterceptor, bool> LoadAttributedInterceptorFromJson(const nlohmann::json::value_type& src);
 	std::pair<TypeInfo, bool> LoadTypeInfoFromJson(const nlohmann::json::value_type& src);
 	DefaultInitializerInfo LoadDefaultInitializerFromJson(const nlohmann::json::value_type& src);
-	//std::pair<MethodFinder, bool> LoadMethodFinder(const nlohmann::json::value_type& src);
+	ExceptionLoggerInfo LoadExceptionLoggerFromJson(const nlohmann::json::value_type& src);
 
 	LoaderInfo LoadLoaderFromJson(const nlohmann::json::value_type& src);
 
@@ -45,15 +44,13 @@ namespace configuration
 		std::vector<StrictInterception> interceptions{};
 		std::vector<wstring> assemblies{};
 		std::unordered_set<wstring> skipAssemblies{};
-		//std::unordered_set<wstring> enabledAssemblies{};
-		//std::unordered_map<wstring, AttributedInterceptor> attributedInterceptors{};
-		//std::vector<MethodFinder> methodFinders{};
 
 		nlohmann::json j;
 		stream >> j;
 
 		auto loader = LoadLoaderFromJson(j["Loader"]);
 		auto defaultInitializer = LoadDefaultInitializerFromJson(j["DefaultInitializer"]);
+		auto exceptionLogger = LoadExceptionLoggerFromJson(j["ExceptionLogger"]);
 
 		for (auto& el : j["Strict"]) {
 			auto i = LoadInterceptionFromJson(el);
@@ -61,13 +58,6 @@ namespace configuration
 				interceptions.push_back(std::get<0>(i));
 			}
 		}
-
-		/*for (auto& el : j["methodFinders"]) {
-			auto i = LoadMethodFinder(el);
-			if (std::get<1>(i)) {
-				methodFinders.push_back(std::get<0>(i));
-			}
-		}*/
 
 		for (auto& el : j["Assemblies"]) {
 			assemblies.push_back(ToWSTRING(el));
@@ -77,34 +67,13 @@ namespace configuration
 			skipAssemblies.insert(ToWSTRING(el));
 		}
 
-		/*for (auto& el : j["enabledAssemblies"]) {
-			enabledAssemblies.insert(ToWSTRING(el));
-		}*/
-
-		/*for (auto& el : j["attributed"]) {
-			auto i = LoadAttributedInterceptorFromJson(el);
-			if (std::get<1>(i)) {
-				attributedInterceptors.insert(std::make_pair(std::get<0>(i).AttributeType, std::get<0>(i)));
-			}
-		}*/
-
-		/*auto interceptorInterface = LoadTypeInfoFromJson(j["interceptorInterface"]);
-		auto composedInterceptor = LoadTypeInfoFromJson(j["composedInterceptor"]);
-		auto methodFinderInterface = LoadTypeInfoFromJson(j["methodFinderInterface"]);*/
-
 		return {
 			interceptions,
 			assemblies,
-			//attributedInterceptors,
-			//std::get<0>(interceptorInterface),
-			//std::get<0>(composedInterceptor),
-			//std::get<0>(methodFinderInterface),
-			//methodFinders,
 			skipAssemblies,
 			loader,
-			defaultInitializer
-			//ToWSTRING(j.value("loader", ""))
-			//enabledAssemblies
+			defaultInitializer,
+			exceptionLogger
 		};
 	}
 
@@ -120,30 +89,6 @@ namespace configuration
 		return std::make_pair<TypeInfo, bool>({ assemblyName , typeName }, true);
 	}
 
-	/*std::pair<AttributedInterceptor, bool> LoadAttributedInterceptorFromJson(const nlohmann::json::value_type& src)
-	{
-		if (!src.is_object()) {
-			return std::make_pair<AttributedInterceptor, bool>({}, false);
-		}
-
-		auto attributeType = ToWSTRING(src.value("AttributeType", ""));
-		auto interceptor = std::get<0>(LoadTypeInfoFromJson(src["Interceptor"]));
-
-		return std::make_pair<AttributedInterceptor, bool>({ interceptor, attributeType }, true);
-	}*/
-
-	/*std::pair<MethodFinder, bool> LoadMethodFinder(const nlohmann::json::value_type& src)
-	{
-		if (!src.is_object()) {
-			return std::make_pair<MethodFinder, bool>({}, false);
-		}
-
-		auto typeInfo = std::get<0>(LoadTypeInfoFromJson(src["MethodFinder"]));
-		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
-
-		return std::make_pair<MethodFinder, bool>({ target, typeInfo }, true);
-	}*/
-
 	std::pair<StrictInterception, bool> LoadInterceptionFromJson(const nlohmann::json::value_type& src)
 	{
 		if (!src.is_object()) {
@@ -152,20 +97,14 @@ namespace configuration
 
 		auto interceptor = std::get<0>(LoadTypeInfoFromJson(src["Interceptor"]));
 		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
-		//std::unordered_set<wstring> ignoreCallerAssemblies{};
 
-		//for (auto& el : src["IgnoreCallerAssemblies"]) {
-		//	ignoreCallerAssemblies.insert(ToWSTRING(el));
-		//}
-
-		return std::make_pair<StrictInterception, bool>({ /*ignoreCallerAssemblies,*/ target, interceptor}, true);
+		return std::make_pair<StrictInterception, bool>({ target, interceptor}, true);
 	}
 
 	LoaderInfo LoadLoaderFromJson(const nlohmann::json::value_type& src)
 	{
 		if (!src.is_object()) {
 			throw std::string("Loader not found");
-			//return std::make_pair<StrictInterception, bool>({}, false);
 		}
 
 		return { ToWSTRING(src.value("AssemblyPath", "")) , ToWSTRING(src.value("TypeName", "")) };
@@ -175,10 +114,17 @@ namespace configuration
 	{
 		if (!src.is_object()) {
 			throw std::string("DefaultInitializer not found");
-			//return std::make_pair<StrictInterception, bool>({}, false);
 		}
 
-		return { ToWSTRING(src.value("AssemblyPath", "")) , ToWSTRING(src.value("TypeName", "")) };
+		return { ToWSTRING(src.value("AssemblyPath", "")) , ToWSTRING(src.value("TypeName", "")), ToWSTRING(src.value("MethodName", "")), ToWSTRING(src.value("AssemblyName", "")) };
+	}
+
+	ExceptionLoggerInfo LoadExceptionLoggerFromJson(const nlohmann::json::value_type& src)
+	{
+		if (!src.is_object()) {
+			return { };
+		}
+		return { ToWSTRING(src.value("AssemblyPath", "")) , ToWSTRING(src.value("TypeName", "")), ToWSTRING(src.value("MethodName", "")), ToWSTRING(src.value("AssemblyName", "")) };
 	}
 
 

@@ -48,7 +48,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
                       //COR_PRF_DISABLE_ALL_NGEN_IMAGES |
                       COR_PRF_ENABLE_REJIT;
 
-    //auto hr = this->corProfilerInfo->SetEventMask2(eventMask, COR_PRF_HIGH_ADD_ASSEMBLY_REFERENCES);
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
     if (FAILED(hr)) {
         return hr;
@@ -97,10 +96,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadStarted(AssemblyID assemblyId
 
 HRESULT STDMETHODCALLTYPE CorProfiler::AssemblyLoadFinished(AssemblyID assemblyId, HRESULT hrStatus)
 {
-    //const auto assemblyInfo = info::AssemblyInfo::GetAssemblyInfo(this->corProfilerInfo, assemblyId);
-    //logging::log(
-    //    logging::LogLevel::VERBOSE,
-    //    "Assembly loaded {0} {1}"_W, assemblyId, assemblyInfo.name);
     return S_OK;
 }
 
@@ -488,45 +483,3 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
 {
     return S_OK;
 }
-
-//std::vector<configuration::TypeInfo> CorProfiler::FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target)
-//{
-//    std::vector<configuration::TypeInfo> result{};
-//
-//    std::copy_if(
-//        configuration.StrictInterceptions.begin(),
-//        configuration.StrictInterceptions.end(),
-//        configuration::back_inserter<configuration::StrictInterception>(result),
-//        [&callerAssemblyName,&target](const configuration::StrictInterception& interception) {
-//            return
-//                interception.IgnoreCallerAssemblies.find(callerAssemblyName) == interception.IgnoreCallerAssemblies.end()
-//                && target.Type.Name == interception.Target.TypeName
-//                && target.Name == interception.Target.MethodName && target.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
-//        }
-//    );
-//
-//    for (const auto& a : target.Attributes)
-//    {
-//        auto existing = configuration.AttributedInterceptors.find(a);
-//        if (existing != configuration.AttributedInterceptors.end())
-//        {
-//            result.push_back(existing->second.Interceptor);
-//        }
-//    }
-//
-//    return result;
-//}
-
-//std::pair<configuration::TypeInfo, bool> CorProfiler::FindMethodFinder(const info::FunctionInfo& target)
-//{
-//    for (auto methodFinder : configuration.MethodFinders)
-//    {
-//        if (target.Type.Name == methodFinder.Target.TypeName
-//            && target.Name == methodFinder.Target.MethodName && target.Signature.NumberOfArguments() == methodFinder.Target.MethodParametersCount)
-//        {
-//            return std::make_pair<configuration::TypeInfo, bool>({ methodFinder.Finder.AssemblyName, methodFinder.Finder.TypeName}, true);
-//        }
-//    }
-//
-//    return std::make_pair<configuration::TypeInfo, bool>({}, false);
-//}

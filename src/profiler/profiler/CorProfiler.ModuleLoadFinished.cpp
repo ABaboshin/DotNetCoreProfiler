@@ -42,13 +42,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
 
-    /*mdModule module;
-    hr = metadataImport->GetModuleFromScope(&module);*/
-
     GUID module_version_id;
     hr = metadataImport->GetScopeProps(nullptr, 0, nullptr, &module_version_id);
-
-    //modules[moduleId] = module_version_id;
 
     logging::log(logging::LogLevel::VERBOSE, "Module {0} loaded {1}"_W, moduleInfo.assembly.name, moduleId);
 
@@ -106,9 +101,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     // check all strict interceptors
     for (const auto& interceptor : configuration.StrictInterceptions) {
-        //logging::log(logging::LogLevel::VERBOSE,
-        //    "Try {0}.{1}.{2}"_W, interceptor.Target.AssemblyName, interceptor.Target.TypeName, interceptor.Target.MethodName);
-
         // for this assembly
         if (interceptor.Target.AssemblyName == moduleInfo.assembly.name) {
             // by type
@@ -116,8 +108,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             metadataImport->FindTypeDefByName(interceptor.Target.TypeName.c_str(), mdTokenNil, &typeDef);
 
             if (typeDef == mdTypeRefNil) {
-                /*logging::log(logging::LogLevel::VERBOSE,
-                    "No type {0} found in assembly {1}, skip"_W, interceptor.Target.TypeName, moduleInfo.assembly.name);*/
+                logging::log(logging::LogLevel::VERBOSE,
+                    "No type {0} found in assembly {1}, skip"_W, interceptor.Target.TypeName, moduleInfo.assembly.name);
 
                 continue;
             }

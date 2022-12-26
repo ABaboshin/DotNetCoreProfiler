@@ -50,19 +50,27 @@
     {
       "Interceptor": {
         "AssemblyName": "interceptor",
-        "TypeName": "interceptor.M4"
+        "TypeName": "interceptor.M11"
       },
       "Target": {
         "AssemblyName": "app",
-        "MethodName": "M4",
-        "MethodParametersCount": 2,
+        "MethodName": "M11",
+        "MethodParametersCount": 0,
         "TypeName": "app.C1"
       },
       "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
     }
   ],
   "DefaultInitializer": {
+    "AssemblyName": "interceptor",
     "TypeName": "interceptor.DefaultInitializer",
-    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll",
+    "MethodName": "GetDefault"
+  },
+  "ExceptionLogger": {
+    "AssemblyName": "interceptor",
+    "TypeName": "interceptor.ExceptionLogger",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll",
+    "MethodName": "LogException"
   }
 }

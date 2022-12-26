@@ -19,7 +19,6 @@
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationFinished(FunctionID functionId, ReJITID rejitId, HRESULT hrStatus, BOOL fIsSafeToBlock)
 {
-    //logging::log(logging::LogLevel::INFO, "ReJITCompilationFinished"_W);
     return S_OK;
 }
 
@@ -31,7 +30,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ReJITError(ModuleID moduleId, mdMethodDef
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationStarted(FunctionID functionId, ReJITID rejitId, BOOL fIsSafeToBlock)
 {
-    //logging::log(logging::LogLevel::INFO, "ReJITCompilationStarted"_W);
     return S_OK;
 }
 
@@ -39,5 +37,5 @@ HRESULT STDMETHODCALLTYPE CorProfiler::GetReJITParameters(ModuleID moduleId, mdM
 {
     std::lock_guard<std::mutex> guard(mutex);
 
-    return methodRewriter.Rewriter(moduleId, methodId, pFunctionControl);
+    return methodRewriter.RewriteTargetMethod(moduleId, methodId, pFunctionControl);
 }

@@ -130,20 +130,8 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
   return S_OK;
 }
 
-HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, rewriter::ILRewriter* rewriter, ModuleID moduleId, const RejitInfo& interceptor, ULONG exceptionIndex, ULONG returnIndex, mdModuleRef baseDllRef) {
+HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, rewriter::ILRewriter* rewriter, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, ModuleID moduleId, const RejitInfo& interceptor, ULONG exceptionIndex, ULONG returnIndex) {
     HRESULT hr;
-
-    ComPtr<IUnknown> metadataInterfaces;
-    hr = profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
-    if (FAILED(hr))
-    {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed InitLocalValues {0}"_W, interceptor.interceptor.Interceptor.TypeName);
-        return hr;
-    }
-
-    auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-    auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
-    auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
 
     // ex = null
     helper.LoadNull();
@@ -153,6 +141,15 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
 
     if (!isVoid)
     {
+        // define interceptor.dll
+        mdModuleRef baseDllRef;
+        hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, profiler->configuration.DefaultInitializer.AssemblyName);
+        if (FAILED(hr))
+        {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, profiler->configuration.DefaultInitializer.AssemblyName);
+            return hr;
+        }
+
         // define default initializer type
         mdTypeRef defaultInitializerTypeRef;
         hr = metadataEmit->DefineTypeRefByName(
@@ -179,7 +176,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
         mdMemberRef getDefaultRef;
         hr = metadataEmit->DefineMemberRef(
             defaultInitializerTypeRef,
-            _const::GetDefault.data(),
+            profiler->configuration.DefaultInitializer.MethodName.data(),
             memberSignature.data(),
             memberSignature.size(),
             &getDefaultRef);

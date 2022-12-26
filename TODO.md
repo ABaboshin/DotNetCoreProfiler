@@ -1,7 +1,6 @@
 cleanup
 cor_signature -> vector
 pointer -> reference in c++ method params
-log before/after exception
 interfaces
 trace attributes
 debugger
@@ -10,3 +9,5 @@ cmake install deps
 multpile depedencies
 ref parameters
 ngen
+skip assemblies vs enabled assemblies
+one app domain support

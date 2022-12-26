@@ -32,7 +32,7 @@ namespace util
         return CreateAssemblyRef(metadataAssemblyEmit, &libRef, std::vector<BYTE> { 0xB7, 0x7A, 0x5C, 0x56, 0x19, 0x34, 0xE0, 0x89 }, metadata, _const::mscorlib);
     }
 
-    HRESULT GetWrapperRef(const ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdModuleRef& libRef, const wstring& assemblyName)
+    HRESULT GetAssemblyRef(const ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdModuleRef& libRef, const wstring& assemblyName)
     {
         ASSEMBLYMETADATA metadata{};
         metadata.usMajorVersion = 1;
