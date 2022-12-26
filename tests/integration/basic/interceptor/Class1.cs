@@ -64,5 +64,11 @@ namespace interceptor
         {
             Console.WriteLine($"Execute M4.Before instance != null {instance != null} of type {typeof(TType).FullName} params {a1} {typeof(T1)} {a2} {typeof(T2)}");
         }
+
+        public static void After<TResult>(TResult result, Exception ex)
+        {
+            Console.WriteLine($"Execute M4.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
+            throw new Exception("break");
+        }
     }
 }

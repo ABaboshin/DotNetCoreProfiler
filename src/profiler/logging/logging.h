@@ -10,7 +10,7 @@ namespace logging
 		VERBOSE = 0,
 		DEBUG = 10,
 		INFO = 20,
-		PROFILERERROR = 40,
+		NONSUCCESS = 40,
 		NONE = 10000
 	};
 

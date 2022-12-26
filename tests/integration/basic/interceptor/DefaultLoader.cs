@@ -5,6 +5,7 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 
 namespace interceptor
 {
@@ -32,11 +33,7 @@ namespace interceptor
     [DefaultInitializer]
     public static class DefaultInitializer
     {
-        public static T GetDefault<T>()
-        {
-            Console.WriteLine($"GetDefault {typeof(T).FullName}");
-            return default;
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static T GetDefault<T>() => default(T);
     }
-
 }

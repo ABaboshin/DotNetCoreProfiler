@@ -24,6 +24,7 @@ CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr), methodRewrit
 
 CorProfiler::~CorProfiler()
 {
+    std::cout << "~CorProfiler" << std::endl;
     if (this->corProfilerInfo != nullptr)
     {
         this->corProfilerInfo->Release();

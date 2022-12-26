@@ -30,7 +30,14 @@ namespace app
 
             var c = new C1();
             c.M3();
-            c.M4("test", new C1());
+            try
+            {
+                c.M4("test", new C1());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Exception {e}");
+            }
 
             C1.M1();
             C1.M11();
@@ -70,6 +77,8 @@ namespace app
         }
 
         public void M3() { }
-        public void M4(string s, object o) { }
+        public void M4(string s, object o) { 
+            throw new Exception();
+        }
     }
 }
