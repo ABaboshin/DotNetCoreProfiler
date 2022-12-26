@@ -10,4 +10,4 @@ multpile depedencies
 ref parameters
 ngen
 skip assemblies vs enabled assemblies
-one app domain support
+

@@ -40,7 +40,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
         return E_FAIL;
     }
 
-    DWORD eventMask = COR_PRF_MONITOR_JIT_COMPILATION |
+    eventMask = COR_PRF_MONITOR_JIT_COMPILATION |
                       COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST |
                       // COR_PRF_DISABLE_INLINING |
                       COR_PRF_MONITOR_MODULE_LOADS |
@@ -50,10 +50,13 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
     if (FAILED(hr)) {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed SetEventMask"_W);
         return hr;
     }
 
     configuration = configuration::Configuration::LoadConfiguration(GetEnvironmentValue("PROFILER_CONFIGURATION"));
+
+    oneAppDomainMode = util::GetEnvironmentValue("PROFILER_ONE_APP_DOMAIN") == "1";
 
     return S_OK;
 }

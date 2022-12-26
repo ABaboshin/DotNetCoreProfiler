@@ -19,6 +19,8 @@
 class CorProfiler : public ICorProfilerCallback8
 {
 protected:
+    DWORD eventMask;
+    bool oneAppDomainMode = false;
     ILDumper ilDumper;
     MethodRewriter methodRewriter;
     std::atomic<int> refCount;

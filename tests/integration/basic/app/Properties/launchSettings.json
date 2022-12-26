@@ -8,7 +8,8 @@
         "CORECLR_PROFILER_PATH": "D:\\playground\\DotNetCoreProfiler\\src\\profiler\\build\\Debug\\DotNetCoreProfiler.dll",
         "PROFILER_CONFIGURATION": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\app\\profiler.json",
         "PROFILER_LOG_LEVEL": "VERBOSE",
-        "PROFILER_LOG_FORMAT": "PLAIN"
+        "PROFILER_LOG_FORMAT": "PLAIN",
+        "PROFILER_ONE_APP_DOMAIN": "1"
       },
       "nativeDebugging": true
     }

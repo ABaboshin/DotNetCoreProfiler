@@ -86,6 +86,14 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         return hr;
     }
 
+    if (oneAppDomainMode) {
+        this->corProfilerInfo->SetEventMask(eventMask & ~COR_PRF_MONITOR_JIT_COMPILATION);
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed SetEventMask"_W);
+            return hr;
+        }
+    }
+
     return S_OK;
 }
 
