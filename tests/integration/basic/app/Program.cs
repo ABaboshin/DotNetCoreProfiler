@@ -2,10 +2,10 @@
 
 namespace app
 {
-  class Program
-  {
-    static int Main(string[] args)
+    class Program
     {
+        static int Main(string[] args)
+        {
             //var test = typeof(interceptor.DefaultInitializer);
             //var m1 = test.GetMethod("GetDefault");
             //var mb1 = test.Module.ResolveMethod(m1.MetadataToken);
@@ -35,6 +35,7 @@ namespace app
             C1.M1();
             C1.M11();
             C1.M2(3);
+
             // }
             // catch (System.Exception e)
             // {
@@ -53,45 +54,22 @@ namespace app
             // return i;
             //System.Diagnostics.Debugger.Break();
             return 0;
-    }
-  }
-
-  public class C1 {
-    public static void M1() {}
-    public static C1 M11() {
-            return new C1();
-            //Exception ex = null;
-            //C1 c1 = interceptor.DefaultInitializer.GetDefault<C1>();
-            //try
-            //{
-            //    try
-            //    {
-            //        try
-            //        {
-            //            interceptor.C11.Before();
-            //        }
-            //        catch (Exception)
-            //        {
-
-            //        }
-            //        c1 = new C1();
-            //    }
-            //    catch (Exception e)
-            //    {
-            //        ex = e;
-            //    }
-            //}
-            //finally {
-            //    if (ex != null)
-            //    {
-            //        throw ex;
-            //    }
-            //}
-            //return c1;
         }
-    public static void M2(int i) { }
+    }
 
-    public void M3() { }
-    public void M4(string s, object o) { }
-  }
+    public class C1
+    {
+        public static void M1() { }
+        public static C1 M11()
+        {
+            return new C1();
+        }
+        public static int M2(int i) {
+            Console.WriteLine(i);
+            return i;
+        }
+
+        public void M3() { }
+        public void M4(string s, object o) { }
+    }
 }

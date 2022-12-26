@@ -54,17 +54,19 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     hr = rewriter->Import();
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "GetReJITParameters rewriter->Import failed"_W);
-        return S_FALSE;
+        logging::log(logging::LogLevel::PROFILERERROR, "GetReJITParameters rewriter->Import failed"_W);
+        return hr;
     }
 
     rewriter::ILRewriterHelper helper(rewriter);
     helper.SetILPosition(rewriter->GetILList()->m_pNext);
 
+    //auto firstIL = helper.GetCurrentInstr();
+
     if (profiler->loadedModules.find(interceptor->interceptor.Interceptor.AssemblyName) == profiler->loadedModules.end())
     {
         logging::log(logging::LogLevel::VERBOSE, "Skip rejit because interceptor assembly is not loaded yet"_W);
-        return S_FALSE;
+        return hr;
     }
     else
     {
@@ -72,7 +74,13 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
     }
 
     ComPtr<IUnknown> metadataInterfaces;
-    IfFailRet(profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+    hr = profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed GetModuleMetaData {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        return hr;
+    }
+
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
     auto metadataAssemblyEmit = metadataInterfaces.As<IMetaDataAssemblyEmit>(IID_IMetaDataAssemblyEmit);
     auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
@@ -84,8 +92,12 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
-    GetMsCorLibRef(hr, metadataAssemblyEmit, mscorlibRef);
-    IfFailRet(hr);
+    hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed GetMsCorLibRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        return hr;
+    }
 
     // Define System.Exception
     mdTypeRef exceptionTypeRef;
@@ -93,36 +105,30 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     // define interceptor.dll
     mdModuleRef baseDllRef;
-    GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
+    hr = GetWrapperRef(metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
         return hr;
     }
 
     ULONG exceptionIndex = 0;
     ULONG returnIndex = 0;
 
-    IfFailRet(DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *interceptor, &exceptionIndex, &returnIndex));
+    hr = DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *interceptor, &exceptionIndex, &returnIndex);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed DefineLocalSignature {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        return hr;
+    }
 
     // initialize local variables
     hr = InitLocalValues(helper, rewriter, moduleId, *interceptor, exceptionIndex, returnIndex, baseDllRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "Failed InitLocalValues {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed InitLocalValues {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
         return hr;
     }
-
-
-
-    // // TODO
-    // // initialize local var
-    // // ex = null
-    // helper.LoadNull();
-    // helper.StLocal(exceptionIndex);
-    // // resultIndex = default(return type)
-
-    
 
     // define interceptor type
     mdTypeRef interceptorTypeRef;
@@ -132,12 +138,18 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
         &interceptorTypeRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "Failed DefineTypeRefByName {0}"_W, interceptor->interceptor.Interceptor.TypeName);
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed DefineTypeRefByName {0}"_W, interceptor->interceptor.Interceptor.TypeName);
     }
+
+    interceptor->info.Signature.ParseArguments();
 
     // call Before method
     rewriter::ILInstr* beginFirst;
-    IfFailRet(CreateBeforeMethod(helper, &beginFirst, metadataEmit, interceptorTypeRef, *interceptor));
+    hr = CreateBeforeMethod(helper, &beginFirst, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor);
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed CreateBeforeMethod");
+        return hr;
+    }
 
     auto leaveBeforeTry = helper.LeaveS();
     // TODO log exception
@@ -174,7 +186,11 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     // call After method
     rewriter::ILInstr* afterFirst;
-    IfFailRet(CreateAfterMethod(helper, &afterFirst, metadataEmit, interceptorTypeRef, *interceptor));
+    hr = CreateAfterMethod(helper, &afterFirst, metadataEmit, interceptorTypeRef, *interceptor);
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed CreateAfterMethod");
+        return hr;
+    }
 
     auto leaveAfterTry = helper.LeaveS();
     // TODO log exception
@@ -280,8 +296,8 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "GetReJITParameters rewriter->Export failed"_W);
-        return S_FALSE;
+        logging::log(logging::LogLevel::PROFILERERROR, "GetReJITParameters rewriter->Export failed"_W);
+        return hr;
     }
 
     logging::log(logging::LogLevel::INFO, "GetReJITParameters done"_W);
@@ -290,37 +306,230 @@ HRESULT MethodRewriter::Rewriter(ModuleID moduleId, mdMethodDef methodId, ICorPr
 }
 
 // TODO
-HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2> metadataEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor)
+HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor)
 {
     HRESULT hr;
-    std::vector<BYTE> beforeSignature = {
-    IMAGE_CEE_CS_CALLCONV_DEFAULT,
-    0,
-    ELEMENT_TYPE_VOID };
 
-    // define Before method
-    mdMemberRef beforeRef;
+    auto interceptorNumberOfArguments = interceptor.info.Signature.NumberOfArguments() + 1;
+
+    // define generic Before method
+    std::vector<BYTE> genericBeforeSignature = {
+    IMAGE_CEE_CS_CALLCONV_GENERIC,
+        (BYTE)interceptorNumberOfArguments,
+        (BYTE)interceptorNumberOfArguments,
+        ELEMENT_TYPE_VOID,
+        
+         };
+    for (auto i = 0; i < interceptorNumberOfArguments; i++)
+    {
+        //genericBeforeSignature.push_back(ELEMENT_TYPE_BYREF);
+        genericBeforeSignature.push_back(ELEMENT_TYPE_MVAR);
+        genericBeforeSignature.push_back((BYTE)i);
+    }
+
+    mdMemberRef genericBeforeRef;
     hr = metadataEmit->DefineMemberRef(
         interceptorTypeRef,
         _const::BeforeMethod.data(),
-        beforeSignature.data(),
-        beforeSignature.size(),
-        &beforeRef);
+        genericBeforeSignature.data(),
+        genericBeforeSignature.size(),
+        &genericBeforeRef);
+
+    std::cout << "generic sig" << std::endl;
+    for (auto i = 0; i < genericBeforeSignature.size(); i++)
+    {
+        std::cout << std::hex << (int)genericBeforeSignature[i] << std::endl;
+    }
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "Failed CreateBeforeMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
-        return S_FALSE;
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed CreateBeforeMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+        return hr;
+    }
+    
+    // get target type id
+
+    auto isValueType = false;
+    mdToken targetTypeRef = mdTokenNil;
+    if (interceptor.info.Signature.IsInstanceMethod())
+    {
+        hr = GetTargetTypeRef(interceptor.info.Type, metadataEmit, metadataAssemblyEmit, &targetTypeRef, &isValueType);
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::PROFILERERROR, "Failed CreateBeforeMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+            return hr;
+        }
     }
 
-    *instr = helper.CallMember(beforeRef, false);
+    // load this or null
+    if (targetTypeRef == mdTokenNil || !interceptor.info.Signature.IsInstanceMethod()) {
+        std::cout << "targetTypeRef " << targetTypeRef << std::endl;
+        std::cout << "IsInstanceMethod " << interceptor.info.Signature.IsInstanceMethod() << std::endl;
+        *instr = helper.LoadNull();
+    }
+    else
+    {
+        *instr = helper.LoadArgument(0);
+        if (interceptor.info.Type.IsValueType) {
+            if (interceptor.info.Type.TypeSpec != mdTypeSpecNil) {
+                helper.LoadObj(interceptor.info.Type.TypeSpec);
+            }
+            else if (interceptor.info.Type.IsGenericClassRef) {
+                helper.LoadObj(interceptor.info.Type.Id);
+            }
+            else {
+                return S_FALSE;
+            }
+        }
+    }
+
+    // load arguments
+    for (auto i = 0; i < interceptor.info.Signature.NumberOfArguments(); i++)
+    {
+        helper.LoadArgument(i + (interceptor.info.Signature.IsInstanceMethod() ? 1 : 0));
+    }
+
+    // non generic Before method
+    if (targetTypeRef == mdTokenNil) {
+        hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &targetTypeRef);
+        if (FAILED(hr))
+        {
+            logging::log(logging::LogLevel::PROFILERERROR, "Failed CreateBeforeMethod GetObjectTypeRef"_W);
+            return hr;
+        }
+    }
+
+    unsigned targetTypeBuffer = 0;
+    ULONG targetTypeSize = CorSigCompressToken(targetTypeRef, &targetTypeBuffer);
+
+    //auto signatureLength = 4 + targetTypeSize;
+    std::cout << "num args " << interceptor.info.Signature.NumberOfArguments() << std::endl;
+    
+    //for (auto i = 0; i < interceptor.info.Signature.NumberOfArguments(); i++)
+    //{
+    //    signatureLength += interceptor.info.Signature.Arguments[i].Raw.size();
+    //}
+
+    COR_SIGNATURE signature[1024];
+    unsigned offset = 0;
+
+    signature[offset++] = IMAGE_CEE_CS_CALLCONV_GENERICINST;
+    //signature[offset++] = interceptorNumberOfArguments;
+    signature[offset++] = interceptorNumberOfArguments;
+    //signature[offset++] = ELEMENT_TYPE_VOID;
+
+    if (isValueType) {
+        signature[offset++] = ELEMENT_TYPE_VALUETYPE;
+    }
+    else {
+        signature[offset++] = ELEMENT_TYPE_CLASS;
+    }
+
+    memcpy(&signature[offset], &targetTypeBuffer, targetTypeSize);
+    offset += targetTypeSize;
+
+    for (auto i = 0; i < interceptor.info.Signature.NumberOfArguments(); i++)
+    {
+        memcpy(&signature[offset], &interceptor.info.Signature.Arguments[i].Raw[0], interceptor.info.Signature.Arguments[i].Raw.size());
+        offset += interceptor.info.Signature.Arguments[i].Raw.size();
+    }
+
+    std::cout << "non generic sig" << std::endl;
+    for (auto i = 0; i < offset; i++)
+    {
+        std::cout << std::hex << (int)signature[i] << std::endl;
+    }
+
+    std::cout << "offset " << offset << /*" length " << signatureLength <<*/ std::endl;
+    
+    mdMethodSpec beforeMethodSpec = mdMethodSpecNil;
+    hr = metadataEmit->DefineMethodSpec(genericBeforeRef, signature,
+        offset, &beforeMethodSpec);
+
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed CreateBeforeMethod DefineMethodSpec"_W);
+        return hr;
+    }
+
+    helper.CallMember(beforeMethodSpec, false);
+    //*instr = helper.Nop();
     return S_OK;
 
 }
 
+HRESULT MethodRewriter::GetTargetTypeRef(const info::TypeInfo& targetType, util::ComPtr< IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdToken* targetTypeRef, bool* isValueType) {
+    HRESULT hr;
+    *isValueType = targetType.IsValueType;
+    *targetTypeRef = targetType.TypeSpec;
+
+    if (*targetTypeRef != mdTypeSpecNil) {
+        return S_OK;
+    }
+
+    // TODO cache references to known types
+    mdTypeRef objectTypeRef;
+    hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &objectTypeRef);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed GetTargetTypeRef GetObjectTypeRef"_W);
+        return hr;
+    }
+
+    if (targetType.ParentTypeInfo != nullptr) {
+        bool parentTypeIsGeneric = false;
+        auto parentType = targetType.ParentTypeInfo.get();
+        while (true) {
+            if (parentType->IsGenericClassRef) {
+                parentTypeIsGeneric = true;
+                break;
+            }
+
+            if (parentType->ParentTypeInfo == nullptr) {
+                break;
+            }
+
+            parentType = parentType->ParentTypeInfo.get();
+        }
+
+        // if parent type is generic
+        if (parentTypeIsGeneric) {
+            // and the target type is a struct => cannot be instrumentialized
+            if (targetType.IsValueType) {
+                *targetTypeRef = mdTokenNil;
+                return S_OK;
+            }
+
+            // otherwise use system.object
+            *targetTypeRef = objectTypeRef;
+
+            return S_OK;
+        }
+    }
+
+    auto currentType = &targetType;
+    // if the target type is a generic one
+    // lookup for the nearest non generic parent
+    while (currentType != nullptr && targetType.IsGenericClassRef) {
+        currentType = currentType->ParentTypeInfo.get();
+    }
+
+    if (currentType == nullptr)
+    {
+        *targetTypeRef = objectTypeRef;
+        return S_OK;
+    }
+
+    *isValueType = currentType->IsValueType;
+    *targetTypeRef = currentType->Id;
+
+    return S_OK;
+}
+
 //TODO
-HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2> metadataEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor)
+HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr< IMetaDataEmit2>& metadataEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor)
 {
+    *instr = helper.Nop();
+    return S_OK;
     HRESULT hr;
     std::vector<BYTE> afterSignature = {
     IMAGE_CEE_CS_CALLCONV_DEFAULT,
@@ -338,8 +547,8 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper& helper, re
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "Failed CreateAfterMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
-        return S_FALSE;
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed CreateAfterMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+        return hr;
     }
 
     *instr = helper.CallMember(afterRef, false);
@@ -350,7 +559,11 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     HRESULT hr;
 
     ComPtr<IUnknown> metadataInterfaces;
-    IfFailRet(profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+    hr = profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed GetModuleMetaData GetSigFromToken");
+        return hr;
+    }
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
     auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
 
@@ -361,12 +574,17 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     ULONG originalSignatureSize = 0;
 
     if (localVarSig != mdTokenNil) {
-        IfFailRet(metadataImport->GetSigFromToken(localVarSig, &originalSignature, &originalSignatureSize));
+        hr = metadataImport->GetSigFromToken(localVarSig, &originalSignature, &originalSignatureSize);
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::PROFILERERROR, "Failed DefineLocalSignature GetSigFromToken");
+            return hr;
+        }
     }
 
     // exception type buffer and size
     unsigned exceptionTypeRefBuffer;
     auto exceptionTypeRefSize = CorSigCompressToken(exceptionTypeRef, &exceptionTypeRefBuffer);
+
     // return type signature
     ULONG returnSignatureTypeSize = 0;
     mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
@@ -378,8 +596,6 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     auto returnSignature = interceptor.info.Signature.ReturnType.Raw;
     auto isVoid = interceptor.info.Signature.ReturnType.IsVoid;
 
-    //isVoid = true;
-
     if (!isVoid)
     {
         returnSignatureTypeSize = returnSignature.size();
@@ -388,30 +604,6 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
         hr = metadataEmit->GetTokenFromTypeSpec(&returnSignature[0], returnSignature.size(), &returnValueTypeSpec);
         newSignatureSize += (returnSignatureTypeSize);
         newLocalsCount++;
-    }
-    else {
-        /*mdTypeDef c1Def;
-        hr = metadataImport->FindTypeDefByName("app.C1"_W.c_str(), mdMethodDefNil, &c1Def);
-        if (FAILED(hr)) {
-            logging::log(logging::LogLevel::_ERROR, "Failed FindTypeDefByName app.c1"_W);
-            return hr;
-        }
-
-        auto typeInfo = info::TypeInfo::GetTypeInfo(metadataImport, c1Def);
-        std::cout << "found " << util::ToString(typeInfo.Name) << " " << typeInfo.Raw.size() << std::endl;
-
-        returnSignature.clear();
-        std::copy(typeInfo.Raw.begin(), typeInfo.Raw.end(), returnSignature.begin());
-
-        returnSignature = typeInfo.Raw;
-        isVoid = false;
-
-        returnSignatureTypeSize = returnSignature.size();
-
-        mdTypeSpec returnValueTypeSpec = mdTypeSpecNil;
-        hr = metadataEmit->GetTokenFromTypeSpec(&returnSignature[0], returnSignature.size(), &returnValueTypeSpec);
-        newSignatureSize += (returnSignatureTypeSize);
-        newLocalsCount++;*/
     }
 
     ULONG oldLocalsBuffer;
@@ -466,7 +658,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter* rewriter, Mod
     hr = metadataEmit->GetTokenFromSig(newSignatureBuffer, newSignatureSize, &newLocalVarSig);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "Failed local sig {0}"_W, interceptor.interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed local sig {0}"_W, interceptor.interceptor.Interceptor.AssemblyName);
         return hr;
     }
 

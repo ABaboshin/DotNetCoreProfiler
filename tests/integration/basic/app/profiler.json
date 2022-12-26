@@ -50,12 +50,12 @@
     {
       "Interceptor": {
         "AssemblyName": "interceptor",
-        "TypeName": "interceptor.M11"
+        "TypeName": "interceptor.M4"
       },
       "Target": {
         "AssemblyName": "app",
-        "MethodName": "M11",
-        "MethodParametersCount": 0,
+        "MethodName": "M4",
+        "MethodParametersCount": 2,
         "TypeName": "app.C1"
       },
       "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"

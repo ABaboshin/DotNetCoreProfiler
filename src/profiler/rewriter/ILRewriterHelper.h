@@ -28,7 +28,7 @@ namespace rewriter
 
         void BeginLoadValueIntoArray(INT32 arrayIndex);
 
-        void LoadArgument(UINT16 index);
+        ILInstr* LoadArgument(UINT16 index);
         void LoadArgumentRef(UINT16 index);
 
         void EndLoadValueIntoArray();

@@ -149,7 +149,7 @@ namespace info
                 ti.Raw = util::ToRaw(signature, signatureLength);
                 ti.TryParseGeneric();
 
-                return { ti.Id, ti.Name, {}, ti.IsValueType, ti.IsAbstract, ti.IsSealed, token, tokenType, ti.IsGenericClassRef };
+                return { ti.Id, ti.Name, {}, ti.IsValueType, ti.IsAbstract, ti.IsSealed, token, tokenType, ti.IsGenericClassRef, ti.ParentTypeInfo };
 
                 return ti;
             }
@@ -178,6 +178,6 @@ namespace info
             isGeneric = idxFromRight == 1 || idxFromRight == 2;
         }
 
-        return { token, util::ToString(typeName, typeNameLength), {}, isValueType, isAbstract, isSealed, mdTypeSpecNil, tokenType, isGeneric };
+        return { token, util::ToString(typeName, typeNameLength), {}, isValueType, isAbstract, isSealed, mdTypeSpecNil, tokenType, isGeneric, std::make_shared<TypeInfo>(parentTypeInfo)};
     }
 }

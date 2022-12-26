@@ -1,5 +1,6 @@
 #pragma once
 
+#include <memory>
 #include "cor.h"
 #include "util/util.h"
 #include "util/ComPtr.h"
@@ -30,9 +31,11 @@ namespace info
         mdTypeSpec TypeSpec;
         ULONG32 TokenType;
 
+        std::shared_ptr<TypeInfo> ParentTypeInfo;
+
         TypeInfo() : Id(0), Name(""_W) {}
-        TypeInfo(mdToken id, wstring name, const std::vector<BYTE>& raw, bool isValueType, bool isAbstract, bool isSealed, mdTypeSpec typeSpec, ULONG32 tokenType, bool isGeneric) :
-            Id(id), Name(name), Raw(raw), IsValueType(isValueType), IsAbstract(isAbstract), IsSealed(isSealed), TypeSpec(typeSpec), TokenType(tokenType), IsGenericClassRef(isGeneric) {}
+        TypeInfo(mdToken id, wstring name, const std::vector<BYTE>& raw, bool isValueType, bool isAbstract, bool isSealed, mdTypeSpec typeSpec, ULONG32 tokenType, bool isGeneric, std::shared_ptr<TypeInfo> parentTypeInfo) :
+            Id(id), Name(name), Raw(raw), IsValueType(isValueType), IsAbstract(isAbstract), IsSealed(isSealed), TypeSpec(typeSpec), TokenType(tokenType), IsGenericClassRef(isGeneric), ParentTypeInfo(parentTypeInfo) {}
         TypeInfo(const std::vector<BYTE>& raw);
 
         void TryParseGeneric();

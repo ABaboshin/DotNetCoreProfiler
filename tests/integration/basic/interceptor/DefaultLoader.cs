@@ -29,10 +29,11 @@ namespace interceptor
         }
     }
 
-        [DefaultInitializer]
+    [DefaultInitializer]
     public static class DefaultInitializer
     {
-        public static T GetDefault<T>() {
+        public static T GetDefault<T>()
+        {
             Console.WriteLine($"GetDefault {typeof(T).FullName}");
             return default;
         }

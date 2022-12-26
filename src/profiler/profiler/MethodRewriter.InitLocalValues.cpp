@@ -15,8 +15,8 @@ HRESULT MethodRewriter::InitLocalValues(rewriter::ILRewriterHelper& helper, rewr
     hr = profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::_ERROR, "Failed InitLocalValues {0}"_W, interceptor.interceptor.Interceptor.TypeName);
-        return S_FALSE;
+        logging::log(logging::LogLevel::PROFILERERROR, "Failed InitLocalValues {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+        return hr;
     }
 
     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
@@ -32,15 +32,6 @@ HRESULT MethodRewriter::InitLocalValues(rewriter::ILRewriterHelper& helper, rewr
 
     if (!isVoid)
     {
-        // define assembly where default initializer is placed
-        // mdModuleRef baseDllRef;
-        // GetWrapperRef(hr, metadataAssemblyEmit, baseDllRef, profiler->configuration.DefaultInitializer.AssemblyPath);
-        // if (FAILED(hr))
-        // {
-        //     logging::log(logging::LogLevel::_ERROR, "Failed GetWrapperRef {0}"_W, profiler->configuration.DefaultInitializer.AssemblyPath);
-        //     return hr;
-        // }
-
         // define default initializer type
         mdTypeRef defaultInitializerTypeRef;
         hr = metadataEmit->DefineTypeRefByName(
@@ -49,39 +40,9 @@ HRESULT MethodRewriter::InitLocalValues(rewriter::ILRewriterHelper& helper, rewr
             &defaultInitializerTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::_ERROR, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
-            return S_FALSE;
+            logging::log(logging::LogLevel::PROFILERERROR, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
+            return hr;
         }
-
-        //{
-        //    mdTypeRef testRef;
-        //    hr = metadataImport->FindTypeRef(baseDllRef, profiler->configuration.DefaultInitializer.TypeName.data(), &testRef);
-        //    if (FAILED(hr)) {
-        //        std::cout << "cannot FindTypeRef" << std::endl;
-        //    }
-
-        //    hr = metadataImport->FindTypeDefByName(profiler->configuration.DefaultInitializer.TypeName.data(), mdTokenNil, &testRef);
-        //    if (FAILED(hr)) {
-        //        std::cout << "cannot FindTypeDefByName" << std::endl;
-        //    }
-
-        //    HCORENUM hcorenum = 0;
-        //    const auto maxMethods = 1000;
-        //    mdMethodDef methods[maxMethods]{};
-        //    ULONG cnt;
-        //    hr = metadataImport->EnumMethods(&hcorenum, testRef, methods, maxMethods, &cnt);
-        //    if (FAILED(hr)) {
-        //        std::cout << "cannot enum default init" << std::endl;
-        //    }
-        //    else {
-        //        std::cout << "enum default init " << cnt << std::endl;
-        //    }
-        //    
-        //    /*for (auto i = 0; i < cnt; i++) {
-        //        const auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[i]);
-        //        std::cout << " default initializer " << util::ToString(functionInfo.Name) << std::endl;
-        //    }*/
-        //}
 
         std::vector<BYTE> memberSignature = {
         IMAGE_CEE_CS_CALLCONV_GENERIC,
@@ -101,8 +62,8 @@ HRESULT MethodRewriter::InitLocalValues(rewriter::ILRewriterHelper& helper, rewr
 
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::_ERROR, "Failed DefineMemberRef {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
-            return S_FALSE;
+            logging::log(logging::LogLevel::PROFILERERROR, "Failed DefineMemberRef {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
+            return hr;
         }
 
         auto methodArgumentSignatureSize = interceptor.info.Signature.ReturnType.Raw.size();
@@ -134,8 +95,8 @@ for (auto i = 0; i < signatureLength; i++)
 
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::_ERROR, "Failed DefineMethodSpec {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
-            return S_FALSE;
+            logging::log(logging::LogLevel::PROFILERERROR, "Failed DefineMethodSpec {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
+            return hr;
         }
 
         helper.CallMember(getDefaultSpecRef, false);

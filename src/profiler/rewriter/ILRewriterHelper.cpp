@@ -3,6 +3,7 @@
 #include "util/ComPtr.h"
 #include "util/util.h"
 #include "info/parser.h"
+#include "logging/logging.h"
 
 namespace rewriter
 {
@@ -94,7 +95,7 @@ namespace rewriter
         LoadInt32(arrayIndex);
     }
 
-    void ILRewriterHelper::LoadArgument(UINT16 index)
+    ILInstr* ILRewriterHelper::LoadArgument(UINT16 index)
     {
         static const std::vector<OPCODE> opcodes = {
             CEE_LDARG_0,
@@ -118,6 +119,7 @@ namespace rewriter
         }
 
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::LoadArgumentRef(UINT16 index)
@@ -440,7 +442,11 @@ namespace rewriter
         HRESULT hr;
 
         util::ComPtr<IUnknown> metadataInterfaces;
-        IfFailRet(_rewriter->GetCorProfilerInfo()->GetModuleMetaData(_rewriter->GetModuleId(), ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+        hr = _rewriter->GetCorProfilerInfo()->GetModuleMetaData(_rewriter->GetModuleId(), ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::PROFILERERROR, "Failed AddLocalVariable");
+            return hr;
+        }
 
         auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
         auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
@@ -456,7 +462,11 @@ namespace rewriter
             std::vector<BYTE> originalSignature{};
             PCCOR_SIGNATURE originalSignatureRaw = nullptr;
             ULONG originalSignatureSize = 0;
-            IfFailRet(metadataImport->GetSigFromToken(_rewriter->GetTkLocalVarSig(), &originalSignatureRaw, &originalSignatureSize));
+            hr = metadataImport->GetSigFromToken(_rewriter->GetTkLocalVarSig(), &originalSignatureRaw, &originalSignatureSize);
+            if (FAILED(hr)) {
+                logging::log(logging::LogLevel::PROFILERERROR, "Failed AddLocalVariable GetSigFromToken");
+                return hr;
+            }
 
             originalSignature = util::ToRaw(originalSignatureRaw, originalSignatureSize);
             auto iter = originalSignature.begin();
