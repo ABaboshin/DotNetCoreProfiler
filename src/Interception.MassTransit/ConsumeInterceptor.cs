@@ -1,6 +1,5 @@
 ﻿using Interception.Attributes;
 using MassTransit;
-using Microsoft.Extensions.Options;
 using OpenTracing;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
@@ -9,7 +8,8 @@ using System;
 using System.Linq;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Interception.Tracing;
+using System.Threading;
+using Interception.Tracing.Extensions;
 
 namespace Interception.MassTransit
 {
@@ -21,18 +21,18 @@ namespace Interception.MassTransit
     [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.Saga.InitiatedBy`1", TargetMethodParametersCount = 1)]
     [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.Saga.Observes`2", TargetMethodParametersCount = 1)]
     [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "Consume", TargetTypeName = "MassTransit.Saga.Orchestrates`2", TargetMethodParametersCount = 1)]
-    public class ConsumeInterceptor : BaseMetricsInterceptor
+    public class ConsumeInterceptor
     {
-        public ConsumeInterceptor() : base(DependencyInjection.Instance.ServiceProvider.GetService<IConfiguration>().GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>().ConsumerEnabled)
-        {
-        }
+        protected static AsyncLocal<IScope> _scope = new AsyncLocal<IScope>();
 
-        public override int Priority => 0;
-
-        protected override void CreateScope()
+        public static void Before<TType, T1>(TType instance, T1 context) where T1 : ConsumeContext
         {
-            var context = (ConsumeContext)GetParameter(0);
-            var consumerName = This.GetType().FullName;
+            if (!DependencyInjection.Instance.ServiceProvider.GetService<IConfiguration>().GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>().ConsumerEnabled)
+            {
+                return;
+            }
+
+            var consumerName = instance.GetType().FullName;
 
             ISpanBuilder spanBuilder;
 
@@ -55,7 +55,23 @@ namespace Interception.MassTransit
                 .WithTag("Consumer", consumerName)
                 .WithTag("MessageId", context.MessageId?.ToString());
 
-            _scope = spanBuilder.StartActive(true);
+            _scope.Value = spanBuilder.StartActive(true);
+        }
+
+        public static void After<TResult>(TResult result, Exception ex)
+        {
+            if (_scope.Value != null)
+            {
+                if (ex != null)
+                {
+                    _scope.Value.Span.SetException(ex);
+                }
+
+                _scope.Value.Span.SetTag("result", result?.ToString());
+
+                _scope.Value.Dispose();
+                _scope.Value = null;
+            }
         }
     }
 }
