@@ -46,6 +46,11 @@ namespace interceptor
             Console.WriteLine($"Execute M2.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
             throw new Exception("break");
         }
+        public static void ModifyArgument<T1>(int num, ref T1 a1) where T1 : class
+        {
+            Console.WriteLine($"Execute M2.ModifyArgument {num} {a1} {typeof(T1)}");
+            a1 = "XXX" as T1;
+        }
     }
 
     [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M3", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
@@ -69,13 +74,17 @@ namespace interceptor
         public static void Before<TType, T1, T2>(TType instance, T1 a1, T2 a2)
         {
             Console.WriteLine($"Execute M4.Before instance != null {instance != null} of type {typeof(TType).FullName} params {a1} {typeof(T1)} {a2} {typeof(T2)}");
-            throw new Exception("from before");
+            //throw new Exception("from before");
         }
 
         public static void After<TResult>(TResult result, Exception ex)
         {
             Console.WriteLine($"Execute M4.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
-            throw new Exception("from after");
+            //throw new Exception("from after");
+        }
+        public static void ModifyArgument<T1>(int num, ref T1 a1) 
+        {
+            Console.WriteLine($"Execute M4.ModifyArgument {num} {a1} {typeof(T1)}");
         }
     }
 }

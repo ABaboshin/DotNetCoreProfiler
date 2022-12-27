@@ -41,7 +41,8 @@ namespace app
 
             C1.M1();
             C1.M11();
-            C1.M2(3);
+            var teststr = "i";
+            C1.M2(teststr);
 
             // }
             // catch (System.Exception e)
@@ -71,8 +72,8 @@ namespace app
         {
             return new C1();
         }
-        public static int M2(int i) {
-            Console.WriteLine(i);
+        public static string M2(string i) {
+            Console.WriteLine($"M2 {i}");
             return i;
         }
 

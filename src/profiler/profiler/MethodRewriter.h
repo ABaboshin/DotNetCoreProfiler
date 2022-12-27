@@ -18,6 +18,8 @@ class MethodRewriter {
 
 	HRESULT GetTargetTypeRef(const info::TypeInfo& targetType, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdToken* targetTypeRef, bool* isValueType);
 	HRESULT LogInterceptorException(rewriter::ILRewriterHelper& helper, rewriter::ILRewriter* rewriter, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef exceptionTypeRef);
+
+	HRESULT ModifyArguments(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor);
 public:
 	MethodRewriter(CorProfiler* profiler) : profiler(profiler) {}
 

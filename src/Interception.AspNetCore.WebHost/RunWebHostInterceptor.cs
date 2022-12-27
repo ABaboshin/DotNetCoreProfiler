@@ -11,22 +11,16 @@ namespace Interception.AspNetCore
     /// intercept WebHost.Run
     /// and get the DI
     /// </summary>
-    // [StrictIntercept(TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "RunAsync", TargetTypeName = "Microsoft.AspNetCore.Hosting.WebHostExtensions", TargetMethodParametersCount = 2)]
     [StrictIntercept(TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "Run", TargetTypeName = "Microsoft.AspNetCore.Hosting.WebHostExtensions", TargetMethodParametersCount = 1)]
-    public class RunWebHostInterceptor : BaseInterceptor
+    public class RunWebHostInterceptor
     {
-        public override int Priority => 0;
-
-        public override void ExecuteBefore()
+        public static void Before<TType, T1>(TType instance, T1 webhost)
         {
-            var webHost = GetParameter(0);
-            DependencyInjection.Instance.ServiceProvider = (IServiceProvider)webHost.GetType().GetProperty("Services").GetValue(webHost);
+            DependencyInjection.Instance.ServiceProvider = (IServiceProvider)webhost.GetType().GetProperty("Services").GetValue(webhost);
+        }
 
-            // var cts = (CancellationTokenSource)GetParameter(1);
-            // if (cts != null)
-            // {
-            //     ModifyParameter(1, cts.Token);
-            // }
+        public static void After<TResult>(TResult result, Exception ex)
+        {
         }
     }
 }

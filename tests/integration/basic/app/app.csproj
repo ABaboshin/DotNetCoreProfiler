@@ -6,7 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\interceptor\interceptor.csproj" />
+    <!--<ProjectReference Include="..\interceptor\interceptor.csproj" />-->
   </ItemGroup>
 
 </Project>
