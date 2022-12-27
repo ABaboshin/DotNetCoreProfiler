@@ -78,7 +78,8 @@ namespace app
         }
 
         public void M3() { }
-        public int M4<T1, T2>(T1 s, T2 o) { 
+        public int M4<T1, T2>(T1 s, T2 o) {
+            Console.WriteLine($"M4 {s} {o}");
             throw new Exception();
         }
     }

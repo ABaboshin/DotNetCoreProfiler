@@ -71,9 +71,13 @@ namespace interceptor
     [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M4", TargetTypeName = "app.C1", TargetMethodParametersCount = 2)]
     public class M4
     {
-        public static void Before<TType, T1, T2>(TType instance, T1 a1, T2 a2)
+        public static void Before<TType, T1, T2>(TType instance, ref T1 a1, ref T2 a2) 
         {
             Console.WriteLine($"Execute M4.Before instance != null {instance != null} of type {typeof(TType).FullName} params {a1} {typeof(T1)} {a2} {typeof(T2)}");
+            if (a1 is string)
+            {
+                a1 = (T1)(object)"XXX";
+            }
             //throw new Exception("from before");
         }
 
@@ -82,7 +86,7 @@ namespace interceptor
             Console.WriteLine($"Execute M4.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
             //throw new Exception("from after");
         }
-        public static void ModifyArgument<T1>(int num, ref T1 a1) 
+        public static void ModifyArgument<T1>(int num, ref T1 a1)
         {
             Console.WriteLine($"Execute M4.ModifyArgument {num} {a1} {typeof(T1)}");
         }

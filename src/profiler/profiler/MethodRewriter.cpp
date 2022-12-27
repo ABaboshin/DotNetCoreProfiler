@@ -149,8 +149,6 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         return hr;
     }
 
-    hr = ModifyArguments(helper, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor);
-
     auto leaveBeforeTry = helper.LeaveS();
     rewriter::ILInstr* beforeCatch;
     hr = LogInterceptorException(helper, rewriter, &beforeCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);

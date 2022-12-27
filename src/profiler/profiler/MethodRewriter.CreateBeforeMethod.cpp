@@ -27,6 +27,10 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     for (auto i = 0; i < interceptorNumberOfArguments; i++)
     {
+        if (i > 0) {
+            genericBeforeSignature.push_back(ELEMENT_TYPE_BYREF);
+        }
+        
         genericBeforeSignature.push_back(ELEMENT_TYPE_MVAR);
         genericBeforeSignature.push_back((BYTE)i);
     }
@@ -81,7 +85,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
     // load arguments
     for (auto i = 0; i < interceptor.info.Signature.NumberOfArguments(); i++)
     {
-        helper.LoadArgument(i + (interceptor.info.Signature.IsInstanceMethod() ? 1 : 0));
+        helper.LoadArgumentRef(i + (interceptor.info.Signature.IsInstanceMethod() ? 1 : 0));
     }
 
     // non generic Before method
@@ -116,8 +120,15 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     for (auto i = 0; i < interceptor.info.Signature.NumberOfArguments(); i++)
     {
-        memcpy(&signature[offset], &interceptor.info.Signature.Arguments[i].Raw[0], interceptor.info.Signature.Arguments[i].Raw.size());
-        offset += interceptor.info.Signature.Arguments[i].Raw.size();
+        if (interceptor.info.Signature.Arguments[i].Raw[0] == ELEMENT_TYPE_BYREF) {
+            memcpy(&signature[offset], &interceptor.info.Signature.Arguments[i].Raw[1], interceptor.info.Signature.Arguments[i].Raw.size() - 1);
+            offset += interceptor.info.Signature.Arguments[i].Raw.size();
+        }
+        else
+        {
+            memcpy(&signature[offset], &interceptor.info.Signature.Arguments[i].Raw[0], interceptor.info.Signature.Arguments[i].Raw.size());
+            offset += interceptor.info.Signature.Arguments[i].Raw.size();
+        }
     }
 
     mdMethodSpec beforeMethodSpec = mdMethodSpecNil;
