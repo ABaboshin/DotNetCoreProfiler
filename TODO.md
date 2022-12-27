@@ -6,7 +6,7 @@ pointer -> reference in c++ method params
 
 cmake install deps
 multpile depedencies
-
+update lib/coreclr
 
 trace attributes
 debugger
