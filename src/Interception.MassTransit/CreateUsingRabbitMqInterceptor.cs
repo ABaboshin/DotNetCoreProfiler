@@ -1,5 +1,4 @@
 ﻿using Interception.Attributes;
-using Interception.Core;
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using System;
@@ -11,19 +10,18 @@ namespace Interception.MassTransit
     /// and inject tracing
     /// </summary>
     [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "UsingRabbitMq", TargetTypeName = "MassTransit.RabbitMqBusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
-    public class CreateUsingRabbitMqInterceptor : BaseInterceptor
+    public class CreateUsingRabbitMqInterceptor
     {
-        public override int Priority => 0;
-
-        public override void ExecuteBefore()
+        public static void Before<TType, T1, T2>(TType instance, ref T1 a1, ref T2 a2) 
         {
+            
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
 
             var config = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
 
-            var typedConfigure = (Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator>)GetParameter(1);
+            var typedConfigure = (Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator>)(object)a1;
             Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> configure = (IBusRegistrationContext context, IRabbitMqBusFactoryConfigurator cfg) => {
                 if (config.PublisherEnabled)
                 {
@@ -35,7 +33,7 @@ namespace Interception.MassTransit
                 typedConfigure(context, cfg);
             };
 
-            ModifyParameter(1, configure);
+            a2 = (T2)(object)configure;
         }
     }
 }
