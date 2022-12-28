@@ -32,10 +32,11 @@ namespace info
         ULONG32 TokenType;
 
         std::shared_ptr<TypeInfo> ParentTypeInfo;
+        std::shared_ptr<TypeInfo> ExtendTypeInfo;
 
         TypeInfo() : Id(0), Name(""_W) {}
-        TypeInfo(mdToken id, wstring name, const std::vector<BYTE>& raw, bool isValueType, bool isAbstract, bool isSealed, mdTypeSpec typeSpec, ULONG32 tokenType, bool isGeneric, std::shared_ptr<TypeInfo> parentTypeInfo) :
-            Id(id), Name(name), Raw(raw), IsValueType(isValueType), IsAbstract(isAbstract), IsSealed(isSealed), TypeSpec(typeSpec), TokenType(tokenType), IsGenericClassRef(isGeneric), ParentTypeInfo(parentTypeInfo) {}
+        TypeInfo(mdToken id, wstring name, const std::vector<BYTE>& raw, bool isValueType, bool isAbstract, bool isSealed, mdTypeSpec typeSpec, ULONG32 tokenType, bool isGeneric, std::shared_ptr<TypeInfo> parentTypeInfo, std::shared_ptr<TypeInfo> extendTypeInfo) :
+            Id(id), Name(name), Raw(raw), IsValueType(isValueType), IsAbstract(isAbstract), IsSealed(isSealed), TypeSpec(typeSpec), TokenType(tokenType), IsGenericClassRef(isGeneric), ParentTypeInfo(parentTypeInfo), ExtendTypeInfo(extendTypeInfo) {}
         TypeInfo(const std::vector<BYTE>& raw);
 
         void TryParseGeneric();

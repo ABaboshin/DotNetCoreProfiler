@@ -22,7 +22,7 @@ namespace util
         }
 
         auto result = wstring(data.begin(), data.begin() + length);
-        while (result[result.length() - 1] == 0)
+        while (result.length() > 0 && result[result.length() - 1] == 0)
         {
             result.resize(result.length() - 1);
         }

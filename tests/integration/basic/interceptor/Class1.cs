@@ -86,9 +86,19 @@ namespace interceptor
             Console.WriteLine($"Execute M4.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
             //throw new Exception("from after");
         }
-        public static void ModifyArgument<T1>(int num, ref T1 a1)
+    }
+
+    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "MX", TargetTypeName = "app.I1`1", TargetMethodParametersCount = 1)]
+    public class I1
+    {
+        public static void Before<TType, T1>(TType instance, ref T1 a1)
         {
-            Console.WriteLine($"Execute M4.ModifyArgument {num} {a1} {typeof(T1)}");
+            Console.WriteLine($"Execute I1.Before {a1} {typeof(T1)} instance {instance != null} {typeof(TType).FullName}");
+        }
+        public static void After<TResult>(TResult result, Exception ex)
+        {
+            Console.WriteLine($"Execute I1.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
+            
         }
     }
 }

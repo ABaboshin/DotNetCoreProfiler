@@ -96,8 +96,8 @@ namespace info
         DWORD typeFlags;
         mdToken typeExtends = mdTokenNil;
         mdToken parentTypeToken = mdTokenNil;
-        TypeInfo parentTypeInfo;
-        TypeInfo extendsInfo;
+        std::shared_ptr<TypeInfo> parentTypeInfo = nullptr;
+        std::shared_ptr<TypeInfo> extendsInfo = nullptr;
 
         bool isValueType = false;
         bool isAbstract = false;
@@ -113,14 +113,14 @@ namespace info
 
             if (parentTypeToken != mdTokenNil)
             {
-                parentTypeInfo = GetTypeInfo(metadataImport, parentTypeToken);
+                parentTypeInfo = std::make_shared<TypeInfo>(GetTypeInfo(metadataImport, parentTypeToken));
             }
 
             if (typeExtends != mdTokenNil)
             {
-                extendsInfo = GetTypeInfo(metadataImport, typeExtends);
+                extendsInfo = std::make_shared<TypeInfo>(GetTypeInfo(metadataImport, typeExtends));
                 isValueType =
-                    extendsInfo.Name == "System.ValueType"_W || extendsInfo.Name == "System.Enum"_W;
+                    extendsInfo->Name == "System.ValueType"_W || extendsInfo->Name == "System.Enum"_W;
             }
 
             isAbstract = IsTdAbstract(typeFlags);
@@ -149,7 +149,7 @@ namespace info
                 ti.Raw = util::ToRaw(signature, signatureLength);
                 ti.TryParseGeneric();
 
-                return { ti.Id, ti.Name, {}, ti.IsValueType, ti.IsAbstract, ti.IsSealed, token, tokenType, ti.IsGenericClassRef, ti.ParentTypeInfo };
+                return { ti.Id, ti.Name, {}, ti.IsValueType, ti.IsAbstract, ti.IsSealed, token, tokenType, ti.IsGenericClassRef, ti.ParentTypeInfo, ti.ExtendTypeInfo };
 
                 return ti;
             }
@@ -178,6 +178,6 @@ namespace info
             isGeneric = idxFromRight == 1 || idxFromRight == 2;
         }
 
-        return { token, util::ToString(typeName, typeNameLength), {}, isValueType, isAbstract, isSealed, mdTypeSpecNil, tokenType, isGeneric, std::make_shared<TypeInfo>(parentTypeInfo)};
+        return { token, util::ToString(typeName, typeNameLength), {}, isValueType, isAbstract, isSealed, mdTypeSpecNil, tokenType, isGeneric, parentTypeInfo, extendsInfo };
     }
 }

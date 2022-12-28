@@ -48,6 +48,10 @@ protected:
         return new rewriter::ILRewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
     }
 
+    std::vector<configuration::StrictInterception> FindInterceptor(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo);
+
+    std::vector<info::TypeInfo> GetAllImplementedInterfaces(const info::TypeInfo typeInfo, util::ComPtr<IMetaDataImport2>& metadataImport);
+
 public:
     CorProfiler();
     virtual ~CorProfiler();

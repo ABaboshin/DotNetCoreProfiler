@@ -486,3 +486,70 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
 {
     return S_OK;
 }
+
+
+std::vector<configuration::StrictInterception> CorProfiler::FindInterceptor(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
+    std::vector<configuration::StrictInterception> result{};
+
+    std::copy_if(
+        configuration.StrictInterceptions.begin(),
+        configuration.StrictInterceptions.end(),
+        std::back_inserter(result),
+        [&typeInfo, &functionInfo](const configuration::StrictInterception& interception) {
+        return
+        typeInfo.Name == interception.Target.TypeName
+        && functionInfo.Name == interception.Target.MethodName && functionInfo.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
+    }
+    );
+
+    if (result.empty() && typeInfo.ParentTypeInfo != nullptr)
+    {
+        result = FindInterceptor(*typeInfo.ParentTypeInfo, functionInfo);
+    }
+
+    if (result.empty() && typeInfo.ExtendTypeInfo != nullptr)
+    {
+        result = FindInterceptor(*typeInfo.ExtendTypeInfo, functionInfo);
+    }
+
+    return result;
+}
+
+std::vector<info::TypeInfo> CorProfiler::GetAllImplementedInterfaces(const info::TypeInfo typeInfo, util::ComPtr<IMetaDataImport2>& metadataImport)
+{
+    // get all implemented interfaces
+    HCORENUM hcorenumInterfaces = 0;
+    mdTypeDef interfaces[MAX_CLASS_NAME]{};
+    ULONG interfacesCount;
+    auto hr = metadataImport->EnumInterfaceImpls(&hcorenumInterfaces, typeInfo.Id, interfaces, MAX_CLASS_NAME, &interfacesCount);
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished EnumInterfaceImpls"_W);
+        return {};
+    }
+
+    std::vector<info::TypeInfo> interfaceInfos;
+    for (auto interfaceIndex = 0; interfaceIndex < interfacesCount; interfaceIndex++)
+    {
+        mdToken classToken, interfaceToken;
+        hr = metadataImport->GetInterfaceImplProps(interfaces[interfaceIndex], &classToken, &interfaceToken);
+        if (hr == S_OK && classToken == typeInfo.Id)
+        {
+            auto interfaceInfo = info::TypeInfo::GetTypeInfo(metadataImport, interfaceToken);
+            interfaceInfos.push_back(interfaceInfo);
+        }
+    }
+
+    if (typeInfo.ExtendTypeInfo != nullptr)
+    {
+        auto extend = GetAllImplementedInterfaces(*typeInfo.ExtendTypeInfo, metadataImport);
+        std::copy(extend.begin(), extend.end(), std::back_inserter(interfaceInfos));
+    }
+
+    if (typeInfo.ParentTypeInfo != nullptr)
+    {
+        auto extend = GetAllImplementedInterfaces(*typeInfo.ParentTypeInfo, metadataImport);
+        std::copy(extend.begin(), extend.end(), std::back_inserter(interfaceInfos));
+    }
+
+    return interfaceInfos;
+}

@@ -1,11 +1,10 @@
-interfaces
 cleanup
 
 cor_signature -> vector
 pointer -> reference in c++ method params
 
 cmake install deps
-multpile depedencies
+multiple libraries
 update lib/coreclr
 
 trace attributes

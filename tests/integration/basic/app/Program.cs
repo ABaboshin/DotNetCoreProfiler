@@ -4,64 +4,28 @@ namespace app
 {
     class Program
     {
-        static int Main(string[] args)
+        static void Main(string[] args)
         {
-            //var test = typeof(interceptor.DefaultInitializer);
-            //var m1 = test.GetMethod("GetDefault");
-            //var mb1 = test.Module.ResolveMethod(m1.MetadataToken);
 
-            //test.Module.ResolveMethod(test.DEcla)
-            //interceptor.DefaultInitializer.GetDefault<int>();
-            // // interceptor.C1.Before();
-            //       Exception ex = null;
-            //       int i = 0;
-            //       try
-            //       {
-            //         try
-            //         {
-            //             interceptor.C1.Before();
-            //         }
-            //         catch (System.Exception)
-            //         {
-            //         }
+            var x = new X1();
+            x.MX<int>(3);
+            x.Test(3);
 
-            // // throw new Exception("test");
-            // i = 3;
+            //var c = new C1();
+            //c.M3();
+            //try
+            //{
+            //    c.M4("test", new C1());
+            //}
+            //catch (Exception e)
+            //{
+            //    Console.WriteLine($"Exception {e}");
+            //}
 
-            var c = new C1();
-            c.M3();
-            try
-            {
-                c.M4("test", new C1());
-            }
-            catch (Exception e)
-            {
-                Console.WriteLine($"Exception {e}");
-            }
-
-            C1.M1();
-            C1.M11();
-            var teststr = "i";
-            C1.M2(teststr);
-
-            // }
-            // catch (System.Exception e)
-            // {
-            //   ex = e;
-            // }
-            // finally {
-            //   try
-            //   {
-            //       interceptor.C1.After();
-            //   }
-            //   catch (System.Exception)
-            //   {
-            //   }
-            //   if (ex != null) throw ex;
-            // }
-            // return i;
-            //System.Diagnostics.Debugger.Break();
-            return 0;
+            //C1.M1();
+            //C1.M11();
+            //var teststr = "i";
+            //C1.M2(teststr);
         }
     }
 
@@ -81,6 +45,29 @@ namespace app
         public int M4<T1, T2>(T1 s, T2 o) {
             Console.WriteLine($"M4 {s} {o}");
             throw new Exception();
+        }
+    }
+
+    public interface I1<TClassSpec>
+    {
+        TClassSpec MX<TMethodSpec>(TMethodSpec p);
+    }
+
+    public abstract class X1<TClassSpec> : I1<TClassSpec>
+    {
+        public abstract TClassSpec MX<TMethodSpec>(TMethodSpec p);
+
+        public void Test(int i) {
+            Console.WriteLine($"Test void {i}");
+        }
+    }
+
+    public class X1 : X1<string>
+    {
+        public override string MX<TMethodSpec>(TMethodSpec p)
+        {
+            Console.WriteLine("MX!!!");
+            return p.ToString();
         }
     }
 }

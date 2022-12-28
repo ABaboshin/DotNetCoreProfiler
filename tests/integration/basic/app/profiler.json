@@ -44,19 +44,20 @@
     "System.Runtime.InteropServices.RuntimeInformation",
     "System.Threading.Tasks",
     "System.Xml.Linq",
-    "Microsoft.Extensions.DotNetDeltaApplier"
+    "Microsoft.Extensions.DotNetDeltaApplier",
+    "System.Private.CoreLib"
   ],
   "Strict": [
     {
       "Interceptor": {
         "AssemblyName": "interceptor",
-        "TypeName": "interceptor.M4"
+        "TypeName": "interceptor.I1"
       },
       "Target": {
         "AssemblyName": "app",
-        "MethodName": "M4",
-        "MethodParametersCount": 2,
-        "TypeName": "app.C1"
+        "MethodName": "Test",
+        "MethodParametersCount": 1,
+        "TypeName": "app.X1`1"
       },
       "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
     }
