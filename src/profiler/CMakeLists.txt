@@ -5,6 +5,25 @@ cmake_policy(SET CMP0091 NEW)
 
 project("DotNetCoreProfiler" VERSION 1.6.0)
 
+# include(fmt.cmake)
+#include(fmt)
+
+set(DEP_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/Dependency)
+set(DEP_PROJECTS dep_fmt)
+
+include(ExternalProject)
+ExternalProject_Add(
+    dep_fmt
+    GIT_REPOSITORY "https://github.com/fmtlib/fmt"
+    GIT_TAG "7.0.0"
+    GIT_SHALLOW 1
+    TEST_COMMAND ""
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${DEP_INSTALL_DIR}
+        -DFMT_DOC=OFF
+        -DFMT_TEST=OFF
+)
+
 IF (WIN32)
   add_definitions(-DUNICODE -D_UNICODE -DWIN32 -DNDEBUG -D_WINDOWS -D_USRDLL -D_WIN32 -DWINVER=0x0602 -D_WIN32_WINNT=0x0602 -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS)
 ENDIF()
@@ -27,18 +46,6 @@ SET_SOURCE_FILES_PROPERTIES(
   EXTERNAL_OBJECT false
   GENERATED true
 )
-
-# include(FetchContent)
-
-# FetchContent_Declare(fmt
-#   GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-#   GIT_TAG master
-# )
-
-# FetchContent_MakeAvailable(fmt)
-
-# # add_subdirectory(${CMAKE_CURRENT_BINARY_DIR}/_deps/fmt-src/include
-# #                  EXCLUDE_FROM_ALL)
 
 add_library("DotNetCoreProfiler.static" STATIC
   profiler/CorProfiler.cpp
@@ -73,6 +80,7 @@ target_include_directories("DotNetCoreProfiler.static"
   PUBLIC ../../lib/coreclr/src/inc
   PUBLIC .
   # PuBLIC include
+  PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/Dependency/include
 )
 
 IF (WIN32)
@@ -96,4 +104,4 @@ ELSE()
 ENDIF()
 
 set_target_properties("DotNetCoreProfiler" PROPERTIES PREFIX "")
-target_link_libraries("DotNetCoreProfiler" "DotNetCoreProfiler.static")
+target_link_libraries("DotNetCoreProfiler" PUBLIC "DotNetCoreProfiler.static")

@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace app
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main(string[] args)
         {
 
             var x = new X1();
             x.MX<int>(3);
-            x.Test(3);
+            await x.Test(3);
 
             //var c = new C1();
             //c.M3();
@@ -57,8 +58,16 @@ namespace app
     {
         public abstract TClassSpec MX<TMethodSpec>(TMethodSpec p);
 
-        public void Test(int i) {
+        public Task<int> Test(int i) {
             Console.WriteLine($"Test void {i}");
+            return XXX();
+        }
+
+        private async Task<int> XXX()
+        { 
+            await Task.Delay(1000);
+            Console.WriteLine($"Test XXX");
+            return await Task.FromResult(0);
         }
     }
 

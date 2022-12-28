@@ -1,6 +1,7 @@
 ﻿using Interception.Attributes;
 using Interception.Core;
 using System;
+using System.Threading.Tasks;
 
 namespace interceptor
 {
@@ -95,10 +96,13 @@ namespace interceptor
         {
             Console.WriteLine($"Execute I1.Before {a1} {typeof(T1)} instance {instance != null} {typeof(TType).FullName}");
         }
-        public static void After<TResult>(TResult result, Exception ex)
+        public static void After<TResult>(TResult result, Exception ex) where TResult : Task
         {
-            Console.WriteLine($"Execute I1.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
-            
+            if (result.IsCompleted)
+            {
+                result.GetAwaiter().GetResult();
+            }
+            Console.WriteLine($"Execute I1.After result {result != null} {typeof(TResult).FullName} exception {ex != null} {result.IsCompleted}");
         }
     }
 }
