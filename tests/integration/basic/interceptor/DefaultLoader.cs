@@ -38,8 +38,6 @@ namespace interceptor
                 var a = Assembly.LoadFile(configuration.ExceptionLogger.AssemblyPath);
                 a.CreateInstance(configuration.ExceptionLogger.TypeName);
             }
-
-            //Interception.Core.Interop.Profiler.RejitAll();
         }
     }
 

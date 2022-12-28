@@ -16,13 +16,9 @@
 #include "dllmain.h"
 #include "logging/logging.h"
 
-
-CorProfiler* instance = nullptr;
-
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr), methodRewriter(this)
 {
     logging::init();
-    instance = this;
 }
 
 CorProfiler::~CorProfiler()

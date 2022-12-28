@@ -3,4 +3,3 @@ LIBRARY "DotNetCoreProfiler.dll"
 EXPORTS
     DllCanUnloadNow PRIVATE
     DllGetClassObject PRIVATE
-    RejitAll

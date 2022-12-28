@@ -134,16 +134,3 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     return S_OK;
 }
-
-void CorProfiler::RejitAll()
-{
-    /*std::lock_guard<std::mutex> guard(mutex);
-
-    for (auto i = 0; i < rejitInfo.size(); i++)
-    {
-        logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} with interceptor {2}"_W, rejitInfo[i].info.Type.Name, rejitInfo[i].info.Name, rejitInfo[i].interceptor.Interceptor.TypeName);
-        ModuleID m1[1]{ rejitInfo[i].moduleId };
-        mdMethodDef m2[1]{ rejitInfo[i].methodId };
-        corProfilerInfo->RequestReJIT(1, m1, m2);
-    }*/
-}
