@@ -98,7 +98,8 @@ namespace interceptor
         }
         public static void After<TResult>(TResult result, Exception ex) where TResult : Task
         {
-            if (result.IsCompleted)
+            Console.WriteLine($"Execute I1.After result {result != null} {typeof(TResult).FullName} exception {ex != null} {result.IsCompleted}");
+            if (!result.IsCompleted)
             {
                 result.GetAwaiter().GetResult();
             }
