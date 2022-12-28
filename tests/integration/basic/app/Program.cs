@@ -7,26 +7,24 @@ namespace app
     {
         static async Task Main(string[] args)
         {
-
             var x = new X1();
             x.MX<int>(3);
             await x.Test(3);
 
-            //var c = new C1();
-            //c.M3();
-            //try
-            //{
-            //    c.M4("test", new C1());
-            //}
-            //catch (Exception e)
-            //{
-            //    Console.WriteLine($"Exception {e}");
-            //}
+            C1.M1();
+            C1.M11();
+            C1.M2("teststr");
 
-            //C1.M1();
-            //C1.M11();
-            //var teststr = "i";
-            //C1.M2(teststr);
+            var c1 = new C1();
+            c1.M3();
+            try
+            {
+                c1.M4(123, "strparam");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine(ex.ToString());
+            }
         }
     }
 
@@ -37,13 +35,15 @@ namespace app
         {
             return new C1();
         }
-        public static string M2(string i) {
+        public static string M2(string i)
+        {
             Console.WriteLine($"M2 {i}");
             return i;
         }
 
         public void M3() { }
-        public int M4<T1, T2>(T1 s, T2 o) {
+        public int M4<T1, T2>(T1 s, T2 o)
+        {
             Console.WriteLine($"M4 {s} {o}");
             throw new Exception();
         }
@@ -58,13 +58,14 @@ namespace app
     {
         public abstract TClassSpec MX<TMethodSpec>(TMethodSpec p);
 
-        public Task<int> Test(int i) {
+        public Task<int> Test(int i)
+        {
             Console.WriteLine($"Test void {i}");
             return XXX();
         }
 
         private async Task<int> XXX()
-        { 
+        {
             await Task.Delay(1000);
             Console.WriteLine($"Test XXX");
             return await Task.FromResult(0);

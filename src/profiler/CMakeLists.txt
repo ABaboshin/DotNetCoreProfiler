@@ -108,6 +108,7 @@ IF (WIN32)
   add_library("DotNetCoreProfiler" SHARED
     profiler.def
     dllmain.cpp
+    interop.cpp
   )
 ELSE()
   add_library("DotNetCoreProfiler" SHARED

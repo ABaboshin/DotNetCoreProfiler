@@ -186,5 +186,9 @@ public:
         return count;
     }
 
+    void RejitAll();
+
     friend class MethodRewriter;
 };
+
+extern CorProfiler* instance;

@@ -54,10 +54,10 @@
         "TypeName": "interceptor.I1"
       },
       "Target": {
-        "AssemblyName": "app",
+        "AssemblyName": "applib",
         "MethodName": "Test",
         "MethodParametersCount": 1,
-        "TypeName": "app.X1`1"
+        "TypeName": "applib.X1`1"
       },
       "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
     }

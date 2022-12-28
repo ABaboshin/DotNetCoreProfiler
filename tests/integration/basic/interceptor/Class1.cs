@@ -38,7 +38,7 @@ namespace interceptor
     [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M2", TargetTypeName = "app.C1", TargetMethodParametersCount = 1)]
     public class M2
     {
-        public static void Before<TType, T1>(TType instance, T1 a1)
+        public static void Before<TType, T1>(TType instance, ref T1 a1)
         {
             Console.WriteLine($"Execute M2.Before {a1} {typeof(T1)} instance {instance != null} {typeof(TType).FullName}");
         }
@@ -46,11 +46,6 @@ namespace interceptor
         {
             Console.WriteLine($"Execute M2.After result {result != null} {typeof(TResult).FullName} exception {ex != null}");
             throw new Exception("break");
-        }
-        public static void ModifyArgument<T1>(int num, ref T1 a1) where T1 : class
-        {
-            Console.WriteLine($"Execute M2.ModifyArgument {num} {a1} {typeof(T1)}");
-            a1 = "XXX" as T1;
         }
     }
 
@@ -96,14 +91,14 @@ namespace interceptor
         {
             Console.WriteLine($"Execute I1.Before {a1} {typeof(T1)} instance {instance != null} {typeof(TType).FullName}");
         }
-        public static void After<TResult>(TResult result, Exception ex) where TResult : Task
+        public static void After<TResult>(TResult result, Exception ex)
         {
-            Console.WriteLine($"Execute I1.After result {result != null} {typeof(TResult).FullName} exception {ex != null} {result.IsCompleted}");
-            if (!result.IsCompleted)
-            {
-                result.GetAwaiter().GetResult();
-            }
-            Console.WriteLine($"Execute I1.After result {result != null} {typeof(TResult).FullName} exception {ex != null} {result.IsCompleted}");
+            //Console.WriteLine($"Execute I1.After result {result != null} {typeof(TResult).FullName} exception {ex != null} {result.IsCompleted}");
+            //if (!result.IsCompleted)
+            //{
+            //    result.GetAwaiter().GetResult();
+            //}
+            //Console.WriteLine($"Execute I1.After result {result != null} {typeof(TResult).FullName} exception {ex != null} {result.IsCompleted}");
         }
     }
 }

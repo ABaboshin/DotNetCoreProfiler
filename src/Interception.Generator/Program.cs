@@ -93,7 +93,7 @@ namespace Interception.Generator
                     return new DefaultInitializerInfo
                     {
                         MethodName = info.m.Name,
-                        TypeName = info.m.DeclaringType.Name,
+                        TypeName = info.m.DeclaringType.FullName,
                         AssemblyPath = path,
                         AssemblyName = assembly.GetName().Name,
                     };
@@ -114,7 +114,7 @@ namespace Interception.Generator
                     return new ExceptionLoggerInfo
                     {
                         MethodName = info.m.Name,
-                        TypeName = info.m.DeclaringType.Name,
+                        TypeName = info.m.DeclaringType.FullName,
                         AssemblyPath = path,
                         AssemblyName = assembly.GetName().Name,
                     };

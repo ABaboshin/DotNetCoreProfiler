@@ -57,6 +57,14 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
         return S_OK;
     }
 
+    /*if (moduleInfo.assembly.name == "applib"_W)
+    {
+        for (auto i = 0; i < configuration.StrictInterceptions.size(); i++)
+        {
+            logging::log(logging::LogLevel::VERBOSE, "Strict interceptor for type {0} method {1} assembly {2}"_W, configuration.StrictInterceptions[i].Target.TypeName, configuration.StrictInterceptions[i].Target.MethodName, configuration.StrictInterceptions[i].Target.AssemblyName);
+        }
+    }*/
+
     // TODO trace attributes
     // TODO dump local variables based on PDB
     // iterate over all types in the module
@@ -73,12 +81,16 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             return S_OK;
         }
 
+        //if (moduleInfo.assembly.name == "applib"_W) logging::log(logging::LogLevel::VERBOSE, "Found type {0}"_W, typeInfo.Name);
+
         // get all implemented interfaces
         std::vector<info::TypeInfo> interfaceInfos = GetAllImplementedInterfaces(typeInfo, metadataImport);
         
         for (auto methodIndex = 0; methodIndex < methodsCount; methodIndex++) {
             auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[methodIndex]);
             functionInfo.Signature.ParseArguments();
+
+            //if (moduleInfo.assembly.name == "applib"_W) logging::log(logging::LogLevel::VERBOSE, "Found method {0}"_W, functionInfo.Name);
 
             // try firstly find an interceptor either for this type
             // or for a base type
@@ -101,6 +113,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             // no interceptor found => nothing to do
             if (interceptor.empty())
             {
+                //if (moduleInfo.assembly.name == "applib"_W) logging::log(logging::LogLevel::VERBOSE, "No intercepter found for method {0}"_W, functionInfo.Name);
                 continue;
             }
 
@@ -108,11 +121,29 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             mdMethodDef m2[1]{ methods[methodIndex] };
             // save function info otherwise IMetaDataImport2 will throw an exception from Rejit-Handler
             // get first found interceptor
-            rejitInfo.push_back(RejitInfo(moduleId, methods[methodIndex], functionInfo, interceptor[0]));
+            auto ri = RejitInfo(moduleId, methods[methodIndex], functionInfo, interceptor[0]);
+            rejitInfo.push_back(ri);
             // and then request rejit
             hr = corProfilerInfo->RequestReJIT(1, m1, m2);
+
+            logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} with interceptor {2}"_W, ri.info.Type.Name, ri.info.Name, ri.interceptor.Interceptor.TypeName);
         }
     }
 
+    logging::log(logging::LogLevel::VERBOSE, "Module {0} loaded and analyzed {1}"_W, moduleInfo.assembly.name, moduleId);
+
     return S_OK;
+}
+
+void CorProfiler::RejitAll()
+{
+    /*std::lock_guard<std::mutex> guard(mutex);
+
+    for (auto i = 0; i < rejitInfo.size(); i++)
+    {
+        logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} with interceptor {2}"_W, rejitInfo[i].info.Type.Name, rejitInfo[i].info.Name, rejitInfo[i].interceptor.Interceptor.TypeName);
+        ModuleID m1[1]{ rejitInfo[i].moduleId };
+        mdMethodDef m2[1]{ rejitInfo[i].methodId };
+        corProfilerInfo->RequestReJIT(1, m1, m2);
+    }*/
 }
