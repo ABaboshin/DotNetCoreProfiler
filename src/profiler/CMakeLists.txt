@@ -8,8 +8,9 @@ project("DotNetCoreProfiler" VERSION 1.6.0)
 # include(fmt.cmake)
 #include(fmt)
 
+set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(DEP_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/Dependency)
-set(DEP_PROJECTS dep_fmt)
+set(DEP_PROJECTS dep_fmt dep_json)
 
 include(ExternalProject)
 ExternalProject_Add(
@@ -22,6 +23,17 @@ ExternalProject_Add(
         -DCMAKE_INSTALL_PREFIX=${DEP_INSTALL_DIR}
         -DFMT_DOC=OFF
         -DFMT_TEST=OFF
+)
+
+ExternalProject_Add(
+    dep_json
+    GIT_REPOSITORY "https://github.com/nlohmann/json"
+    GIT_TAG "v3.8.0"
+    GIT_SHALLOW 1
+    TEST_COMMAND ""
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${DEP_INSTALL_DIR}
+        -DJSON_BuildTests=OFF
 )
 
 IF (WIN32)
