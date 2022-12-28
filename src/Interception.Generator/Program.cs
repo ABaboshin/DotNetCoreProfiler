@@ -74,7 +74,8 @@ namespace Interception.Generator
                         Loader = loader,
                         SkipAssemblies = skipAssemblies?.OrderBy(s => s).ToList(),
                         Strict = strict,
-                        DefaultInitializer = defaultInitializer
+                        DefaultInitializer = defaultInitializer,
+                        ExceptionLogger = exceptionLogger
                     };
 
                     File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));
