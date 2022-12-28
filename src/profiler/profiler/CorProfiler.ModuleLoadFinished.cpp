@@ -57,14 +57,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
         return S_OK;
     }
 
-    /*if (moduleInfo.assembly.name == "applib"_W)
-    {
-        for (auto i = 0; i < configuration.StrictInterceptions.size(); i++)
-        {
-            logging::log(logging::LogLevel::VERBOSE, "Strict interceptor for type {0} method {1} assembly {2}"_W, configuration.StrictInterceptions[i].Target.TypeName, configuration.StrictInterceptions[i].Target.MethodName, configuration.StrictInterceptions[i].Target.AssemblyName);
-        }
-    }*/
-
     // TODO trace attributes
     // TODO dump local variables based on PDB
     // iterate over all types in the module
@@ -81,8 +73,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             return S_OK;
         }
 
-        //if (moduleInfo.assembly.name == "applib"_W) logging::log(logging::LogLevel::VERBOSE, "Found type {0}"_W, typeInfo.Name);
-
         // get all implemented interfaces
         std::vector<info::TypeInfo> interfaceInfos = GetAllImplementedInterfaces(typeInfo, metadataImport);
         
@@ -90,11 +80,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[methodIndex]);
             functionInfo.Signature.ParseArguments();
 
-            //if (moduleInfo.assembly.name == "applib"_W) logging::log(logging::LogLevel::VERBOSE, "Found method {0}"_W, functionInfo.Name);
-
             // try firstly find an interceptor either for this type
             // or for a base type
-
             auto interceptor = FindInterceptor(typeInfo, functionInfo);
             // if not found try to find an interceptor for one implemented interfaces
             if (interceptor.empty())
@@ -113,7 +100,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             // no interceptor found => nothing to do
             if (interceptor.empty())
             {
-                //if (moduleInfo.assembly.name == "applib"_W) logging::log(logging::LogLevel::VERBOSE, "No intercepter found for method {0}"_W, functionInfo.Name);
                 continue;
             }
 

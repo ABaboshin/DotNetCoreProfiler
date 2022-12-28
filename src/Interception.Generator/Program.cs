@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using TypeInfo = Interception.Core.Info.TypeInfo;
 
 namespace Interception.Generator
@@ -70,15 +71,17 @@ namespace Interception.Generator
 
                     var result = new ProfilerInfo
                     {
-                        Assemblies = opts.Assemblies.Select(a => Path.Combine(opts.Path, new FileInfo(a).Name)).ToList(),
                         Loader = loader,
                         SkipAssemblies = skipAssemblies?.OrderBy(s => s).ToList(),
                         Strict = strict,
                         DefaultInitializer = defaultInitializer,
-                        ExceptionLogger = exceptionLogger
+                        ExceptionLogger = exceptionLogger,
+                        Path = opts.Path
                     };
 
-                    File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));
+                    File.WriteAllText(opts.Output, System.Text.Json.JsonSerializer.Serialize(result, new JsonSerializerOptions { 
+                        WriteIndented = true,
+                    }));
                 });
         }
 

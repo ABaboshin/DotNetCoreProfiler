@@ -42,7 +42,6 @@ namespace configuration
 	Configuration Configuration::LoadFromStream(std::istream& stream)
 	{
 		std::vector<StrictInterception> interceptions{};
-		std::vector<wstring> assemblies{};
 		std::unordered_set<wstring> skipAssemblies{};
 
 		nlohmann::json j;
@@ -59,17 +58,12 @@ namespace configuration
 			}
 		}
 
-		for (auto& el : j["Assemblies"]) {
-			assemblies.push_back(ToWSTRING(el));
-		}
-
 		for (auto& el : j["SkipAssemblies"]) {
 			skipAssemblies.insert(ToWSTRING(el));
 		}
 
 		return {
 			interceptions,
-			assemblies,
 			skipAssemblies,
 			loader,
 			defaultInitializer,

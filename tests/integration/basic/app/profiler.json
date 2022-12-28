@@ -1,10 +1,8 @@
 {
-  "Assemblies": [
-    "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
-  ],
+  "Path": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0",
   "Loader": {
-    "TypeName": "interceptor.DefaultLoader",
-    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+    "TypeName": "Interception.Core.DefaultLoader",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Core.dll"
   },
   "SkipAssemblies": [
     "Interception.AspNetCore.Tracing",
@@ -63,15 +61,15 @@
     }
   ],
   "DefaultInitializer": {
-    "AssemblyName": "interceptor",
-    "TypeName": "interceptor.DefaultInitializer",
-    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll",
+    "AssemblyName": "Interception.Core",
+    "TypeName": "Interception.Core.DefaultInitializer",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Core.dll",
     "MethodName": "GetDefault"
   },
   "ExceptionLogger": {
-    "AssemblyName": "interceptor",
-    "TypeName": "interceptor.ExceptionLogger",
-    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll",
+    "AssemblyName": "Interception.Core",
+    "TypeName": "Interception.Core.ExceptionLogger",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Core.dll",
     "MethodName": "LogException"
   }
 }

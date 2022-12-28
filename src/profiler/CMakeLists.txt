@@ -5,9 +5,6 @@ cmake_policy(SET CMP0091 NEW)
 
 project("DotNetCoreProfiler" VERSION 1.6.0)
 
-# include(fmt.cmake)
-#include(fmt)
-
 set(JSON_BuildTests OFF CACHE INTERNAL "")
 set(DEP_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/Dependency)
 set(DEP_PROJECTS dep_fmt dep_json)

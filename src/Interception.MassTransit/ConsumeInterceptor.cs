@@ -25,7 +25,7 @@ namespace Interception.MassTransit
     {
         protected static AsyncLocal<IScope> _scope = new AsyncLocal<IScope>();
 
-        public static void Before<TType, T1>(TType instance, T1 context) where T1 : ConsumeContext
+        public static void Before<TType, T1>(TType instance, ref T1 context) where T1 : ConsumeContext
         {
             if (!DependencyInjection.Instance.ServiceProvider.GetService<IConfiguration>().GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>().ConsumerEnabled)
             {

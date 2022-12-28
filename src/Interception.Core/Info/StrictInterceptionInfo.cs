@@ -47,11 +47,11 @@ namespace Interception.Core.Info
 
     public class ProfilerInfo
     {
-        public List<string> Assemblies { get; set; }
         public LoaderInfo Loader { get; set; }
         public List<string> SkipAssemblies { get; set; }
         public List<StrictInterceptionInfo> Strict { get; set; }
         public DefaultInitializerInfo DefaultInitializer { get; set; }
         public ExceptionLoggerInfo ExceptionLogger { get; set; }
+        public string Path { get; set; }
     }
 }
