@@ -13,7 +13,6 @@
 #include "configuration/Configuration.h"
 #include "rewriter/ILRewriter.h"
 #include "RejitInfo.h"
-#include "ILDumper.h"
 #include "MethodRewriter.h"
 
 class CorProfiler : public ICorProfilerCallback8
@@ -21,7 +20,6 @@ class CorProfiler : public ICorProfilerCallback8
 protected:
     DWORD eventMask;
     bool oneAppDomainMode = false;
-    ILDumper ilDumper;
     MethodRewriter methodRewriter;
     std::atomic<int> refCount;
 

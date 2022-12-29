@@ -15,7 +15,6 @@
 #include "CorProfiler.h"
 #include "dllmain.h"
 #include "logging/logging.h"
-#include "ILDumper.h"
 
 HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID functionId, BOOL fIsSafeToBlock)
 {
@@ -121,8 +120,6 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
     }
 
     const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
-    logging::log(logging::LogLevel::VERBOSE, "{0}"_W, ilDumper.DumpILCodes("main ", &rewriter, functionInfo, metadataImport));
 
     return S_OK;
 }
@@ -241,8 +238,6 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
 
         // ret
         helper.Ret();
-
-        logging::log(logging::LogLevel::VERBOSE, "{0}"_W, ilDumper.DumpILCodes("load ", rewriter, functionInfo, metadataImport));
 
         hr = rewriter->Export();
 

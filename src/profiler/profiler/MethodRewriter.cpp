@@ -86,8 +86,6 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     auto assemblyImport = metadataInterfaces.As<IMetaDataAssemblyImport>(IID_IMetaDataEmit);
     auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
 
-    logging::log(logging::LogLevel::VERBOSE, "{0}"_W, profiler->ilDumper.DumpILCodes("rejit before ", rewriter, interceptor->info, metadataImport));
-
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
     hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
@@ -295,8 +293,6 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     newEx[ehCount - 2] = exClause;
     newEx[ehCount - 1] = finallyClause;
     rewriter->SetEHClause(newEx, ehCount);
-
-    logging::log(logging::LogLevel::VERBOSE, "{0}"_W, profiler->ilDumper.DumpILCodes("rejit after ", rewriter, interceptor->info, metadataImport));
 
     hr = rewriter->Export();
 

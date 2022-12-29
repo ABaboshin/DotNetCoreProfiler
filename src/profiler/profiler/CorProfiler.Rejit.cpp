@@ -15,7 +15,6 @@
 #include "CorProfiler.h"
 #include "dllmain.h"
 #include "logging/logging.h"
-#include "ILDumper.h"
 
 HRESULT STDMETHODCALLTYPE CorProfiler::ReJITCompilationFinished(FunctionID functionId, ReJITID rejitId, HRESULT hrStatus, BOOL fIsSafeToBlock)
 {
