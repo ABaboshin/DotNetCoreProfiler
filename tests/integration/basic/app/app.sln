@@ -41,6 +41,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.OpenTracing", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.OpenTracing.Statsd", "..\..\..\..\src\Interception.OpenTracing.Statsd\Interception.OpenTracing.Statsd.csproj", "{91C8FB00-0B67-49C6-989B-EF7D33AAD9DF}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.DefaultImpl", "..\..\..\..\src\Interception.DefaultImpl\Interception.DefaultImpl.csproj", "{93B9A8DE-A903-4A33-9D23-E32E193CBD02}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -357,6 +359,22 @@ Global
 		{91C8FB00-0B67-49C6-989B-EF7D33AAD9DF}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
 		{91C8FB00-0B67-49C6-989B-EF7D33AAD9DF}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
 		{91C8FB00-0B67-49C6-989B-EF7D33AAD9DF}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.Debug|x64.Build.0 = Debug|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.MinSizeRel|Any CPU.ActiveCfg = Debug|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.MinSizeRel|Any CPU.Build.0 = Debug|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.MinSizeRel|x64.ActiveCfg = Debug|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.MinSizeRel|x64.Build.0 = Debug|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.Release|Any CPU.Build.0 = Release|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.Release|x64.ActiveCfg = Release|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.Release|x64.Build.0 = Release|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
+		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

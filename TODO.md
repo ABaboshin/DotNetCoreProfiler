@@ -1,6 +1,7 @@
 cleanup
 
 update lib/coreclr
+add execution time logs
 
 check if before/after exist
 

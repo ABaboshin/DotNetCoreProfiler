@@ -4,7 +4,7 @@ using System;
 using System.IO;
 using System.Reflection;
 
-namespace Interception.Core
+namespace Interception.DefaultImpl
 {
     [Loader]
     public class DefaultLoader
@@ -16,7 +16,8 @@ namespace Interception.Core
             var configuartionFile = Environment.GetEnvironmentVariable("PROFILER_CONFIGURATION");
             var configuration = System.Text.Json.JsonSerializer.Deserialize<ProfilerInfo>(File.ReadAllText(configuartionFile));
 
-            AppDomain.CurrentDomain.AssemblyResolve += (object sender, ResolveEventArgs args) => {
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            {
                 var assemblyName = new AssemblyName(args.Name);
                 var path = Path.Combine(configuration.Path, $"{assemblyName.Name}.dll");
 

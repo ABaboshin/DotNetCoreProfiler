@@ -1,7 +1,7 @@
 ﻿using Interception.Attributes;
 using System.Runtime.CompilerServices;
 
-namespace Interception.Core
+namespace Interception.DefaultImpl
 {
     public class DefaultInitializer
     {
