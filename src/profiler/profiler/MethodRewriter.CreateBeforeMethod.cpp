@@ -64,7 +64,10 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     // load this or null
     if (targetTypeRef == mdTokenNil || !interceptor.info.Signature.IsInstanceMethod()) {
+        std::cout << std::hex << "load null " << std::endl;
+        std::cout << *instr << std::endl;
         *instr = helper.LoadNull();
+        std::cout << *instr << std::endl;
     }
     else
     {

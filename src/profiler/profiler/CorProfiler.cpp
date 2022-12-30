@@ -15,6 +15,7 @@
 #include "CorProfiler.h"
 #include "dllmain.h"
 #include "logging/logging.h"
+#include <functional>
 
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr), methodRewriter(this)
 {

@@ -139,34 +139,42 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
     interceptor->info.Signature.ParseArguments();
 
-    // call Before method
-    rewriter::ILInstr* beginFirst;
-    hr = CreateBeforeMethod(helper, &beginFirst, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor);
-    if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
-        return hr;
-    }
-
-    auto leaveBeforeTry = helper.LeaveS();
-    rewriter::ILInstr* beforeCatch;
-    hr = LogInterceptorException(helper, rewriter, &beforeCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
-    if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
-        return hr;
-    }
-    auto leaveBeforeCatch = helper.LeaveS();
-
     // try/catch for Interceptor.Before
     rewriter::EHClause beforeEx{};
-    beforeEx.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
-    beforeEx.m_pTryBegin = beginFirst;
-    beforeEx.m_pTryEnd = beforeCatch;
-    beforeEx.m_pHandlerBegin = beforeCatch;
-    beforeEx.m_pHandlerEnd = leaveBeforeCatch;
-    beforeEx.m_ClassToken = exceptionTypeRef;
+    rewriter::ILInstr* beginFirst;
 
-    leaveBeforeCatch->m_pTarget = helper.GetCurrentInstr();
-    leaveBeforeTry->m_pTarget = helper.GetCurrentInstr();
+    CreateTryCatch(
+        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, &beginFirst](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
+        // call Before method
+        std::cout << std::hex << "tryBegin " << *tryBegin << std::endl;
+        auto hr = CreateBeforeMethod(helper, tryBegin, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor);
+        std::cout << std::hex << "tryBegin " << *tryBegin << std::endl;
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
+            return hr;
+        }
+
+        *tryLeave = helper.LeaveS();
+
+        beginFirst = *tryBegin;
+
+        return S_OK;
+    },
+        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, exceptionTypeRef, &rewriter](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
+        auto hr = LogInterceptorException(helper, rewriter, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
+            return hr;
+        }
+        *catchLeave = helper.LeaveS();
+        return S_OK;
+    }, [&helper](rewriter::ILInstr& tryLeave) {
+        tryLeave.m_pTarget = helper.GetCurrentInstr();
+        return S_OK;
+    }, [&helper](rewriter::ILInstr& leaveBeforeCatch) {
+        leaveBeforeCatch.m_pTarget = helper.GetCurrentInstr();
+        return S_OK;
+    }, exceptionTypeRef, beforeEx);
 
     // new ret instruction
     auto newRet = helper.NewInstr();
