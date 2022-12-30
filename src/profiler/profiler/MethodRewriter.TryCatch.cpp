@@ -15,14 +15,29 @@ HRESULT MethodRewriter::CreateTryCatch(TBlock tryBlock, TBlock catchBlock, TLeav
 	rewriter::ILInstr* catchBegin = nullptr;
 	rewriter::ILInstr* catchLeave = nullptr;
 
-	tryBlock(&tryBegin, &tryLeave);
-	catchBlock(&catchBegin, &catchLeave);
+	auto hr = tryBlock(&tryBegin, &tryLeave);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
 
-	std::cout << std::hex << tryBegin << " " << tryLeave << " " << catchBegin << " " << catchLeave << std::endl;
+	hr = catchBlock(&catchBegin, &catchLeave);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
 
-	tryModifier(*tryLeave);
-	catchModifier(*catchLeave);
+	hr = tryModifier(*tryLeave);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
 
+	hr = catchModifier(*catchLeave);
+	if (FAILED(hr))
+	{
+		return hr;
+	}
 
 	ehClause.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
 	ehClause.m_pTryBegin = tryBegin;

@@ -143,12 +143,10 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     rewriter::EHClause beforeEx{};
     rewriter::ILInstr* beginFirst;
 
-    CreateTryCatch(
+    hr = CreateTryCatch(
         [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, &beginFirst](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
         // call Before method
-        std::cout << std::hex << "tryBegin " << *tryBegin << std::endl;
         auto hr = CreateBeforeMethod(helper, tryBegin, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor);
-        std::cout << std::hex << "tryBegin " << *tryBegin << std::endl;
         if (FAILED(hr)) {
             logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
             return hr;
@@ -176,6 +174,11 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         return S_OK;
     }, exceptionTypeRef, beforeEx);
 
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateTryCatch Before");
+        return hr;
+    }
+
     // new ret instruction
     auto newRet = helper.NewInstr();
     newRet->m_opcode = rewriter::CEE_RET;
@@ -187,38 +190,57 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     auto mainCatchLeave = helper.Rethrow(); // helper.LeaveS();
     mainCatchLeave->m_pTarget = newRet;
     helper.SetILPosition(newRet);
-    //auto rethrow = helper.StLocal(exceptionIndex);
     auto nopFinally = helper.Nop();
 
     // finally
 
-    // call After method
+    // try/catch for Interceptor.After
+    rewriter::EHClause afterEx{};
     rewriter::ILInstr* afterFirst;
-    hr = CreateAfterMethod(helper, &afterFirst, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor, returnIndex, exceptionTypeRef, exceptionIndex);
+    rewriter::ILInstr* leaveAfterTry;
+    rewriter::ILInstr* nopAfterCatch;
+    rewriter::ILInstr* leaveAfterCatch;
+    hr = CreateTryCatch(
+        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, &afterFirst, returnIndex, exceptionTypeRef, exceptionIndex, &leaveAfterTry](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
+        // call After method
+    auto hr = CreateAfterMethod(helper, tryBegin, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor, returnIndex, exceptionTypeRef, exceptionIndex);
     if (FAILED(hr)) {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
         return hr;
     }
 
-    auto leaveAfterTry = helper.LeaveS();
-    // TODO log exception
-    //auto nopAfterCatch = helper.Pop();
-    rewriter::ILInstr* nopAfterCatch;
-    hr = LogInterceptorException(helper, rewriter, &nopAfterCatch, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
+    leaveAfterTry = *tryLeave = helper.LeaveS();
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
+        return hr;
+    }
+
+    afterFirst = *tryBegin;
+
+    return S_OK;
+    },
+        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, exceptionTypeRef, &rewriter, &leaveAfterCatch, &nopAfterCatch](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
+    auto hr = LogInterceptorException(helper, rewriter, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
     if (FAILED(hr)) {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
         return hr;
     }
-    auto leaveAfterCatch = helper.LeaveS();
 
-    // try/catch for Interceptor.After
-    rewriter::EHClause afterEx{};
-    afterEx.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
-    afterEx.m_pTryBegin = afterFirst;
-    afterEx.m_pTryEnd = nopAfterCatch;
-    afterEx.m_pHandlerBegin = nopAfterCatch;
-    afterEx.m_pHandlerEnd = leaveAfterCatch;
-    afterEx.m_ClassToken = exceptionTypeRef;
+    nopAfterCatch = *catchBegin;
+    leaveAfterCatch = *catchLeave = helper.LeaveS();
+    return S_OK;
+    }, [&helper](rewriter::ILInstr& tryLeave) {
+        
+    return S_OK;
+    }, [&helper](rewriter::ILInstr& leaveBeforeCatch) {
+        
+    return S_OK;
+    }, exceptionTypeRef, afterEx);
+
+    if (FAILED(hr)) {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateTryCatch After");
+        return hr;
+    }
 
     // finally
 
