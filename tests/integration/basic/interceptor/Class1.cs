@@ -5,22 +5,37 @@ using System.Threading.Tasks;
 
 namespace interceptor
 {
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
+    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0, Priority = 0)]
     public class M1
     {
         public static void Before<T>(T obj)
         {
             Console.WriteLine($"Execute M1.Before {Environment.StackTrace} {obj != null} {typeof(T).FullName}");
-            throw new Exception("break");
+            //throw new Exception("break");
         }
         public static void After<TResult>(TResult result, Exception ex)
         {
             Console.WriteLine($"Execute M1.After {Environment.StackTrace}");
-            throw new Exception("break");
+            //throw new Exception("break");
         }
     }
 
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M11", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
+    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0, Priority = 1)]
+    public class M1_1
+    {
+        public static void Before<T>(T obj)
+        {
+            Console.WriteLine($"Execute M1_1.Before {Environment.StackTrace} {obj != null} {typeof(T).FullName}");
+            //throw new Exception("break");
+        }
+        public static void After<TResult>(TResult result, Exception ex)
+        {
+            Console.WriteLine($"Execute M1_1.After {Environment.StackTrace}");
+            //throw new Exception("break");
+        }
+    }
+
+    //[StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M11", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
     public class M11
     {
         public static void Before<T>(T obj)
@@ -35,7 +50,7 @@ namespace interceptor
         }
     }
 
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M2", TargetTypeName = "app.C1", TargetMethodParametersCount = 1)]
+    //[StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M2", TargetTypeName = "app.C1", TargetMethodParametersCount = 1)]
     public class M2
     {
         public static void Before<TType, T1>(TType instance, ref T1 a1)
@@ -49,7 +64,7 @@ namespace interceptor
         }
     }
 
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M3", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
+    //[StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M3", TargetTypeName = "app.C1", TargetMethodParametersCount = 0)]
     public class M3
     {
         public static void Before<T1>(T1 a1)
@@ -64,7 +79,7 @@ namespace interceptor
         }
     }
 
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M4", TargetTypeName = "app.C1", TargetMethodParametersCount = 2)]
+    //[StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M4", TargetTypeName = "app.C1", TargetMethodParametersCount = 2)]
     public class M4
     {
         public static void Before<TType, T1, T2>(TType instance, ref T1 a1, ref T2 a2) 
@@ -84,7 +99,7 @@ namespace interceptor
         }
     }
 
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "MX", TargetTypeName = "app.I1`1", TargetMethodParametersCount = 1)]
+    //[StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "MX", TargetTypeName = "app.I1`1", TargetMethodParametersCount = 1)]
     public class I1
     {
         public static void Before<TType, T1>(TType instance, ref T1 a1)

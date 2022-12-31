@@ -488,7 +488,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
 }
 
 
-std::vector<configuration::StrictInterception> CorProfiler::FindInterceptor(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
+std::vector<configuration::StrictInterception> CorProfiler::FindInterceptors(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
     std::vector<configuration::StrictInterception> result{};
 
     std::copy_if(
@@ -502,14 +502,16 @@ std::vector<configuration::StrictInterception> CorProfiler::FindInterceptor(cons
     }
     );
 
-    if (result.empty() && typeInfo.ParentTypeInfo != nullptr)
+    if (typeInfo.ParentTypeInfo != nullptr)
     {
-        result = FindInterceptor(*typeInfo.ParentTypeInfo, functionInfo);
+        auto r2 = FindInterceptors(*typeInfo.ParentTypeInfo, functionInfo);
+        std::copy(r2.begin(), r2.end(), std::back_inserter(result));
     }
 
-    if (result.empty() && typeInfo.ExtendTypeInfo != nullptr)
+    if (typeInfo.ExtendTypeInfo != nullptr)
     {
-        result = FindInterceptor(*typeInfo.ExtendTypeInfo, functionInfo);
+        auto r2 = FindInterceptors(*typeInfo.ExtendTypeInfo, functionInfo);
+        std::copy(r2.begin(), r2.end(), std::back_inserter(result));
     }
 
     return result;

@@ -41,14 +41,14 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     mdToken functionToken;
     ClassID classId;
 
-    const auto interceptor = std::find_if(profiler->rejitInfo.begin(), profiler->rejitInfo.end(), [moduleId, methodId](const RejitInfo& ri) {
-        return ri.methodId == methodId && ri.moduleId == moduleId;
+    const auto rejitInfo = std::find_if(profiler->rejitInfo.begin(), profiler->rejitInfo.end(), [moduleId, methodId](const RejitInfo& ri) {
+        return ri.MethodId == methodId && ri.ModuleId == moduleId;
     });
 
     // no rejit info => exit
-    if (interceptor == profiler->rejitInfo.end()) return S_OK;
+    if (rejitInfo == profiler->rejitInfo.end()) return S_OK;
 
-    logging::log(logging::LogLevel::INFO, "GetReJITParameters {0}.{1}"_W, interceptor->info.Type.Name, interceptor->info.Name);
+    logging::log(logging::LogLevel::INFO, "GetReJITParameters {0}.{1}"_W, rejitInfo->Info.Type.Name, rejitInfo->Info.Name);
 
     auto rewriter = profiler->CreateILRewriter(pFunctionControl, moduleId, methodId);
     hr = rewriter->Import();
@@ -61,23 +61,24 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     rewriter::ILRewriterHelper helper(rewriter);
     helper.SetILPosition(rewriter->GetILList()->m_pNext);
 
-    //auto firstIL = helper.GetCurrentInstr();
-
-    if (profiler->loadedModules.find(interceptor->interceptor.Interceptor.AssemblyName) == profiler->loadedModules.end())
+    for (auto i = 0; i < rejitInfo->Interceptors.size(); i++)
     {
-        logging::log(logging::LogLevel::VERBOSE, "Skip rejit because interceptor assembly is not loaded yet"_W);
-        return hr;
-    }
-    else
-    {
-        logging::log(logging::LogLevel::VERBOSE, "Continue rejit as interceptor assembly is loaded {0}"_W, profiler->loadedModules[interceptor->interceptor.Interceptor.AssemblyName]);
+        if (profiler->loadedModules.find(rejitInfo->Interceptors[i].Interceptor.AssemblyName) == profiler->loadedModules.end())
+        {
+            logging::log(logging::LogLevel::VERBOSE, "Skip rejit because interceptor assembly is not loaded yet"_W);
+            return hr;
+        }
+        else
+        {
+            logging::log(logging::LogLevel::VERBOSE, "Continue rejit as interceptor assembly is loaded {0}"_W, profiler->loadedModules[rejitInfo->Interceptors[i].Interceptor.AssemblyName]);
+        }
     }
 
     ComPtr<IUnknown> metadataInterfaces;
     hr = profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetModuleMetaData {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetModuleMetaData {0}"_W, rejitInfo->Info.Name);
         return hr;
     }
 
@@ -91,7 +92,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetMsCorLibRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetMsCorLibRef {0}"_W, rejitInfo->Info.Name);
         return hr;
     }
 
@@ -99,57 +100,69 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     mdTypeRef exceptionTypeRef;
     metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemException.data(), &exceptionTypeRef);
 
-    // define interceptor.dll
-    mdModuleRef baseDllRef;
-    hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, interceptor->interceptor.Interceptor.AssemblyName);
-    if (FAILED(hr))
-    {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
-        return hr;
-    }
-
     ULONG exceptionIndex = 0;
     ULONG returnIndex = 0;
 
-    hr = DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *interceptor, &exceptionIndex, &returnIndex);
+    hr = DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *rejitInfo, &exceptionIndex, &returnIndex);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineLocalSignature {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineLocalSignature {0}"_W, rejitInfo->Info.Name);
         return hr;
     }
 
     // initialize local variables
-    hr = InitLocalVariables(helper, rewriter, metadataEmit, metadataAssemblyEmit, moduleId, *interceptor, exceptionIndex, returnIndex);
+    hr = InitLocalVariables(helper, rewriter, metadataEmit, metadataAssemblyEmit, moduleId, *rejitInfo, exceptionIndex, returnIndex);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed InitLocalValues {0}"_W, interceptor->interceptor.Interceptor.AssemblyName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed InitLocalValues {0}"_W, rejitInfo->Info.Name);
         return hr;
     }
 
-    // define interceptor type
-    mdTypeRef interceptorTypeRef;
-    hr = metadataEmit->DefineTypeRefByName(
-        baseDllRef,
-        interceptor->interceptor.Interceptor.TypeName.data(),
-        &interceptorTypeRef);
-    if (FAILED(hr))
-    {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, interceptor->interceptor.Interceptor.TypeName);
-    }
+    rejitInfo->Info.Signature.ParseArguments();
 
-    interceptor->info.Signature.ParseArguments();
+    std::vector<mdTypeRef> interceptorTypeRefs;
+
+    for (auto i = 0; i < rejitInfo->Interceptors.size(); i++)
+    {
+        // define interceptor.dll
+        mdModuleRef baseDllRef;
+        hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, rejitInfo->Interceptors[i].Interceptor.AssemblyName);
+        if (FAILED(hr))
+        {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, rejitInfo->Interceptors[i].Interceptor.AssemblyName);
+            return hr;
+        }
+
+        // define interceptor type
+        mdTypeRef interceptorTypeRef;
+        hr = metadataEmit->DefineTypeRefByName(
+            baseDllRef,
+            rejitInfo->Interceptors[i].Interceptor.TypeName.data(),
+            &interceptorTypeRef);
+        if (FAILED(hr))
+        {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, rejitInfo->Interceptors[i].Interceptor.TypeName);
+            return hr;
+        }
+
+        interceptorTypeRefs.push_back(interceptorTypeRef);
+    }
 
     // try/catch for Interceptor.Before
     rewriter::EHClause beforeEx{};
     rewriter::ILInstr* beginFirst;
 
     hr = CreateTryCatch(
-        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, &beginFirst](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
+        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, &beginFirst](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
+        std::reverse(rejitInfo->Interceptors.begin(), rejitInfo->Interceptors.end());
         // call Before method
-        auto hr = CreateBeforeMethod(helper, tryBegin, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor);
-        if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
-            return hr;
+        for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
+            std::cout << "process before " << i << std::endl;
+            auto hr = CreateBeforeMethod(helper, i == 0 ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo);
+            if (FAILED(hr)) {
+                logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
+                return hr;
+            }
         }
 
         *tryLeave = helper.LeaveS();
@@ -158,7 +171,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
         return S_OK;
     },
-        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, exceptionTypeRef, &rewriter](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
+        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, exceptionTypeRef, &rewriter](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
         auto hr = LogInterceptorException(helper, rewriter, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
         if (FAILED(hr)) {
             logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
@@ -201,25 +214,25 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     rewriter::ILInstr* nopAfterCatch;
     rewriter::ILInstr* leaveAfterCatch;
     hr = CreateTryCatch(
-        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, &afterFirst, returnIndex, exceptionTypeRef, exceptionIndex, &leaveAfterTry](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
+        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, &afterFirst, returnIndex, exceptionTypeRef, exceptionIndex, &leaveAfterTry](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
         // call After method
-    auto hr = CreateAfterMethod(helper, tryBegin, metadataEmit, metadataAssemblyEmit, interceptorTypeRef, *interceptor, returnIndex, exceptionTypeRef, exceptionIndex);
-    if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
-        return hr;
-    }
 
-    leaveAfterTry = *tryLeave = helper.LeaveS();
-    if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
-        return hr;
-    }
+        for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
+            std::cout << "process after " << i << std::endl;
+            auto hr = CreateAfterMethod(helper, i == 0 ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo, returnIndex, exceptionTypeRef, exceptionIndex);
+            if (FAILED(hr)) {
+                logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
+                return hr;
+            }
+        }
 
-    afterFirst = *tryBegin;
+        leaveAfterTry = *tryLeave = helper.LeaveS();
 
-    return S_OK;
+        afterFirst = *tryBegin;
+
+        return S_OK;
     },
-        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRef, interceptor, exceptionTypeRef, &rewriter, &leaveAfterCatch, &nopAfterCatch](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
+        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, exceptionTypeRef, &rewriter, &leaveAfterCatch, &nopAfterCatch](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
     auto hr = LogInterceptorException(helper, rewriter, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
     if (FAILED(hr)) {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
@@ -255,7 +268,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     leaveAfterTry->m_pTarget = endFinally;
     //brFalseS->m_pTarget = endFinally;
 
-    auto isVoid = interceptor->info.Signature.ReturnType.IsVoid;
+    auto isVoid = rejitInfo->Info.Signature.ReturnType.IsVoid;
 
     if (!isVoid) {
         helper.LoadLocal(returnIndex);

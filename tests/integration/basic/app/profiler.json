@@ -58,6 +58,19 @@
         "TypeName": "app.C1"
       },
       "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "interceptor",
+        "TypeName": "interceptor.M1_1"
+      },
+      "Target": {
+        "AssemblyName": "app",
+        "MethodName": "M1",
+        "MethodParametersCount": 0,
+        "TypeName": "app.C1"
+      },
+      "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
     }
   ],
   "DefaultInitializer": {

@@ -7,6 +7,7 @@ namespace Interception.Core.Info
         public TypeInfo Interceptor { get; set; }
         public TargetMethod Target { get; set; }
         public string AssemblyPath { get; set; }
+        public int Priority { get; set; }
     }
 
     public class LoaderInfo

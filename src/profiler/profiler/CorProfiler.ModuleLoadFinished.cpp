@@ -82,14 +82,14 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
             // try firstly find an interceptor either for this type
             // or for a base type
-            auto interceptor = FindInterceptor(typeInfo, functionInfo);
+            auto interceptors = FindInterceptors(typeInfo, functionInfo);
             // if not found try to find an interceptor for one implemented interfaces
-            if (interceptor.empty())
+            if (interceptors.empty())
             {
                 for (auto interfaceIndex = 0; interfaceIndex < interfaceInfos.size(); interfaceIndex++)
                 {
-                    interceptor = FindInterceptor(interfaceInfos[interfaceIndex], functionInfo);
-                    if (!interceptor.empty())
+                    interceptors = FindInterceptors(interfaceInfos[interfaceIndex], functionInfo);
+                    if (!interceptors.empty())
                     {
                         break;
                     }
@@ -98,21 +98,23 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             }
 
             // no interceptor found => nothing to do
-            if (interceptor.empty())
+            if (interceptors.empty())
             {
                 continue;
             }
+
+            std::sort(interceptors.begin(), interceptors.end(), [](const configuration::StrictInterception& left, const configuration::StrictInterception& right) { return left.Priority < right.Priority; });
 
             ModuleID m1[1]{ moduleId };
             mdMethodDef m2[1]{ methods[methodIndex] };
             // save function info otherwise IMetaDataImport2 will throw an exception from Rejit-Handler
             // get first found interceptor
-            auto ri = RejitInfo(moduleId, methods[methodIndex], functionInfo, interceptor[0]);
+            auto ri = RejitInfo(moduleId, methods[methodIndex], functionInfo, interceptors);
             rejitInfo.push_back(ri);
             // and then request rejit
             hr = corProfilerInfo->RequestReJIT(1, m1, m2);
 
-            logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} with interceptor {2}"_W, ri.info.Type.Name, ri.info.Name, ri.interceptor.Interceptor.TypeName);
+            logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} with {2} interceptors"_W, ri.Info.Type.Name, ri.Info.Name, interceptors.size());
         }
     }
 

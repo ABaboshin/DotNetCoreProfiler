@@ -167,7 +167,8 @@ namespace Interception.Generator
                             AssemblyName = info.type.Assembly.GetName().Name,
                             TypeName = info.type.FullName,
                         },
-                        AssemblyPath = path
+                        AssemblyPath = path,
+                        Priority = info.attribute.Priority
                     };
                 })
                 .ToList();

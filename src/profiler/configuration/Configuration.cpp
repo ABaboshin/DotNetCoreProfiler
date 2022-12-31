@@ -91,8 +91,9 @@ namespace configuration
 
 		auto interceptor = std::get<0>(LoadTypeInfoFromJson(src["Interceptor"]));
 		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
+		auto priority = src.value("Priority", 0);
 
-		return std::make_pair<StrictInterception, bool>({ target, interceptor}, true);
+		return std::make_pair<StrictInterception, bool>({ target, interceptor, priority}, true);
 	}
 
 	LoaderInfo LoadLoaderFromJson(const nlohmann::json::value_type& src)

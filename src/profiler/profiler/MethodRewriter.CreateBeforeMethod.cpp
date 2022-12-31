@@ -12,7 +12,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 {
     HRESULT hr;
 
-    auto interceptorNumberOfArguments = interceptor.info.Signature.NumberOfArguments() + 1;
+    auto interceptorNumberOfArguments = interceptor.Info.Signature.NumberOfArguments() + 1;
 
     // define generic Before method
     std::vector<BYTE> genericBeforeSignature = {
@@ -45,7 +45,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
         return hr;
     }
 
@@ -53,28 +53,34 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     auto isValueType = false;
     mdToken targetTypeRef = mdTokenNil;
-    if (interceptor.info.Signature.IsInstanceMethod())
+    if (interceptor.Info.Signature.IsInstanceMethod())
     {
-        hr = GetTargetTypeRef(interceptor.info.Type, metadataEmit, metadataAssemblyEmit, &targetTypeRef, &isValueType);
+        hr = GetTargetTypeRef(interceptor.Info.Type, metadataEmit, metadataAssemblyEmit, &targetTypeRef, &isValueType);
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
             return hr;
         }
     }
 
     // load this or null
-    if (targetTypeRef == mdTokenNil || !interceptor.info.Signature.IsInstanceMethod()) {
-        *instr = helper.LoadNull();
+    if (targetTypeRef == mdTokenNil || !interceptor.Info.Signature.IsInstanceMethod()) {
+        auto loadNull = helper.LoadNull();
+        if (instr != nullptr) {
+            *instr = loadNull;
+        }
     }
     else
     {
-        *instr = helper.LoadArgument(0);
-        if (interceptor.info.Type.IsValueType) {
-            if (interceptor.info.Type.TypeSpec != mdTypeSpecNil) {
-                helper.LoadObj(interceptor.info.Type.TypeSpec);
+        auto loadArg = helper.LoadArgument(0);
+        if (instr != nullptr) {
+            *instr = loadArg;
+        }
+        if (interceptor.Info.Type.IsValueType) {
+            if (interceptor.Info.Type.TypeSpec != mdTypeSpecNil) {
+                helper.LoadObj(interceptor.Info.Type.TypeSpec);
             }
-            else if (interceptor.info.Type.IsGenericClassRef) {
-                helper.LoadObj(interceptor.info.Type.Id);
+            else if (interceptor.Info.Type.IsGenericClassRef) {
+                helper.LoadObj(interceptor.Info.Type.Id);
             }
             else {
                 return S_FALSE;
@@ -83,9 +89,9 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
     }
 
     // load arguments
-    for (auto i = 0; i < interceptor.info.Signature.NumberOfArguments(); i++)
+    for (auto i = 0; i < interceptor.Info.Signature.NumberOfArguments(); i++)
     {
-        helper.LoadArgumentRef(i + (interceptor.info.Signature.IsInstanceMethod() ? 1 : 0));
+        helper.LoadArgumentRef(i + (interceptor.Info.Signature.IsInstanceMethod() ? 1 : 0));
     }
 
     // non generic Before method
@@ -118,16 +124,16 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
     memcpy(&signature[offset], &targetTypeBuffer, targetTypeSize);
     offset += targetTypeSize;
 
-    for (auto i = 0; i < interceptor.info.Signature.NumberOfArguments(); i++)
+    for (auto i = 0; i < interceptor.Info.Signature.NumberOfArguments(); i++)
     {
-        if (interceptor.info.Signature.Arguments[i].Raw[0] == ELEMENT_TYPE_BYREF) {
-            memcpy(&signature[offset], &interceptor.info.Signature.Arguments[i].Raw[1], interceptor.info.Signature.Arguments[i].Raw.size() - 1);
-            offset += interceptor.info.Signature.Arguments[i].Raw.size();
+        if (interceptor.Info.Signature.Arguments[i].Raw[0] == ELEMENT_TYPE_BYREF) {
+            memcpy(&signature[offset], &interceptor.Info.Signature.Arguments[i].Raw[1], interceptor.Info.Signature.Arguments[i].Raw.size() - 1);
+            offset += interceptor.Info.Signature.Arguments[i].Raw.size();
         }
         else
         {
-            memcpy(&signature[offset], &interceptor.info.Signature.Arguments[i].Raw[0], interceptor.info.Signature.Arguments[i].Raw.size());
-            offset += interceptor.info.Signature.Arguments[i].Raw.size();
+            memcpy(&signature[offset], &interceptor.Info.Signature.Arguments[i].Raw[0], interceptor.Info.Signature.Arguments[i].Raw.size());
+            offset += interceptor.Info.Signature.Arguments[i].Raw.size();
         }
     }
 

@@ -12,11 +12,13 @@ namespace configuration
 	struct StrictInterception {
 		TargetMethod Target{};
 		TypeInfo Interceptor{};
+		int Priority = 0;
 
 		StrictInterception(
-			const TargetMethod& targetMethod, const ::configuration::TypeInfo& interceptor) :
+			const TargetMethod& targetMethod, const ::configuration::TypeInfo& interceptor, int priority) :
 			Target(targetMethod),
-			Interceptor(interceptor) {}
+			Interceptor(interceptor),
+			Priority(priority){}
 
 		StrictInterception() {}
 	};

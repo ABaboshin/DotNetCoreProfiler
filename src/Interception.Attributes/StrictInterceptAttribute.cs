@@ -10,11 +10,6 @@ namespace Interception.Attributes
     public class StrictInterceptAttribute : Attribute
     {
         /// <summary>
-        /// ignore calls to the method from the listed assemblies
-        /// </summary>
-        // public string[] IgnoreCallerAssemblies { get; set; }
-
-        /// <summary>
         /// assembly name where the method is placed
         /// </summary>
         public string TargetAssemblyName { get; set; }
@@ -33,5 +28,10 @@ namespace Interception.Attributes
         /// count of parameters of the intercepted method
         /// </summary>
         public int TargetMethodParametersCount { get; set; }
+
+        /// <summary>
+        /// interceptor priority
+        /// </summary>
+        public int Priority { get; set; } = 0;
     }
 }

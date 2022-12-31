@@ -50,8 +50,8 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
   ULONG newSignatureOffset = 0;
   ULONG newLocalsCount = 1;
 
-  auto returnSignature = interceptor.info.Signature.ReturnType.Raw;
-  auto isVoid = interceptor.info.Signature.ReturnType.IsVoid;
+  auto returnSignature = interceptor.Info.Signature.ReturnType.Raw;
+  auto isVoid = interceptor.Info.Signature.ReturnType.IsVoid;
 
   if (!isVoid)
   {
@@ -113,7 +113,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
   hr = metadataEmit->GetTokenFromSig(newSignatureBuffer, newSignatureSize, &newLocalVarSig);
   if (FAILED(hr))
   {
-    logging::log(logging::LogLevel::NONSUCCESS, "Failed local sig {0}"_W, interceptor.interceptor.Interceptor.AssemblyName);
+    logging::log(logging::LogLevel::NONSUCCESS, "Failed local sig {0}"_W, interceptor.Info.Name);
     return hr;
   }
 
@@ -137,7 +137,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
     helper.LoadNull();
     helper.StLocal(exceptionIndex);
 
-    auto isVoid = interceptor.info.Signature.ReturnType.IsVoid;
+    auto isVoid = interceptor.Info.Signature.ReturnType.IsVoid;
 
     if (!isVoid)
     {
@@ -187,7 +187,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
             return hr;
         }
 
-        auto methodArgumentSignatureSize = interceptor.info.Signature.ReturnType.Raw.size();
+        auto methodArgumentSignatureSize = interceptor.Info.Signature.ReturnType.Raw.size();
         auto signatureLength = 2 + methodArgumentSignatureSize;
 
         COR_SIGNATURE signature[500];
@@ -195,7 +195,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, r
         signature[offset++] = IMAGE_CEE_CS_CALLCONV_GENERICINST;
         signature[offset++] = 0x01;
 
-        memcpy(&signature[offset], &interceptor.info.Signature.ReturnType.Raw[0], interceptor.info.Signature.ReturnType.Raw.size());
+        memcpy(&signature[offset], &interceptor.Info.Signature.ReturnType.Raw[0], interceptor.Info.Signature.ReturnType.Raw.size());
         offset += methodArgumentSignatureSize;
 
         mdMethodSpec getDefaultSpecRef = mdMethodSpecNil;

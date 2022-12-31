@@ -13,7 +13,7 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, re
 {
     HRESULT hr;
 
-    auto isVoid = interceptor.info.Signature.ReturnType.IsVoid;
+    auto isVoid = interceptor.Info.Signature.ReturnType.IsVoid;
 
     // define generic After method
     COR_SIGNATURE genericAfterSignature[1024];
@@ -48,25 +48,31 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, re
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod {0}"_W, interceptor.interceptor.Interceptor.TypeName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod {0}"_W, interceptor.Info.Name);
         return hr;
     }
 
     // get result type id
 
     mdToken returnValueTypeSpec = mdTokenNil;
-    auto returnSignature = interceptor.info.Signature.ReturnType.Raw;
+    auto returnSignature = interceptor.Info.Signature.ReturnType.Raw;
     if (!isVoid) {
         hr = metadataEmit->GetTokenFromTypeSpec(&returnSignature[0], returnSignature.size(), &returnValueTypeSpec);
     }
 
     // load this or null
     if (returnValueTypeSpec == mdTokenNil) {
-        *instr = helper.LoadNull();
+        auto loadNull = helper.LoadNull();
+        if (instr != nullptr) {
+            *instr = loadNull;
+        }
     }
     else
     {
-        *instr = helper.LoadLocal(returnIndex);
+        auto loadLocal = helper.LoadLocal(returnIndex);
+        if (instr != nullptr) {
+            *instr = loadLocal;
+        }
     }
 
     // load exception
