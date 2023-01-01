@@ -79,25 +79,35 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[methodIndex]);
             functionInfo.Signature.ParseArguments();
 
-            // try firstly find an interceptor either for this type
+            // find an interceptor either for this type
             // or for a base type
             auto interceptors = FindInterceptors(typeInfo, functionInfo);
-            // if not found try to find an interceptor for one implemented interfaces
-            if (interceptors.empty())
+            auto traces = FindTraces(typeInfo, functionInfo);
+            // then find an interceptor for one implemented interfaces
+            for (auto interfaceIndex = 0; interfaceIndex < interfaceInfos.size(); interfaceIndex++)
+            {
+                auto x = FindInterceptors(interfaceInfos[interfaceIndex], functionInfo);
+                std::copy(
+                    x.begin(),
+                    x.end(),
+                    std::back_inserter(interceptors));
+            }
+
+            if (traces.empty())
             {
                 for (auto interfaceIndex = 0; interfaceIndex < interfaceInfos.size(); interfaceIndex++)
                 {
-                    interceptors = FindInterceptors(interfaceInfos[interfaceIndex], functionInfo);
-                    if (!interceptors.empty())
+                    traces = FindTraces(interfaceInfos[interfaceIndex], functionInfo);
+                    if (!traces.empty())
                     {
                         break;
                     }
                 }
-                
+
             }
 
             // no interceptor found => nothing to do
-            if (interceptors.empty())
+            if (interceptors.empty() && traces.empty())
             {
                 continue;
             }
@@ -108,7 +118,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
             mdMethodDef m2[1]{ methods[methodIndex] };
             // save function info otherwise IMetaDataImport2 will throw an exception from Rejit-Handler
             // get first found interceptor
-            auto ri = RejitInfo(moduleId, methods[methodIndex], functionInfo, interceptors);
+            auto ri = RejitInfo(moduleId, methods[methodIndex], functionInfo, interceptors, traces.size() > 0 ? std::make_shared<configuration::TraceMethodInfo>(traces[0]) : nullptr);
             rejitInfo.push_back(ri);
             // and then request rejit
             hr = corProfilerInfo->RequestReJIT(1, m1, m2);

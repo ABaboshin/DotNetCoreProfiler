@@ -47,6 +47,7 @@ protected:
     }
 
     std::vector<configuration::StrictInterception> FindInterceptors(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo);
+    std::vector<configuration::TraceMethodInfo> FindTraces(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo);
 
     std::vector<info::TypeInfo> GetAllImplementedInterfaces(const info::TypeInfo typeInfo, util::ComPtr<IMetaDataImport2>& metadataImport);
 

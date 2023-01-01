@@ -494,7 +494,7 @@ std::vector<configuration::StrictInterception> CorProfiler::FindInterceptors(con
         configuration.StrictInterceptions.begin(),
         configuration.StrictInterceptions.end(),
         std::back_inserter(result),
-        [&typeInfo, &functionInfo](const configuration::StrictInterception& interception) {
+        [typeInfo, functionInfo](const configuration::StrictInterception& interception) {
         return
         typeInfo.Name == interception.Target.TypeName
         && functionInfo.Name == interception.Target.MethodName && functionInfo.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
@@ -510,6 +510,34 @@ std::vector<configuration::StrictInterception> CorProfiler::FindInterceptors(con
     if (typeInfo.ExtendTypeInfo != nullptr)
     {
         auto r2 = FindInterceptors(*typeInfo.ExtendTypeInfo, functionInfo);
+        std::copy(r2.begin(), r2.end(), std::back_inserter(result));
+    }
+
+    return result;
+}
+
+std::vector<configuration::TraceMethodInfo> CorProfiler::FindTraces(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
+    std::vector<configuration::TraceMethodInfo> result{};
+
+    std::copy_if(
+        configuration.Traces.begin(),
+        configuration.Traces.end(),
+        std::back_inserter(result),
+        [typeInfo, functionInfo](const configuration::TraceMethodInfo& interception) {
+        return
+        typeInfo.Name == interception.TargetMethod.TypeName
+        && functionInfo.Name == interception.TargetMethod.MethodName && functionInfo.Signature.NumberOfArguments() == interception.TargetMethod.MethodParametersCount;
+    });
+
+    if (typeInfo.ParentTypeInfo != nullptr)
+    {
+        auto r2 = FindTraces(*typeInfo.ParentTypeInfo, functionInfo);
+        std::copy(r2.begin(), r2.end(), std::back_inserter(result));
+    }
+
+    if (typeInfo.ExtendTypeInfo != nullptr)
+    {
+        auto r2 = FindTraces(*typeInfo.ExtendTypeInfo, functionInfo);
         std::copy(r2.begin(), r2.end(), std::back_inserter(result));
     }
 

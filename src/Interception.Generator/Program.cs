@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using Interception.Attributes;
+using Interception.Attributes.Tracing;
 using Interception.Core.Info;
 using Newtonsoft.Json;
 using System;
@@ -21,9 +22,15 @@ namespace Interception.Generator
 
                     var strict = new List<StrictInterceptionInfo>();
                     var skipAssemblies = File.Exists(opts.Skip) ? File.ReadAllLines(opts.Skip) : new string[] { };
-                    LoaderInfo loader = null;
-                    DefaultInitializerInfo defaultInitializer = null;
-                    ExceptionLoggerInfo exceptionLogger = null;
+                    TypeInfo loader = null;
+                    InterceptorMethodInfo defaultInitializer = null;
+                    InterceptorMethodInfo exceptionLogger = null;
+                    InterceptorMethodInfo tracingBeginMethod = null;
+                    InterceptorMethodInfo tracingEndMethod = null;
+                    InterceptorMethodInfo tracingAddParameterMethod = null;
+
+                    var traceFileContent = File.Exists(opts.TraceFile) ? File.ReadAllText(opts.TraceFile) : null;
+                    var traces = !string.IsNullOrEmpty(traceFileContent) ? System.Text.Json.JsonSerializer.Deserialize<List<TraceMethodInfo>>(traceFileContent) : null;
 
                     foreach (var assemblyPath in opts.Assemblies)
                     {
@@ -33,29 +40,56 @@ namespace Interception.Generator
 
                         if (loader is null)
                         {
-                            loader = FindLoader(assembly, fullPath);
+                            loader = FindTypeInfo<LoaderAttribute>(assembly, fullPath);
                         }
-                        else if (FindLoader(assembly, fullPath) != null)
+                        else if (FindTypeInfo<LoaderAttribute>(assembly, fullPath) != null)
                         {
                             throw new Exception("duplicate loader");
                         }
 
                         if (defaultInitializer is null)
                         {
-                            defaultInitializer = FindDefaultInitializer(assembly, fullPath);
+                            defaultInitializer = FindInterceptorMethod<DefaultInitializerAttribute>(assembly, fullPath);
                         }
-                        else if (FindDefaultInitializer(assembly, fullPath) != null)
+                        else if (FindInterceptorMethod<DefaultInitializerAttribute>(assembly, fullPath) != null)
                         {
                             throw new Exception("duplicate default initializer");
                         }
 
                         if (exceptionLogger is null)
                         {
-                            exceptionLogger = FindExceptionLogger(assembly, fullPath);
+                            exceptionLogger = FindInterceptorMethod<ExceptionLoggerAttribute>(assembly, fullPath);
                         }
-                        else if (FindExceptionLogger(assembly, fullPath) != null)
+                        else if (FindInterceptorMethod<ExceptionLoggerAttribute>(assembly, fullPath) != null)
                         {
                             throw new Exception("duplicate default exception logger");
+                        }
+
+                        if (tracingBeginMethod is null)
+                        {
+                            tracingBeginMethod = FindInterceptorMethod<TracingBeginMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<TracingBeginMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate tracing begin method");
+                        }
+
+                        if (tracingEndMethod is null)
+                        {
+                            tracingEndMethod = FindInterceptorMethod<TracingEndMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<TracingEndMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate tracing end method");
+                        }
+
+                        if (tracingAddParameterMethod is null)
+                        {
+                            tracingAddParameterMethod = FindInterceptorMethod<TracingAddParameterMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<TracingAddParameterMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate tracing add parameter method");
                         }
                     }
 
@@ -76,7 +110,11 @@ namespace Interception.Generator
                         Strict = strict,
                         DefaultInitializer = defaultInitializer,
                         ExceptionLogger = exceptionLogger,
-                        Path = opts.Path
+                        Path = opts.Path,
+                        TracingBeginMethod = tracingBeginMethod,
+                        TracingEndMethod = tracingEndMethod,
+                        TracingAddParameterMethod= tracingAddParameterMethod,
+                        Traces = traces
                     };
 
                     File.WriteAllText(opts.Output, System.Text.Json.JsonSerializer.Serialize(result, new JsonSerializerOptions { 
@@ -85,15 +123,15 @@ namespace Interception.Generator
                 });
         }
 
-        private static DefaultInitializerInfo FindDefaultInitializer(Assembly assembly, string path)
+        private static InterceptorMethodInfo FindInterceptorMethod<T>(Assembly assembly, string path) where T : Attribute
         {
             var result = assembly
                 .GetTypes()
                 .SelectMany(t => t.GetMethods())
-                .Where(m => m.GetCustomAttributes<DefaultInitializerAttribute>().Any())
-                .SelectMany(m => m.GetCustomAttributes<DefaultInitializerAttribute>().Select(attribute => new { m, attribute }))
+                .Where(m => m.GetCustomAttributes<T>().Any())
+                .SelectMany(m => m.GetCustomAttributes<T>().Select(attribute => new { m, attribute }))
                 .Select(info => {
-                    return new DefaultInitializerInfo
+                    return new InterceptorMethodInfo
                     {
                         MethodName = info.m.Name,
                         TypeName = info.m.DeclaringType.FullName,
@@ -106,38 +144,18 @@ namespace Interception.Generator
             return result;
         }
 
-        private static ExceptionLoggerInfo FindExceptionLogger(Assembly assembly, string path)
+        private static TypeInfo FindTypeInfo<T>(Assembly assembly, string path) where T : Attribute
         {
             var result = assembly
                 .GetTypes()
-                .SelectMany(t => t.GetMethods())
-                .Where(m => m.GetCustomAttributes<ExceptionLoggerAttribute>().Any())
-                .SelectMany(m => m.GetCustomAttributes<ExceptionLoggerAttribute>().Select(attribute => new { m, attribute }))
+                .Where(type => type.GetCustomAttributes<T>().Any())
+                .SelectMany(type => type.GetCustomAttributes<T>().Select(attribute => new { type, attribute }))
                 .Select(info => {
-                    return new ExceptionLoggerInfo
-                    {
-                        MethodName = info.m.Name,
-                        TypeName = info.m.DeclaringType.FullName,
-                        AssemblyPath = path,
-                        AssemblyName = assembly.GetName().Name,
-                    };
-                })
-                .FirstOrDefault();
-
-            return result;
-        }
-
-        private static LoaderInfo FindLoader(Assembly assembly, string path)
-        {
-            var result = assembly
-                .GetTypes()
-                .Where(type => type.GetCustomAttributes<LoaderAttribute>().Any())
-                .SelectMany(type => type.GetCustomAttributes<LoaderAttribute>().Select(attribute => new { type, attribute }))
-                .Select(info => {
-                    return new LoaderInfo
+                    return new TypeInfo
                     {
                         TypeName = info.type.FullName,
-                        AssemblyPath = path
+                        AssemblyPath = path,
+                        AssemblyName = assembly.GetName().Name
                     };
                 })
                 .FirstOrDefault();
@@ -155,7 +173,7 @@ namespace Interception.Generator
                 {
                     return new StrictInterceptionInfo
                     {
-                        Target = new TargetMethod
+                        Target = new TargetMethodnfo
                         {
                             AssemblyName = info.attribute.TargetAssemblyName,
                             MethodName = info.attribute.TargetMethodName,
@@ -166,8 +184,8 @@ namespace Interception.Generator
                         {
                             AssemblyName = info.type.Assembly.GetName().Name,
                             TypeName = info.type.FullName,
+                            AssemblyPath = path
                         },
-                        AssemblyPath = path,
                         Priority = info.attribute.Priority
                     };
                 })

@@ -49,6 +49,19 @@
     {
       "Interceptor": {
         "AssemblyName": "interceptor",
+        "TypeName": "interceptor.M4"
+      },
+      "Target": {
+        "AssemblyName": "app",
+        "MethodName": "M4",
+        "MethodParametersCount": 2,
+        "TypeName": "app.C1"
+      },
+      "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "interceptor",
         "TypeName": "interceptor.M1"
       },
       "Target": {
@@ -84,5 +97,35 @@
     "TypeName": "Interception.DefaultImpl.ExceptionLogger",
     "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.DefaultImpl.dll",
     "MethodName": "LogException"
-  }
+  },
+  "TracingBeginMethod": {
+    "MethodName": "BeginTracing",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "/profiler/Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "TracingEndMethod": {
+    "MethodName": "EndTracing",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "/profiler/Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "TracingAddParameterMethod": {
+    "MethodName": "AddParameter",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "/profiler/Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "Traces": [
+    {
+      "TargetMethod": {
+        "AssemblyName": "app",
+        "MethodName": "M4",
+        "MethodParametersCount": 2,
+        "TypeName": "app.C1"
+      },
+      "Parameters": [ "s", "o" ],
+      "Name": "TestX"
+    }
+  ]
 }

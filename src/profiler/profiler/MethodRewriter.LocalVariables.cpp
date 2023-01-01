@@ -130,7 +130,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
   return S_OK;
 }
 
-HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, rewriter::ILRewriter* rewriter, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, ModuleID moduleId, const RejitInfo& interceptor, ULONG exceptionIndex, ULONG returnIndex) {
+HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, ModuleID moduleId, const RejitInfo& interceptor, ULONG exceptionIndex, ULONG returnIndex) {
     HRESULT hr;
 
     // ex = null

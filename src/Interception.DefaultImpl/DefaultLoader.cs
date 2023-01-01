@@ -46,6 +46,27 @@ namespace Interception.DefaultImpl
                 var a = Assembly.Load(configuration.ExceptionLogger.AssemblyName);
                 a.CreateInstance(configuration.ExceptionLogger.TypeName);
             }
+
+            if (configuration.TracingBeginMethod != null)
+            {
+                Console.WriteLine($"Load exception logger {configuration.TracingBeginMethod.TypeName}");
+                var a = Assembly.Load(configuration.TracingBeginMethod.AssemblyName);
+                a.CreateInstance(configuration.TracingBeginMethod.TypeName);
+            }
+
+            if (configuration.TracingEndMethod != null)
+            {
+                Console.WriteLine($"Load exception logger {configuration.TracingEndMethod.TypeName}");
+                var a = Assembly.Load(configuration.TracingEndMethod.AssemblyName);
+                a.CreateInstance(configuration.TracingEndMethod.TypeName);
+            }
+
+            if (configuration.TracingAddParameterMethod != null)
+            {
+                Console.WriteLine($"Load exception logger {configuration.TracingAddParameterMethod.TypeName}");
+                var a = Assembly.Load(configuration.TracingAddParameterMethod.AssemblyName);
+                a.CreateInstance(configuration.TracingAddParameterMethod.TypeName);
+            }
         }
     }
 }

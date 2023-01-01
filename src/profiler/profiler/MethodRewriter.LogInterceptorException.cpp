@@ -8,19 +8,19 @@
 #include "util/helpers.h"
 #include "const/const.h"
 
-HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& helper, rewriter::ILRewriter* rewriter, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef exceptionTypeRef)
+HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef exceptionTypeRef)
 {
     // if no exception logger is defined => do nothing
-    if (profiler->configuration.ExceptionLogger.NotFound) {
+    if (profiler->configuration.ExceptionLogger == nullptr) {
         *instr = helper.Nop();
         return S_OK;
     }
     // define interceptor.dll
     mdModuleRef baseDllRef;
-    auto hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, profiler->configuration.ExceptionLogger.AssemblyName);
+    auto hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, profiler->configuration.ExceptionLogger->AssemblyName);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, profiler->configuration.ExceptionLogger.AssemblyName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, profiler->configuration.ExceptionLogger->AssemblyName);
         return hr;
     }
 
@@ -28,11 +28,11 @@ HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& help
     mdTypeRef defaultInitializerTypeRef;
     hr = metadataEmit->DefineTypeRefByName(
         baseDllRef,
-        profiler->configuration.ExceptionLogger.TypeName.data(),
+        profiler->configuration.ExceptionLogger->TypeName.data(),
         &defaultInitializerTypeRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.ExceptionLogger.TypeName);
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.ExceptionLogger->TypeName);
         return hr;
     }
 
@@ -51,7 +51,7 @@ HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& help
 
     mdMemberRef loggerRef;
     hr = metadataEmit->DefineMemberRef(
-        defaultInitializerTypeRef, profiler->configuration.ExceptionLogger.MethodName.data(),
+        defaultInitializerTypeRef, profiler->configuration.ExceptionLogger->MethodName.data(),
         memberSignature,
         offset,
         &loggerRef);

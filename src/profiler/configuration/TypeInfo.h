@@ -10,10 +10,12 @@ namespace configuration
 	struct TypeInfo {
 		wstring AssemblyName;
 		wstring TypeName;
+		wstring AssemblyPath;
 
-		TypeInfo(const wstring& assemblyName, const wstring& typeName) :
+		TypeInfo(const wstring& assemblyName, const wstring& typeName, const wstring& assemblyPath) :
 			AssemblyName(assemblyName),
-			TypeName(typeName) {}
+			TypeName(typeName),
+			AssemblyPath(assemblyPath) {}
 
 		TypeInfo() :
 			AssemblyName(""_W),

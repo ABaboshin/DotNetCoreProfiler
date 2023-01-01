@@ -232,12 +232,13 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
-    void ILRewriterHelper::LoadStr(mdToken token)
+    ILInstr* ILRewriterHelper::LoadStr(mdToken token)
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_LDSTR;
         pNewInstr->m_Arg32 = token;
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
 	void ILRewriterHelper::Box(mdToken token)

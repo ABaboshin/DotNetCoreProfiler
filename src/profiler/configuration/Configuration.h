@@ -1,14 +1,12 @@
 #pragma once
 
 #include <vector>
-#include <unordered_map>
 #include <unordered_set>
-#include "LoaderInfo.h"
+#include <memory>
 #include "TypeInfo.h"
 #include "StrictInterception.h"
-#include "DefaultInitializerInfo.h"
-#include "ExceptionLoggerInfo.h"
-
+#include "InterceptorMethodInfo.h"
+#include "TraceMethodInfo.h"
 
 namespace configuration
 {
@@ -16,21 +14,33 @@ namespace configuration
 	{
 		std::vector<StrictInterception> StrictInterceptions{};
 		std::unordered_set<wstring> SkipAssemblies;
-		LoaderInfo Loader;
-		DefaultInitializerInfo DefaultInitializer;
-		ExceptionLoggerInfo ExceptionLogger;
+		TypeInfo Loader;
+		InterceptorMethodInfo DefaultInitializer;
+		std::shared_ptr<InterceptorMethodInfo> ExceptionLogger;
+		std::shared_ptr<InterceptorMethodInfo> TracingBeginMethod;
+		std::shared_ptr<InterceptorMethodInfo> TracingEndMethod;
+		std::shared_ptr<InterceptorMethodInfo> TracingAddParameterMethod;
+		std::vector<TraceMethodInfo> Traces{};
 
 		Configuration(std::vector<StrictInterception> strictInterceptions,
 			std::unordered_set<wstring>& skipAssemblies,
-			LoaderInfo loader,
-			DefaultInitializerInfo defaultInitializer,
-			ExceptionLoggerInfo exceptionLogger
+			TypeInfo loader,
+			InterceptorMethodInfo defaultInitializer,
+			std::shared_ptr<InterceptorMethodInfo> exceptionLogger,
+			std::shared_ptr<InterceptorMethodInfo> tracingBeginMethod,
+			std::shared_ptr<InterceptorMethodInfo> tracingEndMethod,
+			std::shared_ptr<InterceptorMethodInfo> tracingAddParameterMethod,
+			std::vector<TraceMethodInfo> traces
 		) :
 			StrictInterceptions(strictInterceptions),
 			SkipAssemblies(skipAssemblies),
 			Loader(loader),
 			DefaultInitializer(defaultInitializer),
-			ExceptionLogger(exceptionLogger)
+			ExceptionLogger(exceptionLogger),
+			TracingBeginMethod(tracingBeginMethod),
+			TracingEndMethod(tracingEndMethod),
+			TracingAddParameterMethod(tracingAddParameterMethod),
+			Traces(traces)
 		{}
 
 		Configuration() {}

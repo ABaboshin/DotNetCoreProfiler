@@ -47,7 +47,7 @@ namespace rewriter
 
         void Ret();
 
-        void LoadStr(mdToken token);
+        ILInstr* LoadStr(mdToken token);
 
         void Box(mdToken token);
 

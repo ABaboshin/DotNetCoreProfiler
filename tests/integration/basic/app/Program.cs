@@ -7,16 +7,16 @@ namespace app
     {
         static async Task Main(string[] args)
         {
-            var x = new X1();
-            x.MX<int>(3);
-            await x.Test(3);
+            //var x = new X1();
+            //x.MX<int>(3);
+            //await x.Test(3);
 
             C1.M1();
-            C1.M11();
-            C1.M2("teststr");
+            //C1.M11();
+            //C1.M2("teststr");
 
             var c1 = new C1();
-            c1.M3();
+            //c1.M3();
             try
             {
                 c1.M4(123, "strparam");
@@ -44,8 +44,9 @@ namespace app
         public void M3() { }
         public int M4<T1, T2>(T1 s, T2 o)
         {
-            Console.WriteLine($"M4 {s} {o}");
-            throw new Exception();
+            return 1;
+            //Console.WriteLine($"M4 {s} {o}");
+            //throw new Exception();
         }
     }
 
