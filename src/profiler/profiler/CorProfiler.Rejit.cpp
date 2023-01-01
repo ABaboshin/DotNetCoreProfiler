@@ -3,7 +3,6 @@
 #include <string>
 #include "corhlpr.h"
 #include "corhdr.h"
-#include "configuration/back_inserter.h"
 #include "configuration/Configuration.h"
 #include "const/const.h"
 #include "info/InterceptionVarInfo.h"

@@ -157,7 +157,6 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         std::reverse(rejitInfo->Interceptors.begin(), rejitInfo->Interceptors.end());
         // call Before method
         for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
-            std::cout << "process before " << i << std::endl;
             auto hr = CreateBeforeMethod(helper, i == 0 ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo);
             if (FAILED(hr)) {
                 logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
@@ -218,7 +217,6 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         // call After method
 
         for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
-            std::cout << "process after " << i << std::endl;
             auto hr = CreateAfterMethod(helper, i == 0 ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo, returnIndex, exceptionTypeRef, exceptionIndex);
             if (FAILED(hr)) {
                 logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
