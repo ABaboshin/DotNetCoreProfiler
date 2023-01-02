@@ -20,5 +20,5 @@ namespace util
 	wstring ToString(const std::vector<WCHAR>& data, size_t length);
 	std::vector<WCHAR> ToRaw(const wstring& str);
 	std::vector<BYTE> ToRaw(PCCOR_SIGNATURE signature, ULONG length);
-	wstring HexStr(const void* dataPtr, int len);
+	std::string HexStr(const void* dataPtr, int len);
 }

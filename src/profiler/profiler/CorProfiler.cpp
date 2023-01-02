@@ -19,6 +19,11 @@
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr), methodRewriter(this)
 {
     logging::init();
+#define OPDEF(c, s, pop, push, args, type, l, s1, s2, flow) opCodes.push_back(s);
+#include "opcode.def"
+#undef OPDEF
+    opCodes.push_back("(count)");
+    opCodes.push_back("->");
 }
 
 CorProfiler::~CorProfiler()

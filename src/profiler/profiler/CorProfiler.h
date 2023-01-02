@@ -18,6 +18,7 @@
 class CorProfiler : public ICorProfilerCallback8
 {
 protected:
+    std::vector<std::string> opCodes;
     DWORD eventMask;
     bool oneAppDomainMode = false;
     MethodRewriter methodRewriter;
@@ -50,6 +51,8 @@ protected:
     std::vector<configuration::TraceMethodInfo> FindTraces(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo);
 
     std::vector<info::TypeInfo> GetAllImplementedInterfaces(const info::TypeInfo typeInfo, util::ComPtr<IMetaDataImport2>& metadataImport);
+
+    util::wstring DumpILCodes(rewriter::ILRewriter* rewriter, const info::FunctionInfo& functionInfo, const ComPtr<IMetaDataImport2>& metadataImport);
 
 public:
     CorProfiler();

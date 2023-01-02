@@ -109,7 +109,7 @@ namespace util
     constexpr char HexMap[] = { '0', '1', '2', '3', '4', '5', '6', '7',
                                '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
 
-    wstring HexStr(const void* dataPtr, int len)
+    std::string HexStr(const void* dataPtr, int len)
     {
         const unsigned char* data = (unsigned char*)dataPtr;
         wstring s(len * 2, ' ');
@@ -118,6 +118,6 @@ namespace util
             s[2 * i] = HexMap[(data[i] & 0xF0) >> 4];
             s[2 * i + 1] = HexMap[data[i] & 0x0F];
         }
-        return s;
+        return ToString(s);
     }
 }

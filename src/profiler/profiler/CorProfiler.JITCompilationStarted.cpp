@@ -106,10 +106,6 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
         return hr;
     }
 
-    rewriter::ILRewriterHelper helper(&rewriter);
-    helper.SetILPosition(rewriter.GetILList()->m_pNext);
-    helper.CallMember(retMethodToken, false);
-
     ComPtr<IUnknown> metadataInterfaces;
     hr = this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
     if (FAILED(hr))
@@ -119,6 +115,14 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
     }
 
     const auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+    logging::log(logging::LogLevel::VERBOSE, "main method before {0}"_W, DumpILCodes(&rewriter, functionInfo, metadataImport));
+
+    rewriter::ILRewriterHelper helper(&rewriter);
+    helper.SetILPosition(rewriter.GetILList()->m_pNext);
+    helper.CallMember(retMethodToken, false);
+
+    logging::log(logging::LogLevel::VERBOSE, "main method after {0}"_W, DumpILCodes(&rewriter, functionInfo, metadataImport));
 
     return S_OK;
 }
@@ -215,36 +219,36 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
     rewriter::ILRewriterHelper helper(rewriter);
     helper.SetILPosition(rewriter->GetILList()->m_pNext);
 
+    logging::log(logging::LogLevel::INFO, "Load {0}"_W, configuration.Loader.AssemblyPath);
+
+    // assembly path
+    mdString pathToken;
+    hr = metadataEmit->DefineUserString(configuration.Loader.AssemblyPath.c_str(), (ULONG)configuration.Loader.AssemblyPath.length(), &pathToken);
+
+    helper.LoadStr(pathToken);
+    helper.CallMember(assemblyLoadFromRef, false);
+
+    logging::log(logging::LogLevel::INFO, "Loader {0} from {1}"_W, configuration.Loader.TypeName, configuration.Loader.AssemblyPath);
+
+
+    mdString loaderToken;
+    metadataEmit->DefineUserString(configuration.Loader.TypeName.c_str(), (ULONG)configuration.Loader.TypeName.length(), &loaderToken);
+
+    helper.LoadStr(loaderToken);
+    helper.CallMember(createInstanceMemberRef, true);
+    helper.Pop();
+
+    // ret
+    helper.Ret();
+
+    logging::log(logging::LogLevel::VERBOSE, "load method {0}"_W, DumpILCodes(rewriter, functionInfo, metadataImport));
+
+    hr = rewriter->Export();
+
+    if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::INFO, "Load {0}"_W, configuration.Loader.AssemblyPath);
-
-        // assembly path
-        mdString pathToken;
-        hr = metadataEmit->DefineUserString(configuration.Loader.AssemblyPath.c_str(), (ULONG)configuration.Loader.AssemblyPath.length(), &pathToken);
-
-        helper.LoadStr(pathToken);
-        helper.CallMember(assemblyLoadFromRef, false);
-
-        logging::log(logging::LogLevel::INFO, "Loader {0} from {1}"_W, configuration.Loader.TypeName, configuration.Loader.AssemblyPath);
-
-
-        mdString loaderToken;
-        metadataEmit->DefineUserString(configuration.Loader.TypeName.c_str(), (ULONG)configuration.Loader.TypeName.length(), &loaderToken);
-
-        helper.LoadStr(loaderToken);
-        helper.CallMember(createInstanceMemberRef, true);
-        helper.Pop();
-
-        // ret
-        helper.Ret();
-
-        hr = rewriter->Export();
-
-        if (FAILED(hr))
-        {
-            logging::log(logging::LogLevel::INFO, "Failed to create load method"_W);
-        }
-
-        return hr;
+        logging::log(logging::LogLevel::INFO, "Failed to create load method"_W);
     }
+
+    return hr;
 }
