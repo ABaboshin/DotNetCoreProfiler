@@ -1,12 +1,12 @@
 ﻿using System;
 
-namespace Interception.Attributes.Tracing
+namespace Interception.Attributes.Debugger
 {
     /// <summary>
-    /// end tracing span
+    /// end Debugger span
     /// </summary>
     [AttributeUsage(AttributeTargets.Method, AllowMultiple = true, Inherited = false)]
-    public class TracingEndMethodAttribute : Attribute
+    public class DebuggerEndMethodAttribute : Attribute
     {
     }
 }

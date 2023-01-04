@@ -1,5 +1,6 @@
 ﻿using CommandLine;
 using Interception.Attributes;
+using Interception.Attributes.Debugger;
 using Interception.Attributes.Tracing;
 using Interception.Core.Info;
 using Newtonsoft.Json;
@@ -28,9 +29,16 @@ namespace Interception.Generator
                     InterceptorMethodInfo tracingBeginMethod = null;
                     InterceptorMethodInfo tracingEndMethod = null;
                     InterceptorMethodInfo tracingAddParameterMethod = null;
+                    InterceptorMethodInfo debuggerBeginMethod = null;
+                    InterceptorMethodInfo debuggerEndMethod = null;
+                    InterceptorMethodInfo debuggerAddParameterMethod = null;
+                    InterceptorMethodInfo debuggerInitializerMethod = null;
 
                     var traceFileContent = File.Exists(opts.TraceFile) ? File.ReadAllText(opts.TraceFile) : null;
                     var traces = !string.IsNullOrEmpty(traceFileContent) ? System.Text.Json.JsonSerializer.Deserialize<List<TraceMethodInfo>>(traceFileContent) : null;
+
+                    var debugFileContent = File.Exists(opts.DebugFile) ? File.ReadAllText(opts.DebugFile) : null;
+                    var debug = !string.IsNullOrEmpty(debugFileContent) ? System.Text.Json.JsonSerializer.Deserialize<List<DebugMethodInfo>>(debugFileContent) : null;
 
                     foreach (var assemblyPath in opts.Assemblies)
                     {
@@ -91,6 +99,42 @@ namespace Interception.Generator
                         {
                             throw new Exception("duplicate tracing add parameter method");
                         }
+
+                        if (debuggerBeginMethod is null)
+                        {
+                            debuggerBeginMethod = FindInterceptorMethod<DebuggerBeginMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DebuggerBeginMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate debugger begin method");
+                        }
+
+                        if (debuggerEndMethod is null)
+                        {
+                            debuggerEndMethod = FindInterceptorMethod<DebuggerEndMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DebuggerEndMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate debugger end method");
+                        }
+
+                        if (debuggerAddParameterMethod is null)
+                        {
+                            debuggerAddParameterMethod = FindInterceptorMethod<DebuggerAddParameterMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DebuggerAddParameterMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate debugger add parameter method");
+                        }
+
+                        if (debuggerInitializerMethod is null)
+                        {
+                            debuggerInitializerMethod = FindInterceptorMethod<DebuggerInitializerAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DebuggerInitializerAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate debugger add parameter method");
+                        }
                     }
 
                     if (loader is null)
@@ -113,8 +157,13 @@ namespace Interception.Generator
                         Path = opts.Path,
                         TracingBeginMethod = tracingBeginMethod,
                         TracingEndMethod = tracingEndMethod,
-                        TracingAddParameterMethod= tracingAddParameterMethod,
-                        Traces = traces
+                        TracingAddParameterMethod = tracingAddParameterMethod,
+                        DebbuggerAddParameterMethod = debuggerAddParameterMethod,
+                        DebbuggerBeginMethod = debuggerBeginMethod,
+                        DebbuggerEndMethod = debuggerEndMethod,
+                        DebbuggerInitializerMethod = debuggerAddParameterMethod,
+                        Traces = traces,
+                        Debug = debug
                     };
 
                     File.WriteAllText(opts.Output, System.Text.Json.JsonSerializer.Serialize(result, new JsonSerializerOptions { 
@@ -173,7 +222,7 @@ namespace Interception.Generator
                 {
                     return new StrictInterceptionInfo
                     {
-                        Target = new TargetMethodnfo
+                        TargetMethod = new TargetMethodInfo
                         {
                             AssemblyName = info.attribute.TargetAssemblyName,
                             MethodName = info.attribute.TargetMethodName,

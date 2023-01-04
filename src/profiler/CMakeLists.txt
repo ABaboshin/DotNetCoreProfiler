@@ -71,6 +71,7 @@ add_library("DotNetCoreProfiler.static" STATIC
   profiler/MethodRewriter.TryCatch.cpp
   profiler/MethodRewriter.BeginTracing.cpp
   profiler/MethodRewriter.EndTracing.cpp
+  profiler/MethodRewriter.Debugger.cpp
   ClassFactory.cpp
   configuration/Configuration.cpp
   info/AssemblyInfo.cpp
@@ -109,10 +110,12 @@ IF (WIN32)
   add_library("DotNetCoreProfiler" SHARED
     profiler.def
     dllmain.cpp
+    interop.cpp
   )
 ELSE()
   add_library("DotNetCoreProfiler" SHARED
     dllmain.cpp
+    interop.cpp
   )
 ENDIF()
 

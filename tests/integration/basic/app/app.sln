@@ -43,6 +43,10 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.OpenTracing.St
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.DefaultImpl", "..\..\..\..\src\Interception.DefaultImpl\Interception.DefaultImpl.csproj", "{93B9A8DE-A903-4A33-9D23-E32E193CBD02}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Interop", "..\..\..\..\src\Interception.Interop\Interception.Interop.csproj", "{18B0CE38-26B5-4240-8205-7254EBA27EBA}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Interception.Debugger", "..\..\..\..\src\Interception.Debugger\Interception.Debugger.csproj", "{F38F02B1-2100-42CB-A659-9F7B24AF168C}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -375,6 +379,38 @@ Global
 		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
 		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
 		{93B9A8DE-A903-4A33-9D23-E32E193CBD02}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.Debug|x64.Build.0 = Debug|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.MinSizeRel|Any CPU.ActiveCfg = Debug|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.MinSizeRel|Any CPU.Build.0 = Debug|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.MinSizeRel|x64.ActiveCfg = Debug|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.MinSizeRel|x64.Build.0 = Debug|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.Release|x64.ActiveCfg = Release|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.Release|x64.Build.0 = Release|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
+		{18B0CE38-26B5-4240-8205-7254EBA27EBA}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.Debug|x64.Build.0 = Debug|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.MinSizeRel|Any CPU.ActiveCfg = Debug|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.MinSizeRel|Any CPU.Build.0 = Debug|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.MinSizeRel|x64.ActiveCfg = Debug|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.MinSizeRel|x64.Build.0 = Debug|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.Release|x64.ActiveCfg = Release|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.Release|x64.Build.0 = Release|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.RelWithDebInfo|Any CPU.ActiveCfg = Release|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.RelWithDebInfo|Any CPU.Build.0 = Release|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.RelWithDebInfo|x64.ActiveCfg = Release|Any CPU
+		{F38F02B1-2100-42CB-A659-9F7B24AF168C}.RelWithDebInfo|x64.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

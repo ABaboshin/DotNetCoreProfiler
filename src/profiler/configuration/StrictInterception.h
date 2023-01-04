@@ -10,13 +10,13 @@ using namespace util;
 namespace configuration
 {
 	struct StrictInterception {
-		TargetMethod Target{};
+		TargetMethod TargetMethod{};
 		TypeInfo Interceptor{};
 		int Priority = 0;
 
 		StrictInterception(
-			const TargetMethod& targetMethod, const ::configuration::TypeInfo& interceptor, int priority) :
-			Target(targetMethod),
+			const configuration::TargetMethod& targetMethod, const ::configuration::TypeInfo& interceptor, int priority) :
+			TargetMethod(targetMethod),
 			Interceptor(interceptor),
 			Priority(priority){}
 

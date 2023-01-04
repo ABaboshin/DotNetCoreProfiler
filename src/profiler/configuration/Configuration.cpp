@@ -53,6 +53,10 @@ namespace configuration
 		auto tracingEndMethod = LoadInterceptorMethodFromJson(j["TracingEndMethod"], false);
 		auto tracingAddParameterMethod = LoadInterceptorMethodFromJson(j["TracingAddParameterMethod"], false);
 
+		auto debuggerBeginMethod = LoadInterceptorMethodFromJson(j["DebuggerBeginMethod"], false);
+		auto debuggerEndMethod = LoadInterceptorMethodFromJson(j["DebuggerEndMethod"], false);
+		auto debuggerAddParameterMethod = LoadInterceptorMethodFromJson(j["DebuggerAddParameterMethod"], false);
+
 		for (auto& el : j["Strict"]) {
 			auto i = LoadInterceptionFromJson(el);
 			if (std::get<1>(i)) {
@@ -76,8 +80,39 @@ namespace configuration
 			skipAssemblies.insert(ToWSTRING(el));
 		}
 
+		std::unordered_map<TargetMethod, InstrumentationConfiguration> instrumentations{};
+
+		for (size_t i = 0; i < traces.size(); i++)
+		{
+			auto it = instrumentations.find(traces[i].TargetMethod);
+			if (it == instrumentations.end())
+			{
+				std::pair<TargetMethod, InstrumentationConfiguration> ti(traces[i].TargetMethod, {});
+				instrumentations.insert(ti);
+
+				it = instrumentations.find(traces[i].TargetMethod);
+			}
+
+			it->second.Parameters = traces[i].Parameters;
+			it->second.TraceName = traces[i].Name;
+			it->second.Trace = true;
+		}
+
+		for (size_t i = 0; i < interceptions.size(); i++)
+		{
+			auto it = instrumentations.find(interceptions[i].TargetMethod);
+			if (it == instrumentations.end())
+			{
+				std::pair<TargetMethod, InstrumentationConfiguration> ti(interceptions[i].TargetMethod, {});
+				instrumentations.insert(ti);
+
+				it = instrumentations.find(interceptions[i].TargetMethod);
+			}
+
+			it->second.Interceptors.push_back(interceptions[i]);
+		}
+
 		return {
-			interceptions,
 			skipAssemblies,
 			loader.first	,
 			defaultInitializer.first,
@@ -85,7 +120,10 @@ namespace configuration
 			tracingBeginMethod.second ? std::make_shared<InterceptorMethodInfo>(tracingBeginMethod.first) : nullptr,
 			tracingEndMethod.second ? std::make_shared<InterceptorMethodInfo>(tracingEndMethod.first) : nullptr,
 			tracingAddParameterMethod.second ? std::make_shared<InterceptorMethodInfo>(tracingAddParameterMethod.first) : nullptr,
-			traces
+			debuggerBeginMethod.second ? std::make_shared<InterceptorMethodInfo>(debuggerBeginMethod.first) : nullptr,
+			debuggerEndMethod.second ? std::make_shared<InterceptorMethodInfo>(debuggerEndMethod.first) : nullptr,
+			debuggerAddParameterMethod.second ? std::make_shared<InterceptorMethodInfo>(debuggerAddParameterMethod.first) : nullptr,
+			instrumentations
 		};
 	}
 
@@ -109,7 +147,7 @@ namespace configuration
 		}
 
 		auto interceptor = std::get<0>(LoadTypeInfoFromJson(src["Interceptor"]));
-		auto target = std::get<0>(LoadTargetFromJson(src["Target"]));
+		auto target = std::get<0>(LoadTargetFromJson(src["TargetMethod"]));
 		auto priority = src.value("Priority", 0);
 
 		return std::make_pair<StrictInterception, bool>({ target, interceptor, priority}, true);

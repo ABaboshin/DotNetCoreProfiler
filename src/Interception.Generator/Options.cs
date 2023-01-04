@@ -20,5 +20,8 @@ namespace Interception.Generator
 
         [Option('t', "trace")]
         public string TraceFile { get; set; }
+
+        [Option('d', "debug")]
+        public string DebugFile { get; set; }
     }
 }

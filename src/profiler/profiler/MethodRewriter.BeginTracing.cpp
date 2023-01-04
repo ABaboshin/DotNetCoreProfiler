@@ -36,7 +36,7 @@ HRESULT MethodRewriter::BeginTracing(rewriter::ILRewriterHelper& helper, rewrite
     }
 
     mdString nameToken;
-    hr = metadataEmit->DefineUserString(interceptor.TraceMethodInfo->Name.c_str(), (ULONG)interceptor.TraceMethodInfo->Name.length(), &nameToken);
+    hr = metadataEmit->DefineUserString(interceptor.TraceName.c_str(), (ULONG)interceptor.TraceName.length(), &nameToken);
     *instr = helper.LoadStr(nameToken);
     helper.CallMember(beginRef, false);
 
@@ -158,7 +158,7 @@ HRESULT MethodRewriter::BeginTracing(rewriter::ILRewriterHelper& helper, rewrite
             offset, &addParameterSpec);
 
         mdString parameterNameToken;
-        wstring parameterName = interceptor.TraceMethodInfo->Parameters.size() >= i ? interceptor.TraceMethodInfo->Parameters[i] : util::ToWSTRING(std::to_string(i));
+        wstring parameterName = interceptor.Parameters.size() >= i ? interceptor.Parameters[i] : util::ToWSTRING(std::to_string(i));
         hr = metadataEmit->DefineUserString(parameterName.c_str(), (ULONG)parameterName.length(), &parameterNameToken);
 
         helper.LoadStr(parameterNameToken);

@@ -29,6 +29,9 @@ class MethodRewriter {
 
 	HRESULT BeginTracing(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef beginTypeRef, mdTypeRef addParameterTypeRef, const RejitInfo& interceptor);
 	HRESULT EndTracing(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef typeRef, const RejitInfo& interceptor, ULONG returnIndex, mdTypeRef exceptionTypeRef, ULONG exceptionIndex);
+
+	HRESULT AddDebugger(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, const RejitInfo& interceptor);
+	HRESULT AddDebugger(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, const RejitInfo& interceptor, int offset);
 public:
 	MethodRewriter(CorProfiler* profiler) : profiler(profiler) {}
 

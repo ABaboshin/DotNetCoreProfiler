@@ -114,6 +114,9 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
     logging::log(logging::LogLevel::VERBOSE, "before rewriting {0}"_W, profiler->DumpILCodes(rewriter, rejitInfo->Info, metadataImport));
 
+    // add debugger as first to preserve the offsets
+    AddDebugger(helper, metadataEmit, metadataAssemblyEmit, *rejitInfo);
+
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
     hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
@@ -165,7 +168,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     mdTypeRef tracingBeginMethodRef = mdTokenNil;
     mdTypeRef tracingEndMethodRef = mdTokenNil;
     mdTypeRef tracingAddParameterMethodRef = mdTokenNil;
-    if (profiler->configuration.TracingBeginMethod != nullptr && profiler->configuration.TracingEndMethod != nullptr && profiler->configuration.TracingAddParameterMethod != nullptr && rejitInfo->TraceMethodInfo != nullptr)
+    if (profiler->configuration.TracingBeginMethod != nullptr && profiler->configuration.TracingEndMethod != nullptr && profiler->configuration.TracingAddParameterMethod != nullptr && rejitInfo->Trace)
     {
         hr = FindTypeRef(metadataEmit, metadataAssemblyEmit, profiler->configuration.TracingBeginMethod->AssemblyName, profiler->configuration.TracingBeginMethod->TypeName, tracingBeginMethodRef);
         if (FAILED(hr))
@@ -196,7 +199,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     hr = CreateTryCatch(
         [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, &beginFirst, tracingBeginMethodRef, tracingAddParameterMethodRef](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave)
     {
-        if (rejitInfo->TraceMethodInfo != nullptr)
+        if (rejitInfo->Trace)
         {
             auto hr = BeginTracing(helper, tryBegin, metadataEmit, metadataAssemblyEmit, tracingBeginMethodRef, tracingAddParameterMethodRef, *rejitInfo);
         }
@@ -204,7 +207,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         // call Before method
         for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
             logging::log(logging::LogLevel::VERBOSE, "CreateBeforeMethod {0} {1}"_W, i, i, interceptorTypeRefs[i]);
-            auto hr = CreateBeforeMethod(helper, i == 0 && rejitInfo->TraceMethodInfo == nullptr ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo);
+            auto hr = CreateBeforeMethod(helper, i == 0 && !rejitInfo->Trace ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo);
             if (FAILED(hr)) {
                 logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
                 return hr;
@@ -270,7 +273,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
             }
         }
 
-    if (rejitInfo->TraceMethodInfo != nullptr)
+    if (rejitInfo->Trace)
     {
         auto hr = EndTracing(helper, tryBegin, metadataEmit, metadataAssemblyEmit, tracingEndMethodRef, *rejitInfo, returnIndex, exceptionTypeRef, exceptionIndex);
     }

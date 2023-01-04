@@ -56,9 +56,6 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
         return S_OK;
     }
 
-    // TODO trace attributes
-    // TODO dump local variables based on PDB
-    // iterate over all types in the module
     for (auto typeIndex = 0; typeIndex < typeDefsCount; typeIndex++) {
         const auto typeInfo = info::TypeInfo::GetTypeInfo(metadataImport, typeDefs[typeIndex]);
 
@@ -93,37 +90,44 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
                     std::back_inserter(interceptors));
             }
 
-            if (traces.empty())
+            if (!std::get<0>(traces))
             {
                 for (auto interfaceIndex = 0; interfaceIndex < interfaceInfos.size(); interfaceIndex++)
                 {
                     traces = FindTraces(interfaceInfos[interfaceIndex], functionInfo);
-                    if (!traces.empty())
+                    if (std::get<0>(traces))
                     {
                         break;
                     }
                 }
-
             }
 
+            auto offsets = FindOffsets(typeInfo, functionInfo);
+
             // no interceptor found => nothing to do
-            if (interceptors.empty() && traces.empty())
+            if (interceptors.empty() && !std::get<0>(traces) && offsets.empty())
             {
                 continue;
             }
 
-            std::sort(interceptors.begin(), interceptors.end(), [](const configuration::StrictInterception& left, const configuration::StrictInterception& right) { return left.Priority < right.Priority; });
+            std::vector<configuration::StrictInterception> strict{};
+            for (const auto& el : interceptors)
+            {
+                std::copy(el.Interceptors.begin(), el.Interceptors.end(), std::back_inserter(strict));
+            }
+
+            std::sort(strict.begin(), strict.end(), [](const configuration::StrictInterception& left, const configuration::StrictInterception& right) { return left.Priority < right.Priority; });
 
             ModuleID m1[1]{ moduleId };
             mdMethodDef m2[1]{ methods[methodIndex] };
             // save function info otherwise IMetaDataImport2 will throw an exception from Rejit-Handler
             // get first found interceptor
-            auto ri = RejitInfo(moduleId, methods[methodIndex], functionInfo, interceptors, traces.size() > 0 ? std::make_shared<configuration::TraceMethodInfo>(traces[0]) : nullptr);
+            auto ri = RejitInfo(moduleId, methods[methodIndex], functionInfo, strict, std::get<0>(traces), std::get<1>(traces), std::get<2>(traces), offsets);
             rejitInfo.push_back(ri);
             // and then request rejit
             hr = corProfilerInfo->RequestReJIT(1, m1, m2);
 
-            logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} with {2} interceptors"_W, ri.Info.Type.Name, ri.Info.Name, interceptors.size());
+            logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} with {2} interceptors"_W, ri.Info.Type.Name, ri.Info.Name, strict.size());
         }
     }
 

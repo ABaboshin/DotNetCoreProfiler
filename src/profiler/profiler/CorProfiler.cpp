@@ -16,6 +16,8 @@
 #include "logging/logging.h"
 #include <functional>
 
+CorProfiler* instance = nullptr;
+
 CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr), methodRewriter(this)
 {
     logging::init();
@@ -24,6 +26,8 @@ CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr), methodRewrit
 #undef OPDEF
     opCodes.push_back("(count)");
     opCodes.push_back("->");
+    instance = this;
+    debuggerThread = std::make_unique<std::thread>(ProcessDebuggerRejits);
 }
 
 CorProfiler::~CorProfiler()
@@ -492,19 +496,17 @@ HRESULT STDMETHODCALLTYPE CorProfiler::DynamicMethodJITCompilationFinished(Funct
 }
 
 
-std::vector<configuration::StrictInterception> CorProfiler::FindInterceptors(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
-    std::vector<configuration::StrictInterception> result{};
+std::vector<configuration::InstrumentationConfiguration> CorProfiler::FindInterceptors(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
+    std::vector<configuration::InstrumentationConfiguration> result{};
 
-    std::copy_if(
-        configuration.StrictInterceptions.begin(),
-        configuration.StrictInterceptions.end(),
-        std::back_inserter(result),
-        [typeInfo, functionInfo](const configuration::StrictInterception& interception) {
-        return
-        typeInfo.Name == interception.Target.TypeName
-        && functionInfo.Name == interception.Target.MethodName && functionInfo.Signature.NumberOfArguments() == interception.Target.MethodParametersCount;
+    for (const auto& el : configuration.Instrumentations)
+    {
+        if (typeInfo.Name == el.first.TypeName
+            && functionInfo.Name == el.first.MethodName && functionInfo.Signature.NumberOfArguments() == el.first.MethodParametersCount)
+        {
+            result.push_back(el.second);
+        }
     }
-    );
 
     if (typeInfo.ParentTypeInfo != nullptr)
     {
@@ -521,32 +523,50 @@ std::vector<configuration::StrictInterception> CorProfiler::FindInterceptors(con
     return result;
 }
 
-std::vector<configuration::TraceMethodInfo> CorProfiler::FindTraces(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
+std::tuple<bool, std::vector<util::wstring>, util::wstring> CorProfiler::FindTraces(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
     std::vector<configuration::TraceMethodInfo> result{};
 
-    std::copy_if(
-        configuration.Traces.begin(),
-        configuration.Traces.end(),
-        std::back_inserter(result),
-        [typeInfo, functionInfo](const configuration::TraceMethodInfo& interception) {
-        return
-        typeInfo.Name == interception.TargetMethod.TypeName
-        && functionInfo.Name == interception.TargetMethod.MethodName && functionInfo.Signature.NumberOfArguments() == interception.TargetMethod.MethodParametersCount;
-    });
+    for (const auto& el : configuration.Instrumentations)
+    {
+        if (typeInfo.Name == el.first.TypeName
+            && functionInfo.Name == el.first.MethodName && functionInfo.Signature.NumberOfArguments() == el.first.MethodParametersCount && el.second.Trace)
+        {
+            return std::tuple<bool, std::vector<util::wstring>, util::wstring>(true, el.second.Parameters, el.second.TraceName);
+        }
+    }
 
     if (typeInfo.ParentTypeInfo != nullptr)
     {
-        auto r2 = FindTraces(*typeInfo.ParentTypeInfo, functionInfo);
-        std::copy(r2.begin(), r2.end(), std::back_inserter(result));
+        auto x = FindTraces(*typeInfo.ParentTypeInfo, functionInfo);
+        if (std::get<0>(x))
+        {
+            return x;
+        }
     }
 
     if (typeInfo.ExtendTypeInfo != nullptr)
     {
-        auto r2 = FindTraces(*typeInfo.ExtendTypeInfo, functionInfo);
-        std::copy(r2.begin(), r2.end(), std::back_inserter(result));
+        auto x = FindTraces(*typeInfo.ExtendTypeInfo, functionInfo);
+        if (std::get<0>(x))
+        {
+            return x;
+        }
     }
 
-    return result;
+    return std::tuple<bool, std::vector<util::wstring>, util::wstring>(false, {}, ""_W);
+}
+
+std::vector<int> CorProfiler::FindOffsets(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo) {
+    for (const auto& el : configuration.Instrumentations)
+    {
+        if (typeInfo.Name == el.first.TypeName
+            && functionInfo.Name == el.first.MethodName && functionInfo.Signature.NumberOfArguments() == el.first.MethodParametersCount)
+        {
+            return el.second.Offsets;
+        }
+    }
+
+    return {};
 }
 
 std::vector<info::TypeInfo> CorProfiler::GetAllImplementedInterfaces(const info::TypeInfo typeInfo, util::ComPtr<IMetaDataImport2>& metadataImport)
@@ -586,4 +606,184 @@ std::vector<info::TypeInfo> CorProfiler::GetAllImplementedInterfaces(const info:
     }
 
     return interfaceInfos;
+}
+
+void CorProfiler::AddMethodParameters(util::wstring assemblyName, util::wstring typeName, util::wstring methodName, int methodParametersCount, std::vector<util::wstring> parameters)
+{
+    std::lock_guard<std::mutex> guard(mutex);
+
+    logging::log(logging::LogLevel::INFO, "AddMethodParameters {0}.{1}.{2} {3} {4}"_W, assemblyName, typeName, methodName, methodParametersCount, parameters.size());
+
+    configuration::TargetMethod tm(assemblyName, typeName, methodName, methodParametersCount);
+    auto it = configuration.Instrumentations.find(tm);
+    if (it == configuration.Instrumentations.end())
+    {
+        std::pair<configuration::TargetMethod, configuration::InstrumentationConfiguration> ti(tm, {});
+        configuration.Instrumentations.insert(ti);
+
+        it = configuration.Instrumentations.find(tm);
+    }
+
+    it->second.Parameters = parameters;
+}
+
+void CorProfiler::AddMethodVariables(util::wstring assemblyName, util::wstring typeName, util::wstring methodName, int methodParametersCount, std::vector<util::wstring> variables)
+{
+    std::lock_guard<std::mutex> guard(mutex);
+
+    logging::log(logging::LogLevel::INFO, "AddMethodVariables {0}.{1}.{2} {3} {4}"_W, assemblyName, typeName, methodName, methodParametersCount, variables.size());
+
+    configuration::TargetMethod tm(assemblyName, typeName, methodName, methodParametersCount);
+    auto it = configuration.Instrumentations.find(tm);
+    if (it == configuration.Instrumentations.end())
+    {
+        std::pair<configuration::TargetMethod, configuration::InstrumentationConfiguration> ti(tm, {});
+        configuration.Instrumentations.insert(ti);
+
+        it = configuration.Instrumentations.find(tm);
+    }
+
+    it->second.Variables = variables;
+}
+
+void CorProfiler::StartDebugger()
+{
+    logging::log(logging::LogLevel::INFO, "StartDebugger"_W);
+    debuggerQueue.push(true);
+}
+
+void CorProfiler::AddDebuggerOffset(util::wstring assemblyName, util::wstring typeName, util::wstring methodName, int methodParametersCount, int offset)
+{
+    std::lock_guard<std::mutex> guard(mutex);
+
+    logging::log(logging::LogLevel::INFO, "AddDebuggerOffset {0} {1} {2} {3} {4}"_W, assemblyName, typeName, methodName, methodParametersCount, offset);
+
+    configuration::TargetMethod tm(assemblyName, typeName, methodName, methodParametersCount);
+    auto it = configuration.Instrumentations.find(tm);
+    if (it == configuration.Instrumentations.end())
+    {
+        std::pair<configuration::TargetMethod, configuration::InstrumentationConfiguration> ti(tm, {});
+        configuration.Instrumentations.insert(ti);
+
+        it = configuration.Instrumentations.find(tm);
+    }
+
+    it->second.Offsets.push_back(offset);
+}
+
+void CorProfiler::ProcessDebuggerRejits()
+{
+    HRESULT hr = instance->corProfilerInfo->InitializeCurrentThread();
+    if (FAILED(true))
+    {
+        logging::log(logging::LogLevel::NONSUCCESS, "ProcessDebuggerRejits"_W);
+    }
+
+    while (true)
+    {
+        bool b = false;
+        instance->debuggerQueue.waitAndPop(b);
+        logging::log(logging::LogLevel::INFO, "StartDebugger received"_W);
+
+        for (const auto& instr : instance->configuration.Instrumentations)
+        {
+            if (instr.second.Offsets.empty())
+            {
+                continue;
+            }
+
+            for (const auto& el : instance->loadedModules)
+            {
+                if (el.first == instr.first.AssemblyName)
+                {
+                    std::cout << 1 << std::endl;
+
+                    ComPtr<IUnknown> metadataInterfaces;
+                    std::cout << 11 << std::endl;
+                    // 0x80131363 = CORPROF_E_UNSUPPORTED_CALL_SEQUENCE
+                    auto hr = instance->corProfilerInfo->GetModuleMetaData(el.second, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
+                    std::cout << 12 << std::endl;
+                    if (FAILED(hr))
+                    {
+                        std::cout << 13 << std::endl;
+                        std::cout << std::hex << hr << std::endl;
+                        logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished GetModuleMetaData"_W);
+                        return;
+                    }
+
+                    std::cout << 2 << std::endl;
+
+                    auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
+
+                    std::cout << 3 << std::endl;
+
+                    HCORENUM hcorenumTypeDefs = 0;
+                    mdTypeDef typeDefs[MAX_CLASS_NAME]{};
+                    ULONG typeDefsCount;
+                    hr = metadataImport->EnumTypeDefs(&hcorenumTypeDefs, typeDefs, MAX_CLASS_NAME, &typeDefsCount);
+                    if (FAILED(hr)) {
+                        logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished EnumTypeDefs"_W);
+                        return;
+                    }
+
+                    std::cout << 4 << std::endl;
+
+                    for (auto typeIndex = 0; typeIndex < typeDefsCount; typeIndex++) {
+                        const auto typeInfo = info::TypeInfo::GetTypeInfo(metadataImport, typeDefs[typeIndex]);
+
+                        logging::log(logging::LogLevel::INFO, "x {0} {1}"_W, typeInfo.Name, instr.first.TypeName);
+
+                        if (typeInfo.Name != instr.first.TypeName)
+                        {
+                            continue;
+                        }
+
+                        std::cout << 5 << std::endl;
+
+                        // get all methods
+                        HCORENUM hcorenumMethods = 0;
+                        mdMethodDef methods[MAX_CLASS_NAME]{};
+                        ULONG methodsCount;
+                        hr = metadataImport->EnumMethods(&hcorenumMethods, typeDefs[typeIndex], methods, MAX_CLASS_NAME, &methodsCount);
+                        if (FAILED(hr)) {
+                            logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished EnumInterfaceImpls"_W);
+                            return;
+                        }
+
+                        for (auto methodIndex = 0; methodIndex < methodsCount; methodIndex++) {
+                            auto functionInfo = info::FunctionInfo::GetFunctionInfo(metadataImport, methods[methodIndex]);
+
+                            if (functionInfo.Name != instr.first.MethodName || functionInfo.Signature.NumberOfArguments() != instr.first.MethodParametersCount)
+                            {
+                                continue;
+                            }
+
+                            ModuleID m1[1]{ el.second };
+                            mdMethodDef m2[1]{ methods[methodIndex] };
+
+                            auto rit = std::find_if(instance->rejitInfo.begin(), instance->rejitInfo.end(), [el, methods, methodIndex](const RejitInfo& ri) {
+                                return ri.ModuleId == el.second && methods[methodIndex] == ri.MethodId;
+                            });
+
+                            if (rit != instance->rejitInfo.end())
+                            {
+                                rit->Offsets = instr.second.Offsets;
+                            }
+                            else
+                            {
+                                auto ri = RejitInfo(el.second, methods[methodIndex], functionInfo, {}, {}, {}, {}, instr.second.Offsets);
+                                instance->rejitInfo.push_back(ri);
+                            }
+
+                            // and then request rejit
+                            hr = instance->corProfilerInfo->RequestReJIT(1, m1, m2);
+
+                            logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} for debug"_W, instr.first.TypeName, instr.first.MethodName);
+                            return;
+                        }
+                    }
+                }
+            }
+        }
+    }
 }

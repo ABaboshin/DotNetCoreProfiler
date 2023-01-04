@@ -5,7 +5,7 @@ namespace Interception.Core.Info
     public class StrictInterceptionInfo
     {
         public TypeInfo Interceptor { get; set; }
-        public TargetMethodnfo Target { get; set; }
+        public TargetMethodInfo TargetMethod { get; set; }
         public int Priority { get; set; }
     }
 
@@ -24,7 +24,7 @@ namespace Interception.Core.Info
         public string AssemblyPath { get; set; }
     }
 
-    public class TargetMethodnfo
+    public class TargetMethodInfo
     {
         public string AssemblyName { get; set; }
         public string MethodName { get; set; }
@@ -34,9 +34,17 @@ namespace Interception.Core.Info
 
     public class TraceMethodInfo
     {
-        public TargetMethodnfo TargetMethod { get; set; }
+        public TargetMethodInfo TargetMethod { get; set; }
         public List<string> Parameters { get; set; }
         public string Name { get; set; }
+    }
+
+    public class DebugMethodInfo
+    {
+        public TargetMethodInfo TargetMethod { get; set; }
+        public string Dll { get; set; }
+        public string SourceFile { get; set; }
+        public int LineNumber { get; set; }
     }
 
     public class ProfilerInfo
@@ -49,7 +57,12 @@ namespace Interception.Core.Info
         public InterceptorMethodInfo TracingBeginMethod { get; set; }
         public InterceptorMethodInfo TracingEndMethod { get; set; }
         public InterceptorMethodInfo TracingAddParameterMethod { get; set; }
+        public InterceptorMethodInfo DebbuggerBeginMethod { get; set; }
+        public InterceptorMethodInfo DebbuggerEndMethod { get; set; }
+        public InterceptorMethodInfo DebbuggerAddParameterMethod { get; set; }
+        public InterceptorMethodInfo DebbuggerInitializerMethod { get; set; }
         public List<TraceMethodInfo> Traces { get; set; }
+        public List<DebugMethodInfo> Debug { get; set; }
         public string Path { get; set; }
     }
 }

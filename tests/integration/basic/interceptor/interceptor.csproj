@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -7,6 +7,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\..\..\src\Interception.Attributes\Interception.Attributes.csproj" />
     <ProjectReference Include="..\..\..\..\src\Interception.Core\Interception.Core.csproj" />
+    <ProjectReference Include="..\..\..\..\src\Interception.Debugger\Interception.Debugger.csproj" />
     <ProjectReference Include="..\..\..\..\src\Interception.DefaultImpl\Interception.DefaultImpl.csproj" />
     <ProjectReference Include="..\..\..\..\src\Interception.Tracing\Interception.Tracing.csproj" />
   </ItemGroup>

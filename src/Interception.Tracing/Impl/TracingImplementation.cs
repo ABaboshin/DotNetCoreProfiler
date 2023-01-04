@@ -7,7 +7,7 @@ using OpenTracing.Util;
 using System;
 using System.Collections.Generic;
 using System.Threading;
-using System.Xml.Linq;
+using System.Threading.Tasks;
 
 namespace Interception.Tracing.Impl
 {
@@ -58,6 +58,15 @@ namespace Interception.Tracing.Impl
                     if (ex != null)
                     {
                         _scope.Value.Span.SetException(ex);
+                    }
+
+                    if (result != null && result is Task)
+                    {
+                        var task = result as Task;
+                        if (!task.IsCanceled && !task.IsCompleted)
+                        {
+                            task.GetAwaiter().GetResult();
+                        }
                     }
 
                     _scope.Value.Span.SetTag("result", result?.ToString());

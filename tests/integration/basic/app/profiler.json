@@ -51,7 +51,7 @@
         "AssemblyName": "interceptor",
         "TypeName": "interceptor.M4"
       },
-      "Target": {
+      "TargetMethod": {
         "AssemblyName": "app",
         "MethodName": "M4",
         "MethodParametersCount": 2,
@@ -64,7 +64,7 @@
         "AssemblyName": "interceptor",
         "TypeName": "interceptor.M1"
       },
-      "Target": {
+      "TargetMethod": {
         "AssemblyName": "app",
         "MethodName": "M1",
         "MethodParametersCount": 0,
@@ -75,12 +75,25 @@
     {
       "Interceptor": {
         "AssemblyName": "interceptor",
-        "TypeName": "interceptor.M1_1"
+        "TypeName": "interceptor.M1"
       },
-      "Target": {
+      "TargetMethod": {
         "AssemblyName": "app",
         "MethodName": "M1",
         "MethodParametersCount": 0,
+        "TypeName": "app.C1"
+      },
+      "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "interceptor",
+        "TypeName": "interceptor.M4"
+      },
+      "TargetMethod": {
+        "AssemblyName": "app",
+        "MethodName": "M4",
+        "MethodParametersCount": 2,
         "TypeName": "app.C1"
       },
       "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\interceptor.dll"
@@ -101,20 +114,44 @@
   "TracingBeginMethod": {
     "MethodName": "BeginTracing",
     "TypeName": "Interception.Tracing.Impl.TracingImplementation",
-    "AssemblyPath": "/profiler/Interception.Tracing.dll",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Tracing.dll",
     "AssemblyName": "Interception.Tracing"
   },
   "TracingEndMethod": {
     "MethodName": "EndTracing",
     "TypeName": "Interception.Tracing.Impl.TracingImplementation",
-    "AssemblyPath": "/profiler/Interception.Tracing.dll",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Tracing.dll",
     "AssemblyName": "Interception.Tracing"
   },
   "TracingAddParameterMethod": {
     "MethodName": "AddParameter",
     "TypeName": "Interception.Tracing.Impl.TracingImplementation",
-    "AssemblyPath": "/profiler/Interception.Tracing.dll",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Tracing.dll",
     "AssemblyName": "Interception.Tracing"
+  },
+  "DebbuggerBeginMethod": {
+    "MethodName": "BeginTracing",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebbuggerEndMethod": {
+    "MethodName": "EndTracing",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebbuggerAddParameterMethod": {
+    "MethodName": "AddParameter",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebbuggerInitializerMethod": {
+    "MethodName": "DebuggerInitializer",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
   },
   "Traces": [
     {
@@ -126,6 +163,19 @@
       },
       "Parameters": [ "s", "o" ],
       "Name": "TestX"
+    }
+  ],
+  "Debug": [
+    {
+      "TargetMethod": {
+        "AssemblyName": "app",
+        "MethodName": "M4",
+        "MethodParametersCount": 2,
+        "TypeName": "app.C1"
+      },
+      "Dll": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\app\\bin\\Debug\\net6.0\\app.dll",
+      "SourceFile": "Program.cs",
+      "LineNumber": 64
     }
   ]
 }

@@ -3,3 +3,7 @@ LIBRARY "DotNetCoreProfiler.dll"
 EXPORTS
     DllCanUnloadNow PRIVATE
     DllGetClassObject PRIVATE
+    AddMethodParameters
+    AddMethodVariables
+    AddDebuggerOffset
+    StartDebugger

@@ -1,4 +1,7 @@
-﻿using System;
+﻿using Interception.Core.Info;
+using System;
+using System.IO;
+using System.Reflection;
 using System.Threading.Tasks;
 
 namespace app
@@ -7,6 +10,18 @@ namespace app
     {
         static async Task Main(string[] args)
         {
+            //var configuartionFile = Environment.GetEnvironmentVariable("PROFILER_CONFIGURATION");
+            //var configuration = System.Text.Json.JsonSerializer.Deserialize<ProfilerInfo>(File.ReadAllText(configuartionFile));
+
+            //if (configuration.DebbuggerInitializerMethod != null)
+            //{
+            //    Console.WriteLine($"Load exception logger {configuration.DebbuggerInitializerMethod.TypeName}");
+            //    var a = Assembly.Load(configuration.DebbuggerInitializerMethod.AssemblyName);
+            //    var debuggerInitializer = a.CreateInstance(configuration.DebbuggerInitializerMethod.TypeName);
+            //    var method = debuggerInitializer.GetType().GetMethod(configuration.DebbuggerInitializerMethod.MethodName);
+            //    method.Invoke(debuggerInitializer, new object[] { configuration });
+            //}
+
             //var x = new X1();
             //x.MX<int>(3);
             //await x.Test(3);
@@ -44,7 +59,9 @@ namespace app
         public void M3() { }
         public int M4<T1, T2>(T1 s, T2 o)
         {
-            return 1;
+            var i = 3;
+            var j = 4;
+            return i + j;
             //Console.WriteLine($"M4 {s} {o}");
             //throw new Exception();
         }
