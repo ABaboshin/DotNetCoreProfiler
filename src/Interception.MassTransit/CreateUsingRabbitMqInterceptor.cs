@@ -35,5 +35,9 @@ namespace Interception.MassTransit
 
             a2 = (T2)(object)configure;
         }
+        
+        public static void After<TResult>(TResult result, Exception ex)
+        {
+        }
     }
 }

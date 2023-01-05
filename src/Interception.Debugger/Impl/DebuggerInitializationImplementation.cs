@@ -10,6 +10,10 @@ namespace Interception.Debugger.Impl
         [DebuggerInitializer]
         public static void DebuggerInitializer (ProfilerInfo info)
         {
+            if (info.Debug is null)
+            {
+                return;
+            }
             foreach (var debug in info.Debug)
             {
                 ModuleContext modCtx = ModuleDef.CreateModuleContext();
