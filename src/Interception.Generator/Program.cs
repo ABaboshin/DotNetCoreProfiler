@@ -161,7 +161,7 @@ namespace Interception.Generator
                         DebuggerAddParameterMethod = debuggerAddParameterMethod,
                         DebuggerBeginMethod = debuggerBeginMethod,
                         DebuggerEndMethod = debuggerEndMethod,
-                        DebuggerInitializerMethod = debuggerAddParameterMethod,
+                        DebuggerInitializerMethod = debuggerInitializerMethod,
                         Traces = traces,
                         Debug = debug
                     };

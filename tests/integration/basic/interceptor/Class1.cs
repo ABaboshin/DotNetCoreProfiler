@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace interceptor
 {
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0, Priority = 0)]
+    //[StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0, Priority = 0)]
     public class M1
     {
         public static void Before<T>(T obj)
@@ -20,7 +20,7 @@ namespace interceptor
         }
     }
 
-    [StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0, Priority = 1)]
+    //[StrictIntercept(TargetAssemblyName = "app", TargetMethodName = "M1", TargetTypeName = "app.C1", TargetMethodParametersCount = 0, Priority = 1)]
     public class M1_1
     {
         public static void Before<T>(T obj)

@@ -97,7 +97,7 @@
   },
   "DebuggerInitializerMethod": {
     "MethodName": "DebuggerInitializer",
-    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "TypeName": "Interception.Debugger.Impl.DebuggerInitializationImplementation",
     "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
     "AssemblyName": "Interception.Debugger"
   },
