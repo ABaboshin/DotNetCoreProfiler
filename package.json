@@ -5,7 +5,6 @@
   "author": "Andrey Baboshin <andrey.baboshin@gmail.com>",
   "license": "MIT",
   "scripts": {
-    "build:mutator": "cd k8s/monitoring-mutator && bash build-image.sh",
     "build:llvm": "docker build -t profiler:llvm -f src/Dockerfile.llvm .",
     "build:native": "yarn build:llvm && docker build -t profiler:native -f src/profiler/Dockerfile .",
     "build:native:nuget": "yarn build:native && docker build -t profiler:native.nuget -f src/profiler/Dockerfile.nuget --build-arg NUGET_KEY=$NUGET_KEY .",

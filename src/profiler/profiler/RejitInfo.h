@@ -13,7 +13,8 @@ struct RejitInfo
 	info::FunctionInfo Info;
 	std::vector<configuration::StrictInterception> Interceptors;
 	bool Trace;
-	std::vector<util::wstring> Parameters;
+	std::vector<util::wstring> Parameters{};
+	std::vector<util::wstring> Variables{};
 	util::wstring TraceName;
 	std::vector<int> Offsets;
 

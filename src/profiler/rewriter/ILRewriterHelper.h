@@ -2,6 +2,8 @@
 
 #include "ILRewriter.h"
 
+class MethodRewriter;
+
 namespace rewriter
 {
     class ILRewriterHelper
@@ -86,5 +88,7 @@ namespace rewriter
             _instr++;
             return new ILInstr();
         }
+
+        friend class ::MethodRewriter;
     };
 }

@@ -2,8 +2,10 @@
 using Interception.Attributes.Debugger;
 using Interception.Core.Info;
 using Interception.Tracing.Impl;
+using System;
 using System.Linq;
 using System.Threading;
+using System.Xml.Linq;
 
 namespace Interception.Debugger.Impl
 {
@@ -12,23 +14,29 @@ namespace Interception.Debugger.Impl
         protected static AsyncLocal<OpenTracing.IScope> _scope = new AsyncLocal<OpenTracing.IScope>();
 
         [DebuggerBeginMethod]
-        public static void BeginTracing(string name)
+        public static void BeginDebugging(string name)
         {
+            Console.WriteLine($"BeginDebugging {name}");
             TracingImplementation.BeginTracing(name);
         }
 
         [DebuggerAddParameterMethod]
         public static void AddParameter<T>(string type, string name, T value)
         {
+            Console.WriteLine($"AddParameter {type} {name} {value}");
             TracingImplementation.AddParameter($"{type}_{name}", value);
         }
 
         [DebuggerEndMethod]
-        public static void EndTracing()
+        public static void EndDebugging()
         {
+            Console.WriteLine($"EndDebugging");
             TracingImplementation.EndTracing<object>(null, null);
         }
+    }
 
+    public class DebuggerInitializationImplementation
+    { 
         [DebuggerInitializer]
         public static void DebuggerInitializer (ProfilerInfo info)
         {

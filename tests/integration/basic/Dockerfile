@@ -12,7 +12,7 @@ RUN dotnet publish -c Release -o /interceptor tests/integration/basic/intercepto
 WORKDIR /interceptor
 
 # RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /tests/integration/skip.txt
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.DefaultImpl.dll,Interception.Tracing.dll,Interception.Debugger.dll -p /profiler -o profiler.json -s /tests/integration/skip.txt -t /tests/integration/basic/trace.json
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.DefaultImpl.dll,Interception.Tracing.dll,Interception.Debugger.dll -p /profiler -o profiler.json -s /tests/integration/skip.txt -t /tests/integration/basic/trace.json -d /tests/integration/basic/debug.json
 
 FROM profiler:native as profiler
 

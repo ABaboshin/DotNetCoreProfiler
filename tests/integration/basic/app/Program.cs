@@ -34,7 +34,9 @@ namespace app
             //c1.M3();
             try
             {
+                await Task.Delay(5000);
                 c1.M4(123, "strparam");
+                C1.M2("test");
             }
             catch (Exception ex)
             {

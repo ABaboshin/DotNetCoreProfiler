@@ -158,10 +158,10 @@ namespace Interception.Generator
                         TracingBeginMethod = tracingBeginMethod,
                         TracingEndMethod = tracingEndMethod,
                         TracingAddParameterMethod = tracingAddParameterMethod,
-                        DebbuggerAddParameterMethod = debuggerAddParameterMethod,
-                        DebbuggerBeginMethod = debuggerBeginMethod,
-                        DebbuggerEndMethod = debuggerEndMethod,
-                        DebbuggerInitializerMethod = debuggerAddParameterMethod,
+                        DebuggerAddParameterMethod = debuggerAddParameterMethod,
+                        DebuggerBeginMethod = debuggerBeginMethod,
+                        DebuggerEndMethod = debuggerEndMethod,
+                        DebuggerInitializerMethod = debuggerAddParameterMethod,
                         Traces = traces,
                         Debug = debug
                     };

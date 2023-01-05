@@ -15,6 +15,13 @@
 #include "dllmain.h"
 #include "logging/logging.h"
 #include <functional>
+#include <memory>
+
+// TODO remove it after upgrading to c++14 or newer
+template<typename T, typename... Args>
+std::unique_ptr<T> make_unique(Args&&... args) {
+    return std::unique_ptr<T>(new T(std::forward<Args>(args)...));
+}
 
 CorProfiler* instance = nullptr;
 
@@ -27,7 +34,7 @@ CorProfiler::CorProfiler() : refCount(0), corProfilerInfo(nullptr), methodRewrit
     opCodes.push_back("(count)");
     opCodes.push_back("->");
     instance = this;
-    debuggerThread = std::make_unique<std::thread>(ProcessDebuggerRejits);
+    debuggerThread = make_unique<std::thread>(ProcessDebuggerRejits);
 }
 
 CorProfiler::~CorProfiler()
@@ -674,7 +681,7 @@ void CorProfiler::AddDebuggerOffset(util::wstring assemblyName, util::wstring ty
 void CorProfiler::ProcessDebuggerRejits()
 {
     HRESULT hr = instance->corProfilerInfo->InitializeCurrentThread();
-    if (FAILED(true))
+    if (FAILED(hr))
     {
         logging::log(logging::LogLevel::NONSUCCESS, "ProcessDebuggerRejits"_W);
     }
@@ -696,26 +703,16 @@ void CorProfiler::ProcessDebuggerRejits()
             {
                 if (el.first == instr.first.AssemblyName)
                 {
-                    std::cout << 1 << std::endl;
-
                     ComPtr<IUnknown> metadataInterfaces;
-                    std::cout << 11 << std::endl;
                     // 0x80131363 = CORPROF_E_UNSUPPORTED_CALL_SEQUENCE
                     auto hr = instance->corProfilerInfo->GetModuleMetaData(el.second, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
-                    std::cout << 12 << std::endl;
                     if (FAILED(hr))
                     {
-                        std::cout << 13 << std::endl;
-                        std::cout << std::hex << hr << std::endl;
                         logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished GetModuleMetaData"_W);
                         return;
                     }
 
-                    std::cout << 2 << std::endl;
-
                     auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
-
-                    std::cout << 3 << std::endl;
 
                     HCORENUM hcorenumTypeDefs = 0;
                     mdTypeDef typeDefs[MAX_CLASS_NAME]{};
@@ -726,19 +723,13 @@ void CorProfiler::ProcessDebuggerRejits()
                         return;
                     }
 
-                    std::cout << 4 << std::endl;
-
                     for (auto typeIndex = 0; typeIndex < typeDefsCount; typeIndex++) {
                         const auto typeInfo = info::TypeInfo::GetTypeInfo(metadataImport, typeDefs[typeIndex]);
-
-                        logging::log(logging::LogLevel::INFO, "x {0} {1}"_W, typeInfo.Name, instr.first.TypeName);
 
                         if (typeInfo.Name != instr.first.TypeName)
                         {
                             continue;
                         }
-
-                        std::cout << 5 << std::endl;
 
                         // get all methods
                         HCORENUM hcorenumMethods = 0;
@@ -768,10 +759,14 @@ void CorProfiler::ProcessDebuggerRejits()
                             if (rit != instance->rejitInfo.end())
                             {
                                 rit->Offsets = instr.second.Offsets;
+                                rit->Variables = instr.second.Variables;
+                                rit->Parameters = instr.second.Parameters;
                             }
                             else
                             {
                                 auto ri = RejitInfo(el.second, methods[methodIndex], functionInfo, {}, {}, {}, {}, instr.second.Offsets);
+                                ri.Variables = instr.second.Variables;
+                                ri.Parameters = instr.second.Parameters;
                                 instance->rejitInfo.push_back(ri);
                             }
 
@@ -779,7 +774,6 @@ void CorProfiler::ProcessDebuggerRejits()
                             hr = instance->corProfilerInfo->RequestReJIT(1, m1, m2);
 
                             logging::log(logging::LogLevel::INFO, "Rejit {0}.{1} for debug"_W, instr.first.TypeName, instr.first.MethodName);
-                            return;
                         }
                     }
                 }

@@ -1,5 +1,7 @@
 #include "parser.h"
 
+// based on https://github.com/dotnet/runtime/blob/main/src/tests/profiler/native/rejitprofiler/sigparse.cpp
+
 namespace info {
     bool ParseTypeDefOrRefEncoded(std::vector<BYTE>::iterator& begin) {
         mdToken typeToken;
@@ -40,15 +42,76 @@ namespace info {
         return false;
     }
 
+    bool ParseByte(std::vector<BYTE>::iterator& begin, BYTE& number) {
+        number = *begin;
+
+        std::advance(begin, 1);
+
+        return true;
+    }
+
     bool ParseNumber(std::vector<BYTE>::iterator& begin, ULONG& number) {
-        ULONG result = CorSigUncompressData(&*begin, &number);
+
+        // parse the variable length number format (0-4 bytes)
+
+        BYTE b1 = 0, b2 = 0, b3 = 0, b4 = 0;
+
+        // at least one byte in the encoding, read that
+
+        if (!ParseByte(begin , b1))
+            return false;
+
+        if (b1 == 0xff)
+        {
+            // special encoding of 'NULL'
+            // not sure what this means as a number, don't expect to see it except for string lengths
+            // which we don't encounter anyway so calling it an error
+            return false;
+        }
+
+        // early out on 1 byte encoding
+        if ((b1 & 0x80) == 0)
+        {
+            number = (int)b1;
+            return true;
+        }
+
+        // now at least 2 bytes in the encoding, read 2nd byte
+        if (!ParseByte(begin, b2))
+            return false;
+
+        // early out on 2 byte encoding
+        if ((b1 & 0x40) == 0)
+        {
+            number = (((b1 & 0x3f) << 8) | b2);
+            return true;
+        }
+
+        // must be a 4 byte encoding
+
+        if ((b1 & 0x20) != 0)
+        {
+            // 4 byte encoding has this bit clear -- error if not
+            return false;
+        }
+
+        if (!ParseByte(begin, b3))
+            return false;
+
+        if (!ParseByte(begin, b4))
+            return false;
+
+        number = ((b1 & 0x1f) << 24) | (b2 << 16) | (b3 << 8) | b4;
+        return true;
+
+        /*ULONG result = CorSigUncompressData(&*begin, &number);
         if (result == -1) {
             return false;
         }
 
         std::advance(begin, result);
 
-        return true;
+        return true;*/
     }
 
     bool ParseParam(std::vector<BYTE>::iterator& begin) {

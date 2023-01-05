@@ -8,4 +8,5 @@ namespace info {
 	bool ParseParam(std::vector<BYTE>::iterator& begin);
 	bool ParseNumber(std::vector<BYTE>::iterator& begin, ULONG& number);
 	bool IsVoid(const std::vector<BYTE>& type);
+	bool ParseByte(std::vector<BYTE>::iterator& begin, BYTE& number);
 }

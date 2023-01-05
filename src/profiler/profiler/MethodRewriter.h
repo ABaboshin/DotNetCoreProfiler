@@ -15,7 +15,7 @@ typedef std::function<HRESULT(rewriter::ILInstr&)> TLeaveInstructionModifier;
 
 class MethodRewriter {
 	CorProfiler* profiler;
-	HRESULT DefineLocalSignature(rewriter::ILRewriter* rewriter, ModuleID moduleId, mdTypeRef exceptionTypeRef, const RejitInfo& interceptor, ULONG* exceptionIndex, ULONG* returnIndex);
+	HRESULT DefineLocalSignature(rewriter::ILRewriter* rewriter, ModuleID moduleId, mdTypeRef exceptionTypeRef, const RejitInfo& interceptor, ULONG* exceptionIndex, ULONG* returnIndex, std::vector<BYTE>& origlocalSignature);
 	HRESULT CreateBeforeMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor);
 	HRESULT CreateAfterMethod(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef interceptorTypeRef, const RejitInfo& interceptor, ULONG returnIndex, mdTypeRef exceptionTypeRef, ULONG exceptionIndex);
 	HRESULT InitLocalVariables(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, ModuleID moduleId, const RejitInfo& interceptor, ULONG exceptionIndex, ULONG returnIndex);
@@ -30,8 +30,8 @@ class MethodRewriter {
 	HRESULT BeginTracing(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef beginTypeRef, mdTypeRef addParameterTypeRef, const RejitInfo& interceptor);
 	HRESULT EndTracing(rewriter::ILRewriterHelper& helper, rewriter::ILInstr** instr, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, mdTypeRef typeRef, const RejitInfo& interceptor, ULONG returnIndex, mdTypeRef exceptionTypeRef, ULONG exceptionIndex);
 
-	HRESULT AddDebugger(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, const RejitInfo& interceptor);
-	HRESULT AddDebugger(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, const RejitInfo& interceptor, int offset);
+	HRESULT AddDebugger(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, const ComPtr<IMetaDataImport2>& metadataImport, const RejitInfo& interceptor, mdTypeRef exceptionTypeRef, std::vector<BYTE>& origlocalSignature);
+	HRESULT AddDebugger(rewriter::ILRewriterHelper& helper, util::ComPtr<IMetaDataEmit2>& metadataEmit, util::ComPtr<IMetaDataAssemblyEmit>& metadataAssemblyEmit, const ComPtr<IMetaDataImport2>& metadataImport, const RejitInfo& interceptor, mdTypeRef exceptionTypeRef, const std::vector<info::TypeInfo>& locals, mdTypeRef debuggerBeginMethodRef, mdTypeRef debuggerEndMethodRef, mdTypeRef debuggerAddParameterMethodRef, int offset);
 public:
 	MethodRewriter(CorProfiler* profiler) : profiler(profiler) {}
 

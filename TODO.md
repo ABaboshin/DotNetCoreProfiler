@@ -1,16 +1,15 @@
 cleanup
 
+CreateILRewriter unique ptr
+
 update lib/coreclr
 add execution time logs
 
 check if before/after exist
 
-async
-
 cor_signature -> vector
 pointer -> reference in c++ method params
 
-trace attributes
 debugger
 cache references to known types
 ngen

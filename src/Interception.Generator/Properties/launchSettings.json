@@ -2,7 +2,7 @@
   "profiles": {
     "Interception.Generator": {
       "commandName": "Project",
-      "commandLineArgs": "-a Interceptor.dll -s ../../skip.txt -p /profiler -o profiler.json",
+      "commandLineArgs": "-a Interceptor.dll,Interception.Debugger.dll -s ../../skip.txt -p /profiler -o profiler.json",
       "workingDirectory": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0"
     }
   }

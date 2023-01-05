@@ -114,9 +114,6 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
     logging::log(logging::LogLevel::VERBOSE, "before rewriting {0}"_W, profiler->DumpILCodes(rewriter, rejitInfo->Info, metadataImport));
 
-    // add debugger as first to preserve the offsets
-    AddDebugger(helper, metadataEmit, metadataAssemblyEmit, *rejitInfo);
-
     // define mscorlib.dll
     mdModuleRef mscorlibRef;
     hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
@@ -133,7 +130,9 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     ULONG exceptionIndex = 0;
     ULONG returnIndex = 0;
 
-    hr = DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *rejitInfo, &exceptionIndex, &returnIndex);
+    std::vector<BYTE> origlocalSignature;
+
+    hr = DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *rejitInfo, &exceptionIndex, &returnIndex, origlocalSignature);
     if (FAILED(hr))
     {
         logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineLocalSignature {0}"_W, rejitInfo->Info.Name);
@@ -149,6 +148,13 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     }
 
     rejitInfo->Info.Signature.ParseArguments();
+
+    // add debugger as first to preserve the offsets
+    hr = AddDebugger(helper, metadataEmit, metadataAssemblyEmit, metadataImport, *rejitInfo, exceptionTypeRef, origlocalSignature);
+    if (FAILED(hr))
+    {
+        logging::log(logging::LogLevel::NONSUCCESS, "Failed AddDebugger {0}"_W, rejitInfo->Info.Name);
+    }
 
     std::vector<mdTypeRef> interceptorTypeRefs;
 
@@ -192,17 +198,19 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         }
     }
 
-    // try/catch for Interceptor.Before
-    rewriter::EHClause beforeEx{};
-    rewriter::ILInstr* beginFirst;
-
-    hr = CreateTryCatch(
-        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, &beginFirst, tracingBeginMethodRef, tracingAddParameterMethodRef](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave)
+    if (!rejitInfo->Interceptors.empty() || rejitInfo->Trace)
     {
-        if (rejitInfo->Trace)
+        // try/catch for Interceptor.Before
+        rewriter::EHClause beforeEx{};
+        rewriter::ILInstr* beginFirst;
+
+        hr = CreateTryCatch(
+            [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, &beginFirst, tracingBeginMethodRef, tracingAddParameterMethodRef](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave)
         {
-            auto hr = BeginTracing(helper, tryBegin, metadataEmit, metadataAssemblyEmit, tracingBeginMethodRef, tracingAddParameterMethodRef, *rejitInfo);
-        }
+            if (rejitInfo->Trace)
+            {
+                auto hr = BeginTracing(helper, tryBegin, metadataEmit, metadataAssemblyEmit, tracingBeginMethodRef, tracingAddParameterMethodRef, *rejitInfo);
+            }
 
         // call Before method
         for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
@@ -214,180 +222,181 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
             }
         }
 
-    *tryLeave = helper.LeaveS();
+        *tryLeave = helper.LeaveS();
 
-    beginFirst = *tryBegin;
+        beginFirst = *tryBegin;
 
-    return S_OK;
-    },
-        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, exceptionTypeRef](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
-        auto hr = LogInterceptorException(helper, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
-    if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
-        return hr;
-    }
-    *catchLeave = helper.LeaveS();
-    return S_OK;
-    }, [&helper](rewriter::ILInstr& tryLeave) {
-        tryLeave.m_pTarget = helper.GetCurrentInstr();
-    return S_OK;
-    }, [&helper](rewriter::ILInstr& leaveBeforeCatch) {
-        leaveBeforeCatch.m_pTarget = helper.GetCurrentInstr();
-    return S_OK;
-    }, exceptionTypeRef, beforeEx);
+        return S_OK;
+        },
+            [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, exceptionTypeRef](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
+            auto hr = LogInterceptorException(helper, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
+            return hr;
+        }
+        *catchLeave = helper.LeaveS();
+        return S_OK;
+        }, [&helper](rewriter::ILInstr& tryLeave) {
+            tryLeave.m_pTarget = helper.GetCurrentInstr();
+        return S_OK;
+        }, [&helper](rewriter::ILInstr& leaveBeforeCatch) {
+            leaveBeforeCatch.m_pTarget = helper.GetCurrentInstr();
+        return S_OK;
+        }, exceptionTypeRef, beforeEx);
 
-    if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateTryCatch Before");
-        return hr;
-    }
-
-    // new ret instruction
-    auto newRet = helper.NewInstr();
-    newRet->m_opcode = rewriter::CEE_RET;
-    rewriter->InsertAfter(rewriter->GetILList()->m_pPrev, newRet);
-    helper.SetILPosition(newRet);
-
-    // main catch
-    auto mainCatch = helper.StLocal(exceptionIndex);
-    auto mainCatchLeave = helper.Rethrow(); // helper.LeaveS();
-    mainCatchLeave->m_pTarget = newRet;
-    helper.SetILPosition(newRet);
-    auto nopFinally = helper.Nop();
-
-    // finally
-
-    // try/catch for Interceptor.After
-    rewriter::EHClause afterEx{};
-    rewriter::ILInstr* afterFirst;
-    rewriter::ILInstr* leaveAfterTry;
-    rewriter::ILInstr* nopAfterCatch;
-    rewriter::ILInstr* leaveAfterCatch;
-    hr = CreateTryCatch(
-        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, &afterFirst, returnIndex, exceptionTypeRef, exceptionIndex, &leaveAfterTry, tracingEndMethodRef](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
-        // call After method
-        for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
-            auto hr = CreateAfterMethod(helper, i == 0 ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo, returnIndex, exceptionTypeRef, exceptionIndex);
-            if (FAILED(hr)) {
-                logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
-                return hr;
-            }
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateTryCatch Before");
+            return hr;
         }
 
-    if (rejitInfo->Trace)
-    {
-        auto hr = EndTracing(helper, tryBegin, metadataEmit, metadataAssemblyEmit, tracingEndMethodRef, *rejitInfo, returnIndex, exceptionTypeRef, exceptionIndex);
-    }
+        // new ret instruction
+        auto newRet = helper.NewInstr();
+        newRet->m_opcode = rewriter::CEE_RET;
+        rewriter->InsertAfter(rewriter->GetILList()->m_pPrev, newRet);
+        helper.SetILPosition(newRet);
 
-    leaveAfterTry = *tryLeave = helper.LeaveS();
+        // main catch
+        auto mainCatch = helper.StLocal(exceptionIndex);
+        auto mainCatchLeave = helper.Rethrow(); // helper.LeaveS();
+        mainCatchLeave->m_pTarget = newRet;
+        helper.SetILPosition(newRet);
+        auto nopFinally = helper.Nop();
 
-    afterFirst = *tryBegin;
+        // finally
 
-    return S_OK;
-    },
-        [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, exceptionTypeRef, &leaveAfterCatch, &nopAfterCatch](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
-        auto hr = LogInterceptorException(helper, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
-    if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
-        return hr;
-    }
+        // try/catch for Interceptor.After
+        rewriter::EHClause afterEx{};
+        rewriter::ILInstr* afterFirst;
+        rewriter::ILInstr* leaveAfterTry;
+        rewriter::ILInstr* nopAfterCatch;
+        rewriter::ILInstr* leaveAfterCatch;
+        hr = CreateTryCatch(
+            [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, &afterFirst, returnIndex, exceptionTypeRef, exceptionIndex, &leaveAfterTry, tracingEndMethodRef](rewriter::ILInstr** tryBegin, rewriter::ILInstr** tryLeave) {
+            // call After method
+            for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
+                auto hr = CreateAfterMethod(helper, i == 0 ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo, returnIndex, exceptionTypeRef, exceptionIndex);
+                if (FAILED(hr)) {
+                    logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
+                    return hr;
+                }
+            }
 
-    nopAfterCatch = *catchBegin;
-    leaveAfterCatch = *catchLeave = helper.LeaveS();
-    return S_OK;
-    }, [&helper](rewriter::ILInstr& tryLeave) {
+        if (rejitInfo->Trace)
+        {
+            auto hr = EndTracing(helper, tryBegin, metadataEmit, metadataAssemblyEmit, tracingEndMethodRef, *rejitInfo, returnIndex, exceptionTypeRef, exceptionIndex);
+        }
+
+        leaveAfterTry = *tryLeave = helper.LeaveS();
+
+        afterFirst = *tryBegin;
 
         return S_OK;
-    }, [&helper](rewriter::ILInstr& leaveBeforeCatch) {
+        },
+            [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, exceptionTypeRef, &leaveAfterCatch, &nopAfterCatch](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
+            auto hr = LogInterceptorException(helper, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
+            return hr;
+        }
 
+        nopAfterCatch = *catchBegin;
+        leaveAfterCatch = *catchLeave = helper.LeaveS();
         return S_OK;
-    }, exceptionTypeRef, afterEx);
+        }, [&helper](rewriter::ILInstr& tryLeave) {
 
-    if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateTryCatch After");
-        return hr;
-    }
+            return S_OK;
+        }, [&helper](rewriter::ILInstr& leaveBeforeCatch) {
 
-    // finally
+            return S_OK;
+        }, exceptionTypeRef, afterEx);
 
-    // if ex != null throw ex
-    /*auto ldLocal = helper.LoadLocal(exceptionIndex);
-    auto brFalseS = helper.BrFalseS();
-    helper.LoadLocal(exceptionIndex);
-    helper.Throw();*/
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateTryCatch After");
+            return hr;
+        }
 
-    auto endFinally = helper.EndFinally();
-    leaveAfterCatch->m_pTarget = endFinally;// ldLocal;
-    leaveAfterTry->m_pTarget = endFinally;
-    //brFalseS->m_pTarget = endFinally;
+        // finally
 
-    auto isVoid = rejitInfo->Info.Signature.ReturnType.IsVoid;
+        // if ex != null throw ex
+        /*auto ldLocal = helper.LoadLocal(exceptionIndex);
+        auto brFalseS = helper.BrFalseS();
+        helper.LoadLocal(exceptionIndex);
+        helper.Throw();*/
 
-    if (!isVoid) {
-        helper.LoadLocal(returnIndex);
-    }
+        auto endFinally = helper.EndFinally();
+        leaveAfterCatch->m_pTarget = endFinally;// ldLocal;
+        leaveAfterTry->m_pTarget = endFinally;
+        //brFalseS->m_pTarget = endFinally;
 
-    // ret -> leave_s
-    for (auto pInstr = rewriter->GetILList()->m_pNext; pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
-    {
-        switch (pInstr->m_opcode)
+        auto isVoid = rejitInfo->Info.Signature.ReturnType.IsVoid;
+
+        if (!isVoid) {
+            helper.LoadLocal(returnIndex);
+        }
+
+        // ret -> leave_s
+        for (auto pInstr = rewriter->GetILList()->m_pNext; pInstr != rewriter->GetILList(); pInstr = pInstr->m_pNext)
         {
-        case rewriter::CEE_RET:
-        {
-            if (pInstr != newRet)
+            switch (pInstr->m_opcode)
             {
-                if (isVoid)
+            case rewriter::CEE_RET:
+            {
+                if (pInstr != newRet)
                 {
-                    pInstr->m_opcode = rewriter::CEE_LEAVE_S;
-                    pInstr->m_pTarget = endFinally->m_pNext;
-                }
-                else
-                {
-                    pInstr->m_opcode = rewriter::CEE_STLOC;
-                    pInstr->m_Arg16 = static_cast<INT16>(returnIndex);
+                    if (isVoid)
+                    {
+                        pInstr->m_opcode = rewriter::CEE_LEAVE_S;
+                        pInstr->m_pTarget = endFinally->m_pNext;
+                    }
+                    else
+                    {
+                        pInstr->m_opcode = rewriter::CEE_STLOC;
+                        pInstr->m_Arg16 = static_cast<INT16>(returnIndex);
 
-                    auto leaveInstr = rewriter->NewILInstr();
-                    leaveInstr->m_opcode = rewriter::CEE_LEAVE_S;
-                    leaveInstr->m_pTarget = endFinally->m_pNext;
-                    rewriter->InsertAfter(pInstr, leaveInstr);
+                        auto leaveInstr = rewriter->NewILInstr();
+                        leaveInstr->m_opcode = rewriter::CEE_LEAVE_S;
+                        leaveInstr->m_pTarget = endFinally->m_pNext;
+                        rewriter->InsertAfter(pInstr, leaveInstr);
+                    }
                 }
+                break;
             }
-            break;
+            default:
+                break;
+            }
         }
-        default:
-            break;
+
+        rewriter::EHClause exClause{};
+        exClause.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
+        exClause.m_pTryBegin = beginFirst;
+        exClause.m_pTryEnd = mainCatch;
+        exClause.m_pHandlerBegin = mainCatch;
+        exClause.m_pHandlerEnd = mainCatchLeave;
+        exClause.m_ClassToken = exceptionTypeRef;
+
+        rewriter::EHClause finallyClause{};
+        finallyClause.m_Flags = COR_ILEXCEPTION_CLAUSE_FINALLY;
+        finallyClause.m_pTryBegin = beginFirst;
+        finallyClause.m_pTryEnd = mainCatchLeave->m_pNext;
+        finallyClause.m_pHandlerBegin = nopFinally;// rethrow->m_pNext;
+        finallyClause.m_pHandlerEnd = endFinally;
+
+        auto ehCount = rewriter->GetEHCount();
+        auto ehPointer = rewriter->GetEHPointer();
+
+        auto newEx = new rewriter::EHClause[ehCount + 4];
+        for (unsigned i = 0; i < ehCount; i++)
+        {
+            newEx[i] = ehPointer[i];
         }
+
+        ehCount += 4;
+        newEx[ehCount - 4] = beforeEx;
+        newEx[ehCount - 3] = afterEx;
+        newEx[ehCount - 2] = exClause;
+        newEx[ehCount - 1] = finallyClause;
+        rewriter->SetEHClause(newEx, ehCount);
     }
-
-    rewriter::EHClause exClause{};
-    exClause.m_Flags = COR_ILEXCEPTION_CLAUSE_NONE;
-    exClause.m_pTryBegin = beginFirst;
-    exClause.m_pTryEnd = mainCatch;
-    exClause.m_pHandlerBegin = mainCatch;
-    exClause.m_pHandlerEnd = mainCatchLeave;
-    exClause.m_ClassToken = exceptionTypeRef;
-
-    rewriter::EHClause finallyClause{};
-    finallyClause.m_Flags = COR_ILEXCEPTION_CLAUSE_FINALLY;
-    finallyClause.m_pTryBegin = beginFirst;
-    finallyClause.m_pTryEnd = mainCatchLeave->m_pNext;
-    finallyClause.m_pHandlerBegin = nopFinally;// rethrow->m_pNext;
-    finallyClause.m_pHandlerEnd = endFinally;
-
-    auto ehCount = rewriter->GetEHCount();
-    auto ehPointer = rewriter->GetEHPointer();
-
-    auto newEx = new rewriter::EHClause[ehCount + 4];
-    for (unsigned i = 0; i < ehCount; i++)
-    {
-        newEx[i] = ehPointer[i];
-    }
-
-    ehCount += 4;
-    newEx[ehCount - 4] = beforeEx;
-    newEx[ehCount - 3] = afterEx;
-    newEx[ehCount - 2] = exClause;
-    newEx[ehCount - 1] = finallyClause;
-    rewriter->SetEHClause(newEx, ehCount);
 
     logging::log(logging::LogLevel::VERBOSE, "after rewriting {0}"_W, profiler->DumpILCodes(rewriter, rejitInfo->Info, metadataImport));
 

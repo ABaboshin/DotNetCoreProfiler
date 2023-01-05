@@ -68,33 +68,33 @@ namespace Interception.DefaultImpl
                 a.CreateInstance(configuration.TracingAddParameterMethod.TypeName);
             }
 
-            if (configuration.DebbuggerBeginMethod != null)
+            if (configuration.DebuggerBeginMethod != null)
             {
-                Console.WriteLine($"Load debugger begin method {configuration.DebbuggerBeginMethod.TypeName}");
-                var a = Assembly.Load(configuration.DebbuggerBeginMethod.AssemblyName);
-                a.CreateInstance(configuration.DebbuggerBeginMethod.TypeName);
+                Console.WriteLine($"Load debugger begin method {configuration.DebuggerBeginMethod.TypeName}");
+                var a = Assembly.Load(configuration.DebuggerBeginMethod.AssemblyName);
+                a.CreateInstance(configuration.DebuggerBeginMethod.TypeName);
             }
 
-            if (configuration.DebbuggerEndMethod != null)
+            if (configuration.DebuggerEndMethod != null)
             {
-                Console.WriteLine($"Load debugger end method {configuration.DebbuggerEndMethod.TypeName}");
-                var a = Assembly.Load(configuration.DebbuggerEndMethod.AssemblyName);
-                a.CreateInstance(configuration.DebbuggerEndMethod.TypeName);
+                Console.WriteLine($"Load debugger end method {configuration.DebuggerEndMethod.TypeName}");
+                var a = Assembly.Load(configuration.DebuggerEndMethod.AssemblyName);
+                a.CreateInstance(configuration.DebuggerEndMethod.TypeName);
             }
 
-            if (configuration.DebbuggerAddParameterMethod != null)
+            if (configuration.DebuggerAddParameterMethod != null)
             {
-                Console.WriteLine($"Load debugger add parameter method {configuration.DebbuggerAddParameterMethod.TypeName}");
-                var a = Assembly.Load(configuration.DebbuggerAddParameterMethod.AssemblyName);
-                a.CreateInstance(configuration.DebbuggerAddParameterMethod.TypeName);
+                Console.WriteLine($"Load debugger add parameter method {configuration.DebuggerAddParameterMethod.TypeName}");
+                var a = Assembly.Load(configuration.DebuggerAddParameterMethod.AssemblyName);
+                a.CreateInstance(configuration.DebuggerAddParameterMethod.TypeName);
             }
 
-            if (configuration.DebbuggerInitializerMethod != null)
+            if (configuration.DebuggerInitializerMethod != null)
             {
-                Console.WriteLine($"Load exception logger {configuration.DebbuggerInitializerMethod.TypeName}");
-                var a = Assembly.Load(configuration.DebbuggerInitializerMethod.AssemblyName);
-                var debuggerInitializer = a.CreateInstance(configuration.DebbuggerInitializerMethod.TypeName);
-                var method = debuggerInitializer.GetType().GetMethod(configuration.DebbuggerInitializerMethod.MethodName);
+                Console.WriteLine($"Load debugger initializer {configuration.DebuggerInitializerMethod.TypeName}");
+                var a = Assembly.Load(configuration.DebuggerInitializerMethod.AssemblyName);
+                var debuggerInitializer = a.CreateInstance(configuration.DebuggerInitializerMethod.TypeName);
+                var method = debuggerInitializer.GetType().GetMethod(configuration.DebuggerInitializerMethod.MethodName);
                 method.Invoke(debuggerInitializer, new object[] { configuration });
             }
         }

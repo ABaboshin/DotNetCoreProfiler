@@ -8,7 +8,7 @@
 #include "util/helpers.h"
 #include "const/const.h"
 
-HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, ModuleID moduleId, mdTypeRef exceptionTypeRef, const RejitInfo &interceptor, ULONG *exceptionIndex, ULONG *returnIndex)
+HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, ModuleID moduleId, mdTypeRef exceptionTypeRef, const RejitInfo &interceptor, ULONG *exceptionIndex, ULONG *returnIndex, std::vector<BYTE>& origlocalSignature)
 {
   HRESULT hr;
 
@@ -19,6 +19,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
     logging::log(logging::LogLevel::NONSUCCESS, "Failed GetModuleMetaData GetSigFromToken");
     return hr;
   }
+
   auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
   auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
 
@@ -37,6 +38,8 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
       return hr;
     }
   }
+
+  origlocalSignature = util::ToRaw(originalSignature, originalSignatureSize);
 
   // exception type buffer and size
   unsigned exceptionTypeRefBuffer;

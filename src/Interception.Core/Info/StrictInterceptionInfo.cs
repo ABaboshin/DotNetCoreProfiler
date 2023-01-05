@@ -57,10 +57,10 @@ namespace Interception.Core.Info
         public InterceptorMethodInfo TracingBeginMethod { get; set; }
         public InterceptorMethodInfo TracingEndMethod { get; set; }
         public InterceptorMethodInfo TracingAddParameterMethod { get; set; }
-        public InterceptorMethodInfo DebbuggerBeginMethod { get; set; }
-        public InterceptorMethodInfo DebbuggerEndMethod { get; set; }
-        public InterceptorMethodInfo DebbuggerAddParameterMethod { get; set; }
-        public InterceptorMethodInfo DebbuggerInitializerMethod { get; set; }
+        public InterceptorMethodInfo DebuggerBeginMethod { get; set; }
+        public InterceptorMethodInfo DebuggerEndMethod { get; set; }
+        public InterceptorMethodInfo DebuggerAddParameterMethod { get; set; }
+        public InterceptorMethodInfo DebuggerInitializerMethod { get; set; }
         public List<TraceMethodInfo> Traces { get; set; }
         public List<DebugMethodInfo> Debug { get; set; }
         public string Path { get; set; }
