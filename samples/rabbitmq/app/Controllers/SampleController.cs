@@ -1,16 +1,11 @@
-﻿using Interception.Attributes;
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
 using System.Threading.Tasks;
-using System;
 using app.MessageBus;
 
 namespace app.Controllers
 {
-  [Route("api/[controller]")]
+    [Route("api/[controller]")]
   [ApiController]
   public class SampleController : ControllerBase
   {

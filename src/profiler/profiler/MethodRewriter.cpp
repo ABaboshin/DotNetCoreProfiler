@@ -71,7 +71,10 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     });
 
     // no rejit info => exit
-    if (rejitInfo == profiler->rejitInfo.end()) return S_OK;
+    if (rejitInfo == profiler->rejitInfo.end())
+    {
+        return S_OK;
+    }
 
     logging::log(logging::LogLevel::INFO, "GetReJITParameters {0}.{1}"_W, rejitInfo->Info.Type.Name, rejitInfo->Info.Name);
 

@@ -33,25 +33,22 @@ namespace app
 
             serviceCollection.AddMassTransit(x =>
             {
-                x.AddBus(context =>
+                x.UsingRabbitMq((context, cfg) =>
                 {
-                    return Bus.Factory.CreateUsingRabbitMq(cfg =>
+                    var loggerFactory = context.GetRequiredService<ILoggerFactory>();
+                    // cfg.UseExtensionsLogging(loggerFactory);
+
+                    var config = context.GetService<IOptions<RabbitMQConfiguration>>().Value;
+
+                    cfg.Host(new Uri($"rabbitmq://{config.Host}/"), host =>
                     {
-                        var loggerFactory = context.GetRequiredService<ILoggerFactory>();
-                        // cfg.UseExtensionsLogging(loggerFactory);
+                        host.Username(config.User);
+                        host.Password(config.Password);
+                    });
 
-                        var config = context.GetService<IOptions<RabbitMQConfiguration>>().Value;
-
-                        cfg.Host(new Uri($"rabbitmq://{config.Host}/"), host =>
-                        {
-                            host.Username(config.User);
-                            host.Password(config.Password);
-                        });
-
-                        cfg.ReceiveEndpoint("queue-name", ec =>
-                        {
-                            ec.Consumer(typeof(MyMessageConsumer), t => new MyMessageConsumer(context.GetRequiredService<ILogger<MyMessageConsumer>>()));
-                        });
+                    cfg.ReceiveEndpoint("queue-name", ec =>
+                    {
+                        ec.Consumer(typeof(MyMessageConsumer), t => new MyMessageConsumer(context.GetRequiredService<ILogger<MyMessageConsumer>>()));
                     });
                 });
             });

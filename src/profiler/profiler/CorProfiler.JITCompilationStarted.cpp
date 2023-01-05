@@ -92,6 +92,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
         }
     }
 
+    logging::log(logging::LogLevel::INFO, "Loaded into {0}"_W, moduleInfo.assembly.name);
+
     return S_OK;
 }
 

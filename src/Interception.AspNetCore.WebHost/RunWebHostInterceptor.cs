@@ -1,9 +1,5 @@
 ﻿using System;
 using Interception.Attributes;
-using Interception.Core;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.Extensions.Hosting;
-using System.Threading;
 
 namespace Interception.AspNetCore
 {

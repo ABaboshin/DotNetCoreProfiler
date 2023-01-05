@@ -29,6 +29,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
 
     if (SkipAssembly(moduleInfo.assembly.name)) {
         skippedModules.insert(moduleId);
+        std::pair<util::wstring, ModuleID> lm(moduleInfo.assembly.name, moduleId);
+        loadedModules.insert(lm);
         return S_OK;
     }
 

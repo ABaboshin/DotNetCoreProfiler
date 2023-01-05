@@ -1,8 +1,6 @@
-﻿using Interception.Attributes;
-using MassTransit;
+﻿using MassTransit;
 using Microsoft.Extensions.Logging;
 using System;
-using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace app.MessageBus
@@ -28,7 +26,7 @@ namespace app.MessageBus
         }
 
 
-        [Monitor(Name = "A long time action", Parameters = new[] { "o1" }, ReturnValue = true)]
+        // [Monitor(Name = "A long time action", Parameters = new[] { "o1" }, ReturnValue = true)]
         async Task<int> LongAction(object o1, object o2)
         {
             await Task.Delay(3000);

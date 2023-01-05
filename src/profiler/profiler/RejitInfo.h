@@ -12,7 +12,7 @@ struct RejitInfo
 	mdMethodDef MethodId;
 	info::FunctionInfo Info;
 	std::vector<configuration::StrictInterception> Interceptors;
-	bool Trace;
+	bool Trace = false;
 	std::vector<util::wstring> Parameters{};
 	std::vector<util::wstring> Variables{};
 	util::wstring TraceName;

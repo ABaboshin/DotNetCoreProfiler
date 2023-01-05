@@ -283,7 +283,7 @@ HRESULT MethodRewriter::AddDebugger(rewriter::ILRewriterHelper& helper, util::Co
             offset, &addParameterSpec);
 
         mdString parameterNameToken;
-        wstring parameterName = interceptor.Parameters.size() >= i ? interceptor.Parameters[i + (interceptor.Info.Signature.IsInstanceMethod() ? 1 : 0)] : util::ToWSTRING(std::to_string(i));
+        wstring parameterName = interceptor.Parameters.size() > i ? interceptor.Parameters[i + (interceptor.Info.Signature.IsInstanceMethod() ? 1 : 0)] : util::ToWSTRING(std::to_string(i));
         hr = metadataEmit->DefineUserString(parameterName.c_str(), (ULONG)parameterName.length(), &parameterNameToken);
 
         helper.LoadStr(parameterTypeNameToken);

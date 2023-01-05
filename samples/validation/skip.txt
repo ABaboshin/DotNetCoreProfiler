@@ -36,3 +36,4 @@ System.Threading.Tasks
 System.Xml.Linq
 mscorlib
 netstandard
+System.Runtime.CompilerServices

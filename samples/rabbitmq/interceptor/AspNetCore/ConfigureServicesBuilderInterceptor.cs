@@ -1,15 +1,18 @@
-﻿using Interception.Attributes;
-using Interception.Core;
-using Interception.Tracing.Serilog;
+﻿using System;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Interception.AspNetCore;
+using Interception.Attributes;
+using Interception.Observers;
+using Interception.Observers.Samplers;
+using Interception.Tracing.Serilog;
+using OpenTracing;
+using OpenTracing.Mock;
 using OpenTracing.Util;
 using Serilog;
 using Serilog.Core;
-using Serilog.Events;
 using Serilog.Extensions.Logging;
-using Serilog.Formatting.Json;
-using System;
 
 namespace Interception.AspNetCore
 {
@@ -17,56 +20,70 @@ namespace Interception.AspNetCore
     /// intercept Startup.ConfigureService and inject cache
     /// </summary>
     [StrictIntercept(TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "InvokeCore", TargetTypeName = "Microsoft.AspNetCore.Hosting.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
-    public class ConfigureServicesBuilderInterceptor : BaseInterceptor
+    public class ConfigureServicesBuilderInterceptor
     {
-        public override int Priority => 0;
-
-        public override void ExecuteBefore()
+        public static void After<TResult>(TResult result, Exception ex)
         {
-            var serviceCollection = ((IServiceCollection)GetParameter(1));
+        }
 
-            var logger = CreateLogger();
-            var loggerFactory = new SerilogLoggerFactory(logger);
-            serviceCollection.AddSingleton((Microsoft.Extensions.Logging.ILoggerFactory)loggerFactory);
+        public static void Before<TType, T1, T2>(TType instance, ref T1 a1, ref T2 serviceCollection) where T2 : IServiceCollection
+        {
+            HttpDiagnosticsObserver.ConfigureAndStart();
+            EFCoreDiagnosticsObserver.ConfigureAndStart();
+
+            //CPUSampler.ConfigureAndStart();
+            //MemSampler.ConfigureAndStart();
+            //GCSampler.ConfigureAndStart();
 
             var configuration = new ConfigurationBuilder()
                 .AddEnvironmentVariables()
                 .Build();
+
+            var logger = CreateLogger(configuration);
+            var loggerFactory = new SerilogLoggerFactory(logger);
+            serviceCollection.AddSingleton((Microsoft.Extensions.Logging.ILoggerFactory)loggerFactory);
+
+            serviceCollection.Configure<AspNetCoreConfiguration>(configuration.GetSection(AspNetCoreConfiguration.SectionKey));
+            serviceCollection.AddSingleton<IStartupFilter>(_ => new TracingStartupFilter());
 
             ConfigureMetrics(loggerFactory, serviceCollection);
         }
 
-        private void ConfigureMetrics(Microsoft.Extensions.Logging.ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
+        private static void ConfigureMetrics(Microsoft.Extensions.Logging.ILoggerFactory loggerFactory, IServiceCollection serviceCollection)
         {
+          ITracer tracer = null;
+          try
+          {
             var configuration = new ConfigurationBuilder()
-                .AddEnvironmentVariables()
-                .Build();
+              .AddEnvironmentVariables()
+              .Build();
 
             var config = Jaeger.Configuration.FromEnv(loggerFactory);
-            var tracer = config.GetTracer();
 
-            GlobalTracer.Register(tracer);
+            tracer = config.GetTracer();
 
-            serviceCollection.AddSingleton(sp => GlobalTracer.Instance);
+            // initialize dogstatsd client
+            // var statsdConfiguration = Interception.OpenTracing.Statsd.StatsdConfiguration.FromEnv(loggerFactory);
+          }
+          catch (System.Exception)
+          {
+              tracer = new MockTracer();
+          }
+
+          GlobalTracer.Register(tracer);
+
+          serviceCollection.AddSingleton(sp => GlobalTracer.Instance);
         }
 
-        private Logger CreateLogger()
+        private static Logger CreateLogger(IConfiguration configuration)
         {
-            var logLevel = ParseLoggingLevel(Environment.GetEnvironmentVariable("LOG_LEVEL"));
+            var logger =
+                new LoggerConfiguration()
+                    .ReadFrom.Configuration(configuration)
+                    .Enrich.With((ILogEventEnricher)new SerilogEnricher())
+                    .CreateLogger();
 
-            var logger = new LoggerConfiguration()
-                .Enrich.FromLogContext()
-                .Enrich.With((ILogEventEnricher)new SerilogEnricher())
-                .MinimumLevel.Is(LogEventLevel.Verbose)
-                .WriteTo.Console(new JsonFormatter(renderMessage: true), logLevel)
-                .CreateLogger();
             return logger;
-        }
-
-        private LogEventLevel ParseLoggingLevel(string logLevelRaw)
-        {
-            Enum.TryParse(logLevelRaw, out LogEventLevel level);
-            return level as LogEventLevel? ?? LogEventLevel.Verbose;
         }
     }
 }

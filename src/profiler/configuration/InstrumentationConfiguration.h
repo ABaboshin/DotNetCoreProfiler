@@ -11,7 +11,7 @@ namespace configuration
 
   struct InstrumentationConfiguration
   {
-    bool Trace;
+    bool Trace = false;
     std::vector<wstring> Parameters{};
     std::vector<wstring> Variables{};
     std::vector<int> Offsets{};

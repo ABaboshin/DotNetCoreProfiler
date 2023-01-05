@@ -158,7 +158,7 @@ HRESULT MethodRewriter::BeginTracing(rewriter::ILRewriterHelper& helper, rewrite
             offset, &addParameterSpec);
 
         mdString parameterNameToken;
-        wstring parameterName = interceptor.Parameters.size() >= i ? interceptor.Parameters[i] : util::ToWSTRING(std::to_string(i));
+        wstring parameterName = interceptor.Parameters.size() > i ? interceptor.Parameters[i] : util::ToWSTRING(std::to_string(i));
         hr = metadataEmit->DefineUserString(parameterName.c_str(), (ULONG)parameterName.length(), &parameterNameToken);
 
         helper.LoadStr(parameterNameToken);

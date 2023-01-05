@@ -1,5 +1,4 @@
 ﻿using MassTransit;
-using Microsoft.Extensions.Options;
 using OpenTracing.Propagation;
 using OpenTracing.Tag;
 using OpenTracing.Util;

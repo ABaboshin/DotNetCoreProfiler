@@ -12,7 +12,7 @@ namespace Interception.MassTransit
     [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "UsingRabbitMq", TargetTypeName = "MassTransit.RabbitMqBusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
     public class CreateUsingRabbitMqInterceptor
     {
-        public static void Before<TType, T1, T2>(TType instance, ref T1 a1, ref T2 a2) 
+        public static void Before<TType, T1, T2>(TType instance, ref T1 a1, ref T2 a2)
         {
             
             var configuration = new ConfigurationBuilder()
@@ -21,7 +21,7 @@ namespace Interception.MassTransit
 
             var config = configuration.GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>();
 
-            var typedConfigure = (Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator>)(object)a1;
+            var typedConfigure = (Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator>)(object)a2;
             Action<IBusRegistrationContext, IRabbitMqBusFactoryConfigurator> configure = (IBusRegistrationContext context, IRabbitMqBusFactoryConfigurator cfg) => {
                 if (config.PublisherEnabled)
                 {
