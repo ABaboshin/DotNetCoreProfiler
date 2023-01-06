@@ -1,3 +1,4 @@
+Masstransit 7/8
 Debugger:
   - try/catch
   - update all related leave_s to debugger.start
