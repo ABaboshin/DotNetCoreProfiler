@@ -11,7 +11,7 @@ RUN dotnet publish -c Release -o /interceptor samples/rabbitmq/interceptor/inter
 
 WORKDIR /interceptor
 
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.MassTransit.dll,Interception.AspNetCore.WebHost.dll,Interception.Tracing.dll,Interception.Debugger.dll,Interception.DefaultImpl.dll -p /profiler -o profiler.json -s /samples/rabbitmq/skip.txt
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.MassTransit7.dll,Interception.AspNetCore.WebHost.dll,Interception.Tracing.dll,Interception.Debugger.dll,Interception.DefaultImpl.dll -p /profiler -o profiler.json -s /samples/rabbitmq/skip.txt
 
 FROM profiler:native as profiler
 

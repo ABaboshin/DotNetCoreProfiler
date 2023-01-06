@@ -10,9 +10,12 @@ RUN dotnet build -c Release src/Interception.Attributes/Interception.Attributes.
 RUN dotnet build -c Release src/Interception.Core/Interception.Core.csproj
 #RUN dotnet build -c Release src/Interception.DeadlockDetection/Interception.DeadlockDetection.csproj
 RUN dotnet build -c Release src/Interception.DependencyInjection/Interception.DependencyInjection.csproj
+RUN dotnet build -c Release src/Interception.Debugger/Interception.Debugger.csproj
 RUN dotnet build -c Release src/Interception.DefaultImpl/Interception.DefaultImpl.csproj
 RUN dotnet build -c Release src/Interception.Generator/Interception.Generator.csproj
-RUN dotnet build -c Release src/Interception.MassTransit/Interception.MassTransit.csproj
+RUN dotnet build -c Release src/Interception.Interop/Interception.Interop.csproj
+RUN dotnet build -c Release src/Interception.MassTransit7/Interception.MassTransit7.csproj
+RUN dotnet build -c Release src/Interception.MassTransit8/Interception.MassTransit8.csproj
 RUN dotnet build -c Release src/Interception.Observers/Interception.Observers.csproj
 RUN dotnet build -c Release src/Interception.Observers.Http/Interception.Observers.Http.csproj
 RUN dotnet build -c Release src/Interception.Observers.EFCore6/Interception.Observers.EFCore6.csproj
