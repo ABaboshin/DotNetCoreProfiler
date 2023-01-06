@@ -16,6 +16,7 @@ namespace logging
 		{LogLevel::VERBOSE, "VERBOSE"},
 		{LogLevel::DEBUG, "DEBUG"},
 		{LogLevel::INFO, "INFO"},
+		{LogLevel::ERR, "ERROR"},
 		{LogLevel::NONE, "NONE"}
 	};
 

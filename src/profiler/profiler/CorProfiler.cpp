@@ -65,7 +65,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);
     if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed SetEventMask"_W);
+        logging::log(logging::LogLevel::ERR, "Failed SetEventMask"_W);
         return hr;
     }
 
@@ -584,7 +584,7 @@ std::vector<info::TypeInfo> CorProfiler::GetAllImplementedInterfaces(const info:
     ULONG interfacesCount;
     auto hr = metadataImport->EnumInterfaceImpls(&hcorenumInterfaces, typeInfo.Id, interfaces, MAX_CLASS_NAME, &interfacesCount);
     if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished EnumInterfaceImpls"_W);
+        logging::log(logging::LogLevel::ERR, "Failed ModuleLoadFinished EnumInterfaceImpls"_W);
         return {};
     }
 
@@ -683,7 +683,7 @@ void CorProfiler::ProcessDebuggerRejits()
     HRESULT hr = instance->corProfilerInfo->InitializeCurrentThread();
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "ProcessDebuggerRejits"_W);
+        logging::log(logging::LogLevel::ERR, "ProcessDebuggerRejits"_W);
     }
 
     while (true)
@@ -708,7 +708,7 @@ void CorProfiler::ProcessDebuggerRejits()
                     auto hr = instance->corProfilerInfo->GetModuleMetaData(el.second, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
                     if (FAILED(hr))
                     {
-                        logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished GetModuleMetaData"_W);
+                        logging::log(logging::LogLevel::ERR, "Failed ModuleLoadFinished GetModuleMetaData"_W);
                         return;
                     }
 
@@ -719,7 +719,7 @@ void CorProfiler::ProcessDebuggerRejits()
                     ULONG typeDefsCount;
                     hr = metadataImport->EnumTypeDefs(&hcorenumTypeDefs, typeDefs, MAX_CLASS_NAME, &typeDefsCount);
                     if (FAILED(hr)) {
-                        logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished EnumTypeDefs"_W);
+                        logging::log(logging::LogLevel::ERR, "Failed ModuleLoadFinished EnumTypeDefs"_W);
                         return;
                     }
 
@@ -737,7 +737,7 @@ void CorProfiler::ProcessDebuggerRejits()
                         ULONG methodsCount;
                         hr = metadataImport->EnumMethods(&hcorenumMethods, typeDefs[typeIndex], methods, MAX_CLASS_NAME, &methodsCount);
                         if (FAILED(hr)) {
-                            logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished EnumInterfaceImpls"_W);
+                            logging::log(logging::LogLevel::ERR, "Failed ModuleLoadFinished EnumInterfaceImpls"_W);
                             return;
                         }
 

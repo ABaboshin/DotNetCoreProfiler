@@ -16,7 +16,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
   hr = profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
   if (FAILED(hr))
   {
-    logging::log(logging::LogLevel::NONSUCCESS, "Failed GetModuleMetaData GetSigFromToken");
+    logging::log(logging::LogLevel::ERR, "Failed GetModuleMetaData GetSigFromToken");
     return hr;
   }
 
@@ -34,7 +34,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
     hr = metadataImport->GetSigFromToken(localVarSig, &originalSignature, &originalSignatureSize);
     if (FAILED(hr))
     {
-      logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineLocalSignature GetSigFromToken");
+      logging::log(logging::LogLevel::ERR, "Failed DefineLocalSignature GetSigFromToken");
       return hr;
     }
   }
@@ -116,7 +116,7 @@ HRESULT MethodRewriter::DefineLocalSignature(rewriter::ILRewriter *rewriter, Mod
   hr = metadataEmit->GetTokenFromSig(newSignatureBuffer, newSignatureSize, &newLocalVarSig);
   if (FAILED(hr))
   {
-    logging::log(logging::LogLevel::NONSUCCESS, "Failed local sig {0}"_W, interceptor.Info.Name);
+    logging::log(logging::LogLevel::ERR, "Failed local sig {0}"_W, interceptor.Info.Name);
     return hr;
   }
 
@@ -149,7 +149,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, u
         hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, profiler->configuration.DefaultInitializer.AssemblyName);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, profiler->configuration.DefaultInitializer.AssemblyName);
+            logging::log(logging::LogLevel::ERR, "Failed GetWrapperRef {0}"_W, profiler->configuration.DefaultInitializer.AssemblyName);
             return hr;
         }
 
@@ -161,7 +161,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, u
             &defaultInitializerTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
             return hr;
         }
 
@@ -186,7 +186,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, u
 
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineMemberRef {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed DefineMemberRef {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
             return hr;
         }
 
@@ -206,7 +206,7 @@ HRESULT MethodRewriter::InitLocalVariables(rewriter::ILRewriterHelper& helper, u
 
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineMethodSpec {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed DefineMethodSpec {0}"_W, profiler->configuration.DefaultInitializer.TypeName);
             return hr;
         }
 

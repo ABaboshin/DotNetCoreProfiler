@@ -31,7 +31,7 @@ HRESULT MethodRewriter::BeginTracing(rewriter::ILRewriterHelper& helper, rewrite
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, profiler->configuration.TracingBeginMethod->MethodName);
+        logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod {0}"_W, profiler->configuration.TracingBeginMethod->MethodName);
         return hr;
     }
 
@@ -65,7 +65,7 @@ HRESULT MethodRewriter::BeginTracing(rewriter::ILRewriterHelper& helper, rewrite
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, profiler->configuration.TracingAddParameterMethod->MethodName);
+        logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod {0}"_W, profiler->configuration.TracingAddParameterMethod->MethodName);
         return hr;
     }
 
@@ -75,7 +75,7 @@ HRESULT MethodRewriter::BeginTracing(rewriter::ILRewriterHelper& helper, rewrite
     {
         hr = GetTargetTypeRef(interceptor.Info.Type, metadataEmit, metadataAssemblyEmit, &targetTypeRef, &isValueType);
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
+            logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
             return hr;
         }
     }
@@ -84,7 +84,7 @@ HRESULT MethodRewriter::BeginTracing(rewriter::ILRewriterHelper& helper, rewrite
         hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &targetTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod GetObjectTypeRef"_W);
+            logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod GetObjectTypeRef"_W);
             return hr;
         }
     }

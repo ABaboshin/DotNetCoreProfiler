@@ -45,7 +45,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
+        logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
         return hr;
     }
 
@@ -57,7 +57,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
     {
         hr = GetTargetTypeRef(interceptor.Info.Type, metadataEmit, metadataAssemblyEmit, &targetTypeRef, &isValueType);
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
+            logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
             return hr;
         }
     }
@@ -99,7 +99,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
         hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &targetTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod GetObjectTypeRef"_W);
+            logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod GetObjectTypeRef"_W);
             return hr;
         }
     }
@@ -143,7 +143,7 @@ HRESULT MethodRewriter::CreateBeforeMethod(rewriter::ILRewriterHelper& helper, r
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod DefineMethodSpec"_W);
+        logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod DefineMethodSpec"_W);
         return hr;
     }
 

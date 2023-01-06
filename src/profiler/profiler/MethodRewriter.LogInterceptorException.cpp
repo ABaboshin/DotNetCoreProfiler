@@ -20,7 +20,7 @@ HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& help
     auto hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, profiler->configuration.ExceptionLogger->AssemblyName);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, profiler->configuration.ExceptionLogger->AssemblyName);
+        logging::log(logging::LogLevel::ERR, "Failed GetWrapperRef {0}"_W, profiler->configuration.ExceptionLogger->AssemblyName);
         return hr;
     }
 
@@ -32,7 +32,7 @@ HRESULT MethodRewriter::LogInterceptorException(rewriter::ILRewriterHelper& help
         &defaultInitializerTypeRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.ExceptionLogger->TypeName);
+        logging::log(logging::LogLevel::ERR, "Failed DefineTypeRefByName {0}"_W, profiler->configuration.ExceptionLogger->TypeName);
         return hr;
     }
 

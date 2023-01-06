@@ -33,21 +33,21 @@ HRESULT MethodRewriter::AddDebugger(rewriter::ILRewriterHelper& helper, util::Co
         hr = FindTypeRef(metadataEmit, metadataAssemblyEmit, profiler->configuration.DebuggerBeginMethod->AssemblyName, profiler->configuration.DebuggerBeginMethod->TypeName, debuggerBeginMethodRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.DebuggerBeginMethod->AssemblyName, profiler->configuration.DebuggerBeginMethod->TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.DebuggerBeginMethod->AssemblyName, profiler->configuration.DebuggerBeginMethod->TypeName);
             return hr;
         }
 
         hr = FindTypeRef(metadataEmit, metadataAssemblyEmit, profiler->configuration.DebuggerEndMethod->AssemblyName, profiler->configuration.DebuggerEndMethod->TypeName, debuggerEndMethodRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.DebuggerEndMethod->AssemblyName, profiler->configuration.DebuggerEndMethod->TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.DebuggerEndMethod->AssemblyName, profiler->configuration.DebuggerEndMethod->TypeName);
             return hr;
         }
 
         hr = FindTypeRef(metadataEmit, metadataAssemblyEmit, profiler->configuration.DebuggerAddParameterMethod->AssemblyName, profiler->configuration.DebuggerAddParameterMethod->TypeName, debuggerAddParameterMethodRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.DebuggerAddParameterMethod->AssemblyName, profiler->configuration.DebuggerAddParameterMethod->TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.DebuggerAddParameterMethod->AssemblyName, profiler->configuration.DebuggerAddParameterMethod->TypeName);
             return hr;
         }
     }
@@ -148,7 +148,7 @@ HRESULT MethodRewriter::AddDebugger(rewriter::ILRewriterHelper& helper, util::Co
 
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, profiler->configuration.DebuggerBeginMethod->MethodName);
+            logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod {0}"_W, profiler->configuration.DebuggerBeginMethod->MethodName);
             return hr;
         }
 
@@ -185,7 +185,7 @@ HRESULT MethodRewriter::AddDebugger(rewriter::ILRewriterHelper& helper, util::Co
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, profiler->configuration.DebuggerAddParameterMethod->MethodName);
+        logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod {0}"_W, profiler->configuration.DebuggerAddParameterMethod->MethodName);
         return hr;
     }
 
@@ -195,7 +195,7 @@ HRESULT MethodRewriter::AddDebugger(rewriter::ILRewriterHelper& helper, util::Co
     {
         hr = GetTargetTypeRef(interceptor.Info.Type, metadataEmit, metadataAssemblyEmit, &targetTypeRef, &isValueType);
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
+            logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod {0}"_W, interceptor.Info.Name);
             return hr;
         }
     }
@@ -204,7 +204,7 @@ HRESULT MethodRewriter::AddDebugger(rewriter::ILRewriterHelper& helper, util::Co
         hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &targetTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod GetObjectTypeRef"_W);
+            logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod GetObjectTypeRef"_W);
             return hr;
         }
     }
@@ -347,7 +347,7 @@ HRESULT MethodRewriter::AddDebugger(rewriter::ILRewriterHelper& helper, util::Co
 
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod {0}"_W, profiler->configuration.DebuggerBeginMethod->MethodName);
+            logging::log(logging::LogLevel::ERR, "Failed CreateAfterMethod {0}"_W, profiler->configuration.DebuggerBeginMethod->MethodName);
             return hr;
         }
 

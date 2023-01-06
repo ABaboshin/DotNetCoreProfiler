@@ -50,7 +50,7 @@ namespace util
         auto hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed GetObjectTypeRef GetMsCorLibRef"_W);
+            logging::log(logging::LogLevel::ERR, "Failed GetObjectTypeRef GetMsCorLibRef"_W);
             return hr;
         }
 
@@ -58,7 +58,7 @@ namespace util
         hr = metadataEmit->DefineTypeRefByName(mscorlibRef, _const::SystemObject.data(), objectTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed GetObjectTypeRef DefineTypeRefByName"_W);
+            logging::log(logging::LogLevel::ERR, "Failed GetObjectTypeRef DefineTypeRefByName"_W);
             return hr;
         }
 

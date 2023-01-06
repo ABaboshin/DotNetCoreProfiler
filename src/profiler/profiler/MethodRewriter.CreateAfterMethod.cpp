@@ -48,7 +48,7 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, re
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod {0}"_W, interceptor.Info.Name);
+        logging::log(logging::LogLevel::ERR, "Failed CreateAfterMethod {0}"_W, interceptor.Info.Name);
         return hr;
     }
 
@@ -98,7 +98,7 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, re
         hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &objectTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod GetObjectTypeRef"_W);
+            logging::log(logging::LogLevel::ERR, "Failed CreateAfterMethod GetObjectTypeRef"_W);
             return hr;
         }
         unsigned objectTypeRefBuffer = 0;
@@ -113,7 +113,7 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, re
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod DefineMethodSpec"_W);
+        logging::log(logging::LogLevel::ERR, "Failed CreateAfterMethod DefineMethodSpec"_W);
         return hr;
     }
 

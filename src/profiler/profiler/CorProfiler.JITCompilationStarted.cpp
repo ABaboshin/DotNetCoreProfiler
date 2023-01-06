@@ -27,7 +27,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hr = this->corProfilerInfo->GetFunctionInfo(functionId, &classId, &moduleId, &functionToken);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetFunctionInfo"_W);
+        logging::log(logging::LogLevel::ERR, "Failed GetFunctionInfo"_W);
         return hr;
     }
 
@@ -49,7 +49,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hr = rewriter->Import();
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed Import"_W);
+        logging::log(logging::LogLevel::ERR, "Failed Import"_W);
         return hr;
     }
 
@@ -60,7 +60,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hr = this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetModuleMetaData"_W);
+        logging::log(logging::LogLevel::ERR, "Failed GetModuleMetaData"_W);
         return hr;
     }
 
@@ -71,7 +71,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
     hr = InjectLoadMethod(moduleId, *rewriter, functionInfo);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed InjectLoadMethod"_W);
+        logging::log(logging::LogLevel::ERR, "Failed InjectLoadMethod"_W);
         return hr;
     }
 
@@ -80,14 +80,14 @@ HRESULT STDMETHODCALLTYPE CorProfiler::JITCompilationStarted(FunctionID function
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed Export"_W);
+        logging::log(logging::LogLevel::ERR, "Failed Export"_W);
         return hr;
     }
 
     if (oneAppDomainMode) {
         this->corProfilerInfo->SetEventMask(eventMask & ~COR_PRF_MONITOR_JIT_COMPILATION);
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed SetEventMask"_W);
+            logging::log(logging::LogLevel::ERR, "Failed SetEventMask"_W);
             return hr;
         }
     }
@@ -104,7 +104,7 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
     auto hr = GenerateLoadMethod(moduleId, retMethodToken, functionInfo);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GenerateLoadMethod GetModuleMetaData"_W);
+        logging::log(logging::LogLevel::ERR, "Failed GenerateLoadMethod GetModuleMetaData"_W);
         return hr;
     }
 
@@ -112,7 +112,7 @@ HRESULT CorProfiler::InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& r
     hr = this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed InjectLoadMethod GetModuleMetaData"_W);
+        logging::log(logging::LogLevel::ERR, "Failed InjectLoadMethod GetModuleMetaData"_W);
         return hr;
     }
 
@@ -137,7 +137,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
     hr = this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GenerateLoadMethod GetModuleMetaData"_W);
+        logging::log(logging::LogLevel::ERR, "Failed GenerateLoadMethod GetModuleMetaData"_W);
         return hr;
     }
 
@@ -150,7 +150,7 @@ HRESULT CorProfiler::GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMetho
     hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GenerateLoadMethod GetMsCorLibRef"_W);
+        logging::log(logging::LogLevel::ERR, "Failed GenerateLoadMethod GetMsCorLibRef"_W);
         return hr;
     }
 

@@ -38,7 +38,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
     hr = this->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished GetModuleMetaData"_W);
+        logging::log(logging::LogLevel::ERR, "Failed ModuleLoadFinished GetModuleMetaData"_W);
         return S_OK;
     }
 
@@ -54,7 +54,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
     ULONG typeDefsCount;
     hr = metadataImport->EnumTypeDefs(&hcorenumTypeDefs, typeDefs, MAX_CLASS_NAME, &typeDefsCount);
     if (FAILED(hr)) {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished EnumTypeDefs"_W);
+        logging::log(logging::LogLevel::ERR, "Failed ModuleLoadFinished EnumTypeDefs"_W);
         return S_OK;
     }
 
@@ -67,7 +67,7 @@ HRESULT STDMETHODCALLTYPE CorProfiler::ModuleLoadFinished(ModuleID moduleId, HRE
         ULONG methodsCount;
         hr = metadataImport->EnumMethods(&hcorenumMethods, typeDefs[typeIndex], methods, MAX_CLASS_NAME, &methodsCount);
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed ModuleLoadFinished EnumInterfaceImpls"_W);
+            logging::log(logging::LogLevel::ERR, "Failed ModuleLoadFinished EnumInterfaceImpls"_W);
             return S_OK;
         }
 

@@ -445,7 +445,7 @@ namespace rewriter
         util::ComPtr<IUnknown> metadataInterfaces;
         hr = _rewriter->GetCorProfilerInfo()->GetModuleMetaData(_rewriter->GetModuleId(), ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed AddLocalVariable");
+            logging::log(logging::LogLevel::ERR, "Failed AddLocalVariable");
             return hr;
         }
 
@@ -465,7 +465,7 @@ namespace rewriter
             ULONG originalSignatureSize = 0;
             hr = metadataImport->GetSigFromToken(_rewriter->GetTkLocalVarSig(), &originalSignatureRaw, &originalSignatureSize);
             if (FAILED(hr)) {
-                logging::log(logging::LogLevel::NONSUCCESS, "Failed AddLocalVariable GetSigFromToken");
+                logging::log(logging::LogLevel::ERR, "Failed AddLocalVariable GetSigFromToken");
                 return hr;
             }
 

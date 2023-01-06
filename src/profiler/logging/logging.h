@@ -11,7 +11,8 @@ namespace logging
 		VERBOSE = 0,
 		DEBUG = 10,
 		INFO = 20,
-		NONSUCCESS = 40,
+		WARN = 30,
+		ERR = 40,
 		NONE = 10000
 	};
 

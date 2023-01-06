@@ -42,7 +42,7 @@ HRESULT MethodRewriter::FindTypeRef(util::ComPtr<IMetaDataEmit2>& metadataEmit, 
     auto hr = GetAssemblyRef(metadataAssemblyEmit, baseDllRef, assemblyName);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetWrapperRef {0}"_W, assemblyName);
+        logging::log(logging::LogLevel::ERR, "Failed GetWrapperRef {0}"_W, assemblyName);
         return hr;
     }
 
@@ -53,7 +53,7 @@ HRESULT MethodRewriter::FindTypeRef(util::ComPtr<IMetaDataEmit2>& metadataEmit, 
         &typeRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineTypeRefByName {0}"_W, typeName);
+        logging::log(logging::LogLevel::ERR, "Failed DefineTypeRefByName {0}"_W, typeName);
         return hr;
     }
 
@@ -82,7 +82,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     hr = rewriter->Import();
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "GetReJITParameters rewriter->Import failed"_W);
+        logging::log(logging::LogLevel::ERR, "GetReJITParameters rewriter->Import failed"_W);
         return hr;
     }
 
@@ -106,7 +106,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     hr = profiler->corProfilerInfo->GetModuleMetaData(moduleId, ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetModuleMetaData {0}"_W, rejitInfo->Info.Name);
+        logging::log(logging::LogLevel::ERR, "Failed GetModuleMetaData {0}"_W, rejitInfo->Info.Name);
         return hr;
     }
 
@@ -122,7 +122,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     hr = GetMsCorLibRef(metadataAssemblyEmit, mscorlibRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetMsCorLibRef {0}"_W, rejitInfo->Info.Name);
+        logging::log(logging::LogLevel::ERR, "Failed GetMsCorLibRef {0}"_W, rejitInfo->Info.Name);
         return hr;
     }
 
@@ -138,7 +138,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     hr = DefineLocalSignature(rewriter, moduleId, exceptionTypeRef, *rejitInfo, &exceptionIndex, &returnIndex, origlocalSignature);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed DefineLocalSignature {0}"_W, rejitInfo->Info.Name);
+        logging::log(logging::LogLevel::ERR, "Failed DefineLocalSignature {0}"_W, rejitInfo->Info.Name);
         return hr;
     }
 
@@ -146,7 +146,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     hr = InitLocalVariables(helper, metadataEmit, metadataAssemblyEmit, moduleId, *rejitInfo, exceptionIndex, returnIndex);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed InitLocalValues {0}"_W, rejitInfo->Info.Name);
+        logging::log(logging::LogLevel::ERR, "Failed InitLocalValues {0}"_W, rejitInfo->Info.Name);
         return hr;
     }
 
@@ -156,7 +156,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
     hr = AddDebugger(helper, metadataEmit, metadataAssemblyEmit, metadataImport, *rejitInfo, exceptionTypeRef, origlocalSignature);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed AddDebugger {0}"_W, rejitInfo->Info.Name);
+        logging::log(logging::LogLevel::ERR, "Failed AddDebugger {0}"_W, rejitInfo->Info.Name);
     }
 
     std::vector<mdTypeRef> interceptorTypeRefs;
@@ -167,7 +167,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         hr = FindTypeRef(metadataEmit, metadataAssemblyEmit, rejitInfo->Interceptors[i].Interceptor.AssemblyName, rejitInfo->Interceptors[i].Interceptor.TypeName, interceptorTypeRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed FindTypeRef {0} {1}"_W, rejitInfo->Interceptors[i].Interceptor.AssemblyName, rejitInfo->Interceptors[i].Interceptor.TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed FindTypeRef {0} {1}"_W, rejitInfo->Interceptors[i].Interceptor.AssemblyName, rejitInfo->Interceptors[i].Interceptor.TypeName);
             return hr;
         }
 
@@ -182,21 +182,21 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         hr = FindTypeRef(metadataEmit, metadataAssemblyEmit, profiler->configuration.TracingBeginMethod->AssemblyName, profiler->configuration.TracingBeginMethod->TypeName, tracingBeginMethodRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.TracingBeginMethod->AssemblyName, profiler->configuration.TracingBeginMethod->TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.TracingBeginMethod->AssemblyName, profiler->configuration.TracingBeginMethod->TypeName);
             return hr;
         }
 
         hr = FindTypeRef(metadataEmit, metadataAssemblyEmit, profiler->configuration.TracingEndMethod->AssemblyName, profiler->configuration.TracingEndMethod->TypeName, tracingEndMethodRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.TracingEndMethod->AssemblyName, profiler->configuration.TracingEndMethod->TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.TracingEndMethod->AssemblyName, profiler->configuration.TracingEndMethod->TypeName);
             return hr;
         }
 
         hr = FindTypeRef(metadataEmit, metadataAssemblyEmit, profiler->configuration.TracingAddParameterMethod->AssemblyName, profiler->configuration.TracingAddParameterMethod->TypeName, tracingAddParameterMethodRef);
         if (FAILED(hr))
         {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.TracingAddParameterMethod->AssemblyName, profiler->configuration.TracingAddParameterMethod->TypeName);
+            logging::log(logging::LogLevel::ERR, "Failed FindTypeRef {0} {1}"_W, profiler->configuration.TracingAddParameterMethod->AssemblyName, profiler->configuration.TracingAddParameterMethod->TypeName);
             return hr;
         }
     }
@@ -220,7 +220,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
             logging::log(logging::LogLevel::VERBOSE, "CreateBeforeMethod {0} {1}"_W, i, i, interceptorTypeRefs[i]);
             auto hr = CreateBeforeMethod(helper, i == 0 && !rejitInfo->Trace ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo);
             if (FAILED(hr)) {
-                logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateBeforeMethod");
+                logging::log(logging::LogLevel::ERR, "Failed CreateBeforeMethod");
                 return hr;
             }
         }
@@ -234,7 +234,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
             [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, exceptionTypeRef](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
             auto hr = LogInterceptorException(helper, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
+            logging::log(logging::LogLevel::ERR, "Failed LogInterceptorException");
             return hr;
         }
         *catchLeave = helper.LeaveS();
@@ -248,7 +248,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         }, exceptionTypeRef, beforeEx);
 
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateTryCatch Before");
+            logging::log(logging::LogLevel::ERR, "Failed CreateTryCatch Before");
             return hr;
         }
 
@@ -279,7 +279,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
             for (auto i = 0; i < rejitInfo->Interceptors.size(); i++) {
                 auto hr = CreateAfterMethod(helper, i == 0 ? tryBegin : nullptr, metadataEmit, metadataAssemblyEmit, interceptorTypeRefs[i], *rejitInfo, returnIndex, exceptionTypeRef, exceptionIndex);
                 if (FAILED(hr)) {
-                    logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateAfterMethod");
+                    logging::log(logging::LogLevel::ERR, "Failed CreateAfterMethod");
                     return hr;
                 }
             }
@@ -298,7 +298,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
             [this, &helper, &metadataEmit, &metadataAssemblyEmit, interceptorTypeRefs, rejitInfo, exceptionTypeRef, &leaveAfterCatch, &nopAfterCatch](rewriter::ILInstr** catchBegin, rewriter::ILInstr** catchLeave) {
             auto hr = LogInterceptorException(helper, catchBegin, metadataEmit, metadataAssemblyEmit, exceptionTypeRef);
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed LogInterceptorException");
+            logging::log(logging::LogLevel::ERR, "Failed LogInterceptorException");
             return hr;
         }
 
@@ -314,7 +314,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
         }, exceptionTypeRef, afterEx);
 
         if (FAILED(hr)) {
-            logging::log(logging::LogLevel::NONSUCCESS, "Failed CreateTryCatch After");
+            logging::log(logging::LogLevel::ERR, "Failed CreateTryCatch After");
             return hr;
         }
 
@@ -407,7 +407,7 @@ HRESULT MethodRewriter::RewriteTargetMethod(ModuleID moduleId, mdMethodDef metho
 
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "GetReJITParameters rewriter->Export failed"_W);
+        logging::log(logging::LogLevel::ERR, "GetReJITParameters rewriter->Export failed"_W);
         return hr;
     }
 
@@ -430,7 +430,7 @@ HRESULT MethodRewriter::GetTargetTypeRef(const info::TypeInfo& targetType, util:
     hr = GetObjectTypeRef(metadataEmit, metadataAssemblyEmit, &objectTypeRef);
     if (FAILED(hr))
     {
-        logging::log(logging::LogLevel::NONSUCCESS, "Failed GetTargetTypeRef GetObjectTypeRef"_W);
+        logging::log(logging::LogLevel::ERR, "Failed GetTargetTypeRef GetObjectTypeRef"_W);
         return hr;
     }
 
