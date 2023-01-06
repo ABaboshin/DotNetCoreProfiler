@@ -6,6 +6,7 @@ using OpenTracing.Tag;
 using OpenTracing.Util;
 using System;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -16,6 +17,7 @@ namespace Interception.Tracing.Impl
         protected static AsyncLocal<IScope> _scope = new AsyncLocal<IScope>();
 
         [TracingBeginMethod]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void BeginTracing(string name)
         {
             Console.WriteLine($"begin tracing {name}");
@@ -35,6 +37,7 @@ namespace Interception.Tracing.Impl
         }
 
         [TracingAddParameterMethod]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AddParameter<T>(string name, T value)
         {
             Console.WriteLine($"AddParameter {name} {value}");
@@ -48,6 +51,7 @@ namespace Interception.Tracing.Impl
         }
 
         [TracingEndMethod]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void EndTracing<TResult>(TResult result, Exception ex)
         {
             Console.WriteLine($"EndTracing {result} {ex}");

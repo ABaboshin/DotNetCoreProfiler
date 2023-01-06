@@ -13,6 +13,7 @@ using OpenTracing.Util;
 using Serilog;
 using Serilog.Core;
 using Serilog.Extensions.Logging;
+using System.Runtime.CompilerServices;
 
 namespace Interception.AspNetCore
 {
@@ -22,10 +23,12 @@ namespace Interception.AspNetCore
     [StrictIntercept(TargetAssemblyName = "Microsoft.AspNetCore.Hosting", TargetMethodName = "InvokeCore", TargetTypeName = "Microsoft.AspNetCore.Hosting.ConfigureServicesBuilder", TargetMethodParametersCount = 2)]
     public class ConfigureServicesBuilderInterceptor
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void After<TResult>(TResult result, Exception ex)
         {
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Before<TType, T1, T2>(TType instance, ref T1 a1, ref T2 serviceCollection) where T2 : IServiceCollection
         {
             HttpDiagnosticsObserver.ConfigureAndStart();

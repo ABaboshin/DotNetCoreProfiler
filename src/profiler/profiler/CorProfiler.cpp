@@ -57,10 +57,8 @@ HRESULT STDMETHODCALLTYPE CorProfiler::Initialize(IUnknown* pICorProfilerInfoUnk
 
     eventMask = COR_PRF_MONITOR_JIT_COMPILATION |
                       COR_PRF_DISABLE_TRANSPARENCY_CHECKS_UNDER_FULL_TRUST |
-                      // COR_PRF_DISABLE_INLINING |
                       COR_PRF_MONITOR_MODULE_LOADS |
                       COR_PRF_MONITOR_ASSEMBLY_LOADS | COR_PRF_MONITOR_APPDOMAIN_LOADS |
-                      //COR_PRF_DISABLE_ALL_NGEN_IMAGES |
                       COR_PRF_ENABLE_REJIT;
 
     auto hr = this->corProfilerInfo->SetEventMask(eventMask);

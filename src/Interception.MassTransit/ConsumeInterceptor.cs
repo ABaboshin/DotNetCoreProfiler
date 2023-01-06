@@ -11,6 +11,7 @@ using Microsoft.Extensions.DependencyInjection;
 using System.Threading;
 using Interception.Tracing.Extensions;
 using System.Threading.Tasks;
+using System.Runtime.CompilerServices;
 
 namespace Interception.MassTransit
 {
@@ -27,6 +28,7 @@ namespace Interception.MassTransit
     {
         protected static AsyncLocal<IScope> _scope = new AsyncLocal<IScope>();
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Before<TType, TContext>(TType instance, ref TContext context) where TContext : ConsumeContext
         {
             if (!DependencyInjection.Instance.ServiceProvider.GetService<IConfiguration>().GetSection(MassTransitConfiguration.SectionKey).Get<MassTransitConfiguration>().ConsumerEnabled)
@@ -60,6 +62,7 @@ namespace Interception.MassTransit
             _scope.Value = spanBuilder.StartActive(true);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void After<TResult>(TResult result, Exception ex) where TResult : Task
         {
             if (_scope.Value != null)

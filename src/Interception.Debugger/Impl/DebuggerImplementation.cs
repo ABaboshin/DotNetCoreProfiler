@@ -1,6 +1,7 @@
 ﻿using Interception.Attributes.Debugger;
 using Interception.Tracing.Impl;
 using System;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Xml.Linq;
 
@@ -11,6 +12,7 @@ namespace Interception.Debugger.Impl
         protected static AsyncLocal<OpenTracing.IScope> _scope = new AsyncLocal<OpenTracing.IScope>();
 
         [DebuggerBeginMethod]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void BeginDebugging(string name)
         {
             Console.WriteLine($"BeginDebugging {name}");
@@ -18,6 +20,7 @@ namespace Interception.Debugger.Impl
         }
 
         [DebuggerAddParameterMethod]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void AddParameter<T>(string type, string name, T value)
         {
             Console.WriteLine($"AddParameter {type} {name} {value}");
@@ -25,6 +28,7 @@ namespace Interception.Debugger.Impl
         }
 
         [DebuggerEndMethod]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void EndDebugging()
         {
             Console.WriteLine($"EndDebugging");

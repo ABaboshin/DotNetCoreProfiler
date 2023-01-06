@@ -2,6 +2,7 @@
 using MassTransit;
 using Microsoft.Extensions.Configuration;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace Interception.MassTransit
 {
@@ -12,6 +13,7 @@ namespace Interception.MassTransit
     [StrictIntercept(TargetAssemblyName = "MassTransit", TargetMethodName = "UsingRabbitMq", TargetTypeName = "MassTransit.RabbitMqBusFactoryConfiguratorExtensions", TargetMethodParametersCount = 2)]
     public class CreateUsingRabbitMqInterceptor
     {
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void Before<TType, T1, T2>(TType instance, ref T1 a1, ref T2 a2)
         {
             
@@ -35,7 +37,8 @@ namespace Interception.MassTransit
 
             a2 = (T2)(object)configure;
         }
-        
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void After<TResult>(TResult result, Exception ex)
         {
         }

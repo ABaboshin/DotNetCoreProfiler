@@ -3,12 +3,14 @@ using dnlib.DotNet;
 using Interception.Attributes.Debugger;
 using Interception.Core.Info;
 using System.Linq;
+using System.Runtime.CompilerServices;
 
 namespace Interception.Debugger.Impl
 {
     public class DebuggerInitializationImplementation
     { 
         [DebuggerInitializer]
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static void DebuggerInitializer (ProfilerInfo info)
         {
             if (info.Debug is null)
