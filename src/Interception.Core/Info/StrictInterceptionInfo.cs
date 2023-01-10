@@ -63,6 +63,6 @@ namespace Interception.Core.Info
         public InterceptorMethodInfo DebuggerInitializerMethod { get; set; }
         public List<TraceMethodInfo> Traces { get; set; }
         public List<DebugMethodInfo> Debug { get; set; }
-        public string Path { get; set; }
+        public List<string> Path { get; set; }
     }
 }

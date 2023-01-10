@@ -19,11 +19,17 @@ namespace Interception.DefaultImpl
             AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
             {
                 var assemblyName = new AssemblyName(args.Name);
-                var path = Path.Combine(configuration.Path, $"{assemblyName.Name}.dll");
+                foreach (var path in configuration.Path)
+                {
+                    var fullPath = Path.Combine(path, $"{assemblyName.Name}.dll");
+                    if (File.Exists(fullPath))
+                    {
+                        Console.WriteLine($"Resolve assembly name {assemblyName} to path {path}");
+                        return Assembly.Load(fullPath);    
+                    }
+                }
 
-                Console.WriteLine($"Resolve assembly name {assemblyName} to path {path}");
-
-                return Assembly.Load(path);
+                return null;
             };
 
             foreach (var interceptor in configuration.Strict)

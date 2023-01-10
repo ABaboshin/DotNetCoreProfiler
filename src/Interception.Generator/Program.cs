@@ -43,7 +43,7 @@ namespace Interception.Generator
                     foreach (var assemblyPath in opts.Assemblies)
                     {
                         var assembly = Assembly.LoadFrom(assemblyPath);
-                        var fullPath = Path.Combine(opts.Path, new FileInfo(assemblyPath).Name);
+                        var fullPath = Path.Combine(opts.Path[0], new FileInfo(assemblyPath).Name);
                         strict.AddRange(ProcessStrictInterceptors(assembly, fullPath));
 
                         if (loader is null)
@@ -154,7 +154,7 @@ namespace Interception.Generator
                         Strict = strict,
                         DefaultInitializer = defaultInitializer,
                         ExceptionLogger = exceptionLogger,
-                        Path = opts.Path,
+                        Path = opts.Path.ToList(),
                         TracingBeginMethod = tracingBeginMethod,
                         TracingEndMethod = tracingEndMethod,
                         TracingAddParameterMethod = tracingAddParameterMethod,

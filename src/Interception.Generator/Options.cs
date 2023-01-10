@@ -8,8 +8,8 @@ namespace Interception.Generator
         [Option('a', "assembiles", Separator = ',')]
         public IList<string> Assemblies { get; set; }
 
-        [Option('p', "path")]
-        public string Path { get; set; }
+        [Option('p', "path", Separator = ',')]
+        public IList<string> Path { get; set; }
 
         [Option('o', "output")]
         public string Output { get; set; }

@@ -25,7 +25,7 @@ namespace Interception.DefaultImpl
 
             if (!logged)
             {
-                Console.WriteLine($"An error occured by calling the interceptor {exception}");
+                Console.WriteLine($"DependencyInjection not called. An error occured by calling the interceptor {exception} {exception.StackTrace}");
             }
         }
 
