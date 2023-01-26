@@ -63,7 +63,7 @@ namespace Interception.MassTransit
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void After<TResult>(TResult result, Exception ex) where TResult : Task
+        public static void After<TResult>(ref TResult result, Exception ex) where TResult : Task
         {
             if (_scope.Value != null)
             {

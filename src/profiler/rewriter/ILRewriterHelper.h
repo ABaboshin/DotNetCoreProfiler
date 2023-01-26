@@ -41,7 +41,7 @@ namespace rewriter
 
         ILInstr* LoadLocal(unsigned index);
 
-        void LoadLocalAddress(unsigned index);
+        ILInstr* LoadLocalAddress(unsigned index);
 
         void NewObject(mdToken token);
 

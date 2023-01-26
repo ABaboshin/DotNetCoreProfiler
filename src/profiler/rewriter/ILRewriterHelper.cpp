@@ -188,7 +188,7 @@ namespace rewriter
         return pNewInstr;
     }
 
-    void ILRewriterHelper::LoadLocalAddress(unsigned index)
+    ILInstr* ILRewriterHelper::LoadLocalAddress(unsigned index)
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         if (index <= 255) {
@@ -200,6 +200,7 @@ namespace rewriter
             pNewInstr->m_Arg16 = index;
         }
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::NewObject(mdToken token)

@@ -2,8 +2,8 @@
   "profiles": {
     "Interception.Generator": {
       "commandName": "Project",
-      "commandLineArgs": "-a Interceptor.dll,Interception.Debugger.dll -s ../../skip.txt -p /profiler -o profiler.json",
-      "workingDirectory": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0"
+      "commandLineArgs": "-a Interceptor.dll,Interception.DefaultImpl.dll -s ../skip.txt -p /profiler -o profiler.json",
+      "workingDirectory": "/Users/ababoshin/work/ev-charging/directcharge/monitoring/interceptor/publish/"
     }
   }
 }

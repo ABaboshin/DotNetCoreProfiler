@@ -18,6 +18,25 @@ namespace Interception.Generator
     {
         static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            {
+                var assemblyName = new AssemblyName(args.Name);
+                
+                var fullPath = Path.Combine($"./{assemblyName.Name}.dll");
+                if (!File.Exists(fullPath))
+                {
+                    return null;
+                }
+
+                if (assemblyName.Name == "System.Diagnostics.DiagnosticSource")
+                {
+                    var assembly = Assembly.LoadFrom(fullPath);
+                    return assembly;
+                }
+                
+                return Assembly.LoadFrom(fullPath);
+            };
+
             Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(opts => {
 

@@ -18,7 +18,7 @@ namespace Interception.AspNetCore
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static void After<TResult>(TResult result, Exception ex)
+        public static void After<TResult>(ref TResult result, Exception ex)
         {
         }
     }

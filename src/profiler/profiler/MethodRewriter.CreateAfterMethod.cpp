@@ -28,6 +28,9 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, re
     // return type
     genericAfterSignature[genericAfterSignatureOffset++] = ELEMENT_TYPE_VOID;
     // result type
+    if (!isVoid) {
+        genericAfterSignature[genericAfterSignatureOffset++] = ELEMENT_TYPE_BYREF;
+    }
     genericAfterSignature[genericAfterSignatureOffset++] = ELEMENT_TYPE_MVAR;
     genericAfterSignature[genericAfterSignatureOffset++] = 0;
 
@@ -69,7 +72,7 @@ HRESULT MethodRewriter::CreateAfterMethod(rewriter::ILRewriterHelper &helper, re
     }
     else
     {
-        auto loadLocal = helper.LoadLocal(returnIndex);
+        auto loadLocal = helper.LoadLocalAddress(returnIndex);
         if (instr != nullptr) {
             *instr = loadLocal;
         }
