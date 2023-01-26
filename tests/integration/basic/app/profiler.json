@@ -1,0 +1,131 @@
+{
+  "Path": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0",
+  "Loader": {
+    "TypeName": "Interception.DefaultImpl.DefaultLoader",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.DefaultImpl.dll"
+  },
+  "SkipAssemblies": [
+    "Interception.AspNetCore.Tracing",
+    "Interception.AspNetCore.WebHost",
+    "Interception.Cache",
+    "Interception.Core",
+    "Interception.DeadlockDetection",
+    "Interception.DependencyInjection",
+    "Interception.MassTransit",
+    "Interception.Observers",
+    "Interception.OpenTracing",
+    "Interception.OpenTracing.Statsd",
+    "Interception.Quartz",
+    "Interception.Tracing",
+    "Interception.Tracing.Serilog",
+    "ISymWrapper",
+    "Microsoft.AspNetCore.Mvc.RazorPages",
+    "Microsoft.AspNetCore.Razor.Language",
+    "Microsoft.CSharp",
+    "Microsoft.Extensions.ObjectPool",
+    "Microsoft.Extensions.Options",
+    "mscorlib",
+    "netstandard",
+    "Newtonsoft.Json",
+    "StatsdClient",
+    "System.Collections",
+    "System.ComponentModel",
+    "System.Configuration",
+    "System.Console",
+    "System.Core",
+    "System.Diagnostics.DiagnosticSource",
+    "System.IO.FileSystem",
+    "System.Private.CoreLib",
+    "System.Runtime",
+    "System.Runtime.Extensions",
+    "System.Runtime.InteropServices",
+    "System.Runtime.InteropServices.RuntimeInformation",
+    "System.Threading.Tasks",
+    "System.Xml.Linq",
+    "Microsoft.Extensions.DotNetDeltaApplier",
+    "System.Private.CoreLib"
+  ],
+  "Strict": [
+  ],
+  "DefaultInitializer": {
+    "AssemblyName": "Interception.DefaultImpl",
+    "TypeName": "Interception.DefaultImpl.DefaultInitializer",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.DefaultImpl.dll",
+    "MethodName": "GetDefault"
+  },
+  "ExceptionLogger": {
+    "AssemblyName": "Interception.DefaultImpl",
+    "TypeName": "Interception.DefaultImpl.ExceptionLogger",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.DefaultImpl.dll",
+    "MethodName": "LogException"
+  },
+  "TracingBeginMethod": {
+    "MethodName": "BeginTracing",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "TracingEndMethod": {
+    "MethodName": "EndTracing",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "TracingAddParameterMethod": {
+    "MethodName": "AddParameter",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "DebuggerBeginMethod": {
+    "MethodName": "BeginDebugging",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebuggerEndMethod": {
+    "MethodName": "EndDebugging",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebuggerAddParameterMethod": {
+    "MethodName": "AddParameter",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebuggerInitializerMethod": {
+    "MethodName": "DebuggerInitializer",
+    "TypeName": "Interception.Debugger.Impl.DebuggerInitializationImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\interceptor\\bin\\Debug\\net6.0\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "Traces": [
+    
+  ],
+  "Debug": [
+    {
+      "TargetMethod": {
+        "AssemblyName": "app",
+        "MethodName": "M4",
+        "MethodParametersCount": 2,
+        "TypeName": "app.C1"
+      },
+      "Dll": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\app\\bin\\Debug\\net6.0\\app.dll",
+      "SourceFile": "Program.cs",
+      "LineNumber": 66
+    },
+    {
+      "TargetMethod": {
+        "AssemblyName": "app",
+        "MethodName": "M2",
+        "MethodParametersCount": 1,
+        "TypeName": "app.C1"
+      },
+      "Dll": "D:\\playground\\DotNetCoreProfiler\\tests\\integration\\basic\\app\\bin\\Debug\\net6.0\\app.dll",
+      "SourceFile": "Program.cs",
+      "LineNumber": 58
+    }
+  ]
+}

@@ -2,6 +2,8 @@
 
 #include "ILRewriter.h"
 
+class MethodRewriter;
+
 namespace rewriter
 {
     class ILRewriterHelper
@@ -28,25 +30,26 @@ namespace rewriter
 
         void BeginLoadValueIntoArray(INT32 arrayIndex);
 
-        void LoadArgument(UINT16 index);
+        ILInstr* LoadArgument(UINT16 index);
+        void LoadArgumentRef(UINT16 index);
 
         void EndLoadValueIntoArray();
 
-        void CallMember(mdMemberRef memberRef, bool isVirtual);
+        ILInstr* CallMember(mdMemberRef memberRef, bool isVirtual);
 
         void Cast(mdTypeRef typeRef);
 
         ILInstr* LoadLocal(unsigned index);
 
-        void LoadLocalAddress(unsigned index);
+        ILInstr* LoadLocalAddress(unsigned index);
 
         void NewObject(mdToken token);
 
-        void Pop();
+        ILInstr* Pop();
 
         void Ret();
 
-        void LoadStr(mdToken token);
+        ILInstr* LoadStr(mdToken token);
 
         void Box(mdToken token);
 
@@ -66,10 +69,26 @@ namespace rewriter
 
         ILInstr* LoadNull();
 
-        ILInstr* CgtUn();
-
         ILInstr* Throw();
+        ILInstr* Rethrow();
+        ILInstr* EndFinally();
 
         HRESULT AddLocalVariable(mdTypeRef typeRef, int& newIndex);
+
+        void LoadObj(mdToken token);
+
+        ILInstr* LeaveS();
+
+        ILInstr* GetCurrentInstr() const
+        {
+            return _instr;
+        }
+
+        ILInstr* NewInstr() {
+            _instr++;
+            return new ILInstr();
+        }
+
+        friend class ::MethodRewriter;
     };
 }

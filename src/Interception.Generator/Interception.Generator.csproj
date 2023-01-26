@@ -7,7 +7,7 @@
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/ABaboshin/DotNetCoreProfiler</RepositoryUrl>
-    <Version>1.2022.1213</Version>
+    <Version>2.0.30126</Version>
     <PackAsTool>true</PackAsTool>
     <ToolCommandName>interception-generator</ToolCommandName>
   </PropertyGroup>
@@ -17,6 +17,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+<!--    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="6.0.0" />-->
+<!--    <PackageReference Include="Microsoft.Extensions.Logging" Version="6.0.0" />-->
     <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
     <PackageReference Include="Microsoft.Extensions.Primitives" Version="6.0.0" />
   </ItemGroup>
@@ -27,6 +30,10 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Interception.Core\Interception.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>

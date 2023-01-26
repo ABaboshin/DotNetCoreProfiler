@@ -16,3 +16,5 @@ samples/**/x86/
 samples/**/[Bb]in/
 samples/**/[Oo]bj/
 !k8s/sample/*
+src/profiler/build/*
+**/.vs

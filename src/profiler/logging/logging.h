@@ -1,6 +1,7 @@
 #pragma once
 
-#include "fmt/fmt.h"
+#define FMT_HEADER_ONLY
+#include "fmt/format.h"
 #include "util/types.h"
 
 namespace logging
@@ -10,6 +11,8 @@ namespace logging
 		VERBOSE = 0,
 		DEBUG = 10,
 		INFO = 20,
+		WARN = 30,
+		ERR = 40,
 		NONE = 10000
 	};
 

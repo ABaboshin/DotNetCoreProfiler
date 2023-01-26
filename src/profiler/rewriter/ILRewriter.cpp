@@ -627,4 +627,17 @@ namespace rewriter
         m_tkLocalVarSig = tkLocalVarSig;
         m_fGenerateTinyHeader = false;
     }
+
+    void ILRewriter::SetEHClause(EHClause* ehPointer, unsigned ehLength)
+    {
+        if (m_pEH != nullptr)
+        {
+            // Delete previous array
+            m_nEH = 0;
+            delete[] m_pEH;
+        }
+
+        m_nEH = ehLength;
+        m_pEH = ehPointer;
+    }
 }

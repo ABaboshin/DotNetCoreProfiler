@@ -2,8 +2,37 @@ cmake_minimum_required (VERSION 3.17)
 cmake_policy(SET CMP0015 NEW)
 cmake_policy(SET CMP0042 NEW)
 cmake_policy(SET CMP0091 NEW)
+cmake_policy(SET CMP0135 NEW)
 
 project("DotNetCoreProfiler" VERSION 1.6.0)
+
+set(JSON_BuildTests OFF CACHE INTERNAL "")
+set(DEP_INSTALL_DIR ${CMAKE_CURRENT_BINARY_DIR}/Dependency)
+set(DEP_PROJECTS dep_fmt dep_json dep_boost_range)
+
+include(ExternalProject)
+ExternalProject_Add(
+    dep_fmt
+    GIT_REPOSITORY "https://github.com/fmtlib/fmt"
+    GIT_TAG "7.0.0"
+    GIT_SHALLOW 1
+    TEST_COMMAND ""
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${DEP_INSTALL_DIR}
+        -DFMT_DOC=OFF
+        -DFMT_TEST=OFF
+)
+
+ExternalProject_Add(
+    dep_json
+    GIT_REPOSITORY "https://github.com/nlohmann/json"
+    GIT_TAG "v3.8.0"
+    GIT_SHALLOW 1
+    TEST_COMMAND ""
+    CMAKE_ARGS
+        -DCMAKE_INSTALL_PREFIX=${DEP_INSTALL_DIR}
+        -DJSON_BuildTests=OFF
+)
 
 IF (WIN32)
   add_definitions(-DUNICODE -D_UNICODE -DWIN32 -DNDEBUG -D_WINDOWS -D_USRDLL -D_WIN32 -DWINVER=0x0602 -D_WIN32_WINNT=0x0602 -DWIN32_LEAN_AND_MEAN -D_CRT_SECURE_NO_WARNINGS)
@@ -29,6 +58,20 @@ SET_SOURCE_FILES_PROPERTIES(
 )
 
 add_library("DotNetCoreProfiler.static" STATIC
+  profiler/CorProfiler.cpp
+  profiler/CorProfiler.ModuleLoadFinished.cpp
+  profiler/CorProfiler.JITCompilationStarted.cpp
+  profiler/CorProfiler.Rejit.cpp
+  profiler/CorProfiler.DumpILCodes.cpp
+  profiler/MethodRewriter.cpp
+  profiler/MethodRewriter.LocalVariables.cpp
+  profiler/MethodRewriter.CreateAfterMethod.cpp
+  profiler/MethodRewriter.CreateBeforeMethod.cpp
+  profiler/MethodRewriter.LogInterceptorException.cpp
+  profiler/MethodRewriter.TryCatch.cpp
+  profiler/MethodRewriter.BeginTracing.cpp
+  profiler/MethodRewriter.EndTracing.cpp
+  profiler/MethodRewriter.Debugger.cpp
   ClassFactory.cpp
   configuration/Configuration.cpp
   info/AssemblyInfo.cpp
@@ -40,7 +83,6 @@ add_library("DotNetCoreProfiler.static" STATIC
   info/parser.cpp
   logging/logging.cpp
   miniutf/miniutf.cpp
-  profiler/CorProfiler.cpp
   rewriter/ILRewriter.cpp
   rewriter/ILRewriterHelper.cpp
   util/helpers.cpp
@@ -52,6 +94,7 @@ set_target_properties("DotNetCoreProfiler.static" PROPERTIES PREFIX "")
 target_include_directories("DotNetCoreProfiler.static"
   PUBLIC ../../lib/coreclr/src/inc
   PUBLIC .
+  PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/Dependency/include
 )
 
 IF (WIN32)
@@ -67,12 +110,14 @@ IF (WIN32)
   add_library("DotNetCoreProfiler" SHARED
     profiler.def
     dllmain.cpp
+    interop.cpp
   )
 ELSE()
   add_library("DotNetCoreProfiler" SHARED
     dllmain.cpp
+    interop.cpp
   )
 ENDIF()
 
 set_target_properties("DotNetCoreProfiler" PROPERTIES PREFIX "")
-target_link_libraries("DotNetCoreProfiler" "DotNetCoreProfiler.static")
+target_link_libraries("DotNetCoreProfiler" PUBLIC "DotNetCoreProfiler.static")

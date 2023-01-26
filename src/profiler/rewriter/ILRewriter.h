@@ -161,5 +161,17 @@ namespace rewriter
         ICorProfilerInfo* GetCorProfilerInfo() { return m_pICorProfilerInfo; }
 
         ModuleID GetModuleId() { return m_moduleId; }
+
+        unsigned GetMaxStackValue()
+        {
+            return m_maxStack;
+        }
+
+        EHClause* GetEHPointer()
+        {
+            return m_pEH;
+        }
+
+        void SetEHClause(EHClause* ehPointer, unsigned ehLength);
     };
 }

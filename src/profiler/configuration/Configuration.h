@@ -3,44 +3,63 @@
 #include <vector>
 #include <unordered_map>
 #include <unordered_set>
-#include "AttributedInterceptor.h"
+#include <memory>
 #include "TypeInfo.h"
 #include "StrictInterception.h"
-#include "MethodFinder.h"
-
+#include "InterceptorMethodInfo.h"
+#include "TraceMethodInfo.h"
+#include "InstrumentationConfiguration.h"
 
 namespace configuration
 {
+	//struct TargetMethodHash
+	//{
+	//	template <class T1, class T2>
+	//	std::size_t operator () (std::pair<T1, T2> const& v) const
+	//	{
+	//		return std::hash<T1>()(v.size());
+	//	}
+	//};
+
 	struct Configuration
 	{
-		std::vector<StrictInterception> StrictInterceptions{};
-		std::vector<wstring> Assemblies;
-		std::unordered_map<wstring, AttributedInterceptor> AttributedInterceptors;
-		TypeInfo InterceptorInterface{};
-		TypeInfo ComposedInterceptor{};
-		TypeInfo MethodFinderInterface{};
-		std::vector<MethodFinder> MethodFinders{};
 		std::unordered_set<wstring> SkipAssemblies;
-		std::unordered_set<wstring> EnabledAssemblies;
+		TypeInfo Loader;
+		InterceptorMethodInfo DefaultInitializer;
+		std::shared_ptr<InterceptorMethodInfo> ExceptionLogger;
+		std::shared_ptr<InterceptorMethodInfo> TracingBeginMethod;
+		std::shared_ptr<InterceptorMethodInfo> TracingEndMethod;
+		std::shared_ptr<InterceptorMethodInfo> TracingAddParameterMethod;
+		std::shared_ptr<InterceptorMethodInfo> DebuggerBeginMethod;
+		std::shared_ptr<InterceptorMethodInfo> DebuggerEndMethod;
+		std::shared_ptr<InterceptorMethodInfo> DebuggerAddParameterMethod;
+		std::unordered_map<TargetMethod, InstrumentationConfiguration> Instrumentations;
 
-		Configuration(std::vector<StrictInterception> strictInterceptions,
-			std::vector<wstring>& assemblies,
-			const std::unordered_map<wstring, AttributedInterceptor>& attributedInterceptors,
-			const TypeInfo& base,
-			const TypeInfo& composed,
-			const TypeInfo& methodFinderInterface,
-			std::vector<MethodFinder> methodFinders,
+		Configuration(
 			std::unordered_set<wstring>& skipAssemblies,
-			std::unordered_set<wstring>& enabledAssemblies) :
-			StrictInterceptions(strictInterceptions),
-			Assemblies(assemblies),
-			AttributedInterceptors(attributedInterceptors),
-			InterceptorInterface(base),
-			ComposedInterceptor(composed),
-			MethodFinderInterface(methodFinderInterface),
-			MethodFinders(methodFinders),
+			TypeInfo loader,
+			InterceptorMethodInfo defaultInitializer,
+			std::shared_ptr<InterceptorMethodInfo> exceptionLogger,
+			std::shared_ptr<InterceptorMethodInfo> tracingBeginMethod,
+			std::shared_ptr<InterceptorMethodInfo> tracingEndMethod,
+			std::shared_ptr<InterceptorMethodInfo> tracingAddParameterMethod,
+			std::shared_ptr<InterceptorMethodInfo> debuggerBeginMethod,
+			std::shared_ptr<InterceptorMethodInfo> debuggerEndMethod,
+			std::shared_ptr<InterceptorMethodInfo> debuggerAddParameterMethod,
+			std::unordered_map<TargetMethod, InstrumentationConfiguration> instrumentations
+		) :
 			SkipAssemblies(skipAssemblies),
-			EnabledAssemblies(enabledAssemblies) {}
+			Loader(loader),
+			DefaultInitializer(defaultInitializer),
+			ExceptionLogger(exceptionLogger),
+			TracingBeginMethod(tracingBeginMethod),
+			TracingEndMethod(tracingEndMethod),
+			TracingAddParameterMethod(tracingAddParameterMethod),
+			DebuggerBeginMethod(debuggerBeginMethod),
+			DebuggerEndMethod(debuggerEndMethod),
+			DebuggerAddParameterMethod(debuggerAddParameterMethod),
+			Instrumentations(instrumentations)
+		{}
 
 		Configuration() {}
 

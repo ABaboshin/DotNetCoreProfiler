@@ -5,43 +5,129 @@
 #include <unordered_set>
 #include <unordered_map>
 #include <iostream>
+#include <mutex>
+#include <thread>
 #include "cor.h"
 #include "corprof.h"
 #include "info/FunctionInfo.h"
 #include "info/ModuleInfo.h"
 #include "configuration/Configuration.h"
 #include "rewriter/ILRewriter.h"
+#include "RejitInfo.h"
+#include "MethodRewriter.h"
+
+#pragma once
+#include <queue>
+#include <mutex>
+#include <condition_variable>
+
+template<typename T>
+class LockingQueue
+{
+public:
+    void push(T const& _data)
+    {
+        {
+            std::lock_guard<std::mutex> lock(guard);
+            queue.push(_data);
+        }
+        signal.notify_one();
+    }
+
+    bool empty() const
+    {
+        std::lock_guard<std::mutex> lock(guard);
+        return queue.empty();
+    }
+
+    bool tryPop(T& _value)
+    {
+        std::lock_guard<std::mutex> lock(guard);
+        if (queue.empty())
+        {
+            return false;
+        }
+
+        _value = queue.front();
+        queue.pop();
+        return true;
+    }
+
+    void waitAndPop(T& _value)
+    {
+        std::unique_lock<std::mutex> lock(guard);
+        while (queue.empty())
+        {
+            signal.wait(lock);
+        }
+
+        _value = queue.front();
+        queue.pop();
+    }
+
+    bool tryWaitAndPop(T& _value, int _milli)
+    {
+        std::unique_lock<std::mutex> lock(guard);
+        while (queue.empty())
+        {
+            signal.wait_for(lock, std::chrono::milliseconds(_milli));
+            return false;
+        }
+
+        _value = queue.front();
+        queue.pop();
+        return true;
+    }
+
+private:
+    std::queue<T> queue;
+    mutable std::mutex guard;
+    std::condition_variable signal;
+};
 
 class CorProfiler : public ICorProfilerCallback8
 {
 protected:
+    LockingQueue<bool> debuggerQueue;
+    std::unique_ptr<std::thread> debuggerThread;
+    std::vector<std::string> opCodes;
+    DWORD eventMask;
+    bool oneAppDomainMode = false;
+    MethodRewriter methodRewriter;
     std::atomic<int> refCount;
 
     std::unordered_set<AppDomainID> loadedIntoAppDomains;
 
-    std::unordered_map<ModuleID, GUID> modules;
-    std::vector<ModuleID> enabledModules;
+    std::unordered_set<ModuleID> skippedModules;
+    std::vector<RejitInfo> rejitInfo;
+    std::unordered_map<util::wstring, ModuleID> loadedModules;
+
+    std::mutex mutex;
+    bool alreadyLoaded;
 
     configuration::Configuration configuration{};
     ICorProfilerInfo8* corProfilerInfo;
 
     bool SkipAssembly(const wstring& name);
 
-    HRESULT Rewrite(ModuleID moduleId, rewriter::ILRewriter& rewriter, bool alreadyChanged);
+    virtual HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter, const info::FunctionInfo& functionInfo);
 
-    virtual HRESULT InjectLoadMethod(ModuleID moduleId, rewriter::ILRewriter& rewriter);
-
-    HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken);
-
-    HRESULT GenerateInterceptMethod(ModuleID moduleId, info::FunctionInfo& target, const std::vector<configuration::TypeInfo>& interceptions, mdToken targetMdToken, mdMethodDef& retMethodToken);
-
-    std::vector<configuration::TypeInfo> FindInterceptions(const wstring& callerAssemblyName, const info::FunctionInfo& target);
-    std::pair<configuration::TypeInfo, bool> FindMethodFinder(const info::FunctionInfo& target);
+    HRESULT GenerateLoadMethod(ModuleID moduleId, mdMethodDef& retMethodToken, const info::FunctionInfo& functionInfo);
 
     virtual rewriter::ILRewriter* CreateILRewriter(ICorProfilerFunctionControl* pICorProfilerFunctionControl, ModuleID moduleId, mdToken functionToken)
     {
         return new rewriter::ILRewriter(this->corProfilerInfo, nullptr, moduleId, functionToken);
     }
+
+    std::vector<configuration::InstrumentationConfiguration> FindInterceptors(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo);
+    std::tuple<bool, std::vector<util::wstring>, util::wstring> FindTraces(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo);
+    std::vector<int> FindOffsets(const info::TypeInfo& typeInfo, const info::FunctionInfo& functionInfo);
+
+    std::vector<info::TypeInfo> GetAllImplementedInterfaces(const info::TypeInfo typeInfo, util::ComPtr<IMetaDataImport2>& metadataImport);
+
+    util::wstring DumpILCodes(rewriter::ILRewriter* rewriter, const info::FunctionInfo& functionInfo, const ComPtr<IMetaDataImport2>& metadataImport);
+
+    static void ProcessDebuggerRejits();
 
 public:
     CorProfiler();
@@ -139,6 +225,12 @@ public:
     HRESULT STDMETHODCALLTYPE DynamicMethodJITCompilationStarted(FunctionID functionId, BOOL fIsSafeToBlock, LPCBYTE ilHeader, ULONG cbILHeader) override;
     HRESULT STDMETHODCALLTYPE DynamicMethodJITCompilationFinished(FunctionID functionId, HRESULT hrStatus, BOOL fIsSafeToBlock) override;
 
+    void AddMethodParameters(util::wstring assemblyName, util::wstring typeName, util::wstring methodName, int methodParametersCount, std::vector<util::wstring> parameters);
+    void AddMethodVariables(util::wstring assemblyName, util::wstring typeName, util::wstring methodName, int methodParametersCount, std::vector<util::wstring> variables);
+    void AddDebuggerOffset(util::wstring assemblyName, util::wstring typeName, util::wstring methodName, int methodParametersCount, int offset);
+
+    void StartDebugger();
+
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** ppvObject) override
     {
         if (riid == __uuidof(ICorProfilerCallback8) ||
@@ -176,4 +268,8 @@ public:
 
         return count;
     }
+
+    friend class MethodRewriter;
 };
+
+extern CorProfiler* instance;

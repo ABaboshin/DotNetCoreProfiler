@@ -8,8 +8,8 @@ namespace Interception.Generator
         [Option('a', "assembiles", Separator = ',')]
         public IList<string> Assemblies { get; set; }
 
-        [Option('p', "path")]
-        public string Path { get; set; }
+        [Option('p', "path", Separator = ',')]
+        public IList<string> Path { get; set; }
 
         [Option('o', "output")]
         public string Output { get; set; }
@@ -18,7 +18,10 @@ namespace Interception.Generator
         [Option('s', "skip")]
         public string Skip { get; set; }
 
-        [Option('e', "enabledAssemblies")]
-        public string EnabledAssemblies { get; set; }
+        [Option('t', "trace")]
+        public string TraceFile { get; set; }
+
+        [Option('d', "debug")]
+        public string DebugFile { get; set; }
     }
 }

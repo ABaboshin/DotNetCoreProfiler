@@ -22,7 +22,7 @@ namespace util
         }
 
         auto result = wstring(data.begin(), data.begin() + length);
-        while (result[result.length() - 1] == 0)
+        while (result.length() > 0 && result[result.length() - 1] == 0)
         {
             result.resize(result.length() - 1);
         }
@@ -104,5 +104,20 @@ namespace util
         }
 
         return trimmed;
+    }
+
+    constexpr char HexMap[] = { '0', '1', '2', '3', '4', '5', '6', '7',
+                               '8', '9', 'a', 'b', 'c', 'd', 'e', 'f' };
+
+    std::string HexStr(const void* dataPtr, int len)
+    {
+        const unsigned char* data = (unsigned char*)dataPtr;
+        wstring s(len * 2, ' ');
+        for (int i = 0; i < len; ++i)
+        {
+            s[2 * i] = HexMap[(data[i] & 0xF0) >> 4];
+            s[2 * i + 1] = HexMap[data[i] & 0x0F];
+        }
+        return ToString(s);
     }
 }

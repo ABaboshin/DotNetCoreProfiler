@@ -1,0 +1,13 @@
+[
+  {
+    "TargetMethod": {
+      "AssemblyName": "app",
+      "MethodName": "M4",
+      "MethodParametersCount": 2,
+      "TypeName": "app.C1"
+    },
+    "Dll": "/app/app.dll",
+    "SourceFile": "Program.cs",
+    "LineNumber": 66
+  }
+]

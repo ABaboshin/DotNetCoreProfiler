@@ -11,7 +11,8 @@ RUN dotnet publish -c Release -o /interceptor tests/integration/basic/intercepto
 
 WORKDIR /interceptor
 
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /tests/integration/skip.txt
+# RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll -p /profiler -o profiler.json -s /tests/integration/skip.txt
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.DefaultImpl.dll,Interception.Tracing.dll,Interception.Debugger.dll -p /profiler -o profiler.json -s /tests/integration/skip.txt -t /tests/integration/basic/trace.json -d /tests/integration/basic/debug.json
 
 FROM profiler:native as profiler
 
@@ -26,7 +27,8 @@ ENV CORECLR_ENABLE_PROFILING=1
 ENV CORECLR_PROFILER="{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
 ENV CORECLR_PROFILER_PATH="/profiler/DotNetCoreProfiler.so"
 ENV PROFILER_CONFIGURATION="/profiler/profiler.json"
-ENV PROFILER_LOG_LEVEL="NONE"
+ENV PROFILER_LOG_LEVEL="VERBOSE"
+ENV PROFILER_LOG_FORMAT="PLAIN"
 
 ENTRYPOINT ["/app/run.sh"]
 

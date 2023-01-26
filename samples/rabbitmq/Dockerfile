@@ -11,7 +11,7 @@ RUN dotnet publish -c Release -o /interceptor samples/rabbitmq/interceptor/inter
 
 WORKDIR /interceptor
 
-RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.MassTransit.dll,Interception.AspNetCore.WebHost.dll -p /profiler -o profiler.json -s /samples/rabbitmq/skip.txt
+RUN dotnet ../generator/Interception.Generator.dll -a interceptor.dll,Interception.Core.dll,Interception.MassTransit7.dll,Interception.AspNetCore.WebHost.dll,Interception.Tracing.dll,Interception.Debugger.dll,Interception.DefaultImpl.dll -p /profiler -o profiler.json -s /samples/rabbitmq/skip.txt
 
 FROM profiler:native as profiler
 
@@ -26,7 +26,8 @@ ENV CORECLR_ENABLE_PROFILING=1
 ENV CORECLR_PROFILER="{585022b6-31e9-4ddf-b35d-3c256d0a16f3}"
 ENV CORECLR_PROFILER_PATH="/profiler/DotNetCoreProfiler.so"
 ENV PROFILER_CONFIGURATION="/profiler/profiler.json"
-ENV PROFILER_LOG_LEVEL="INFO"
+ENV PROFILER_LOG_LEVEL="VERBOSE"
+ENV PROFILER_LOG_FORMAT="PLAIN"
 
 ENTRYPOINT ["/app/run.sh"]
 

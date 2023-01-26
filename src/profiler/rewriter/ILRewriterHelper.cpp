@@ -3,6 +3,7 @@
 #include "util/ComPtr.h"
 #include "util/util.h"
 #include "info/parser.h"
+#include "logging/logging.h"
 
 namespace rewriter
 {
@@ -94,7 +95,7 @@ namespace rewriter
         LoadInt32(arrayIndex);
     }
 
-    void ILRewriterHelper::LoadArgument(UINT16 index)
+    ILInstr* ILRewriterHelper::LoadArgument(UINT16 index)
     {
         static const std::vector<OPCODE> opcodes = {
             CEE_LDARG_0,
@@ -118,6 +119,23 @@ namespace rewriter
         }
 
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    void ILRewriterHelper::LoadArgumentRef(UINT16 index)
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+
+        if (index <= 255) {
+            pNewInstr->m_opcode = CEE_LDARGA_S;
+            pNewInstr->m_Arg8 = static_cast<UINT8>(index);
+        }
+        else {
+            pNewInstr->m_opcode = CEE_LDARGA;
+            pNewInstr->m_Arg16 = index;
+        }
+
+        _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
     void ILRewriterHelper::EndLoadValueIntoArray()
@@ -128,12 +146,13 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
-    void ILRewriterHelper::CallMember(mdMemberRef memberRef, bool isVirtual)
+    ILInstr* ILRewriterHelper::CallMember(mdMemberRef memberRef, bool isVirtual)
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         pNewInstr->m_opcode = isVirtual ? CEE_CALLVIRT : CEE_CALL;
         pNewInstr->m_Arg32 = memberRef;
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::Cast(mdTypeRef typeRef)
@@ -169,7 +188,7 @@ namespace rewriter
         return pNewInstr;
     }
 
-    void ILRewriterHelper::LoadLocalAddress(unsigned index)
+    ILInstr* ILRewriterHelper::LoadLocalAddress(unsigned index)
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         if (index <= 255) {
@@ -181,6 +200,7 @@ namespace rewriter
             pNewInstr->m_Arg16 = index;
         }
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::NewObject(mdToken token)
@@ -191,11 +211,19 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
-    void ILRewriterHelper::Pop()
+    void ILRewriterHelper::LoadObj(mdToken token) {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_LDOBJ;
+        pNewInstr->m_Arg32 = token;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+    }
+
+    ILInstr* ILRewriterHelper::Pop()
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_POP;
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
     void ILRewriterHelper::Ret()
@@ -205,12 +233,13 @@ namespace rewriter
         _rewriter->InsertBefore(_instr, pNewInstr);
     }
 
-    void ILRewriterHelper::LoadStr(mdToken token)
+    ILInstr* ILRewriterHelper::LoadStr(mdToken token)
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
         pNewInstr->m_opcode = CEE_LDSTR;
         pNewInstr->m_Arg32 = token;
         _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
     }
 
 	void ILRewriterHelper::Box(mdToken token)
@@ -378,10 +407,18 @@ namespace rewriter
         return pNewInstr;
     }
 
-    ILInstr* ILRewriterHelper::CgtUn()
+    ILInstr* ILRewriterHelper::Rethrow()
     {
         ILInstr* pNewInstr = _rewriter->NewILInstr();
-        pNewInstr->m_opcode = CEE_CGT_UN;
+        pNewInstr->m_opcode = CEE_RETHROW;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
+    ILInstr* ILRewriterHelper::EndFinally()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_ENDFINALLY;
         _rewriter->InsertBefore(_instr, pNewInstr);
         return pNewInstr;
     }
@@ -394,12 +431,24 @@ namespace rewriter
         return pNewInstr;
     }
 
+    ILInstr* ILRewriterHelper::LeaveS()
+    {
+        ILInstr* pNewInstr = _rewriter->NewILInstr();
+        pNewInstr->m_opcode = CEE_LEAVE_S;
+        _rewriter->InsertBefore(_instr, pNewInstr);
+        return pNewInstr;
+    }
+
     HRESULT ILRewriterHelper::AddLocalVariable(mdTypeRef typeRef, int& newIndex)
     {
         HRESULT hr;
 
         util::ComPtr<IUnknown> metadataInterfaces;
-        IfFailRet(_rewriter->GetCorProfilerInfo()->GetModuleMetaData(_rewriter->GetModuleId(), ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf()));
+        hr = _rewriter->GetCorProfilerInfo()->GetModuleMetaData(_rewriter->GetModuleId(), ofRead | ofWrite, IID_IMetaDataImport, metadataInterfaces.GetAddressOf());
+        if (FAILED(hr)) {
+            logging::log(logging::LogLevel::ERR, "Failed AddLocalVariable");
+            return hr;
+        }
 
         auto metadataImport = metadataInterfaces.As<IMetaDataImport2>(IID_IMetaDataImport);
         auto metadataEmit = metadataInterfaces.As<IMetaDataEmit2>(IID_IMetaDataEmit);
@@ -415,7 +464,11 @@ namespace rewriter
             std::vector<BYTE> originalSignature{};
             PCCOR_SIGNATURE originalSignatureRaw = nullptr;
             ULONG originalSignatureSize = 0;
-            IfFailRet(metadataImport->GetSigFromToken(_rewriter->GetTkLocalVarSig(), &originalSignatureRaw, &originalSignatureSize));
+            hr = metadataImport->GetSigFromToken(_rewriter->GetTkLocalVarSig(), &originalSignatureRaw, &originalSignatureSize);
+            if (FAILED(hr)) {
+                logging::log(logging::LogLevel::ERR, "Failed AddLocalVariable GetSigFromToken");
+                return hr;
+            }
 
             originalSignature = util::ToRaw(originalSignatureRaw, originalSignatureSize);
             auto iter = originalSignature.begin();

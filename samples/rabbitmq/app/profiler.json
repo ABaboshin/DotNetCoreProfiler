@@ -1,0 +1,220 @@
+{
+  "Loader": {
+    "AssemblyName": "Interception.DefaultImpl",
+    "TypeName": "Interception.DefaultImpl.DefaultLoader",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.DefaultImpl.dll"
+  },
+  "SkipAssemblies": [
+    "Interception.AspNetCore.Tracing",
+    "Interception.AspNetCore.WebHost",
+    "Interception.Cache",
+    "Interception.Core",
+    "Interception.DeadlockDetection",
+    "Interception.DependencyInjection",
+    "Interception.MassTransit",
+    "Interception.Observers",
+    "Interception.OpenTracing",
+    "Interception.OpenTracing.Statsd",
+    "Interception.Quartz",
+    "Interception.Tracing",
+    "Interception.Tracing.Serilog",
+    "ISymWrapper",
+    "Microsoft.AspNetCore.Mvc.RazorPages",
+    "Microsoft.AspNetCore.Razor.Language",
+    "Microsoft.CSharp",
+    "Microsoft.Extensions.ObjectPool",
+    "Microsoft.Extensions.Options",
+    "mscorlib",
+    "netstandard",
+    "Newtonsoft.Json",
+    "StatsdClient",
+    "System.Collections",
+    "System.ComponentModel",
+    "System.Configuration",
+    "System.Console",
+    "System.Core",
+    "System.Diagnostics.DiagnosticSource",
+    "System.IO.FileSystem",
+    "System.Private.CoreLib",
+    "System.Runtime",
+    "System.Runtime.Extensions",
+    "System.Runtime.InteropServices",
+    "System.Runtime.InteropServices.RuntimeInformation",
+    "System.Threading.Tasks",
+    "System.Xml.Linq",
+    "Microsoft.Extensions.DotNetDeltaApplier",
+    "System.Private.CoreLib",
+    "System.Runtime.CompilerServices"
+  ],
+  "Strict": [
+    {
+      "Interceptor": {
+        "AssemblyName": "interceptor",
+        "TypeName": "Interception.AspNetCore.ConfigureServicesBuilderInterceptor",
+        "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\interceptor.dll"
+      },
+      "TargetMethod": {
+        "AssemblyName": "Microsoft.AspNetCore.Hosting",
+        "MethodName": "InvokeCore",
+        "MethodParametersCount": 2,
+        "TypeName": "Microsoft.AspNetCore.Hosting.ConfigureServicesBuilder"
+      },
+      "Priority": 0
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "Interception.MassTransit",
+        "TypeName": "Interception.MassTransit.ConsumeInterceptor",
+        "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.MassTransit.dll"
+      },
+      "TargetMethod": {
+        "AssemblyName": "MassTransit",
+        "MethodName": "Consume",
+        "MethodParametersCount": 1,
+        "TypeName": "MassTransit.IConsumer\u00601"
+      },
+      "Priority": 0
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "Interception.MassTransit",
+        "TypeName": "Interception.MassTransit.ConsumeInterceptor",
+        "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.MassTransit.dll"
+      },
+      "TargetMethod": {
+        "AssemblyName": "MassTransit",
+        "MethodName": "Consume",
+        "MethodParametersCount": 1,
+        "TypeName": "MassTransit.Saga.InitiatedBy\u00601"
+      },
+      "Priority": 0
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "Interception.MassTransit",
+        "TypeName": "Interception.MassTransit.ConsumeInterceptor",
+        "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.MassTransit.dll"
+      },
+      "TargetMethod": {
+        "AssemblyName": "MassTransit",
+        "MethodName": "Consume",
+        "MethodParametersCount": 1,
+        "TypeName": "MassTransit.Saga.Observes\u00602"
+      },
+      "Priority": 0
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "Interception.MassTransit",
+        "TypeName": "Interception.MassTransit.ConsumeInterceptor",
+        "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.MassTransit.dll"
+      },
+      "TargetMethod": {
+        "AssemblyName": "MassTransit",
+        "MethodName": "Consume",
+        "MethodParametersCount": 1,
+        "TypeName": "MassTransit.Saga.Orchestrates\u00602"
+      },
+      "Priority": 0
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "Interception.MassTransit",
+        "TypeName": "Interception.MassTransit.ConsumeInterceptor",
+        "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.MassTransit.dll"
+      },
+      "TargetMethod": {
+        "AssemblyName": "app",
+        "MethodName": "Consume",
+        "MethodParametersCount": 1,
+        "TypeName": "app.MessageBus.MyMessageConsumer"
+      },
+      "Priority": 0
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "Interception.MassTransit",
+        "TypeName": "Interception.MassTransit.CreateUsingRabbitMqInterceptor",
+        "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.MassTransit.dll"
+      },
+      "TargetMethod": {
+        "AssemblyName": "MassTransit",
+        "MethodName": "UsingRabbitMq",
+        "MethodParametersCount": 2,
+        "TypeName": "MassTransit.RabbitMqBusFactoryConfiguratorExtensions"
+      },
+      "Priority": 0
+    },
+    {
+      "Interceptor": {
+        "AssemblyName": "Interception.AspNetCore.WebHost",
+        "TypeName": "Interception.AspNetCore.RunWebHostInterceptor",
+        "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.AspNetCore.WebHost.dll"
+      },
+      "TargetMethod": {
+        "AssemblyName": "Microsoft.AspNetCore.Hosting",
+        "MethodName": "Run",
+        "MethodParametersCount": 1,
+        "TypeName": "Microsoft.AspNetCore.Hosting.WebHostExtensions"
+      },
+      "Priority": 0
+    }
+  ],
+  "DefaultInitializer": {
+    "MethodName": "GetDefault",
+    "TypeName": "Interception.DefaultImpl.DefaultInitializer",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.DefaultImpl.dll",
+    "AssemblyName": "Interception.DefaultImpl"
+  },
+  "ExceptionLogger": {
+    "MethodName": "LogException",
+    "TypeName": "Interception.DefaultImpl.ExceptionLogger",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.DefaultImpl.dll",
+    "AssemblyName": "Interception.DefaultImpl"
+  },
+  "TracingBeginMethod": {
+    "MethodName": "BeginTracing",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "TracingEndMethod": {
+    "MethodName": "EndTracing",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "TracingAddParameterMethod": {
+    "MethodName": "AddParameter",
+    "TypeName": "Interception.Tracing.Impl.TracingImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.Tracing.dll",
+    "AssemblyName": "Interception.Tracing"
+  },
+  "DebuggerBeginMethod": {
+    "MethodName": "BeginDebugging",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebuggerEndMethod": {
+    "MethodName": "EndDebugging",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebuggerAddParameterMethod": {
+    "MethodName": "AddParameter",
+    "TypeName": "Interception.Debugger.Impl.DebuggerImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "DebuggerInitializerMethod": {
+    "MethodName": "DebuggerInitializer",
+    "TypeName": "Interception.Debugger.Impl.DebuggerInitializationImplementation",
+    "AssemblyPath": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish\\Interception.Debugger.dll",
+    "AssemblyName": "Interception.Debugger"
+  },
+  "Traces": null,
+  "Debug": null,
+  "Path": "D:\\playground\\DotNetCoreProfiler\\samples\\rabbitmq\\interceptor\\publish"
+}

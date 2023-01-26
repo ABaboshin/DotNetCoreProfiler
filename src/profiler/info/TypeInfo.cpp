@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cor.h>
 #include "parser.h"
 #include "TypeInfo.h"
 #include "const/const.h"
@@ -92,13 +93,39 @@ namespace info
     TypeInfo TypeInfo::GetTypeInfo(const ComPtr<IMetaDataImport2>& metadataImport, mdToken token) {
         std::vector<WCHAR> typeName(MAX_CLASS_NAME, (WCHAR)0);
         DWORD typeNameLength = 0;
+        DWORD typeFlags;
+        mdToken typeExtends = mdTokenNil;
+        mdToken parentTypeToken = mdTokenNil;
+        std::shared_ptr<TypeInfo> parentTypeInfo = nullptr;
+        std::shared_ptr<TypeInfo> extendsInfo = nullptr;
+
+        bool isValueType = false;
+        bool isAbstract = false;
+        bool isSealed = false;
+        bool isGeneric = false;
 
         HRESULT hr = E_FAIL;
-        const auto token_type = TypeFromToken(token);
-        switch (token_type) {
+        const auto tokenType = TypeFromToken(token);
+        switch (tokenType) {
         case mdtTypeDef:
-            hr = metadataImport->GetTypeDefProps(token, &typeName[0], MAX_CLASS_NAME,
-                &typeNameLength, nullptr, nullptr);
+            hr = metadataImport->GetTypeDefProps(token, &typeName[0], MAX_CLASS_NAME, &typeNameLength, &typeFlags, &typeExtends);
+            metadataImport->GetNestedClassProps(token, &parentTypeToken);
+
+            if (parentTypeToken != mdTokenNil)
+            {
+                parentTypeInfo = std::make_shared<TypeInfo>(GetTypeInfo(metadataImport, parentTypeToken));
+            }
+
+            if (typeExtends != mdTokenNil)
+            {
+                extendsInfo = std::make_shared<TypeInfo>(GetTypeInfo(metadataImport, typeExtends));
+                isValueType =
+                    extendsInfo->Name == "System.ValueType"_W || extendsInfo->Name == "System.Enum"_W;
+            }
+
+            isAbstract = IsTdAbstract(typeFlags);
+            isSealed = IsTdSealed(typeFlags);
+
             break;
         case mdtTypeRef:
             hr = metadataImport->GetTypeRefProps(token, nullptr, &typeName[0],
@@ -107,12 +134,11 @@ namespace info
         case mdtTypeSpec:
         {
             PCCOR_SIGNATURE signature{};
-            ULONG signature_length{};
+            ULONG signatureLength{};
 
-            hr = metadataImport->GetTypeSpecFromToken(token, &signature,
-                &signature_length);
+            hr = metadataImport->GetTypeSpecFromToken(token, &signature, &signatureLength);
 
-            if (FAILED(hr) || signature_length < 3) {
+            if (FAILED(hr) || signatureLength < 3) {
                 return {};
             }
 
@@ -120,8 +146,10 @@ namespace info
                 mdToken typeToken;
                 auto length = CorSigUncompressToken(&signature[2], &typeToken);
                 auto ti = GetTypeInfo(metadataImport, typeToken);
-                ti.Raw = util::ToRaw(signature, signature_length);
+                ti.Raw = util::ToRaw(signature, signatureLength);
                 ti.TryParseGeneric();
+
+                return { ti.Id, ti.Name, {}, ti.IsValueType, ti.IsAbstract, ti.IsSealed, token, tokenType, ti.IsGenericClassRef, ti.ParentTypeInfo, ti.ExtendTypeInfo };
 
                 return ti;
             }
@@ -137,10 +165,19 @@ namespace info
             return FunctionInfo::GetFunctionInfo(metadataImport, token).Type;
             break;
         }
+
         if (FAILED(hr) || typeNameLength == 0) {
             return {};
         }
 
-        return { token, util::ToString(typeName, typeNameLength), {} };
+        const auto name = util::ToString(typeName, typeNameLength);
+        const auto genericTokenIndex = name.rfind("`"_W);
+        if (genericTokenIndex != std::string::npos)
+        {
+            const auto idxFromRight = name.length() - genericTokenIndex - 1;
+            isGeneric = idxFromRight == 1 || idxFromRight == 2;
+        }
+
+        return { token, util::ToString(typeName, typeNameLength), {}, isValueType, isAbstract, isSealed, mdTypeSpecNil, tokenType, isGeneric, parentTypeInfo, extendsInfo };
     }
 }

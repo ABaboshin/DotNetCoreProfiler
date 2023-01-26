@@ -1,11 +1,16 @@
 ﻿using CommandLine;
 using Interception.Attributes;
-using Interception.Core;
+using Interception.Attributes.Debugger;
+using Interception.Attributes.Tracing;
+using Interception.Core.Info;
 using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
+using TypeInfo = Interception.Core.Info.TypeInfo;
 
 namespace Interception.Generator
 {
@@ -13,74 +18,220 @@ namespace Interception.Generator
     {
         static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.AssemblyResolve += (sender, args) =>
+            {
+                var assemblyName = new AssemblyName(args.Name);
+                
+                var fullPath = Path.Combine($"./{assemblyName.Name}.dll");
+                if (!File.Exists(fullPath))
+                {
+                    return null;
+                }
+
+                if (assemblyName.Name == "System.Diagnostics.DiagnosticSource")
+                {
+                    var assembly = Assembly.LoadFrom(fullPath);
+                    return assembly;
+                }
+                
+                return Assembly.LoadFrom(fullPath);
+            };
+
             Parser.Default.ParseArguments<Options>(args)
                 .WithParsed(opts => {
 
                     var strict = new List<StrictInterceptionInfo>();
-                    var methodFinders = new List<MethodFinderInfo>();
-                    var attributed = new List<AttributedInterceptor>();
-                    var skipAssemblies = File.Exists(opts.Skip) ?  File.ReadAllLines(opts.Skip) : new string[] { };
-                    var enabledAssemblies = File.Exists(opts.EnabledAssemblies) ? File.ReadAllLines(opts.EnabledAssemblies) : new string[] { };
+                    var skipAssemblies = File.Exists(opts.Skip) ? File.ReadAllLines(opts.Skip) : new string[] { };
+                    TypeInfo loader = null;
+                    InterceptorMethodInfo defaultInitializer = null;
+                    InterceptorMethodInfo exceptionLogger = null;
+                    InterceptorMethodInfo tracingBeginMethod = null;
+                    InterceptorMethodInfo tracingEndMethod = null;
+                    InterceptorMethodInfo tracingAddParameterMethod = null;
+                    InterceptorMethodInfo debuggerBeginMethod = null;
+                    InterceptorMethodInfo debuggerEndMethod = null;
+                    InterceptorMethodInfo debuggerAddParameterMethod = null;
+                    InterceptorMethodInfo debuggerInitializerMethod = null;
+
+                    var traceFileContent = File.Exists(opts.TraceFile) ? File.ReadAllText(opts.TraceFile) : null;
+                    var traces = !string.IsNullOrEmpty(traceFileContent) ? System.Text.Json.JsonSerializer.Deserialize<List<TraceMethodInfo>>(traceFileContent) : null;
+
+                    var debugFileContent = File.Exists(opts.DebugFile) ? File.ReadAllText(opts.DebugFile) : null;
+                    var debug = !string.IsNullOrEmpty(debugFileContent) ? System.Text.Json.JsonSerializer.Deserialize<List<DebugMethodInfo>>(debugFileContent) : null;
 
                     foreach (var assemblyPath in opts.Assemblies)
                     {
                         var assembly = Assembly.LoadFrom(assemblyPath);
-                        strict.AddRange(ProcessStrictInterceptors(assembly));
-                        methodFinders.AddRange(ProcessMethodFinders(assembly));
-                        attributed.AddRange(ProcessAttributedInterceptors(assembly));
+                        var fullPath = Path.Combine(opts.Path[0], new FileInfo(assemblyPath).Name);
+                        strict.AddRange(ProcessStrictInterceptors(assembly, fullPath));
+
+                        if (loader is null)
+                        {
+                            loader = FindTypeInfo<LoaderAttribute>(assembly, fullPath);
+                        }
+                        else if (FindTypeInfo<LoaderAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate loader");
+                        }
+
+                        if (defaultInitializer is null)
+                        {
+                            defaultInitializer = FindInterceptorMethod<DefaultInitializerAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DefaultInitializerAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate default initializer");
+                        }
+
+                        if (exceptionLogger is null)
+                        {
+                            exceptionLogger = FindInterceptorMethod<ExceptionLoggerAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<ExceptionLoggerAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate default exception logger");
+                        }
+
+                        if (tracingBeginMethod is null)
+                        {
+                            tracingBeginMethod = FindInterceptorMethod<TracingBeginMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<TracingBeginMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate tracing begin method");
+                        }
+
+                        if (tracingEndMethod is null)
+                        {
+                            tracingEndMethod = FindInterceptorMethod<TracingEndMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<TracingEndMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate tracing end method");
+                        }
+
+                        if (tracingAddParameterMethod is null)
+                        {
+                            tracingAddParameterMethod = FindInterceptorMethod<TracingAddParameterMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<TracingAddParameterMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate tracing add parameter method");
+                        }
+
+                        if (debuggerBeginMethod is null)
+                        {
+                            debuggerBeginMethod = FindInterceptorMethod<DebuggerBeginMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DebuggerBeginMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate debugger begin method");
+                        }
+
+                        if (debuggerEndMethod is null)
+                        {
+                            debuggerEndMethod = FindInterceptorMethod<DebuggerEndMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DebuggerEndMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate debugger end method");
+                        }
+
+                        if (debuggerAddParameterMethod is null)
+                        {
+                            debuggerAddParameterMethod = FindInterceptorMethod<DebuggerAddParameterMethodAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DebuggerAddParameterMethodAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate debugger add parameter method");
+                        }
+
+                        if (debuggerInitializerMethod is null)
+                        {
+                            debuggerInitializerMethod = FindInterceptorMethod<DebuggerInitializerAttribute>(assembly, fullPath);
+                        }
+                        else if (FindInterceptorMethod<DebuggerInitializerAttribute>(assembly, fullPath) != null)
+                        {
+                            throw new Exception("duplicate debugger add parameter method");
+                        }
                     }
 
-                    var result = new {
-                        attributed,
-                        assemblies = opts.Assemblies.Select(a => Path.Combine(opts.Path, new FileInfo(a).Name)).ToList(),
-                        composedInterceptor = new
-                        {
-                            TypeName = typeof(ComposedInterceptor).FullName,
-                            AssemblyName = typeof(ComposedInterceptor).Assembly.GetName().Name
-                        },
-                        interceptorInterface = new
-                        {
-                            TypeName = typeof(IInterceptor).FullName,
-                            AssemblyName = typeof(IInterceptor).Assembly.GetName().Name
-                        },
-                        methodFinderInterface = new
-                        {
-                            TypeName = typeof(IMethodFinder).FullName,
-                            AssemblyName = typeof(IMethodFinder).Assembly.GetName().Name
-                        },
-                        methodFinders,
-                        skipAssemblies = skipAssemblies?.OrderBy(s => s),
-                        enabledAssemblies = enabledAssemblies?.OrderBy(s => s),
-                        strict,
+                    if (loader is null)
+                    {
+                        throw new Exception("load not found");
+                    }
+
+                    if (defaultInitializer is null)
+                    {
+                        throw new Exception("default initializer not found");
+                    }
+
+                    var result = new ProfilerInfo
+                    {
+                        Loader = loader,
+                        SkipAssemblies = skipAssemblies?.OrderBy(s => s).ToList(),
+                        Strict = strict,
+                        DefaultInitializer = defaultInitializer,
+                        ExceptionLogger = exceptionLogger,
+                        Path = opts.Path.ToList(),
+                        TracingBeginMethod = tracingBeginMethod,
+                        TracingEndMethod = tracingEndMethod,
+                        TracingAddParameterMethod = tracingAddParameterMethod,
+                        DebuggerAddParameterMethod = debuggerAddParameterMethod,
+                        DebuggerBeginMethod = debuggerBeginMethod,
+                        DebuggerEndMethod = debuggerEndMethod,
+                        DebuggerInitializerMethod = debuggerInitializerMethod,
+                        Traces = traces,
+                        Debug = debug
                     };
 
-                    File.WriteAllText(opts.Output, JsonConvert.SerializeObject(result, Formatting.Indented));
+                    File.WriteAllText(opts.Output, System.Text.Json.JsonSerializer.Serialize(result, new JsonSerializerOptions { 
+                        WriteIndented = true,
+                    }));
                 });
         }
 
-        private static IEnumerable<AttributedInterceptor> ProcessAttributedInterceptors(Assembly assembly)
+        private static InterceptorMethodInfo FindInterceptorMethod<T>(Assembly assembly, string path) where T : Attribute
         {
             var result = assembly
                 .GetTypes()
-                .Where(type => type.GetCustomAttributes<MethodInterceptorImplementationAttribute>().Any())
-                .SelectMany(type => type.GetCustomAttributes<MethodInterceptorImplementationAttribute>().Select(attribute => new { type, attribute }))
+                .SelectMany(t => t.GetMethods())
+                .Where(m => m.GetCustomAttributes<T>().Any())
+                .SelectMany(m => m.GetCustomAttributes<T>().Select(attribute => new { m, attribute }))
                 .Select(info => {
-                    return new AttributedInterceptor
+                    return new InterceptorMethodInfo
                     {
-                        AttributeType = info.attribute.MethodInterceptorAttribute.FullName,
-                        Interceptor = new TypeInfo
-                        {
-                            AssemblyName = assembly.GetName().Name,
-                            TypeName = info.type.FullName
-                        }
+                        MethodName = info.m.Name,
+                        TypeName = info.m.DeclaringType.FullName,
+                        AssemblyPath = path,
+                        AssemblyName = assembly.GetName().Name,
                     };
                 })
-                .ToList();
+                .FirstOrDefault();
 
             return result;
         }
 
-        private static List<StrictInterceptionInfo> ProcessStrictInterceptors(Assembly assembly)
+        private static TypeInfo FindTypeInfo<T>(Assembly assembly, string path) where T : Attribute
+        {
+            var result = assembly
+                .GetTypes()
+                .Where(type => type.GetCustomAttributes<T>().Any())
+                .SelectMany(type => type.GetCustomAttributes<T>().Select(attribute => new { type, attribute }))
+                .Select(info => {
+                    return new TypeInfo
+                    {
+                        TypeName = info.type.FullName,
+                        AssemblyPath = path,
+                        AssemblyName = assembly.GetName().Name
+                    };
+                })
+                .FirstOrDefault();
+
+            return result;
+        }
+
+        private static List<StrictInterceptionInfo> ProcessStrictInterceptors(Assembly assembly, string path)
         {
             var interceptors = assembly
                 .GetTypes()
@@ -90,8 +241,7 @@ namespace Interception.Generator
                 {
                     return new StrictInterceptionInfo
                     {
-                        IgnoreCallerAssemblies = info.attribute.IgnoreCallerAssemblies?.OrderBy(a => a).Distinct().ToArray(),
-                        Target = new TargetMethod
+                        TargetMethod = new TargetMethodInfo
                         {
                             AssemblyName = info.attribute.TargetAssemblyName,
                             MethodName = info.attribute.TargetMethodName,
@@ -102,36 +252,9 @@ namespace Interception.Generator
                         {
                             AssemblyName = info.type.Assembly.GetName().Name,
                             TypeName = info.type.FullName,
-                        }
-                    };
-                })
-                .ToList();
-
-            return interceptors;
-        }
-
-        private static List<MethodFinderInfo> ProcessMethodFinders(Assembly assembly)
-        {
-            var interceptors = assembly
-                .GetTypes()
-                .Where(type => type.GetCustomAttributes().Where(c => typeof(MethodFinderAttribute).IsAssignableFrom(c.GetType())).Any())
-                .SelectMany(type => type.GetCustomAttributes().Where(c => typeof(MethodFinderAttribute).IsAssignableFrom(c.GetType())).Select(attribute => new { type, attribute = (MethodFinderAttribute)attribute }))
-                .Select(info =>
-                {
-                    return new MethodFinderInfo
-                    {
-                        Target = new TargetMethod
-                        {
-                            AssemblyName = info.attribute.TargetAssemblyName,
-                            MethodName = info.attribute.TargetMethodName,
-                            TypeName = info.attribute.TargetTypeName,
-                            MethodParametersCount = info.attribute.TargetMethodParametersCount,
+                            AssemblyPath = path
                         },
-                        MethodFinder = new TypeInfo
-                        {
-                            AssemblyName = info.type.Assembly.GetName().Name,
-                            TypeName = info.type.FullName,
-                        }
+                        Priority = info.attribute.Priority
                     };
                 })
                 .ToList();
